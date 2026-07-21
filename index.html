@@ -302,22 +302,20 @@ async function saveDocument(){
 }
 
 function renderDocuments(){
-  const el=document.getElementById("pane-documents");
-  const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom).localeCompare(String(b.nom),"fr")).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('');
+  const el=document.getElementById('pane-documents');
   let html='<div class="gpanel"><h4>Enregistrer un document</h4>'
-    +'<div class="row" style="margin-bottom:10px">'
-    +'<button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button>'
+    +'<div class="row" style="margin-bottom:10px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>'
     +'<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">'
     +'<input type="hidden" id="docLien">'
-    +'<span class="note" id="docEtat"></span>'
+    +'<div class="row">'
+    +'<select class="inp" id="docCh"><option value="__">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom).localeCompare(String(b.nom),"fr")).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('')+'</select>'
+    +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
-    +'<select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Chantier —</option>'+chOpts+'</select>'
-    +'<select class="inp" id="docType" style="flex:0 0 110px">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
-    +'<input class="inp" id="docTitre" placeholder="Titre" style="flex:3">'
-    +'<input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3">'
-    +'<button class="btnp go" onclick="saveDocument()" style="flex:0 0 auto">Enregistrer</button>'
+    +'<input class="inp" id="docTitre" placeholder="Titre (auto-rempli par IA)">'
+    +'<input class="inp" id="docSujet" placeholder="Sujet / description">'
     +'</div>'
+    +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
     +'</div>';
   const last5=S.documents.slice(0,5);
   if(last5.length){
@@ -327,11 +325,11 @@ function renderDocuments(){
       const c=chantierById(d.chantierId);
       const nomC=c?esc(c.nom):'—';
       const voir=d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'';
-      html+='<div class="achligne" style="padding:10px 12px;border-bottom:1px solid #eee;align-items:center">'
+      html+='<div class="achligne" style="padding:10px 0;border-bottom:1px solid #eee">'
         +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
-        +'<span class="badge b-df" style="width:auto;padding:3px 10px;flex:0 0 auto">'+nomC+'</span>'
-        +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
-        +'<small style="color:#aaa;margin:0 8px;flex:0 0 auto;white-space:nowrap">'+esc(d.date)+'</small>'
+        +'<span class="badge b-df" style="width:auto;padding:3px 10px">'+nomC+'</span>'
+        +'<span style="flex:1;font-size:13px;color:#555">'+esc(d.titre)+(d.sujet?' — <small>'+esc(d.sujet)+'</small>':'')+'</span>'
+        +'<small style="color:#aaa;margin-right:8px">'+esc(d.date)+'</small>'
         +voir
         +'</div>';
     }
@@ -416,9 +414,16 @@ function renderChantiers(){
         f+='<div class="seclabel"><span>Documents</span><span>'+docs.length+' doc'+(docs.length>1?'s':'')+'</span></div>';
         for(const d of docs){
           const voir2=d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'';
-          f+='<div class="achligne ligD"><span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span><span style="flex:1;font-size:13px">'+esc(d.titre)+(d.sujet?' — <small>'+esc(d.sujet)+'</small>':'')+'</span><small style="color:#aaa;margin-right:8px">'+esc(d.date)+'</small>'+voir2+'</div>';
+          const sujetBadge=d.sujet?'<span class="badge b-df" style="width:auto;padding:3px 10px;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc(d.sujet)+'</span>':'';
+          f+='<div class="achligne ligD">'
+            +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
+            +sujetBadge
+            +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
+            +'<small style="color:#aaa;margin:0 8px;flex:0 0 auto;white-space:nowrap">'+esc(d.date)+'</small>'
+            +'<span style="white-space:nowrap">'+voir2+'</span>'
+            +'</div>';
         }
-      }
+}
       f+='<div style="margin-top:9px;display:flex;gap:8px"><button class="btn2" onclick="openAvenant(\''+c.id+'\')">+ Avenant</button><span class="spacer"></span><button class="btn2" onclick="archiverChantier(\''+c.id+'\')">Archiver</button></div></div>';
       el.innerHTML=f; convertAvoirBadges(); return;
     }
