@@ -303,26 +303,21 @@ async function saveDocument(){
 
 function renderDocuments(){
   const el=document.getElementById('pane-documents');
-  const chOpts=S.chantiers.filter(c=>c.statut!=='Terminé'&&c.statut!=='Archivé')
-    .sort((a,b)=>String(a.nom).localeCompare(String(b.nom),'fr'))
-    .map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('');
-  el.innerHTML=''
-    +'<div class="gpanel"><h4>Enregistrer un document</h4>'
-    +'<div class="row" style="margin-bottom:12px">'
-    +'<label class="btnp" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px;user-select:none">'
-    +'<span>📎 Déposer un document (PDF ou photo)</span>'
-    +'<input type="file" id="docFile" accept="application/pdf,image/*" style="position:absolute;opacity:0;width:0;height:0" onchange="traiterDocument(this.files[0])">'
-    +'</label><input type="hidden" id="docLien"><span class="note" id="docEtat"></span>'
+  let html='<div class="gpanel"><h4>Enregistrer un document</h4>'
+    +'<div class="row" style="margin-bottom:10px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>'
+    +'<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">'
+    +'<input type="hidden" id="docLien">'
+    +'<div class="row">'
+    +'<select class="inp" id="docCh"><option value="__">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom).localeCompare(String(b.nom),"fr")).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('')+'</select>'
+    +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
-    +'<select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Chantier —</option>'+chOpts+'</select>'
-    +'<select class="inp" id="docType" style="flex:0 0 110px">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'<input type="hidden" id="docTitre">'
-    +'<input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3">'
-    +'<button class="btnp go" onclick="saveDocument()" style="flex:0 0 auto">Enregistrer</button>'
+    +'<input class="inp" id="docSujet" placeholder="Sujet / description">'
     +'</div>'
+    +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
     +'</div>';
-const last5=S.documents.slice(0,5);
+  const last5=S.documents.slice(0,5);
   if(last5.length){
     html+='<div class="seclabel" style="margin:18px 0 8px"><span>Derniers enregistrés</span></div>';
     html+='<div class="gpanel" style="padding:0">';
@@ -349,7 +344,6 @@ const last5=S.documents.slice(0,5);
 html+='<div class="note" style="margin-top:12px">Le détail complet de chaque document est dans la fiche de son chantier.</div>';
   el.innerHTML=html;
 }
-
 
 function renderHeures(){
   const el=document.getElementById("pane-heures");
@@ -432,7 +426,7 @@ function renderChantiers(){
             +sujetBadge
             +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc((d.titre||'').split(' ').slice(0,3).join(' '))+'…</span>'
             
-            +'<span style="white-space:nowrap">'+voir2+'</span>'
+            +'<span style="white-space:nowrap;display:flex;gap:4px;align-items:center">'+voir2+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">✎</button>'+'<button class="x" onclick="delDocument(\''+d.id+'\')">✕</button>'+'</span>'
             +'</div>';
         }
 }
