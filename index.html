@@ -325,7 +325,8 @@ function renderDocuments(){
       const c=chantierById(d.chantierId);
       const nomC=c?esc(c.nom):'—';
       const voir=d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'';
-      const sujetBadge='<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+nomC+'</span>';
+      const sujetCourt=(d.sujet||'').split(' ').slice(0,2).join(' ');
+      const sujetBadge=sujetCourt?'<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(sujetCourt)+'</span>':'<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+nomC+'</span>';
       const dateDoc=esc(d.date||'').slice(0,10).split('-').reverse().join('/');
       html+='<div class="achligne ligD" style="padding:10px 0">'
         +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
@@ -422,6 +423,7 @@ function renderChantiers(){
           const sujetBadge=d.sujet?'<span class="badge b-df" style="width:auto;padding:3px 10px;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc(d.sujet)+'</span>':'';
           f+='<div class="achligne ligD">'
             +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
+            +sujetBadge
             +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
             +'<small style="color:#aaa;margin:0 8px;flex:0 0 auto;white-space:nowrap">'+esc(d.date)+'</small>'
             +'<span style="white-space:nowrap">'+voir2+'</span>'
