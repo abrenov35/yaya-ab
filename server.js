@@ -100,6 +100,10 @@ db.serialize(() => {
       file_type TEXT NOT NULL,
       file_size REAL NOT NULL,
       file_path TEXT NOT NULL,
+      chantier TEXT,
+      type TEXT,
+      fournisseur TEXT,
+      montant REAL,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (project_id) REFERENCES projects(id)
     )
@@ -235,10 +239,11 @@ app.post('/api/projects/:projectId/documents', upload.single('file'), (req, res)
   
   const id = uuidv4();
   const fileType = req.file.mimetype.includes('pdf') ? 'PDF' : 'PHOTO';
+  const { chantier, type, fournisseur, montant } = req.body;
   
   db.run(
-    'INSERT INTO documents (id, project_id, filename, original_name, file_type, file_size, file_path) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, req.params.projectId, req.file.filename, req.file.originalname, fileType, req.file.size, `/uploads/documents/${req.file.filename}`],
+    'INSERT INTO documents (id, project_id, filename, original_name, file_type, file_size, file_path, chantier, type, fournisseur, montant) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+    [id, req.params.projectId, req.file.filename, req.file.originalname, fileType, req.file.size, `/uploads/documents/${req.file.filename}`, chantier, type, fournisseur, montant],
     function(err) {
       if (err) {
         fs.unlinkSync(req.file.path);
@@ -249,7 +254,8 @@ app.post('/api/projects/:projectId/documents', upload.single('file'), (req, res)
         filename: req.file.originalname, 
         file_type: fileType,
         file_size: req.file.size,
-        file_path: `/uploads/documents/${req.file.filename}`
+        file_path: `/uploads/documents/${req.file.filename}`,
+        chantier, type, fournisseur, montant
       });
     }
   );

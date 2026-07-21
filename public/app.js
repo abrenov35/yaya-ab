@@ -3,7 +3,6 @@ let currentProjectId = null;
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
     loadProject();
-    setupDragAndDrop();
 });
 
 // GESTION DES PROJETS
@@ -307,7 +306,7 @@ async function loadDocuments() {
                         <span class="item-badge ${badge}">${doc.file_type}</span>
                         <div class="item-content">
                             <div class="item-name">${doc.original_name}</div>
-                            <div class="item-desc">Ajouté le ${date} • ${size} MB</div>
+                            <div class="item-desc">${date} • ${size} MB</div>
                         </div>
                     </div>
                     <div class="item-actions">
@@ -323,12 +322,25 @@ async function loadDocuments() {
     }
 }
 
-async function handleFileUpload(event) {
+async function handleDocumentUpload(event) {
     const files = Array.from(event.target.files);
+    const chantier = document.getElementById('documentChantier').value;
+    const type = document.getElementById('documentType').value;
+    const fournisseur = document.getElementById('documentFournisseur').value;
+    const montant = document.getElementById('documentMontant').value;
+    
+    if (!chantier || chantier === 'Choisir un chantier') {
+        alert('Veuillez choisir un chantier');
+        return;
+    }
     
     for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('chantier', chantier);
+        formData.append('type', type);
+        formData.append('fournisseur', fournisseur);
+        formData.append('montant', montant);
         
         try {
             const response = await fetch(`/api/projects/${currentProjectId}/documents`, {
@@ -344,8 +356,21 @@ async function handleFileUpload(event) {
         }
     }
     
-    // Réinitialiser l'input
+    // Réinitialiser le formulaire
     event.target.value = '';
+    document.getElementById('documentChantier').value = 'Choisir un chantier';
+    document.getElementById('documentType').value = 'BL';
+    document.getElementById('documentFournisseur').value = '';
+    document.getElementById('documentMontant').value = '';
+}
+
+function saveDocument() {
+    const fileInput = document.getElementById('fileInputDoc');
+    if (fileInput.files.length === 0) {
+        alert('Veuillez sélectionner un document');
+        return;
+    }
+    handleDocumentUpload({ target: fileInput });
 }
 
 function downloadDocument(path) {
@@ -365,32 +390,6 @@ async function deleteDocument(id) {
     } catch (error) {
         console.error('Erreur:', error);
     }
-}
-
-// DRAG AND DROP
-function setupDragAndDrop() {
-    const uploadArea = document.querySelector('.upload-area');
-    
-    if (!uploadArea) return;
-    
-    uploadArea.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadArea.classList.add('active');
-    });
-    
-    uploadArea.addEventListener('dragleave', () => {
-        uploadArea.classList.remove('active');
-    });
-    
-    uploadArea.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadArea.classList.remove('active');
-        
-        const files = Array.from(e.dataTransfer.files);
-        const fileInput = document.getElementById('fileInput');
-        fileInput.files = e.dataTransfer.files;
-        handleFileUpload({ target: fileInput });
-    });
 }
 
 // UTILITAIRES

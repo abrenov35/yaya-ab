@@ -47,7 +47,6 @@
         <div class="menu-tabs">
             <div class="tab active" onclick="switchTab(event, 'marche')">Marché</div>
             <div class="tab" onclick="switchTab(event, 'achats')">Achats</div>
-            <div class="tab" onclick="switchTab(event, 'documents')">Documents</div>
             <div class="tab" onclick="switchTab(event, 'heures')">Heures</div>
         </div>
 
@@ -63,6 +62,52 @@
                 <div class="section-title">Dépenses</div>
                 <div class="items-list" id="expensesList"></div>
                 <button class="add-btn" onclick="openExpenseModal('new')">+ Ajouter une dépense</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Enregistrer un Document</div>
+                
+                <div style="background: var(--bg-accent); border: 1px solid var(--border-accent); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;">
+                    <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 1rem;">
+                        <button class="btn primary" onclick="document.getElementById('fileInputDoc').click()" style="flex-shrink: 0;">
+                            📄 Déposer un document (PDF ou photo)
+                        </button>
+                        <button class="btn" onclick="alert('Capture photo - À implémenter')">📷 Coller une capture</button>
+                        <input type="file" id="fileInputDoc" multiple accept=".pdf,.jpg,.jpeg,.png,.gif" onchange="handleDocumentUpload(event)" style="display:none;">
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end;">
+                        <div>
+                            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">Choisir le chantier</label>
+                            <select id="documentChantier" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
+                                <option>Choisir un chantier</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">Type</label>
+                            <select id="documentType" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
+                                <option value="BL">BL</option>
+                                <option value="FACTURE">Facture</option>
+                                <option value="PHOTO">Photo</option>
+                                <option value="PLAN">Plan</option>
+                                <option value="AUTRE">Autre</option>
+                            </select>
+                        </div>
+                        <div>
+                            <input type="text" id="documentFournisseur" placeholder="Fournisseur" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                        <div>
+                            <input type="date" id="documentDate" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; display: flex; gap: 12px;">
+                        <input type="number" id="documentMontant" placeholder="Montant HT €" style="flex: 1; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
+                        <button class="btn primary" onclick="saveDocument()" style="background: #4CAF50; border-color: #4CAF50;">Enregistrer</button>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top: 1.5rem;">Derniers Enregistrés</div>
+                <div class="items-list" id="documentsList"></div>
             </div>
         </div>
 
