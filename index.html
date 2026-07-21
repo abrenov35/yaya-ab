@@ -82,7 +82,7 @@
   .b-devis{background:rgba(22,45,73,.10);color:var(--navy)}
   .b-avenant{background:rgba(201,162,39,.20);color:#7d630e}
   .b-doc{background:rgba(22,45,73,.05);color:var(--navy-l)}
-  .b-bl{background:rgba(36,67,107,.14);color:var(--navy-l)}.b-avoir{background:#dcfce7;color:#166534;cursor:pointer}
+  .b-bl{background:rgba(36,67,107,.14);color:var(--navy-l)}
   .b-fac{background:rgba(46,125,70,.15);color:var(--green)}
   .b-df{background:rgba(122,74,158,.14);color:#7A4A9E}
   .b-ad{background:rgba(14,124,134,.15);color:#0E7C86}
@@ -290,6 +290,7 @@ async function traiterDocument(file){
 async function saveDocument(){
   const chantierId=document.getElementById('docCh').value;
   const type=document.getElementById('docType').value;
+  if(!type||type==='__'){ toast('Choisis un type de document',true); return; }
   const titre=document.getElementById('docTitre').value.trim();
   const sujet=document.getElementById('docSujet').value.trim();
   const lien=document.getElementById('docLien').value.trim();
@@ -309,7 +310,7 @@ function renderDocuments(){
     +'<input type="hidden" id="docLien">'
     +'<div class="row">'
     +'<select class="inp" id="docCh"><option value="__">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom).localeCompare(String(b.nom),"fr")).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('')+'</select>'
-    +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
+    +'<select class="inp" id="docType">'<option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
     +'<input type="hidden" id="docTitre">'
