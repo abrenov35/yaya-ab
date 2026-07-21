@@ -271,7 +271,7 @@ async function traiterDocument(file){
   const rd=new FileReader();
   rd.onload=async()=>{
     const b64=String(rd.result).split(',')[1];
-    showIA('Analyse du document…');
+    toast('Analyse IA en cours...');
     try{
       const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'extraireDocument',data:{filename:file.name,mimeType:file.type||'application/pdf',base64:b64}})});
@@ -281,8 +281,8 @@ async function traiterDocument(file){
       if(d.titre) document.getElementById('docTitre').value=d.titre;
       if(d.sujet) document.getElementById('docSujet').value=d.sujet;
       if(d.type && TYPES_DOC2.includes(d.type)) document.getElementById('docType').value=d.type;
-      hideIA(); toast('Document analysé ✓ — vérifiez et enregistrez');
-    }catch(e){ hideIA(); toast('Erreur analyse: '+e.message,true); }
+      toast('Document analysé — vérifiez et enregistrez');
+    }catch(e){ toast('Erreur analyse: '+e.message,true); }
   };
   rd.readAsDataURL(file);
 }
@@ -312,7 +312,7 @@ function renderDocuments(){
     +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
-    +'<input class="inp" id="docTitre" placeholder="Titre (auto-rempli par IA)">'
+    +'<input type="hidden" id="docTitre">'
     +'<input class="inp" id="docSujet" placeholder="Sujet / description">'
     +'</div>'
     +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
@@ -331,7 +331,7 @@ function renderDocuments(){
       html+='<div class="achligne ligD" style="padding:10px 0">'
         +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
         +sujetBadge
-        +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
+        +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc((d.titre||'').split(' ').slice(0,3).join(' '))+'…</span>'
         +'<small style="color:#aaa;margin:0 8px;flex:0 0 auto;white-space:nowrap">'+dateDoc+'</small>'
         +'<span style="white-space:nowrap;display:flex;gap:4px;align-items:center">'+voir
         +'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">&#9998;</button>'
@@ -424,7 +424,7 @@ function renderChantiers(){
           f+='<div class="achligne ligD">'
             +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
             +sujetBadge
-            +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
+            +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc((d.titre||'').split(' ').slice(0,3).join(' '))+'…</span>'
             
             +'<span style="white-space:nowrap">'+voir2+'</span>'
             +'</div>';
@@ -1154,6 +1154,47 @@ function convertAvoirBadges(){
     }
   }, {passive:false});
 })();
+
+function editDocument(id){
+  const d=S.documents.find(x=>x.id===id); if(!d) return;
+  const root=document.getElementById("modalRoot");
+  const chOpts=S.chantiers.map(c=>'<option value="'+c.id+'"'+(String(c.id)===String(d.chantierId)?' selected':'')+'>'+esc(c.nom)+'</option>').join('');
+  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'
+    +'<h5>Modifier le document<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
+    +'<div class="mrow"><select class="msel" id="edDocCh">'+chOpts+'</select></div>'
+    +'<div class="mrow"><select class="msel" id="edDocType">'+TYPES_DOC2.map(t=>'<option'+(d.type===t?' selected':'')+'>'+t+'</option>').join('')+'</select></div>'
+    +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+esc(d.titre||'')+'" placeholder="Titre"></div>'
+    +'<div class="mrow"><input class="msel" id="edDocSujet" value="'+esc(d.sujet||'')+'" placeholder="Sujet"></div>'
+    +'<div class="mfoot"><button class="btnp go" onclick="saveDocumentEdit(\''+id+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
+    +'</div></div>';
+}
+async function saveDocumentEdit(id){
+  const d=S.documents.find(x=>x.id===id); if(!d) return;
+  d.chantierId=document.getElementById('edDocCh').value;
+  d.type=document.getElementById('edDocType').value;
+  d.titre=document.getElementById('edDocTitre').value.trim();
+  d.sujet=document.getElementById('edDocSujet').value.trim();
+  closeModal(); render();
+  if(await apiPost('setDocuments',S.documents)) toast('Document modifié ✓');
+}
+async function delDocument(id){
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center">'
+    +'<div style="font-weight:700;margin-bottom:16px">Supprimer ce document ?</div>'
+    +'<button id="del-ok-doc" style="width:100%;padding:10px;border-radius:10px;border:none;background:#e53e3e;color:#fff;font-weight:600;cursor:pointer;margin-bottom:8px">Supprimer</button>'
+    +'<button id="del-ann-doc" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:14px;cursor:pointer">Annuler</button>'
+    +'</div>';
+  document.body.appendChild(overlay);
+  const close=()=>document.body.removeChild(overlay);
+  document.getElementById('del-ann-doc').onclick=close;
+  overlay.onclick=e=>{if(e.target===overlay)close();};
+  document.getElementById('del-ok-doc').onclick=async()=>{
+    close(); S.documents=S.documents.filter(x=>x.id!==id);
+    render(); if(await apiPost('setDocuments',S.documents)) toast('Document supprimé');
+  };
+}
+
 </script>
 
 
