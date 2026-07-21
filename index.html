@@ -307,8 +307,8 @@ function renderDocuments(){
     +'<div class="row" style="margin-bottom:10px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>'
     +'<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">'
     +'<input type="hidden" id="docLien">'
-    +'<div class="row">'+'<select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select>'+'<input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30">'+'<select class="inp" id="docType">'+('<option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join(''))+' </select>'+'<button class="btnp go" onclick="saveDocument()" style="flex:0 0 auto">Enregistrer</button>'+'</div>'
-    +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
+    +'<div class="row">'+'<select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select>'+'<input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30">'+'<select class="inp" id="docType" style="flex:0 0 100px">'+'<option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'+'<button class="btnp go" onclick="saveDocument()" style="flex:0 0 auto">Enregistrer</button>'+'<input type="hidden" id="docTitre">'+'</div>'
+
     +'</div>';
   const last5=S.documents.slice(0,5);
   if(last5.length){
@@ -724,10 +724,9 @@ async function saveAvenant(cid){
   if(await apiPost("setAvenants",S.avenants)) toast("Avenant ajouté ✓ (devis total mis à jour)");
 }
 async function delAvenant(id){
-  confirmSuppr('Supprimer cet avenant ?', async()=>{
-    S.avenants=S.avenants.filter(v=>v.id!==id);
-    render(); if(await apiPost("setAvenants",S.avenants)) toast('Avenant supprimé');
-  });
+  if(!confirm("Supprimer cet avenant ? Le devis total du chantier redescendra d'autant.")) return;
+  S.avenants=S.avenants.filter(v=>v.id!==id);
+  render(); await apiPost("setAvenants",S.avenants);
 }
 
 function demanderMontant(actuel){
@@ -804,14 +803,20 @@ async function saveChantier(id){
 async function delChantier(id){
   const c=chantierById(id); if(!c) return;
   const nb=achatsChantier(id).length;
-  let msg='Supprimer « '+esc(c.nom)+' » ?';
-  if(nb) msg+='<br><small style="color:#e53e3e">• '+nb+' achat(s) seront supprimés</small>';
-  confirmSuppr(msg, async()=>{
-    S.chantiers=S.chantiers.filter(x=>x.id!==id);
-    S.achats=S.achats.filter(a=>a.chantierId!==id);
-    S.avenants=S.avenants.filter(v=>v.chantierId!==id);
-    render(); if(await apiPost("setChantiers",S.chantiers)) toast('Chantier supprimé');
-  });
+  const hh=heuresChantier(id);
+  let msg="Supprimer le chantier « "+c.nom+" » ?";
+  if(nb) msg+="\n• Ses "+nb+" achat(s) seront supprimés aussi.";
+  if(hh) msg+="\n• Ses "+hh+" h saisies resteront dans l'historique des heures.";
+  if(!confirm(msg)) return;
+  S.chantiers=S.chantiers.filter(x=>String(x.id)!==String(id));
+  S.achats=S.achats.filter(a=>String(a.chantierId)!==String(id));
+  const hadAv=S.avenants.some(v=>String(v.chantierId)===String(id));
+  S.avenants=S.avenants.filter(v=>String(v.chantierId)!==String(id));
+  render();
+  const ok1=await apiPost("setChantiers",S.chantiers);
+  const ok2=await apiPost("setAchats",S.achats);
+  if(hadAv) await apiPost("setAvenants",S.avenants);
+  if(ok1&&ok2) toast("Chantier supprimé");
 }
 function editSalarie(id){
   const s=S.salaries.find(x=>String(x.id)===String(id)); if(!s) return;
@@ -1022,10 +1027,9 @@ async function saveAchat(id){
   if(await apiPost("setAchats",S.achats)) toast("Achat modifié ✓");
 }
 async function delAchat(id){
-  confirmSuppr('Supprimer cet achat ?', async()=>{
-    S.achats=S.achats.filter(a=>a.id!==id);
-    render(); if(await apiPost("setAchats",S.achats)) toast('Achat supprimé');
-  });
+  if(!confirm("Supprimer cet achat ?")) return;
+  S.achats=S.achats.filter(a=>a.id!==id);
+  render(); await apiPost("setAchats",S.achats);
 }
 
 async function addSalarie(){
@@ -1167,10 +1171,21 @@ async function saveDocumentEdit(id){
   if(await apiPost('setDocuments',S.documents)) toast('Document modifié ✓');
 }
 async function delDocument(id){
-  confirmSuppr('Supprimer ce document ?', async()=>{
-    S.documents=S.documents.filter(x=>x.id!==id);
+  const overlay=document.createElement('div');
+  overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center">'
+    +'<div style="font-weight:700;margin-bottom:16px">Supprimer ce document ?</div>'
+    +'<button id="del-ok-doc" style="width:100%;padding:10px;border-radius:10px;border:none;background:#e53e3e;color:#fff;font-weight:600;cursor:pointer;margin-bottom:8px">Supprimer</button>'
+    +'<button id="del-ann-doc" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:14px;cursor:pointer">Annuler</button>'
+    +'</div>';
+  document.body.appendChild(overlay);
+  const close=()=>document.body.removeChild(overlay);
+  document.getElementById('del-ann-doc').onclick=close;
+  overlay.onclick=e=>{if(e.target===overlay)close();};
+  document.getElementById('del-ok-doc').onclick=async()=>{
+    close(); S.documents=S.documents.filter(x=>x.id!==id);
     render(); if(await apiPost('setDocuments',S.documents)) toast('Document supprimé');
-  });
+  };
 }
 
 </script>
