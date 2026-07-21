@@ -1,0 +1,16 @@
+node_modules/
+npm-debug.log
+yarn-error.log
+.DS_Store
+.env
+.env.local
+uploads/
+database.db
+dist/
+build/
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.env.*.local
