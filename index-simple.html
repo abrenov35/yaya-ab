@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YAYA - Gestionnaire de Projets</title>
+    <link rel="stylesheet" href="public/styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div>
+                <span class="title">YAYA</span>
+                <span class="title-code" id="projectCode">2026-250</span>
+            </div>
+            <div class="actions">
+                <select class="btn" id="statusSelect" style="padding: 6px 12px;">
+                    <option>En cours</option>
+                    <option>Terminé</option>
+                    <option>En attente</option>
+                </select>
+                <button class="btn danger" onclick="deleteProject()">Supprimer</button>
+                <button class="btn" onclick="closeProject()">Fermer</button>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-label">Marché HT</div>
+                <div class="stat-value" id="marketValue">21 048 €</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Achats</div>
+                <div class="stat-value" id="purchasesValue">1 104 €</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Main-d'oeuvre</div>
+                <div class="stat-value" id="laborValue">630 €</div>
+            </div>
+            <div class="stat-card margin">
+                <div class="stat-label">Marge</div>
+                <div class="stat-value" style="color: #3B6D11;" id="marginValue">19 314 €</div>
+                <div class="stat-percent" id="marginPercent">92%</div>
+            </div>
+        </div>
+
+        <div class="menu-tabs">
+            <div class="tab active" onclick="switchTab(event, 'marche')">Marché</div>
+            <div class="tab" onclick="switchTab(event, 'achats')">Achats</div>
+            <div class="tab" onclick="switchTab(event, 'heures')">Heures</div>
+        </div>
+
+        <!-- TAB MARCHÉ -->
+        <div id="marche-tab" class="tab-content">
+            <div class="section">
+                <div class="section-title">Marché</div>
+                <div class="items-list" id="marketList"></div>
+                <button class="add-btn" onclick="openMarketModal('new')">+ Ajouter un élément</button>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Dépenses</div>
+                <div class="items-list" id="expensesList"></div>
+                <button class="add-btn" onclick="openExpenseModal('new')">+ Ajouter une dépense</button>
+            </div>
+        </div>
+
+        <!-- TAB ACHATS -->
+        <div id="achats-tab" class="tab-content" style="display:none;">
+            <div class="section">
+                <div class="section-title">Achats</div>
+                <div class="stat-card" style="margin-bottom: 1rem;">
+                    <div class="stat-label">Total des achats</div>
+                    <div class="stat-value" id="totalPurchases">1 104 €</div>
+                </div>
+                <div class="items-list" id="achatsList"></div>
+            </div>
+        </div>
+
+        <!-- TAB HEURES -->
+        <div id="heures-tab" class="tab-content" style="display:none;">
+            <div class="section">
+                <div class="stat-card" style="margin-bottom: 1rem;">
+                    <div class="stat-label">Total heures</div>
+                    <div class="stat-value" id="totalHours">0 h</div>
+                </div>
+                <p style="color: var(--text-secondary); font-size: 14px;">Gestion des heures à venir.</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 2rem;">
+            <button class="archive-btn" onclick="archiveProject()">Archiver</button>
+        </div>
+    </div>
+
+    <!-- MODAL MARCHÉ -->
+    <div id="marketModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ajouter un élément de marché</h2>
+                <button class="close-btn" onclick="closeModal('marketModal')">&times;</button>
+            </div>
+            <form onsubmit="saveMarketItem(event)">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="marketType" required>
+                        <option value="DEVIS">Devis</option>
+                        <option value="AVENANT">Avenant</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="marketName" required placeholder="Nom de l'élément">
+                </div>
+                <div class="form-group">
+                    <label>Montant (€)</label>
+                    <input type="number" id="marketValue" required step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal('marketModal')">Annuler</button>
+                    <button type="submit" class="btn primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DÉPENSES -->
+    <div id="expenseModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ajouter une dépense</h2>
+                <button class="close-btn" onclick="closeModal('expenseModal')">&times;</button>
+            </div>
+            <form onsubmit="saveExpense(event)">
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="expenseType" required>
+                        <option value="BL">Bon de Livraison</option>
+                        <option value="AVOIR">Avoir</option>
+                        <option value="FACTURE">Facture</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input type="text" id="expenseName" required placeholder="Nom de la dépense">
+                </div>
+                <div class="form-group">
+                    <label>Montant (€)</label>
+                    <input type="number" id="expenseValue" required step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group">
+                    <label>Description (optionnel)</label>
+                    <textarea id="expenseDesc" placeholder="Description..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeModal('expenseModal')">Annuler</button>
+                    <button type="submit" class="btn primary">Ajouter</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="public/app.js"></script>
+</body>
+</html>
