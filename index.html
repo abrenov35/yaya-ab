@@ -312,7 +312,7 @@ function renderDocuments(){
     +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
-    +'<input type="hidden" id="docTitre">'
+    +'<input class="inp" id="docTitre" placeholder="Titre (auto-rempli par IA)">'
     +'<input class="inp" id="docSujet" placeholder="Sujet / description">'
     +'</div>'
     +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
@@ -327,12 +327,11 @@ function renderDocuments(){
       const voir=d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'';
       const sujetCourt=(d.sujet||'').split(' ').slice(0,2).join(' ');
       const sujetBadge=sujetCourt?'<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(sujetCourt)+'</span>':'<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+nomC+'</span>';
-      const dateDoc=esc(d.date||'').slice(0,10).split('-').reverse().join('/');
       html+='<div class="achligne ligD" style="padding:10px 0">'
         +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
         +sujetBadge
         +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
-        +'<small style="color:#aaa;margin:0 8px;flex:0 0 auto;white-space:nowrap">'+dateDoc+'</small>'
+  
         +'<span style="white-space:nowrap;display:flex;gap:4px;align-items:center">'+voir
         +'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">&#9998;</button>'
         +'<button class="x" onclick="delDocument(\''+d.id+'\')">&#10005;</button>'
