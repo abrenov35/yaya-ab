@@ -312,7 +312,7 @@ function renderDocuments(){
     +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
-    +'<input class="inp" id="docTitre" placeholder="Titre (auto-rempli par IA)">'
+    +'<input type="hidden" id="docTitre">'
     +'<input class="inp" id="docSujet" placeholder="Sujet / description">'
     +'</div>'
     +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
