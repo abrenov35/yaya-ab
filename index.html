@@ -271,7 +271,7 @@ async function traiterDocument(file){
   const rd=new FileReader();
   rd.onload=async()=>{
     const b64=String(rd.result).split(',')[1];
-    toast('Analyse IA en cours...');
+    const etat=document.getElementById('docEtat'); if(etat){etat.textContent='⏳ Lecture du document en cours…';etat.style.cssText='color:#1c2b48;font-weight:600;font-size:13px;padding:6px 12px;background:rgba(201,162,39,.12);border:1px solid rgba(201,162,39,.4);border-radius:8px;display:inline-block';}
     try{
       const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'extraireDocument',data:{filename:file.name,mimeType:file.type||'application/pdf',base64:b64}})});
@@ -281,8 +281,8 @@ async function traiterDocument(file){
       if(d.titre) document.getElementById('docTitre').value=d.titre;
       if(d.sujet) document.getElementById('docSujet').value=d.sujet;
       if(d.type && TYPES_DOC2.includes(d.type)) document.getElementById('docType').value=d.type;
-      toast('Document analysé — vérifiez et enregistrez');
-    }catch(e){ toast('Erreur analyse: '+e.message,true); }
+      const etat2=document.getElementById('docEtat'); if(etat2){etat2.textContent='✓ Document analysé — vérifiez et enregistrez';etat2.style.cssText='color:#166534;font-weight:600;font-size:13px;padding:6px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:8px;display:inline-block';}
+    }catch(e){ const etat3=document.getElementById('docEtat'); if(etat3){etat3.textContent='⚠️ Erreur : '+e.message;etat3.style.cssText='color:#c53030;font-weight:600;font-size:13px;padding:6px 12px;background:#fff5f5;border:1px solid #fed7d7;border-radius:8px;display:inline-block';} }
   };
   rd.readAsDataURL(file);
 }
