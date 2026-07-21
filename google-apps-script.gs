@@ -4,8 +4,8 @@
 // ============================================
 
 // CONFIGURATION - À MODIFIER
-const API_URL = "https://votre-app.up.railway.app"; // URL de votre app déployée
-const PROJECT_ID = "votre-project-id"; // ID du projet YAYA
+const API_URL = "https://abrenov35.github.io/yaya-ab"; // URL de GitHub Pages
+const PROJECT_ID = "votre-project-id"; // À remplacer par votre ID projet
 
 // ============================================
 // MENU PERSONNALISÉ
