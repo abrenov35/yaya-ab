@@ -313,7 +313,7 @@ function renderDocuments(){
     +'</div>'
     +'<div class="row">'
     +'<input class="inp" id="docTitre" placeholder="Titre (auto-rempli par IA)">'
-    +'<input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3">'
+    +'<input class="inp" id="docSujet" placeholder="Sujet / description">'
     +'</div>'
     +'<div class="row"><button class="btnp go" onclick="saveDocument()">Enregistrer</button></div>'
     +'</div>';
@@ -328,7 +328,7 @@ function renderDocuments(){
       const sujetCourt=(d.sujet||'').split(' ').slice(0,2).join(' ');
       const sujetBadge=sujetCourt?'<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(sujetCourt)+'</span>':'<span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+nomC+'</span>';
       const dateDoc=esc(d.date||'').slice(0,10).split('-').reverse().join('/');
-      html+='<div class="achligne ligD" style="padding:10px 14px">'
+      html+='<div class="achligne ligD" style="padding:10px 0">'
         +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
         +sujetBadge
         +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
@@ -425,7 +425,7 @@ function renderChantiers(){
             +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
             +sujetBadge
             +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc(d.titre)+'</span>'
-            +'<small style="color:#aaa;margin:0 8px;flex:0 0 auto;white-space:nowrap">'+esc(d.date)+'</small>'
+            
             +'<span style="white-space:nowrap">'+voir2+'</span>'
             +'</div>';
         }
