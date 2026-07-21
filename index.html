@@ -52,9 +52,9 @@
   .hint{font-size:12.5px;color:var(--amber)}
   .okmsg{font-size:13px;color:var(--green);font-weight:600}
 
-  .gpanel{background:rgba(201,162,39,.10);border:1px solid rgba(201,162,39,.4);border-radius:10px;padding:14px 15px;margin-bottom:16px}
+  .gpanel{row-gap:14px;background:rgba(201,162,39,.10);border:1px solid rgba(201,162,39,.4);border-radius:10px;gap:14px;padding:14px 15px;margin-bottom:16px}
   .gpanel h4{margin:0 0 11px;font-size:12px;text-transform:uppercase;letter-spacing:.1em}
-  .row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
   .inp{background:#fff;border:1px solid rgba(22,45,73,.25);border-radius:7px;padding:9px 11px;font-size:13.5px;color:var(--navy)}
   .btnp{background:var(--navy);color:#fff;border:none;border-radius:7px;padding:10px 16px;font-size:13.5px;font-weight:600}
   .btnp.go{background:var(--green)}
@@ -119,19 +119,12 @@
 .tooltip-avoir{position:fixed;background:#1c2b48;color:#fff;font-size:13px;padding:9px 14px;border-radius:10px;max-width:220px;text-align:center;z-index:9999;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.22);line-height:1.4}
 .scan-zone{background:#f8faff;border:1.5px dashed #c9a24b;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13px}.scan-zone b{color:#1c2b48}.scan-zone.loading{opacity:.7;pointer-events:none}.scan-ok{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#166534;font-weight:600}
 .b-photo{background:#e0f2fe;color:#0369a1}.b-mail{background:#fef3c7;color:#92400e}.b-plan{background:#ede9fe;color:#5b21b6}.b-document{background:#f0fdf4;color:#166534}.b-divers{background:#f1f5f9;color:#475569}
-
-#ia-loader{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;display:none;align-items:center;justify-content:center;flex-direction:column;gap:14px}
-#ia-loader.actif{display:flex}
-.ia-sablier{font-size:52px;animation:sablier 1.2s ease-in-out infinite}
-@keyframes sablier{0%,100%{transform:rotate(0deg)}50%{transform:rotate(180deg)}}
-.ia-msg{color:#fff;font-size:15px;font-weight:600;letter-spacing:.5px;background:rgba(28,43,72,.8);padding:10px 20px;border-radius:12px}
 </style>
 </head>
 <body>
 
 <div id="loader" style="display: none;"><div class="spin"></div><div>Connexion à la base Yaya…</div></div>
 
-<div id="ia-loader"><div class="ia-sablier">⏳</div><div class="ia-msg" id="ia-msg">IA en cours…</div></div>
 <div class="hdr">
   <div class="brand"><b>Yaya</b><span>AB RENOV 35 — Pilotage</span><span class="sync" id="syncState">✓ connecté</span></div>
   <div class="tabs">
@@ -185,15 +178,6 @@ const badgeDoc=t=>BADGE_DOC[t]||"b-doc";
 const badgeAchatHtml=a=>a.typeDoc==="Avoir"
   ?'<button class="badge b-avoir" ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer;border:none;font-family:inherit;font-size:inherit;font-weight:inherit;letter-spacing:inherit">AVOIR</button>'
   :'<span class="badge '+badgeDoc(a.typeDoc)+'">'+(a.typeDoc.toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span>';
-
-function showIA(msg){
-  const l=document.getElementById('ia-loader');
-  document.getElementById('ia-msg').textContent=msg||'IA en cours…';
-  l.className='actif';
-}
-function hideIA(){
-  document.getElementById('ia-loader').className='';
-}
 function toast(msg, err){ const t=document.getElementById("toast"); t.textContent=msg; t.className=err?"err":""; t.style.display="block"; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none", 3500); }
 function syncMsg(m){ document.getElementById("syncState").textContent = m; }
 
@@ -287,7 +271,7 @@ async function traiterDocument(file){
   const rd=new FileReader();
   rd.onload=async()=>{
     const b64=String(rd.result).split(',')[1];
-    showIA('Analyse du document…');
+    toast('Analyse IA en cours...');
     try{
       const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'extraireDocument',data:{filename:file.name,mimeType:file.type||'application/pdf',base64:b64}})});
@@ -297,7 +281,7 @@ async function traiterDocument(file){
       if(d.titre) document.getElementById('docTitre').value=d.titre;
       if(d.sujet) document.getElementById('docSujet').value=d.sujet;
       if(d.type && TYPES_DOC2.includes(d.type)) document.getElementById('docType').value=d.type;
-      hideIA(); toast('Document analysé — vérifiez et enregistrez');
+      toast('Document analysé — vérifiez et enregistrez');
     }catch(e){ toast('Erreur analyse: '+e.message,true); }
   };
   rd.readAsDataURL(file);
@@ -960,12 +944,12 @@ function remplacerPJ(type, id){
     if(!inp.files[0]){ zone.className='scan-zone'; zone.innerHTML=pjZoneHtml(type,id); return; }
     const f=inp.files[0];
     zone.className='scan-zone loading';
-    showIA('Lecture du document…');
+    zone.innerHTML='<b>Scan IA en cours...</b> Lecture de '+f.name+'...';
     const rd=new FileReader();
     rd.onload=async()=>{
       const b64=String(rd.result).split(',')[1];
       try{
-        showIA('Analyse par IA…');
+        zone.innerHTML='<b>Scan IA en cours...</b> Analyse par IA...';
         const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
           body:JSON.stringify({action:'extraireAchat',data:{filename:f.name,mimeType:f.type||'application/pdf',base64:b64}})});
         const j=await resp.json();
