@@ -1,6 +1,6 @@
 # 📱 Déployer avec GitHub Pages
 
-Utilisez directement GitHub pour servir votre index en ligne! C'est **gratuit** et **automatique**.
+Utilisez directement GitHub pour servir votre index en ligne! C'est **gratuit** et **super simple**.
 
 ---
 
@@ -9,30 +9,21 @@ Utilisez directement GitHub pour servir votre index en ligne! C'est **gratuit** 
 1. Allez sur: **https://github.com/abrenov35/yaya-ab/settings**
 2. Menu gauche → **"Pages"**
 3. **Source**: Sélectionnez **"Deploy from a branch"**
-4. **Branch**: Sélectionnez **"gh-pages"**
-5. Cliquez **"Save"**
+4. **Branch**: Sélectionnez **"main"**
+5. **Folder**: Sélectionnez **"/public"**
+6. Cliquez **"Save"**
 
 ---
 
-## ✅ ÉTAPE 2: Pousser les Modifications
+## ⏳ ÉTAPE 2: Attendre le Déploiement
 
-J'ai ajouté un workflow GitHub Actions qui déploie automatiquement!
-
-```bash
-git add .
-git commit -m "Add GitHub Pages deployment"
-git push origin main
-```
-
----
-
-## ⏳ ÉTAPE 3: Attendre le Déploiement
-
-1. Allez sur votre repo
-2. Cliquez **"Actions"** en haut
-3. Vous verrez un job "Deploy to GitHub Pages"
-4. ⏳ Attendre ~2 minutes
-5. ✅ Status: **"✓ passed"**
+1. Allez sur votre repo: https://github.com/abrenov35/yaya-ab
+2. Cliquez **"Settings"** → **"Pages"**
+3. Attendez quelques secondes/minutes
+4. Vous verrez un message vert:
+   ```
+   ✓ Your site is live at https://abrenov35.github.io/yaya-ab
+   ```
 
 ---
 
@@ -48,15 +39,17 @@ https://abrenov35.github.io/yaya-ab
 
 ---
 
-## 🔄 Auto-Déploiement
+## 🔄 Mettre à Jour le Code
 
-Chaque fois que vous modifiez le code:
+Chaque fois que vous modifiez et poussez:
 
 ```bash
+git add .
+git commit -m "Mes modifications"
 git push origin main
 ```
 
-GitHub Pages redéploie **automatiquement** en 2-3 minutes! ✨
+GitHub Pages redéploie **automatiquement** en quelques secondes! ✨
 
 ---
 
@@ -64,39 +57,57 @@ GitHub Pages redéploie **automatiquement** en 2-3 minutes! ✨
 
 Le code Google Apps Script fonctionne pareil:
 
-1. Créez une Google Sheet
-2. Outils → Éditeur de script
-3. Collez le code `google-apps-script.gs`
-4. **Changez l'URL** (ligne 5-6):
+1. Créez une Google Sheet: https://sheets.google.com
+2. Menu: **Outils** → **Éditeur de script**
+3. Collez **tout** le code de `google-apps-script.gs`
+4. **Changez l'URL** (ligne 5):
 
 ```javascript
 const API_URL = "https://abrenov35.github.io/yaya-ab";
-const PROJECT_ID = "votre-project-id";
+const PROJECT_ID = "votre-project-id"; // À remplacer
 ```
 
-5. Enregistrez et testez le menu "📊 YAYA"
+5. Cliquez **"Enregistrer"** ☁️
+6. Revenez à la Sheet
+7. Cherchez le menu **"📊 YAYA"** en haut ✅
 
 ---
 
-## 🔗 Accès
+## 📞 Menu Google Sheets
+
+Une fois configuré:
+
+```
+📊 YAYA
+├─ 📈 Charger les projets
+├─ 💰 Charger les marchés
+├─ 💸 Charger les dépenses
+├─ 📄 Charger les documents
+├─ ➕ Ajouter un marché
+├─ ➕ Ajouter une dépense
+└─ 🔄 Synchroniser tout
+```
+
+---
+
+## 🔗 Vos URLs
 
 | Service | URL |
 |---------|-----|
 | **Index** | `https://abrenov35.github.io/yaya-ab` |
-| **Google Sheet** | Votre sheet personnelle |
-| **API** | Votre serveur (Railway, etc) |
-| **GitHub Repo** | `https://github.com/abrenov35/yaya-ab` |
+| **GitHub** | `https://github.com/abrenov35/yaya-ab` |
+| **Google Sheet** | Votre propre sheet |
 
 ---
 
 ## ✅ Checklist
 
 - [ ] Aller dans Settings → Pages
-- [ ] Activer GitHub Pages (branche gh-pages)
-- [ ] Pousser le code: `git push origin main`
-- [ ] Attendre le déploiement (onglet Actions)
+- [ ] Activer GitHub Pages (branche: main, folder: /public)
+- [ ] Voir le message vert "Your site is live at"
 - [ ] Accéder à: `https://abrenov35.github.io/yaya-ab`
-- [ ] Créer Google Sheet + ajouter Apps Script
+- [ ] Créer Google Sheet
+- [ ] Ajouter Apps Script avec le code
 - [ ] Tester le menu "📊 YAYA"
 
 ---
