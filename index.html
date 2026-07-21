@@ -303,6 +303,7 @@ async function saveDocument(){
 
 function renderDocuments(){
   const el=document.getElementById('pane-documents');
+  const chOpts=S.chantiers.map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('');
   let html='<div class="gpanel"><h4>Enregistrer un document</h4>'
     +'<div class="row" style="margin-bottom:10px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>'
     +'<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">'
