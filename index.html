@@ -304,8 +304,7 @@ async function saveDocument(){
 function renderDocuments(){
   const el=document.getElementById('pane-documents');
   let html='<div class="gpanel"><h4>Enregistrer un document</h4>'
-    +'<div class="row" style="margin-bottom:10px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>'
-    +'<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">'
+    +'<div class="row" style="margin-bottom:10px"><label class="btnp" style="cursor:pointer;display:inline-flex;align-items:center;gap:8px">📎 Déposer un document (PDF ou photo)<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])"></label></div>\'
     +'<input type="hidden" id="docLien">'
     +'<div class="row">'
     +'<select class="inp" id="docCh"><option value="__">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom).localeCompare(String(b.nom),"fr")).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('')+'</select>'
