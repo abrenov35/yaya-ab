@@ -310,7 +310,7 @@ function renderDocuments(){
     +'<input type="hidden" id="docLien">'
     +'<div class="row">'
     +'<select class="inp" id="docCh"><option value="__">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom).localeCompare(String(b.nom),"fr")).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('')+'</select>'
-    +'<select class="inp" id="docType">'<option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
+    +'<select class="inp" id="docType">'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select>'
     +'</div>'
     +'<div class="row">'
     +'<input type="hidden" id="docTitre">'
