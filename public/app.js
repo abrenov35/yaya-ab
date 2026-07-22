@@ -1,4 +1,6 @@
 let currentProjectId = null;
+let editingItemId = null;
+let editingItemType = null;
 
 // Initialisation
 document.addEventListener('DOMContentLoaded', () => {
@@ -97,7 +99,7 @@ async function loadMarketItems() {
         items.forEach(item => {
             const badge = item.type === 'DEVIS' ? 'devis' : 'avenant';
             list.innerHTML += `
-                <div class="item">
+                <div class="item" data-market-id="${item.id}">
                     <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
                         <span class="item-badge ${badge}">${item.type}</span>
                         <div class="item-content">
@@ -157,7 +159,16 @@ function viewMarketItem(id) {
 }
 
 function editMarketItem(id) {
-    alert('Édition de l\'élément ' + id);
+    // Récupérer l'élément actuel pour afficher son nom
+    const item = document.querySelector(`[data-market-id="${id}"]`);
+    if (!item) return;
+    
+    const currentName = item.querySelector('.item-name').textContent;
+    document.getElementById('editedName').value = currentName;
+    
+    editingItemId = id;
+    editingItemType = 'market';
+    document.getElementById('editNameModal').style.display = 'flex';
 }
 
 async function deleteMarketItem(id) {
@@ -182,7 +193,7 @@ async function loadAchats() {
         items.forEach(item => {
             const badge = item.type.toLowerCase();
             list.innerHTML += `
-                <div class="item">
+                <div class="item" data-expense-id="${item.id}">
                     <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
                         <span class="item-badge ${badge}">${item.type}</span>
                         <div class="item-content">
@@ -205,6 +216,8 @@ async function loadAchats() {
         console.error('Erreur:', error);
     }
 }
+
+async function loadExpenses() {
     try {
         const response = await fetch(`/api/projects/${currentProjectId}/expenses`);
         const items = await response.json();
@@ -214,7 +227,7 @@ async function loadAchats() {
         items.forEach(item => {
             const badge = item.type.toLowerCase();
             list.innerHTML += `
-                <div class="item">
+                <div class="item" data-expense-id="${item.id}">
                     <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
                         <span class="item-badge ${badge}">${item.type}</span>
                         <div class="item-content">
@@ -273,7 +286,16 @@ function viewExpense(id) {
 }
 
 function editExpense(id) {
-    alert('Édition de la dépense ' + id);
+    // Récupérer l'élément actuel pour afficher son nom
+    const item = document.querySelector(`[data-expense-id="${id}"]`);
+    if (!item) return;
+    
+    const currentName = item.querySelector('.item-name').textContent;
+    document.getElementById('editedName').value = currentName;
+    
+    editingItemId = id;
+    editingItemType = 'expense';
+    document.getElementById('editNameModal').style.display = 'flex';
 }
 
 async function deleteExpense(id) {
@@ -284,6 +306,56 @@ async function deleteExpense(id) {
         loadExpenses();
     } catch (error) {
         console.error('Erreur:', error);
+    }
+}
+
+// ÉDITION DE NOM
+async function saveEditedName(event) {
+    event.preventDefault();
+    
+    if (!editingItemId || !editingItemType) return;
+    
+    const newName = document.getElementById('editedName').value.trim();
+    if (!newName) {
+        alert('Le nom ne peut pas être vide');
+        return;
+    }
+    
+    const itemType = editingItemType; // Garder le type avant de le réinitialiser
+    
+    try {
+        let endpoint = '';
+        if (itemType === 'market') {
+            endpoint = `/api/market/${editingItemId}`;
+        } else if (itemType === 'expense') {
+            endpoint = `/api/expenses/${editingItemId}`;
+        } else if (itemType === 'document') {
+            endpoint = `/api/documents/${editingItemId}`;
+        }
+        
+        await fetch(endpoint, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName })
+        });
+        
+        closeModal('editNameModal');
+        
+        // Recharger la liste appropriée
+        if (itemType === 'market') {
+            loadMarketItems();
+        } else if (itemType === 'expense') {
+            loadExpenses();
+            loadAchats();
+        } else if (itemType === 'document') {
+            loadDocuments();
+        }
+        
+        editingItemId = null;
+        editingItemType = null;
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la modification');
     }
 }
 
@@ -301,7 +373,7 @@ async function loadDocuments() {
             const size = (doc.file_size / (1024 * 1024)).toFixed(1);
             
             list.innerHTML += `
-                <div class="item">
+                <div class="item" data-document-id="${doc.id}">
                     <div style="display: flex; gap: 12px; align-items: center; flex: 1;">
                         <span class="item-badge ${badge}">${doc.file_type}</span>
                         <div class="item-content">
@@ -378,7 +450,16 @@ function downloadDocument(path) {
 }
 
 function editDocument(id) {
-    alert('Édition du document ' + id);
+    // Récupérer l'élément actuel pour afficher son nom
+    const item = document.querySelector(`[data-document-id="${id}"]`);
+    if (!item) return;
+    
+    const currentName = item.querySelector('.item-name').textContent;
+    document.getElementById('editedName').value = currentName;
+    
+    editingItemId = id;
+    editingItemType = 'document';
+    document.getElementById('editNameModal').style.display = 'flex';
 }
 
 async function deleteDocument(id) {
