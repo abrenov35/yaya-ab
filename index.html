@@ -530,13 +530,7 @@ function renderAchats(){
 
 function renderEquipe(){
   const el=document.getElementById("pane-equipe");
-  let html='<div class="gpanel"><h4>Ajouter un salarié</h4><div class="row">'
-    +'<input class="inp" id="eqNom" placeholder="Prénom / nom" style="flex:1;min-width:140px">'
-    +'<select class="inp" id="eqType"><option>Salarié</option><option>Sous-traitant</option></select>'
-    +'<input class="inp" id="eqH" type="number" placeholder="Heures contrat / sem" style="width:160px">'
-    +'<input class="inp" id="eqT" type="number" placeholder="Coût horaire € (chargé)" style="width:170px">'
-    +'<button class="btnp go" onclick="addSalarie()">Ajouter</button></div>'
-    +'<div class="note" style="margin-top:8px">Le coût horaire chargé sert à valoriser les heures dans la marge des chantiers.</div></div>';
+  let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openSalarieModal()">➕ Ajouter un salarié</button></div>';
   const byNomE=(a,b)=>String(a.nom).localeCompare(String(b.nom),'fr');
   const sal=S.salaries.filter(s=>s.type!=="Sous-traitant").sort(byNomE);
   const sts=S.salaries.filter(s=>s.type==="Sous-traitant").sort(byNomE);
@@ -1014,10 +1008,18 @@ async function addSalarie(){
   const nom=document.getElementById("eqNom").value.trim();
   const h=Number(document.getElementById("eqH").value)||0;
   const t=Number(document.getElementById("eqT").value)||0;
+  const type=document.getElementById("eqType").value;
   if(!nom){ toast("Indique le nom",true); return; }
-  S.salaries.push({id:uid(),nom,heuresContrat:h,tauxHoraire:t,type:document.getElementById("eqType").value});
-  render();
-  if(await apiPost("setSalaries",S.salaries)) toast("Salarié ajouté ✓");
+  S.salaries.push({id:uid(),nom,heuresContrat:h,tauxHoraire:t,type});
+  const ok=await apiPost("setSalaries",S.salaries);
+  if(ok){ 
+    tab='equipe';
+    render();
+    toast("Salarié ajouté ✓");
+  } else {
+    toast("Erreur lors de la sauvegarde",true);
+    S.salaries.pop();
+  }
 }
 async function delSalarie(id){
   if(!confirm("Retirer ce salarié de l'équipe ? (ses heures passées restent dans le Sheet)")) return;
@@ -1204,6 +1206,19 @@ function openDocumentModal(){
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Sujet / Description</label><input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30"></div>';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Type de document</label><select class="inp" id="docType" style="flex:0 0 100px"><option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select></div>';
   html+='<div class="row"><button class="btnp go" onclick="saveDocument().then(()=>closeModal())" style="flex:0 0 auto">Enregistrer</button></div><input type="hidden" id="docLien"><input type="hidden" id="docTitre"></div></div>';
+  root.innerHTML=html;
+}
+
+
+function openSalarieModal(){
+  const root=document.getElementById("modalRoot");
+  let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:600px"><h5>Ajouter un salarié<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
+  html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Prénom / Nom</label><input class="inp" id="eqNom" placeholder="Prénom / nom" style="flex:1;min-width:140px"></div>';
+  html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Type</label><select class="inp" id="eqType"><option>Salarié</option><option>Sous-traitant</option></select></div>';
+  html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Heures contrat / semaine</label><input class="inp" id="eqH" type="number" placeholder="Heures contrat / sem" style="width:100%"></div>';
+  html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Coût horaire € (chargé)</label><input class="inp" id="eqT" type="number" placeholder="Coût horaire € (chargé)" style="width:100%"></div>';
+  html+='<div class="note" style="margin-bottom:14px;font-size:12px">Le coût horaire chargé sert à valoriser les heures dans la marge des chantiers.</div>';
+  html+='<div class="row"><button class="btnp go" onclick="addSalarie();closeModal()" style="flex:0 0 auto">Ajouter</button></div></div></div>';
   root.innerHTML=html;
 }
 
