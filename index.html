@@ -519,21 +519,7 @@ function renderChantiers(){
 function renderAchats(){
   const el=document.getElementById("pane-achats");
   const today=isoDate(new Date());
-  let html='<div class="gpanel"><h4>Enregistrer un achat / une facture</h4>'
-    +'<div class="row" style="margin-bottom:10px"><button class="btnp" onclick="document.getElementById(\'achatFile\').click()">📎 Déposer un BL / une facture (PDF ou photo)</button>'
-    +'<button class="btn2" onclick="collerCapture(\'achat\')">📋 Coller une capture</button>'
-    +'<input type="file" id="achatFile" accept="application/pdf,image/*" style="display:none" onchange="lireAchat(this)">'
-    +'<span class="note" id="achatEtat"></span></div>'
-    +'<div class="row">'
-    +'<select class="inp" id="acCh" style="min-width:160px"><option value="">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('')+'</select>'
-    +'<select class="inp" id="acType">'+TYPES_DOC.map(t=>'<option>'+t+'</option>').join('')+'</select>'
-    +'<input class="inp" id="acFour" placeholder="Fournisseur" style="width:130px">'
-    +'<input class="inp" id="acDes" placeholder="Désignation" style="flex:1;min-width:140px">'
-    +'<input class="inp" id="acDate" type="date" value="'+today+'">'
-    +'<input class="inp" id="acMt" type="number" placeholder="Montant HT €" style="width:120px">'
-    +'<input class="inp" id="acST" placeholder="Sous-traitant (si concerné)" style="width:180px;display:none">'
-    +'<button class="btnp go" onclick="addAchat()">Enregistrer</button></div>'
-    +'</div>';
+  let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openAchatModal()">➕ Ajouter un achat / une facture</button></div>';
   if(S.achats.length){
     html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Derniers enregistrés</div>';
     const sorted=[...S.achats].reverse().slice(0,5);
@@ -1189,6 +1175,16 @@ async function delDocument(id){
   };
 }
 
+function openAchatModal(){
+  const today=isoDate(new Date());
+  const root=document.getElementById("modalRoot");
+  let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal"><h5>Enregistrer un achat / une facture<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
+  html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById('"'"'"'achatFile'"'"'"').click()">📎 Déposer un BL / une facture (PDF ou photo)</button>';
+  html+='<button class="btn2" onclick="collerCapture('"'"'"'achat'"'"'"')">📋 Coller une capture</button>';
+  html+='<input type="file" id="achatFile" accept="application/pdf,image/*" style="display:none" onchange="lireAchat(this)"><span class="note" id="achatEtat"></span></div>';
+  html+='<div class="row"><select class="inp" id="acCh" style="min-width:160px"><option value="">— Choisir le chantier —</option>'+S.chantiers.filter(c=>c.statut!==="Terminé"</script></script>c.statut!==="Archivé").map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('')+'</select><select class="inp" id="acType">'+TYPES_DOC.map(t=>'<option>'+t+'</option>').join('')+'</select><input class="inp" id="acFour" placeholder="Fournisseur" style="width:130px"><input class="inp" id="acDes" placeholder="Désignation" style="flex:1;min-width:140px"><input class="inp" id="acDate" type="date" value="'+today+'"><input class="inp" id="acMt" type="number" placeholder="Montant HT €" style="width:120px"><input class="inp" id="acST" placeholder="Sous-traitant (si concerné)" style="width:180px;display:none"><button class="btnp go" onclick="addAchat();closeModal()">Enregistrer</button></div></div></div>';
+  root.innerHTML=html;
+}
 </script>
 
 
