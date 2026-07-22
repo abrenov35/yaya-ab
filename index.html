@@ -720,6 +720,7 @@ function editMontantDevis(cid){
     :'<span style="font-size:12px;color:#999">Aucune PJ — </span><button class="btn2" style="font-size:12px;padding:4px 10px" onclick="remplacerPJ(\'devis\',\''+cid+'\')">+ Ajouter PJ devis</button>';
   root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'
     +'<h5>Modifier le devis<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
+    +'<div class="mrow"><input class="msel" id="edNom" value="'+esc(c.nom||"")+'\" placeholder="Nom client / chantier"></div>'
     +'<div class="mrow"><input class="msel" id="edNum" value="'+esc(c.numero||"")+'\" placeholder="N° devis"></div>'
     +'<div class="mrow"><input class="mnum" id="edMt" type="number" value="'+(c.montantDevisHT||"")+'\" placeholder="Montant HT €" style="width:140px"></div>'
     +'<div id="pj-zone" style="margin-bottom:8px;padding:8px 12px;border:1.5px dashed #ddd;border-radius:10px">'+pjInner+'</div>'
@@ -728,8 +729,10 @@ function editMontantDevis(cid){
 }
 async function saveDevisComplet(cid){
   const c=chantierById(cid); if(!c) return;
-  const num=document.getElementById("edNum").value.trim();
-  c.numero=num;
+  const nom=document.getElementById("edNom").value.trim();
+  if(!nom){ toast("Le nom ne peut pas être vide",true); return; }
+  c.nom=nom;
+  c.numero=document.getElementById("edNum").value.trim();
   c.montantDevisHT=Number(document.getElementById("edMt").value)||0;
   closeModal(); render();
   if(await apiPost("setChantiers",S.chantiers)) toast("Devis modifié ✓");
