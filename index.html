@@ -277,10 +277,10 @@ async function traiterDocument(file){
         body:JSON.stringify({action:'extraireDocument',data:{filename:file.name,mimeType:file.type||'application/pdf',base64:b64}})});
       const j=await resp.json();
       const d=j.data||{};
-      if(d.lienDrive) document.getElementById('docLien').value=d.lienDrive;
-      if(d.titre) document.getElementById('docTitre').value=d.titre;
-      if(d.sujet) document.getElementById('docSujet').value=d.sujet;
-      if(d.type && TYPES_DOC2.includes(d.type)) document.getElementById('docType').value=d.type;
+      if(d.lienDrive){const el=document.getElementById('docLien');if(el)el.value=d.lienDrive;}
+      if(d.titre){const el=document.getElementById('docTitre');if(el)el.value=d.titre;}
+      if(d.sujet){const el=document.getElementById('docSujet');if(el)el.value=d.sujet;}
+      if(d.type && TYPES_DOC2.includes(d.type)){const el=document.getElementById('docType');if(el)el.value=d.type;}
       toast('Document analysé — vérifiez et enregistrez');
     }catch(e){ toast('Erreur analyse: '+e.message,true); }
   };
