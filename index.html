@@ -1022,9 +1022,13 @@ async function addSalarie(){
   }
 }
 async function delSalarie(id){
-  if(!confirm("Retirer ce salarié de l'équipe ? (ses heures passées restent dans le Sheet)")) return;
+  if(!confirm("Retirer ce salarié de l'équipe ?\n\nIMPORTANT: Ses heures passées et l'historique des heures restent INTACTS.\nCela garantit que les calculs de marge ne seront JAMAIS modifiés.")) return;
+  // IMPORTANT: On supprime UNIQUEMENT le salarié, JAMAIS les heures!
+  // Les S.heures qui référencent ce salarieId restent complètes
   S.salaries=S.salaries.filter(s=>s.id!==id);
-  render(); await apiPost("setSalaries",S.salaries);
+  tab='equipe';
+  render(); 
+  if(await apiPost("setSalaries",S.salaries)) toast("Salarié retiré (heures conservées) ✓");
 }
 
 async function collerCapture(type){
