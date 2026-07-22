@@ -290,11 +290,11 @@ async function traiterDocument(file){
 async function saveDocument(){
   const chantierId=document.getElementById('docCh').value;
   const type=document.getElementById('docType').value;
-  const titre=document.getElementById('docTitre').value.trim();
+  let titre=document.getElementById('docTitre').value.trim();
   const sujet=document.getElementById('docSujet').value.trim();
   const lien=document.getElementById('docLien').value.trim();
   if(!chantierId||chantierId==='__'){ toast('Choisis un chantier',true); return; }
-  if(!titre){ toast('Le titre est requis',true); return; }
+  if(!titre) titre=sujet||'Document';
   const doc={id:uid(),chantierId,type,titre,sujet,date:isoDate(new Date()),lien};
   S.documents.unshift(doc);
   render();
