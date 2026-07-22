@@ -297,6 +297,7 @@ async function saveDocument(){
   if(!titre) titre=sujet||'Document';
   const doc={id:uid(),chantierId,type,titre,sujet,date:isoDate(new Date()),lien};
   S.documents.unshift(doc);
+  tab='documents';
   render();
   if(await apiPost('setDocuments',S.documents)) toast('Document enregistré ✓');
 }
@@ -634,6 +635,7 @@ async function addChantier(){
   S.chantiers.push({id:nid,nom,numero,montantDevisHT:devis,statut:"En cours",notes:devisLien});
   expChantiers.clear(); expChantiers.add(nid);
   devisLien="";
+  tab='chantiers';
   render();
   if(await apiPost("setChantiers",S.chantiers)) toast("Chantier créé ✓");
 }
@@ -876,6 +878,7 @@ async function addAchat(){
   achatLien="";
   S.achats.push(a);
   document.getElementById("acFour").value="";document.getElementById("acDes").value="";document.getElementById("acMt").value="";document.getElementById("acST").value="";
+  tab='achats';
   render();
   if(await apiPost("addAchat",a)) toast("Achat enregistré ✓");
 }
