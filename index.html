@@ -307,7 +307,7 @@ function renderDocuments(){
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openDocumentModal()">➕ Ajouter un document</button></div>';
   if(S.documents.length){
     html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Derniers enregistrés</div>';
-    const sorted=[...S.documents].reverse().slice(0,5);
+    const sorted=[...S.documents].slice(-5).reverse();
     html+='<div class="card">';
     for(const d of sorted){
       const c=chantierById(d.chantierId);
