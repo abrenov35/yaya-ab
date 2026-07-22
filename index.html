@@ -1183,7 +1183,10 @@ function openDocumentModal(){
   html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>';
   html+='<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">';
   html+='<input type="hidden" id="docLien">';
-  html+='<div class="row"><select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select><input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30"><select class="inp" id="docType" style="flex:0 0 100px"><option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select><button class="btnp go" onclick="saveDocument();closeModal()" style="flex:0 0 auto">Enregistrer</button><input type="hidden" id="docTitre"></div></div></div>';
+  html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Chantier</label><select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select></div>';
+  html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Sujet / Description</label><input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30"></div>';
+  html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Type de document</label><select class="inp" id="docType" style="flex:0 0 100px"><option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select></div>';
+  html+='<div class="row"><button class="btnp go" onclick="saveDocument();closeModal()" style="flex:0 0 auto">Enregistrer</button></div><input type="hidden" id="docLien"><input type="hidden" id="docTitre"></div></div>';
   root.innerHTML=html;
 }
 
