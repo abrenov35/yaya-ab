@@ -289,17 +289,24 @@ async function traiterDocument(file){
 
 async function saveDocument(){
   const chantierId=document.getElementById('docCh').value;
-  const type=document.getElementById('docType').value;
+  let type=document.getElementById('docType').value;
   let titre=document.getElementById('docTitre').value.trim();
   const sujet=document.getElementById('docSujet').value.trim();
   const lien=document.getElementById('docLien').value.trim();
   if(!chantierId||chantierId==='__'){ toast('Choisis un chantier',true); return; }
   if(!titre) titre=sujet||'Document';
+  if(!type||type==='__') type='Divers';
   const doc={id:uid(),chantierId,type,titre,sujet,date:isoDate(new Date()),lien};
   S.documents.unshift(doc);
-  tab='documents';
-  render();
-  if(await apiPost('setDocuments',S.documents)) toast('Document enregistré ✓');
+  const ok=await apiPost('setDocuments',S.documents);
+  if(ok){ 
+    tab='documents';
+    render();
+    toast('Document enregistré ✓');
+  } else {
+    toast('Erreur lors de la sauvegarde',true);
+    S.documents.shift();
+  }
 }
 
 function renderDocuments(){
@@ -1189,7 +1196,7 @@ function openDocumentModal(){
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Chantier</label><select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select></div>';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Sujet / Description</label><input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30"></div>';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Type de document</label><select class="inp" id="docType" style="flex:0 0 100px"><option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select></div>';
-  html+='<div class="row"><button class="btnp go" onclick="saveDocument();closeModal()" style="flex:0 0 auto">Enregistrer</button></div><input type="hidden" id="docLien"><input type="hidden" id="docTitre"></div></div>';
+  html+='<div class="row"><button class="btnp go" onclick="saveDocument().then(()=>closeModal())" style="flex:0 0 auto">Enregistrer</button></div><input type="hidden" id="docLien"><input type="hidden" id="docTitre"></div></div>';
   root.innerHTML=html;
 }
 
