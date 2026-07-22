@@ -806,7 +806,7 @@ function editSalarie(id){
     +(hLibres>0?'<div class="note" style="margin-top:10px;color:var(--amber)"><b>'+hLibres+' h déjà saisies</b> suivent encore le taux courant. Indique ci-dessous leur taux historique pour les figer : elles ne bougeront plus, et le nouveau taux ne vaudra que pour les prochaines saisies.</div>'
       +'<div class="mrow"><input class="msel" id="esOld" type="number" value="'+(s.tauxHoraire||"")+'" placeholder="Taux à figer sur ces heures (€/h)"></div>':'')
     +'<div class="note" style="margin-top:8px">Le coût horaire chargé = salaire + charges, ramené à l\'heure. Il valorise les heures dans la marge des chantiers.</div>'
-    +'<div class="mfoot"><button class="btnp go" onclick="saveSalarie(\''+id+'\')">Enregistrer</button>'+(s.statut!=="Archivé"?'<button class="btn2" style="border-color:#d32f2f;color:#d32f2f" onclick="if(confirm(\'Archiver '+esc(s.nom)+' ?\n\nLe salarié disparaîtra de la liste active mais restera en archive.\')) delSalarie(\''+id+'\');closeModal();\">✕ Archiver</button>':'<button class="btn2" onclick="restaurerSalarie(\''+id+'\');closeModal();">↻ Restaurer</button>')+'<button class="btn2" onclick="closeModal()">Annuler</button></div>'
+    +'<div class="mfoot"><button class="btnp go" onclick="saveSalarie(\''+id+'\')">Enregistrer</button>'+(s.statut!=="Archivé"?'<button class="btn2" style="border-color:#d32f2f;color:#d32f2f" onclick="archiverSalarieModal(\''+id+'\')">✕ Archiver</button>':'<button class="btn2" onclick="restaurerSalarie(\''+id+'\');closeModal();">↻ Restaurer</button>')+'<button class="btn2" onclick="closeModal()">Annuler</button></div>'
     +'</div></div>';
 }
 async function saveSalarie(id){
@@ -1238,6 +1238,15 @@ async function restaurerSalarie(id){
   tab='equipe';
   render();
   if(await apiPost("setSalaries",S.salaries)) toast("Salarié restauré ✓");
+}
+
+
+function archiverSalarieModal(id){
+  const s=S.salaries.find(x=>x.id===id);
+  if(!s) return;
+  if(!confirm("Archiver « "+s.nom+" » ?\n\nLe salarié disparaîtra de la liste active mais restera en archive.\nSes heures passées restent intactes.")) return;
+  delSalarie(id);
+  closeModal();
 }
 
 </script>
