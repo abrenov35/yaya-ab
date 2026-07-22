@@ -303,7 +303,7 @@ async function saveDocument(){
 
 function renderDocuments(){
   const el=document.getElementById('pane-documents');
-  const chOpts=S.chantiers.map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('');
+  const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openDocumentModal()">➕ Ajouter un document</button></div>';
   if(S.documents.length){
     html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Derniers enregistrés</div>';
@@ -1177,7 +1177,7 @@ function openAchatModal(){
 
 
 function openDocumentModal(){
-  const chOpts=S.chantiers.map(c=>'<option value="'+c.id+'">'+esc(c.nom)+'</option>').join('');
+  const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
   const root=document.getElementById("modalRoot");
   let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:580px"><h5>Ajouter un document<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
   html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>';
