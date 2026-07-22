@@ -266,23 +266,31 @@ const BADGE_DOC2 = {"Photo":"b-photo","Mail":"b-mail","Plan":"b-plan","Document"
 function badgeDoc2(t){ return BADGE_DOC2[t]||"b-divers"; }
 function docsChantier(cid){ return S.documents.filter(d=>String(d.chantierId)===String(cid)); }
 
+let docLien="";
+function lireDocument(input){ const f=input.files[0]; input.value=""; if(f) traiterDocument(f); }
 async function traiterDocument(file){
   if(!file) return;
+  if(file.size>8*1024*1024){ toast("Fichier trop lourd (8 Mo max)",true); return; }
+  const etat=document.getElementById('docEtat');
+  if(!etat){ toast('Ouvre le modal Documents pour déposer une pièce',true); return; }
+  etat.textContent='⏳ Analyse du document en cours…';
   const rd=new FileReader();
   rd.onload=async()=>{
     const b64=String(rd.result).split(',')[1];
-    toast('Analyse IA en cours...');
     try{
       const resp=await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({action:'extraireDocument',data:{filename:file.name,mimeType:file.type||'application/pdf',base64:b64}})});
       const j=await resp.json();
+      if(!j.ok) throw new Error(j.error||'Analyse impossible');
       const d=j.data||{};
       if(d.lienDrive){const el=document.getElementById('docLien');if(el)el.value=d.lienDrive;}
       if(d.titre){const el=document.getElementById('docTitre');if(el)el.value=d.titre;}
       if(d.sujet){const el=document.getElementById('docSujet');if(el)el.value=d.sujet;}
       if(d.type && TYPES_DOC2.includes(d.type)){const el=document.getElementById('docType');if(el)el.value=d.type;}
-      toast('Document analysé — vérifiez et enregistrez');
-    }catch(e){ toast('Erreur analyse: '+e.message,true); }
+      etat.innerHTML='<span style="color:var(--green)">✓ Document analysé'+(d.lienDrive?' et archivé.':'.')+' Vérifiez puis Enregistrer.</span>'+(!d.lienDrive&&d.archiveErreur?'<br><span style="color:var(--amber)">⚠ Pièce NON archivée : '+esc(d.archiveErreur)+'</span>':'');
+    }catch(e){ 
+      etat.innerHTML='<span style="color:var(--red)">⚠ '+esc(e.message)+' — saisissez à la main.</span>'; 
+    }
   };
   rd.readAsDataURL(file);
 }
@@ -1191,7 +1199,8 @@ function openDocumentModal(){
   const root=document.getElementById("modalRoot");
   let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:580px"><h5>Ajouter un document<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
   html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>';
-  html+='<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="traiterDocument(this.files[0])">';
+  html+='<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="lireDocument(this)">';
+  html+='<span class="note" id="docEtat"></span>';
   html+='<input type="hidden" id="docLien">';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Chantier</label><select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select></div>';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Sujet / Description</label><input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30"></div>';
