@@ -1083,6 +1083,7 @@ document.addEventListener("paste", e=>{
 
 // ═════════ DÉMARRAGE ═════════
 document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  if(b.dataset.tab==="chantiers"&&tab==="chantiers"&&focusChantier){ fermerFocus(); return; }
   if(b.dataset.tab==="chantiers"&&tab!=="chantiers"){ expChantiers.clear(); focusChantier=null; filtreChantier=''; showArchives=false; }
   tab=b.dataset.tab; location.hash=tab; render();
 });
