@@ -541,7 +541,7 @@ function renderEquipe(){
       (s.type!=="Sous-traitant"?'<span style="font-size:12px;color:#666;text-align:center">'+s.heuresContrat+' h/sem</span>':'<span></span>')+
       '<span style="font-size:12px;color:#666;text-align:center">'+eur(s.tauxHoraire)+' €/h</span>'+
       '<span></span>'+
-      '<span style="white-space:nowrap;display:flex;gap:4px;justify-content:flex-end;align-items:center">'+(s.statut==="Archivé"?'<button class="btn2" style="padding:2px 8px;font-size:11px" onclick="restaurerSalarie(\''+s.id+'\')">↻ Restaurer</button>':'<button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button><button class="x" title="Archiver" style="padding:1px 4px;font-size:12px" onclick="delSalarie(\''+s.id+'\')">✕</button>')+'</span></div>';
+      '<span style="white-space:nowrap;display:flex;gap:4px;justify-content:flex-end;align-items:center">'+(s.statut==="Archivé"?'<button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button>':'<button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button>')+'</span></div>';
   if(sal.length){ html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Salariés ('+sal.length+')</div>'; for(const s of sal) html+=ligneEq(s); }
   if(sts.length){ html+='<div class="note" style="margin:16px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Sous-traitants ('+sts.length+')</div>'; for(const s of sts) html+=ligneEq(s); }
   if(salArch.length){ html+='<div class="note" style="margin:18px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px;opacity:.6">Salariés archivés ('+salArch.length+')</div>'; for(const s of salArch) html+=ligneEq(s); }
@@ -806,7 +806,7 @@ function editSalarie(id){
     +(hLibres>0?'<div class="note" style="margin-top:10px;color:var(--amber)"><b>'+hLibres+' h déjà saisies</b> suivent encore le taux courant. Indique ci-dessous leur taux historique pour les figer : elles ne bougeront plus, et le nouveau taux ne vaudra que pour les prochaines saisies.</div>'
       +'<div class="mrow"><input class="msel" id="esOld" type="number" value="'+(s.tauxHoraire||"")+'" placeholder="Taux à figer sur ces heures (€/h)"></div>':'')
     +'<div class="note" style="margin-top:8px">Le coût horaire chargé = salaire + charges, ramené à l\'heure. Il valorise les heures dans la marge des chantiers.</div>'
-    +'<div class="mfoot"><button class="btnp go" onclick="saveSalarie(\''+id+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
+    +'<div class="mfoot"><button class="btnp go" onclick="saveSalarie(\''+id+'\')">Enregistrer</button>'+(s.statut!=="Archivé"?'<button class="btn2" style="border-color:#d32f2f;color:#d32f2f" onclick="if(confirm(\'Archiver '+esc(s.nom)+' ?\n\nLe salarié disparaîtra de la liste active mais restera en archive.\')) delSalarie(\''+id+'\');closeModal();\">✕ Archiver</button>':'<button class="btn2" onclick="restaurerSalarie(\''+id+'\');closeModal();">↻ Restaurer</button>')+'<button class="btn2" onclick="closeModal()">Annuler</button></div>'
     +'</div></div>';
 }
 async function saveSalarie(id){
