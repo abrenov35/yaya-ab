@@ -527,7 +527,6 @@ function renderAchats(){
     html+='<div class="note" style="margin-top:6px">Le détail complet de chaque achat est dans la fiche de son chantier.</div>';
   }
   el.innerHTML=html;
-  document.getElementById("acType").onchange=function(){ document.getElementById("acST").style.display=(this.value==="Facture sous-traitant"?"":"none"); };
 }
 
 function renderEquipe(){
@@ -1176,29 +1175,18 @@ function openAchatModal(){
   root.innerHTML=html;
 }
 
+</script>
+
 function openChantierModal(){
   const root=document.getElementById("modalRoot");
   let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:580px"><h5>Créer un chantier<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
-  html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById('"'"'"'devisFileModal'"'"'"').click()">📎 Créer depuis un devis (PDF ou photo)</button>';
-  html+='<button class="btn2" onclick="collerCaptureChantierModal('"'"'"'devis'"'"'"')">📋 Coller une capture</button>';
-  html+='<input type="file" id="devisFileModal" accept="application/pdf,image/*" style="display:none" onchange="lireDevisModal(this)"><span class="note" id="devisEtatModal"></span></div>';
-  html+='<div class="row"><input class="inp" id="chNomModal" placeholder="Nom client / chantier" style="flex:1;min-width:150px"><input class="inp" id="chNumModal" placeholder="N° (ex. 2026-402)" style="width:130px"><input class="inp" id="chDevisModal" type="number" placeholder="Devis HT €" style="width:110px"><button class="btnp go" onclick="addChantierModal();closeModal()">Créer</button></div></div></div>';
+  html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById(\'devisFile\').click()">📎 Créer depuis un devis (PDF ou photo)</button>';
+  html+='<button class="btn2" onclick="collerCapture(\'devis\')">📋 Coller une capture</button>';
+  html+='<input type="file" id="devisFile" accept="application/pdf,image/*" style="display:none" onchange="lireDevis(this)">';
+  html+='<span class="note" id="devisEtat"></span></div>';
+  html+='<div class="row"><input class="inp" id="chNom" placeholder="Nom client / chantier" style="flex:1;min-width:150px"><input class="inp" id="chNum" placeholder="N° (ex. 2026-402)" style="width:130px"><input class="inp" id="chDevis" type="number" placeholder="Devis HT €" style="width:110px"><button class="btnp go" onclick="addChantier();closeModal()">Créer</button></div></div></div>';
   root.innerHTML=html;
 }
-function addChantierModal(){
-  const nom=document.getElementById("chNomModal").value.trim()||"—";
-  const numero=document.getElementById("chNumModal").value.trim()||"—";
-  const devis=Number(document.getElementById("chDevisModal").value)||0;
-  if(!nom||nom==="—"){ toast("Indique un nom",true); return; }
-  if(!numero||numero==="—"){ toast("Indique un n°",true); return; }
-  if(!devis){ toast("Indique un montant devis",true); return; }
-  const nid=uid();
-  S.chantiers.push({id:nid,nom,numero,montantDevisHT:devis,statut:"En cours",notes:""});
-  render(); if(!navigator.onLine) return;
-  apiPost("setChantiers",S.chantiers).then(ok=>{ if(ok) toast("Chantier créé ✓"); else toast("Erreur serveur",true); });
-}
-
-</script>
 
 
 </body></html>
