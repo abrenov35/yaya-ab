@@ -159,16 +159,17 @@ function viewMarketItem(id) {
 }
 
 function editMarketItem(id) {
-    // Récupérer l'élément actuel pour afficher son nom
-    const item = document.querySelector(`[data-market-id="${id}"]`);
-    if (!item) return;
+    console.log('Édition du marché:', id); // Debug
     
-    const currentName = item.querySelector('.item-name').textContent;
-    document.getElementById('editedName').value = currentName;
+    // Ouvrir la modale directement
+    document.getElementById('editNameModal').style.display = 'flex';
     
     editingItemId = id;
     editingItemType = 'market';
-    document.getElementById('editNameModal').style.display = 'flex';
+    
+    // Récupérer le nom depuis l'API ou afficher vide
+    document.getElementById('editedName').value = '';
+    document.getElementById('editedName').focus();
 }
 
 async function deleteMarketItem(id) {
@@ -286,16 +287,17 @@ function viewExpense(id) {
 }
 
 function editExpense(id) {
-    // Récupérer l'élément actuel pour afficher son nom
-    const item = document.querySelector(`[data-expense-id="${id}"]`);
-    if (!item) return;
+    console.log('Édition de la dépense:', id); // Debug
     
-    const currentName = item.querySelector('.item-name').textContent;
-    document.getElementById('editedName').value = currentName;
+    // Ouvrir la modale directement
+    document.getElementById('editNameModal').style.display = 'flex';
     
     editingItemId = id;
     editingItemType = 'expense';
-    document.getElementById('editNameModal').style.display = 'flex';
+    
+    // Récupérer le nom depuis l'API ou afficher vide
+    document.getElementById('editedName').value = '';
+    document.getElementById('editedName').focus();
 }
 
 async function deleteExpense(id) {
@@ -450,16 +452,17 @@ function downloadDocument(path) {
 }
 
 function editDocument(id) {
-    // Récupérer l'élément actuel pour afficher son nom
-    const item = document.querySelector(`[data-document-id="${id}"]`);
-    if (!item) return;
+    console.log('Édition du document:', id); // Debug
     
-    const currentName = item.querySelector('.item-name').textContent;
-    document.getElementById('editedName').value = currentName;
+    // Ouvrir la modale directement
+    document.getElementById('editNameModal').style.display = 'flex';
     
     editingItemId = id;
     editingItemType = 'document';
-    document.getElementById('editNameModal').style.display = 'flex';
+    
+    // Récupérer le nom depuis l'API ou afficher vide
+    document.getElementById('editedName').value = '';
+    document.getElementById('editedName').focus();
 }
 
 async function deleteDocument(id) {
