@@ -542,10 +542,10 @@ function renderEquipe(){
   const sts=S.salaries.filter(s=>s.type==="Sous-traitant").sort(byNomE);
   const ligneEq=s=>'<div style="display:grid;grid-template-columns:120px 110px 150px 140px auto auto;gap:8px;align-items:center;padding:10px 8px;border-bottom:1px solid rgba(22,45,73,.08)"><b style="color:#1c2b48">'+esc(s.nom)+'</b>'+
       (s.type==="Sous-traitant"?'<span class="badge b-avenant" style="min-width:110px;padding:3px 8px;text-align:center;font-size:10px">SOUS-TRAITANT</span>':'<span class="badge b-green" style="min-width:110px;padding:3px 8px;text-align:center;font-size:10px">SALARIÉ</span>')+
-      (s.type!=="Sous-traitant"?'<span style="font-size:12px;color:#666;text-align:center">'+s.heuresContrat+' h/sem</span>':'')+
+      (s.type!=="Sous-traitant"?'<span style="font-size:12px;color:#666;text-align:center">'+s.heuresContrat+' h/sem</span>':'<span></span>')+
       '<span style="font-size:12px;color:#666;text-align:center">'+eur(s.tauxHoraire)+' €/h</span>'+
       '<span></span>'+
-      '<span style="white-space:nowrap;display:flex;gap:4px;justify-content:flex-end"><button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button><button class="x" title="Retirer" style="padding:1px 4px;font-size:12px" onclick="delSalarie(\''+s.id+'\')">✕</button></span></div>';
+      '<span style="white-space:nowrap;display:flex;gap:4px;justify-content:flex-end;align-items:center"><button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button><button class="x" title="Retirer" style="padding:1px 4px;font-size:12px" onclick="delSalarie(\''+s.id+'\')">✕</button></span></div>';
   if(sal.length){ html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Salariés ('+sal.length+')</div>'; for(const s of sal) html+=ligneEq(s); }
   if(sts.length){ html+='<div class="note" style="margin:16px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Sous-traitants ('+sts.length+')</div>'; for(const s of sts) html+=ligneEq(s); }
   el.innerHTML=html;
