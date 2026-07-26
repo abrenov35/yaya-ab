@@ -18,8 +18,8 @@
   .hdr .brand{display:flex;align-items:center;gap:10px;flex-wrap:nowrap}
   .hdr .brand b{font-size:21px}
   .hdr .brand span{font-size:10.5px;color:var(--gold);letter-spacing:.12em;text-transform:uppercase}
-  .hdr .sync{font-size:11px;opacity:.8;font-weight:500;padding-right:4px;white-space:nowrap}
-  .tabs{display:flex;gap:7px;margin-left:auto;flex-wrap:wrap;justify-content:center}
+  .hdr .sync{font-size:11px;opacity:.8;font-weight:500;margin-left:auto;padding-left:2rem;padding-right:1rem;white-space:nowrap}
+  .tabs{display:flex;gap:7px;flex-wrap:wrap;justify-content:center}
   .tab{border:1px solid rgba(255,255,255,.35);background:transparent;border-radius:7px;padding:7px 13px;font-size:13px;font-weight:600;color:#fff}
   .tab.on{background:var(--gold);color:var(--navy);border-color:var(--gold)}
   .body{padding:14px 12px 26px;max-width:980px;margin:0 auto}
@@ -129,7 +129,7 @@
 <div id="loader" style="display: none;"><div class="spin"></div><div>Connexion à la base Yaya…</div></div>
 
 <div class="hdr">
-  <div class="brand"><b>Yaya</b><span>AB RENOV 35 — Pilotage</span><span class="sync" id="syncState" style="display:flex;align-items:center">v1</span></div>
+  <div class="brand"><b>Yaya</b><span>AB RENOV 35 — Pilotage</span></div>
   <div class="tabs">
     <button class="tab on" data-tab="chantiers">Chantiers</button>
     <button class="tab" data-tab="achats">Achats</button>
@@ -137,6 +137,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
+  <span class="sync" id="syncState" style="display:flex;align-items:center">v1</span>
 </div>
 
 <div class="body">
