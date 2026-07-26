@@ -129,7 +129,7 @@
 <div id="loader" style="display: none;"><div class="spin"></div><div>Connexion à la base Yaya…</div></div>
 
 <div class="hdr">
-  <div class="brand"><b>Yaya</b><span>AB RENOV 35 — Pilotage</span><span style="font-size:10px;opacity:.6;margin-left:auto;margin-right:10px">v1</span><span class="sync" id="syncState">✓ connecté</span></div>
+  <div class="brand"><b>Yaya</b><span>AB RENOV 35 — Pilotage</span><span class="sync" id="syncState" style="margin-left:auto">v1</span></div>
   <div class="tabs">
     <button class="tab on" data-tab="chantiers">Chantiers</button>
     <button class="tab" data-tab="achats">Achats</button>
@@ -182,7 +182,7 @@ const badgeAchatHtml=a=>a.typeDoc==="Avoir"
   ?'<button class="badge b-avoir" ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer;border:none;font-family:inherit;font-size:inherit;font-weight:inherit;letter-spacing:inherit">AVOIR</button>'
   :'<span class="badge '+badgeDoc(a.typeDoc)+'">'+(a.typeDoc.toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span>';
 function toast(msg, err){ const t=document.getElementById("toast"); t.textContent=msg; t.className=err?"err":""; t.style.display="block"; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none", 3500); }
-function syncMsg(m){ document.getElementById("syncState").textContent = m; }
+function syncMsg(m){ document.getElementById("syncState").textContent = "v1"; }
 
 // ═════════ API SHEET ═════════
 async function apiGet(){
