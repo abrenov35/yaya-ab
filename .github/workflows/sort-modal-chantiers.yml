@@ -1,0 +1,49 @@
+name: Sort modal chantier lists
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sort-modal-chantiers.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sort chantier lists in Achats and Documents modals
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old_achat = '''S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('')'''
+          new_achat = '''S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('')'''
+
+          old_doc = '''const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');'''
+          new_doc = '''const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');'''
+
+          if old_achat not in s:
+              raise SystemExit('Pattern Achats introuvable')
+          if old_doc not in s:
+              raise SystemExit('Pattern Documents introuvable')
+
+          s = s.replace(old_achat, new_achat, 1)
+          s = s.replace(old_doc, new_doc, 1)
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit and push
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Tri A-Z des chantiers dans les modales"
+          git push
