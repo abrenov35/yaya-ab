@@ -9,8 +9,8 @@ let html=await (await fetch(base,{cache:'no-store'})).text();
 html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
 // Nouveau chantier : rester en affichage compact comme les autres
 html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
-// Renommer le libellé MAIN-D'OEUVRE en CHARGES
-html=html.replace(/MAIN-D['’]OEUVRE/g,'CHARGES').replace(/Main-d['’]oeuvre/g,'Charges').replace(/MAIN-D['’]ŒUVRE/g,'CHARGES').replace(/Main-d['’]œuvre/g,'Charges');
+// Renommer le libellé MAIN-D'OEUVRE / Main-d'oeuvre en CHARGES, y compris dans le code JS échappé
+html=html.replace(/MAIN-D\\?['’]OEUVRE/g,'CHARGES').replace(/Main-d\\?['’]oeuvre/g,'Charges').replace(/MAIN-D\\?['’]ŒUVRE/g,'CHARGES').replace(/Main-d\\?['’]œuvre/g,'Charges');
 const css=`
 .overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}
 .modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}
@@ -32,6 +32,8 @@ function applyRentColors(){
   const pct=parseInt(t,10); el.classList.add('yaya-rent-pct'); el.classList.remove('rent-high','rent-good','rent-watch','rent-low');
   el.classList.add(pct>=30?'rent-high':pct>=20?'rent-good':pct>=10?'rent-watch':'rent-low');
  });
+ // Sécurité visuelle : si une ancienne variante du libellé subsiste dans le DOM, la remplacer après chaque rendu
+ document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').trim().toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});
 }
 const _render=window.render; if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyRentColors,0);return r};
 setTimeout(applyRentColors,150);
