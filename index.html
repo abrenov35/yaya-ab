@@ -43,7 +43,7 @@ window.openCell=function(sid,d){
  const existing=S.heures.filter(h=>h.semaine===wk()&&String(h.salarieId)===String(sid)&&days.includes(Number(h.jour))&&h.type==='chantier');
  const refs=[]; existing.forEach(h=>{if(h.ref&&!refs.some(r=>String(r)===String(h.ref)))refs.push(h.ref)});
  while(refs.length<3)refs.push(''); refs.length=3;
- let rows=refs.map(ref=>({ref:String(ref||''),hs:days.map(day=>{const e=existing.find(h=>Number(e.jour)===day&&String(e.ref)===String(ref));return e?Number(e.heures)||0:0})}));
+ let rows=refs.map(ref=>({ref:String(ref||''),hs:days.map(day=>{const e=existing.find(h=>Number(h.jour)===day&&String(h.ref)===String(ref));return e?Number(e.heures)||0:0})}));
  const active=[...S.chantiers].filter(c=>c.statut!=='Terminé'&&c.statut!=='Archivé').sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'}));
  const root=document.getElementById('modalRoot');
  const fd=n=>addDays(monday,n).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
