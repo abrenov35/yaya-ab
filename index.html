@@ -5,6 +5,8 @@
 (async()=>{try{
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
+// Ne jamais afficher la vieille capture avant la lecture de l'API
+html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
 // Nouveau chantier : rester en affichage compact comme les autres
 html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
 const css=`
@@ -31,8 +33,8 @@ function applyRentColors(){
 }
 const _render=window.render; if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyRentColors,0);return r};
 setTimeout(applyRentColors,150);
-// Au chargement, forcer une lecture fraîche de l'API afin d'éviter l'affichage ancien
-setTimeout(()=>{try{if(typeof reload==='function')reload();}catch(e){}},350);
+// Lecture fraîche immédiate : le loader reste au-dessus jusqu'à la fin de reload()
+try{if(typeof reload==='function')reload();}catch(e){}
 window.openCell=function(sid,d){
  const s=S.salaries.find(x=>String(x.id)===String(sid)); if(!s)return;
  const days=[0,1,2,3,4];
