@@ -5,6 +5,8 @@
 (async()=>{try{
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
+// Nouveau chantier : rester en affichage compact comme les autres
+html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
 const css=`
 .overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}
 .modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}
@@ -29,6 +31,8 @@ function applyRentColors(){
 }
 const _render=window.render; if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyRentColors,0);return r};
 setTimeout(applyRentColors,150);
+// Au chargement, forcer une lecture fraîche de l'API afin d'éviter l'affichage ancien
+setTimeout(()=>{try{if(typeof reload==='function')reload();}catch(e){}},350);
 window.openCell=function(sid,d){
  const s=S.salaries.find(x=>String(x.id)===String(sid)); if(!s)return;
  const days=[0,1,2,3,4];
