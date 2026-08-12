@@ -1,10 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Yaya — AB RENOV 35</title></head>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"><title>Yaya — AB RENOV 35</title></head>
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
+// V70 : autoriser explicitement le zoom tactile natif (pinch-to-zoom) sur iPhone/iPad
+html=html.replace(/<meta name="viewport"[^>]*>/i,'<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">');
 // Ne jamais afficher la vieille capture avant la lecture de l'API
 html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
 // Nouveau chantier : rester en affichage compact comme les autres
@@ -18,52 +20,20 @@ const css=`
 .modal h5 button{flex:0 0 auto;min-height:34px;padding:6px 14px!important;border:1px solid rgba(22,45,73,.16)!important;border-radius:9px!important;background:#fff!important;color:#536273!important;font-size:12px!important;font-weight:650!important}
 .modal .mrow{display:flex!important;gap:10px!important;align-items:center!important;margin-top:10px!important}.modal .inp,.modal .msel,.modal .mnum{min-height:40px!important;border:1px solid rgba(22,45,73,.22)!important;border-radius:9px!important;background:#fff!important;color:#162D49!important;padding:9px 11px!important;outline:none!important}.modal .inp:focus,.modal .msel:focus,.modal .mnum:focus{border-color:#C9A227!important;box-shadow:0 0 0 3px rgba(201,162,39,.14)!important}.modal .btnp,.modal .btn2{min-height:38px!important;border-radius:9px!important;font-weight:650!important}.modal .btnp.go{background:#2E7D46!important}.modal .mfoot{padding-top:12px!important;margin-top:16px!important;border-top:1px solid rgba(22,45,73,.08);display:flex!important;gap:10px!important}
 .week-hours-modal{width:min(1080px,calc(100vw - 28px))!important;max-width:1080px!important}.wh-head{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}.wh-label{font-size:11px;font-weight:750;color:#536273;margin-bottom:6px}.wh-box{height:44px;border:1px solid rgba(22,45,73,.18);border-radius:9px;background:#f8fafb;display:flex;align-items:center;padding:0 14px;font-weight:700}.wh-grid{display:grid;grid-template-columns:minmax(190px,2.1fr) repeat(5,minmax(74px,1fr)) 76px;border:1px solid rgba(22,45,73,.12);border-radius:11px;overflow:hidden}.wh-cell{padding:10px 8px;border-right:1px solid rgba(22,45,73,.09);border-bottom:1px solid rgba(22,45,73,.09);display:flex;align-items:center;justify-content:center;min-width:0}.wh-grid .wh-cell:nth-child(7n){border-right:0}.wh-h{background:#f4f7fa;font-weight:750;text-align:center;line-height:1.25}.wh-h small{display:block;font-size:10px;margin-top:3px}.wh-select{width:100%;min-width:0;height:42px;border:1px solid rgba(22,45,73,.2);border-radius:8px;padding:0 9px;color:#162D49;background:#fff}.wh-num{width:100%;max-width:76px;height:42px;border:1px solid rgba(22,45,73,.2);border-radius:8px;text-align:center;font-weight:700;color:#162D49}.wh-total{font-weight:800}.wh-summary{display:grid;grid-template-columns:minmax(190px,2.1fr) repeat(5,minmax(74px,1fr)) 76px;margin-top:10px;border:1px solid rgba(22,45,73,.12);border-radius:10px;background:#f8fafc;overflow:hidden}.wh-summary>div{padding:9px 6px;text-align:center;font-weight:750}.wh-summary>div:first-child{text-align:left;padding-left:14px}.wh-week{margin-top:14px;display:inline-flex;gap:9px;align-items:center;padding:10px 14px;border:1px solid rgba(46,125,70,.25);background:rgba(46,125,70,.07);border-radius:10px;font-weight:800}.wh-warn{color:#B3352C!important;background:rgba(179,53,44,.08)!important}.wh-help{font-size:11.5px;color:#667487;margin:0 0 8px}
-/* Rentabilite : pastille % seule */
-.yaya-rent-pct{font-size:12px!important;font-weight:800!important;white-space:nowrap!important;font-variant-numeric:tabular-nums!important;display:inline-block!important;min-width:56px!important;width:auto!important;text-align:center!important;padding:4px 9px!important;border-radius:14px!important;margin-right:10px!important}
-.yaya-rent-pct.rent-high{background:rgba(46,125,70,.14)!important;color:#2E7D46!important}.yaya-rent-pct.rent-good{background:rgba(46,125,70,.10)!important;color:#3F8D50!important}.yaya-rent-pct.rent-watch{background:rgba(201,162,39,.16)!important;color:#9A7410!important}.yaya-rent-pct.rent-low{background:rgba(179,53,44,.14)!important;color:#B3352C!important}
-@media(max-width:760px){.overlay{align-items:flex-start!important;padding:8px!important}.week-hours-modal{width:100%!important;max-width:none!important;padding:14px!important}.wh-head{grid-template-columns:1fr;gap:8px}.wh-grid,.wh-summary{grid-template-columns:minmax(150px,1.8fr) repeat(5,72px) 65px;min-width:585px}.wh-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}.wh-cell{padding:8px 5px}.wh-num{height:40px}.modal .mfoot{position:sticky;bottom:-14px;background:#fff;padding-bottom:4px}}
+.yaya-rent-pct{font-weight:850!important}.rent-high{color:#15803d!important}.rent-good{color:#65a30d!important}.rent-watch{color:#d97706!important}.rent-low{color:#dc2626!important}
 `;
-html=html.replace('</style>',css+'\n</style>');
-const js=`<script>
-(function(){
+html=html.replace('</style>',css+'</style>');
+html=html.replace('</body>',`<script>
 function applyRentColors(){
- document.querySelectorAll('.card .top span').forEach(el=>{
-  const t=(el.textContent||'').trim(); if(!/^-?\\d+\\s*%$/.test(t))return;
+ document.querySelectorAll('.stat b').forEach(el=>{const t=(el.textContent||'').trim();if(!/^-?\\d+%$/.test(t))return;
   const pct=parseInt(t,10); el.classList.add('yaya-rent-pct'); el.classList.remove('rent-high','rent-good','rent-watch','rent-low');
   el.classList.add(pct>=30?'rent-high':pct>=20?'rent-good':pct>=10?'rent-watch':'rent-low');
  });
- // Sécurité visuelle : si une ancienne variante du libellé subsiste dans le DOM, la remplacer après chaque rendu
  document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').trim().toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});
 }
 const _render=window.render; if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyRentColors,0);return r};
 setTimeout(applyRentColors,150);
-// Lecture fraîche immédiate : le loader reste au-dessus jusqu'à la fin de reload()
-try{if(typeof reload==='function')reload();}catch(e){}
-window.openCell=function(sid,d){
- const s=S.salaries.find(x=>String(x.id)===String(sid)); if(!s)return;
- const days=[0,1,2,3,4];
- const existing=S.heures.filter(h=>h.semaine===wk()&&String(h.salarieId)===String(sid)&&days.includes(Number(h.jour))&&h.type==='chantier');
- const refs=[]; existing.forEach(h=>{if(h.ref&&!refs.some(r=>String(r)===String(h.ref)))refs.push(h.ref)});
- while(refs.length<3)refs.push(''); refs.length=3;
- let rows=refs.map(ref=>({ref:String(ref||''),hs:days.map(day=>{const e=existing.find(h=>Number(h.jour)===day&&String(h.ref)===String(ref));return e?Number(e.heures)||0:0})}));
- const active=[...S.chantiers].filter(c=>c.statut!=='Terminé'&&c.statut!=='Archivé').sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'}));
- const root=document.getElementById('modalRoot');
- const fd=n=>addDays(monday,n).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
- function draw(){
-  let h='<div class="overlay"><div class="modal week-hours-modal"><h5>Ajouter une affectation<button onclick="closeModal()">Fermer</button></h5>';
-  h+='<div class="wh-head"><div><div class="wh-label">OUVRIER</div><div class="wh-box">'+esc(s.nom)+'</div></div><div><div class="wh-label">SEMAINE</div><div class="wh-box">Du '+fd(0)+' au '+fd(4)+'</div></div></div>';
-  h+='<div class="wh-help">3 chantiers peuvent être saisis directement. Le total d’une journée ne doit pas dépasser les heures prévues.</div><div class="wh-scroll"><div class="wh-grid">';
-  h+='<div class="wh-cell wh-h">Chantier</div>'; days.forEach((day,i)=>h+='<div class="wh-cell wh-h">'+JOURS[day]+'<small>'+fd(day)+'</small></div>'); h+='<div class="wh-cell wh-h">Total</div>';
-  rows.forEach((r,ri)=>{h+='<div class="wh-cell"><select class="wh-select" onchange="whRef('+ri+',this.value)"><option value="">— Choisir un chantier —</option>'+active.map(c=>'<option value="'+c.id+'"'+(String(c.id)===r.ref?' selected':'')+'>'+esc(c.nom)+'</option>').join('')+'</select></div>'; days.forEach((day,di)=>h+='<div class="wh-cell"><input class="wh-num" inputmode="decimal" type="number" min="0" max="24" step="0.5" value="'+(r.hs[di]||'')+'" placeholder="0" oninput="whH('+ri+','+di+',this.value)"></div>'); h+='<div class="wh-cell wh-total" id="whrt'+ri+'">0 h</div>'});
-  h+='</div><div class="wh-summary"><div>Total par jour</div>'; days.forEach((day,di)=>h+='<div id="whd'+di+'">0 h</div>'); h+='<div id="whall">0 h</div></div></div><div class="wh-week" id="whweek">Total semaine : 0 h</div>';
-  h+='<div class="mfoot"><button class="btnp go" onclick="whSave()">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div></div></div>'; root.innerHTML=h; calc();
- }
- function calc(){let all=0;const ds=days.map((_,di)=>rows.reduce((a,r)=>a+(Number(r.hs[di])||0),0));rows.forEach((r,ri)=>{const t=r.hs.reduce((a,v)=>a+(Number(v)||0),0);const e=document.getElementById('whrt'+ri);if(e)e.textContent=t+' h';all+=t});ds.forEach((v,i)=>{const e=document.getElementById('whd'+i);if(e){e.textContent=v+' h';e.className=v>24?'wh-warn':''}});const a=document.getElementById('whall');if(a)a.textContent=all+' h';const w=document.getElementById('whweek');if(w)w.textContent='Total semaine : '+all+' h'}
- window.whRef=(ri,v)=>{rows[ri].ref=String(v||'')}; window.whH=(ri,di,v)=>{rows[ri].hs[di]=Math.max(0,Number(v)||0);calc()};
- window.whSave=async()=>{for(let di=0;di<5;di++){const t=rows.reduce((a,r)=>a+(Number(r.hs[di])||0),0);if(t>24){toast('Trop d’heures le '+JOURS[di]+' ('+t+' h)',true);return}} if(rows.some(r=>r.hs.some(v=>Number(v)>0)&&!r.ref)){toast('Choisis un chantier pour chaque ligne contenant des heures',true);return} const taux=(S.salaries.find(x=>String(x.id)===String(sid))||{}).tauxHoraire||0; const clean=[];rows.forEach(r=>{if(!r.ref)return;r.hs.forEach((v,di)=>{if(Number(v)>0)clean.push({semaine:wk(),salarieId:sid,jour:di,type:'chantier',ref:r.ref,heures:Number(v),taux:taux})})}); S.heures=S.heures.filter(h=>!(h.semaine===wk()&&String(h.salarieId)===String(sid)&&days.includes(Number(h.jour))&&h.type==='chantier')).concat(clean);closeModal();render();await saveSemaine()}; draw();
-};
-})();
-<\/script>`;
-html=html.replace('</body>',js+'</body>');document.open();document.write(html);document.close();
-}catch(e){document.getElementById('boot').innerHTML='<b>Chargement impossible</b><br><small>'+String(e.message||e)+'</small>'}})();
+<\/script></body>`);
+document.open();document.write(html);document.close();
+}catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
 </script></body></html>
