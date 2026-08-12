@@ -9,6 +9,8 @@ let html=await (await fetch(base,{cache:'no-store'})).text();
 html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
 // Nouveau chantier : rester en affichage compact comme les autres
 html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
+// Renommer le libellé MAIN-D'OEUVRE en CHARGES
+html=html.replace(/MAIN-D['’]OEUVRE/g,'CHARGES').replace(/Main-d['’]oeuvre/g,'Charges').replace(/MAIN-D['’]ŒUVRE/g,'CHARGES').replace(/Main-d['’]œuvre/g,'Charges');
 const css=`
 .overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}
 .modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}
@@ -41,7 +43,7 @@ window.openCell=function(sid,d){
  const existing=S.heures.filter(h=>h.semaine===wk()&&String(h.salarieId)===String(sid)&&days.includes(Number(h.jour))&&h.type==='chantier');
  const refs=[]; existing.forEach(h=>{if(h.ref&&!refs.some(r=>String(r)===String(h.ref)))refs.push(h.ref)});
  while(refs.length<3)refs.push(''); refs.length=3;
- let rows=refs.map(ref=>({ref:String(ref||''),hs:days.map(day=>{const e=existing.find(h=>Number(h.jour)===day&&String(h.ref)===String(ref));return e?Number(e.heures)||0:0})}));
+ let rows=refs.map(ref=>({ref:String(ref||''),hs:days.map(day=>{const e=existing.find(h=>Number(e.jour)===day&&String(e.ref)===String(ref));return e?Number(e.heures)||0:0})}));
  const active=[...S.chantiers].filter(c=>c.statut!=='Terminé'&&c.statut!=='Archivé').sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'}));
  const root=document.getElementById('modalRoot');
  const fd=n=>addDays(monday,n).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
