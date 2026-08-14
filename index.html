@@ -13,6 +13,10 @@ html=html.replace('<div id="loader" style="display: none;">','<div id="loader" s
 html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
 // Renommer le libellé MAIN-D'OEUVRE / Main-d'oeuvre en CHARGES, y compris dans le code JS échappé
 html=html.replace(/MAIN-D\\?['’]OEUVRE/g,'CHARGES').replace(/Main-d\\?['’]oeuvre/g,'Charges').replace(/MAIN-D\\?['’]ŒUVRE/g,'CHARGES').replace(/Main-d\\?['’]œuvre/g,'Charges');
+// UI : onglet Achats devient Charges. Les noms techniques internes restent inchangés.
+html=html.replace(/(<button class="tab" data-tab="achats">)Achats(<\/button>)/i,'$1Charges$2');
+// Ajouter Stock aux listes de types d'achat sans modifier le modèle de données.
+html=html.replace(/(<option value="Achat direct">Achat direct<\/option>)/gi,'$1<option value="Stock">Stock</option>');
 const css=`
 .overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}
 .modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}
