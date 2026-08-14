@@ -5,54 +5,59 @@
 (async()=>{try{
 const src='https://raw.githubusercontent.com/abrenov35/yaya-ab/65471f76025e8576d3e4a986b4f328d0e0ea1986/index.html';
 let html=await (await fetch(src,{cache:'no-store'})).text();
-html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V112';");
+html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V113';");
 const forced=`
-/* V112 — CHARTE TYPO AB RENOV, sélecteurs réels YAYA */
+/* V113 — CHARTE TYPO AB RENOV — placée EN FIN de CSS */
 :root{--ab-body:12px;--ab-row:11px;--ab-title:13px;--ab-section:11px;--ab-button:11px;--ab-input:12px;--ab-badge:9px;--ab-kpi:14px;}
-.body{font-size:var(--ab-body)!important}
-#pane-chantiers,#pane-achats,#pane-documents,#pane-heures,#pane-equipe{font-size:var(--ab-body)!important}
-/* Chantiers */
-#pane-chantiers .card .top b{font-size:var(--ab-title)!important;font-weight:750!important}
-#pane-chantiers .card .top .num{font-size:11px!important}
+.body{font-size:12px!important}
+#pane-chantiers,#pane-achats,#pane-documents,#pane-heures,#pane-equipe{font-size:12px!important}
+
+/* CHANTIERS */
+#pane-chantiers .card .top b{font-size:13px!important;font-weight:750!important}
+#pane-chantiers .card .top .num{font-size:10px!important}
 #pane-chantiers .stat small{font-size:9px!important}
-#pane-chantiers .stat b{font-size:var(--ab-kpi)!important}
+#pane-chantiers .stat b{font-size:14px!important}
 #pane-chantiers .stat .sub{font-size:10px!important}
-#pane-chantiers .achligne,#pane-chantiers .ligD,#pane-chantiers .ligM,#pane-chantiers .ligR{font-size:var(--ab-row)!important}
-#pane-chantiers .achligne b,#pane-chantiers .badge{font-size:var(--ab-badge)!important}
-/* Charges */
-#pane-achats .note{font-size:11px!important}
-#pane-achats .card{font-size:var(--ab-row)!important}
-#pane-achats .achligne,#pane-achats .ligD,#pane-achats .ligM,#pane-achats .ligR{font-size:var(--ab-row)!important}
-#pane-achats .achligne b,#pane-achats .badge{font-size:var(--ab-badge)!important}
+#pane-chantiers .achligne,#pane-chantiers .ligD,#pane-chantiers .ligM,#pane-chantiers .ligR{font-size:11px!important}
+#pane-chantiers .badge,#pane-chantiers .achligne b{font-size:9px!important}
+
+/* CHARGES */
+#pane-achats .note{font-size:10px!important}
+#pane-achats .card,#pane-achats .achligne,#pane-achats .ligD,#pane-achats .ligM,#pane-achats .ligR{font-size:11px!important}
+#pane-achats .badge,#pane-achats .achligne b{font-size:9px!important}
 #pane-achats .ligD .des,#pane-achats .ligR .des{font-size:10px!important}
-/* Documents */
-#pane-documents .note{font-size:11px!important}
-#pane-documents .achligne,#pane-documents .ligR{font-size:var(--ab-row)!important}
-#pane-documents .badge{font-size:var(--ab-badge)!important}
-#pane-documents .ligR .des{font-size:10px!important}
-#pane-documents small{font-size:10px!important}
-/* Heures */
-#pane-heures .weekbar b{font-size:var(--ab-title)!important}
-#pane-heures table{font-size:var(--ab-row)!important}
+
+/* DOCUMENTS */
+#pane-documents .note{font-size:10px!important}
+#pane-documents .achligne,#pane-documents .ligR{font-size:11px!important}
+#pane-documents .badge{font-size:9px!important}
+#pane-documents .ligR .des,#pane-documents small{font-size:10px!important}
+
+/* HEURES */
+#pane-heures .weekbar b{font-size:13px!important}
+#pane-heures table{font-size:11px!important}
 #pane-heures th{font-size:10px!important}
-#pane-heures td{font-size:var(--ab-row)!important}
-#pane-heures .who{font-size:var(--ab-row)!important;font-weight:650!important}
+#pane-heures td,#pane-heures .who{font-size:11px!important}
 #pane-heures .chip{font-size:10px!important}
-#pane-heures .plus{font-size:15px!important}
+#pane-heures .plus{font-size:14px!important}
 #pane-heures .tot{font-size:12px!important}
 #pane-heures .tot small{font-size:9px!important}
-/* Equipe */
-#pane-equipe .card .top b,#pane-equipe .who{font-size:var(--ab-title)!important}
-#pane-equipe .badge{font-size:var(--ab-badge)!important}
+
+/* EQUIPE */
+#pane-equipe .card .top b,#pane-equipe .who{font-size:13px!important}
+#pane-equipe .card,#pane-equipe .row{font-size:11px!important}
+#pane-equipe .badge{font-size:9px!important}
 #pane-equipe .note,#pane-equipe small{font-size:10px!important}
-#pane-equipe .row,#pane-equipe .card{font-size:var(--ab-row)!important}
-/* Commandes communes */
-#pane-chantiers button,#pane-achats button,#pane-documents button,#pane-heures button,#pane-equipe button,.btnp,.btn2,.navbtn{font-size:var(--ab-button)!important;font-weight:700!important}
-#pane-chantiers input,#pane-chantiers select,#pane-chantiers textarea,#pane-achats input,#pane-achats select,#pane-achats textarea,#pane-documents input,#pane-documents select,#pane-documents textarea,#pane-heures input,#pane-heures select,#pane-heures textarea,#pane-equipe input,#pane-equipe select,#pane-equipe textarea,.inp,.msel,.mnum{font-size:var(--ab-input)!important}
-.seclabel,.section-header{font-size:var(--ab-section)!important}
-.modal{font-size:var(--ab-body)!important}.modal h5{font-size:15px!important}.modal .note{font-size:10px!important}.modal button{font-size:var(--ab-button)!important}.modal input,.modal select,.modal textarea{font-size:var(--ab-input)!important}
+
+/* COMMANDES COMMUNES */
+#pane-chantiers button,#pane-achats button,#pane-documents button,#pane-heures button,#pane-equipe button,.btnp,.btn2,.navbtn{font-size:11px!important;font-weight:700!important}
+#pane-chantiers input,#pane-chantiers select,#pane-chantiers textarea,#pane-achats input,#pane-achats select,#pane-achats textarea,#pane-documents input,#pane-documents select,#pane-documents textarea,#pane-heures input,#pane-heures select,#pane-heures textarea,#pane-equipe input,#pane-equipe select,#pane-equipe textarea,.inp,.msel,.mnum{font-size:12px!important}
+.seclabel,.section-header{font-size:11px!important}
+.modal{font-size:12px!important}.modal h5{font-size:15px!important}.modal .note{font-size:10px!important}.modal button{font-size:11px!important}.modal input,.modal select,.modal textarea{font-size:12px!important}
 `;
-html=html.replace("const css=`","const css=`"+forced);
+const marker="`;\nhtml=html.replace('</style>',css+'</style>');";
+if(!html.includes(marker)) throw new Error('Point insertion CSS introuvable');
+html=html.replace(marker,forced+marker);
 document.open();document.write(html);document.close();
 }catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
 </script></body></html>
