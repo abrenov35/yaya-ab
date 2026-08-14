@@ -5,35 +5,52 @@
 (async()=>{try{
 const src='https://raw.githubusercontent.com/abrenov35/yaya-ab/65471f76025e8576d3e4a986b4f328d0e0ea1986/index.html';
 let html=await (await fetch(src,{cache:'no-store'})).text();
-html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V111';");
+html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V112';");
 const forced=`
-/* V111 - TYPOGRAPHIE HOMOGENE YAYA */
-#pane-chantiers,#pane-achats,#pane-documents,#pane-heures,#pane-equipe{font-size:12px!important}
-#pane-chantiers div,#pane-chantiers span,#pane-chantiers p,#pane-chantiers a,#pane-chantiers li,
-#pane-achats div,#pane-achats span,#pane-achats p,#pane-achats a,#pane-achats li,
-#pane-documents div,#pane-documents span,#pane-documents p,#pane-documents a,#pane-documents li,
-#pane-heures div,#pane-heures span,#pane-heures p,#pane-heures a,#pane-heures li,
-#pane-equipe div,#pane-equipe span,#pane-equipe p,#pane-equipe a,#pane-equipe li{font-size:12px!important;line-height:1.25!important}
-#pane-chantiers button,#pane-achats button,#pane-documents button,#pane-heures button,#pane-equipe button{font-size:11px!important;font-weight:700!important}
-#pane-chantiers input,#pane-chantiers select,#pane-chantiers textarea,
-#pane-achats input,#pane-achats select,#pane-achats textarea,
-#pane-documents input,#pane-documents select,#pane-documents textarea,
-#pane-heures input,#pane-heures select,#pane-heures textarea,
-#pane-equipe input,#pane-equipe select,#pane-equipe textarea{font-size:12px!important}
-#pane-chantiers table,#pane-achats table,#pane-documents table,#pane-heures table,#pane-equipe table{font-size:11px!important}
-#pane-chantiers th,#pane-achats th,#pane-documents th,#pane-heures th,#pane-equipe th{font-size:10px!important;font-weight:700!important}
-#pane-chantiers td,#pane-achats td,#pane-documents td,#pane-heures td,#pane-equipe td{font-size:11px!important}
-#pane-chantiers .badge,#pane-chantiers .pill,#pane-chantiers .tag,#pane-chantiers .status,
-#pane-achats .badge,#pane-achats .pill,#pane-achats .tag,#pane-achats .status,
-#pane-documents .badge,#pane-documents .pill,#pane-documents .tag,#pane-documents .status,
-#pane-heures .badge,#pane-heures .pill,#pane-heures .tag,#pane-heures .status,
-#pane-equipe .badge,#pane-equipe .pill,#pane-equipe .tag,#pane-equipe .status{font-size:9px!important;font-weight:700!important}
-#pane-chantiers h1,#pane-achats h1,#pane-documents h1,#pane-heures h1,#pane-equipe h1{font-size:20px!important;font-weight:800!important}
-#pane-chantiers h2,#pane-chantiers h3,#pane-chantiers h4,#pane-chantiers h5,
-#pane-achats h2,#pane-achats h3,#pane-achats h4,#pane-achats h5,
-#pane-documents h2,#pane-documents h3,#pane-documents h4,#pane-documents h5,
-#pane-heures h2,#pane-heures h3,#pane-heures h4,#pane-heures h5,
-#pane-equipe h2,#pane-equipe h3,#pane-equipe h4,#pane-equipe h5{font-size:15px!important;font-weight:700!important}
+/* V112 — CHARTE TYPO AB RENOV, sélecteurs réels YAYA */
+:root{--ab-body:12px;--ab-row:11px;--ab-title:13px;--ab-section:11px;--ab-button:11px;--ab-input:12px;--ab-badge:9px;--ab-kpi:14px;}
+.body{font-size:var(--ab-body)!important}
+#pane-chantiers,#pane-achats,#pane-documents,#pane-heures,#pane-equipe{font-size:var(--ab-body)!important}
+/* Chantiers */
+#pane-chantiers .card .top b{font-size:var(--ab-title)!important;font-weight:750!important}
+#pane-chantiers .card .top .num{font-size:11px!important}
+#pane-chantiers .stat small{font-size:9px!important}
+#pane-chantiers .stat b{font-size:var(--ab-kpi)!important}
+#pane-chantiers .stat .sub{font-size:10px!important}
+#pane-chantiers .achligne,#pane-chantiers .ligD,#pane-chantiers .ligM,#pane-chantiers .ligR{font-size:var(--ab-row)!important}
+#pane-chantiers .achligne b,#pane-chantiers .badge{font-size:var(--ab-badge)!important}
+/* Charges */
+#pane-achats .note{font-size:11px!important}
+#pane-achats .card{font-size:var(--ab-row)!important}
+#pane-achats .achligne,#pane-achats .ligD,#pane-achats .ligM,#pane-achats .ligR{font-size:var(--ab-row)!important}
+#pane-achats .achligne b,#pane-achats .badge{font-size:var(--ab-badge)!important}
+#pane-achats .ligD .des,#pane-achats .ligR .des{font-size:10px!important}
+/* Documents */
+#pane-documents .note{font-size:11px!important}
+#pane-documents .achligne,#pane-documents .ligR{font-size:var(--ab-row)!important}
+#pane-documents .badge{font-size:var(--ab-badge)!important}
+#pane-documents .ligR .des{font-size:10px!important}
+#pane-documents small{font-size:10px!important}
+/* Heures */
+#pane-heures .weekbar b{font-size:var(--ab-title)!important}
+#pane-heures table{font-size:var(--ab-row)!important}
+#pane-heures th{font-size:10px!important}
+#pane-heures td{font-size:var(--ab-row)!important}
+#pane-heures .who{font-size:var(--ab-row)!important;font-weight:650!important}
+#pane-heures .chip{font-size:10px!important}
+#pane-heures .plus{font-size:15px!important}
+#pane-heures .tot{font-size:12px!important}
+#pane-heures .tot small{font-size:9px!important}
+/* Equipe */
+#pane-equipe .card .top b,#pane-equipe .who{font-size:var(--ab-title)!important}
+#pane-equipe .badge{font-size:var(--ab-badge)!important}
+#pane-equipe .note,#pane-equipe small{font-size:10px!important}
+#pane-equipe .row,#pane-equipe .card{font-size:var(--ab-row)!important}
+/* Commandes communes */
+#pane-chantiers button,#pane-achats button,#pane-documents button,#pane-heures button,#pane-equipe button,.btnp,.btn2,.navbtn{font-size:var(--ab-button)!important;font-weight:700!important}
+#pane-chantiers input,#pane-chantiers select,#pane-chantiers textarea,#pane-achats input,#pane-achats select,#pane-achats textarea,#pane-documents input,#pane-documents select,#pane-documents textarea,#pane-heures input,#pane-heures select,#pane-heures textarea,#pane-equipe input,#pane-equipe select,#pane-equipe textarea,.inp,.msel,.mnum{font-size:var(--ab-input)!important}
+.seclabel,.section-header{font-size:var(--ab-section)!important}
+.modal{font-size:var(--ab-body)!important}.modal h5{font-size:15px!important}.modal .note{font-size:10px!important}.modal button{font-size:var(--ab-button)!important}.modal input,.modal select,.modal textarea{font-size:var(--ab-input)!important}
 `;
 html=html.replace("const css=`","const css=`"+forced);
 document.open();document.write(html);document.close();
