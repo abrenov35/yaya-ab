@@ -11,6 +11,9 @@ html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.c
 html=html.replace(/MAIN-D\\?['’]OEUVRE/g,'CHARGES').replace(/Main-d\\?['’]oeuvre/g,'Charges').replace(/MAIN-D\\?['’]ŒUVRE/g,'CHARGES').replace(/Main-d\\?['’]œuvre/g,'Charges');
 html=html.replace(/(<button class="tab" data-tab="achats">)Achats(<\/button>)/i,'$1Charges$2');
 html=html.replace(/Ajouter un achat\s*\/\s*une facture/gi,'Ajouter un achat / une charge');
+// Ajouter Stock directement dans la source qui génère les menus de type de charge.
+html=html.replace('const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Facture sous-traitant","Avoir"];','const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Stock","Facture sous-traitant","Avoir"];');
+html=html.replace('const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};','const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Stock":"b-doc","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};');
 const css=`
 .overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}
 .modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}
@@ -25,11 +28,9 @@ html=html.replace('</body>',`<script>
 function applyYayaPatches(){
  document.querySelectorAll('.stat b').forEach(el=>{const t=(el.textContent||'').trim();if(!/^-?\\d+%$/.test(t))return;const pct=parseInt(t,10);el.classList.add('yaya-rent-pct');el.classList.remove('rent-high','rent-good','rent-watch','rent-low');el.classList.add(pct>=30?'rent-high':pct>=20?'rent-good':pct>=10?'rent-watch':'rent-low');});
  document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').trim().toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});
- document.querySelectorAll('select').forEach(sel=>{const labels=Array.from(sel.options).map(o=>(o.textContent||'').trim());if(labels.includes('BL')&&labels.includes('Facture')&&labels.includes('Achat direct')&&!labels.includes('Stock')){const opt=new Option('Stock','Stock');const i=labels.indexOf('Facture sous-traitant');if(i>=0)sel.add(opt,sel.options[i]);else sel.add(opt);}});
  document.querySelectorAll('button').forEach(btn=>{if((btn.textContent||'').trim().replace(/^\+\s*/,'')==='Ajouter un achat / une facture')btn.innerHTML=btn.innerHTML.replace('Ajouter un achat / une facture','Ajouter un achat / une charge');});
 }
 const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyYayaPatches,0);return r};
-new MutationObserver(()=>applyYayaPatches()).observe(document.documentElement,{childList:true,subtree:true});
 setTimeout(applyYayaPatches,150);
 <\/script></body>`);
 document.open();document.write(html);document.close();
