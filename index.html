@@ -5,29 +5,37 @@
 (async()=>{try{
 const src='https://raw.githubusercontent.com/abrenov35/yaya-ab/65471f76025e8576d3e4a986b4f328d0e0ea1986/index.html';
 let html=await (await fetch(src,{cache:'no-store'})).text();
-html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V110';");
+html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V111';");
 const forced=`
-/* V110 - TYPOGRAPHIE HOMOGENE SUR TOUT YAYA */
+/* V111 - TYPOGRAPHIE HOMOGENE YAYA */
 #pane-chantiers,#pane-achats,#pane-documents,#pane-heures,#pane-equipe{font-size:12px!important}
-#pane-chantiers :where(div,span,p,a,b,strong,li),
-#pane-achats :where(div,span,p,a,b,strong,li),
-#pane-documents :where(div,span,p,a,b,strong,li),
-#pane-heures :where(div,span,p,a,b,strong,li),
-#pane-equipe :where(div,span,p,a,b,strong,li){font-size:12px!important;line-height:1.25!important}
-#pane-chantiers :where(h1),#pane-achats :where(h1),#pane-documents :where(h1),#pane-heures :where(h1),#pane-equipe :where(h1){font-size:20px!important;font-weight:800!important}
-#pane-chantiers :where(h2,h3,h4,h5,.section-title),#pane-achats :where(h2,h3,h4,h5,.section-title),#pane-documents :where(h2,h3,h4,h5,.section-title),#pane-heures :where(h2,h3,h4,h5,.section-title),#pane-equipe :where(h2,h3,h4,h5,.section-title){font-size:15px!important;font-weight:700!important}
-#pane-chantiers :where(button,.btn,.btnp,.btn2),#pane-achats :where(button,.btn,.btnp,.btn2),#pane-documents :where(button,.btn,.btnp,.btn2),#pane-heures :where(button,.btn,.btnp,.btn2),#pane-equipe :where(button,.btn,.btnp,.btn2){font-size:11px!important;font-weight:700!important}
-#pane-chantiers :where(input,select,textarea),#pane-achats :where(input,select,textarea),#pane-documents :where(input,select,textarea),#pane-heures :where(input,select,textarea),#pane-equipe :where(input,select,textarea){font-size:12px!important}
+#pane-chantiers div,#pane-chantiers span,#pane-chantiers p,#pane-chantiers a,#pane-chantiers li,
+#pane-achats div,#pane-achats span,#pane-achats p,#pane-achats a,#pane-achats li,
+#pane-documents div,#pane-documents span,#pane-documents p,#pane-documents a,#pane-documents li,
+#pane-heures div,#pane-heures span,#pane-heures p,#pane-heures a,#pane-heures li,
+#pane-equipe div,#pane-equipe span,#pane-equipe p,#pane-equipe a,#pane-equipe li{font-size:12px!important;line-height:1.25!important}
+#pane-chantiers button,#pane-achats button,#pane-documents button,#pane-heures button,#pane-equipe button{font-size:11px!important;font-weight:700!important}
+#pane-chantiers input,#pane-chantiers select,#pane-chantiers textarea,
+#pane-achats input,#pane-achats select,#pane-achats textarea,
+#pane-documents input,#pane-documents select,#pane-documents textarea,
+#pane-heures input,#pane-heures select,#pane-heures textarea,
+#pane-equipe input,#pane-equipe select,#pane-equipe textarea{font-size:12px!important}
 #pane-chantiers table,#pane-achats table,#pane-documents table,#pane-heures table,#pane-equipe table{font-size:11px!important}
 #pane-chantiers th,#pane-achats th,#pane-documents th,#pane-heures th,#pane-equipe th{font-size:10px!important;font-weight:700!important}
 #pane-chantiers td,#pane-achats td,#pane-documents td,#pane-heures td,#pane-equipe td{font-size:11px!important}
-#pane-chantiers :where(.badge,.pill,.tag,.status),#pane-achats :where(.badge,.pill,.tag,.status),#pane-documents :where(.badge,.pill,.tag,.status),#pane-heures :where(.badge,.pill,.tag,.status),#pane-equipe :where(.badge,.pill,.tag,.status){font-size:9px!important;font-weight:700!important}
-/* Les noms/titres de cartes restent lisibles mais ne dominent plus l'écran */
-#pane-chantiers :where(.card b,.card strong,.row b,.row strong),#pane-documents :where(.card b,.card strong),#pane-equipe :where(.card b,.card strong){font-size:12px!important}
-/* KPI uniquement lorsqu'une classe KPI explicite existe */
-#pane-chantiers :where(.kpi,.stat-value),#pane-achats :where(.kpi,.stat-value),#pane-documents :where(.kpi,.stat-value),#pane-heures :where(.kpi,.stat-value),#pane-equipe :where(.kpi,.stat-value){font-size:20px!important;font-weight:800!important}
+#pane-chantiers .badge,#pane-chantiers .pill,#pane-chantiers .tag,#pane-chantiers .status,
+#pane-achats .badge,#pane-achats .pill,#pane-achats .tag,#pane-achats .status,
+#pane-documents .badge,#pane-documents .pill,#pane-documents .tag,#pane-documents .status,
+#pane-heures .badge,#pane-heures .pill,#pane-heures .tag,#pane-heures .status,
+#pane-equipe .badge,#pane-equipe .pill,#pane-equipe .tag,#pane-equipe .status{font-size:9px!important;font-weight:700!important}
+#pane-chantiers h1,#pane-achats h1,#pane-documents h1,#pane-heures h1,#pane-equipe h1{font-size:20px!important;font-weight:800!important}
+#pane-chantiers h2,#pane-chantiers h3,#pane-chantiers h4,#pane-chantiers h5,
+#pane-achats h2,#pane-achats h3,#pane-achats h4,#pane-achats h5,
+#pane-documents h2,#pane-documents h3,#pane-documents h4,#pane-documents h5,
+#pane-heures h2,#pane-heures h3,#pane-heures h4,#pane-heures h5,
+#pane-equipe h2,#pane-equipe h3,#pane-equipe h4,#pane-equipe h5{font-size:15px!important;font-weight:700!important}
 `;
-html=html.replace('</style>',forced+'</style>');
+html=html.replace("const css=`","const css=`"+forced);
 document.open();document.write(html);document.close();
 }catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
 </script></body></html>
