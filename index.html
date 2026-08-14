@@ -5,18 +5,11 @@
 (async()=>{try{
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
-// V70 : autoriser explicitement le zoom tactile natif (pinch-to-zoom) sur iPhone/iPad
 html=html.replace(/<meta name="viewport"[^>]*>/i,'<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">');
-// Ne jamais afficher la vieille capture avant la lecture de l'API
 html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
-// Nouveau chantier : rester en affichage compact comme les autres
 html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
-// Renommer le libellé MAIN-D'OEUVRE / Main-d'oeuvre en CHARGES, y compris dans le code JS échappé
 html=html.replace(/MAIN-D\\?['’]OEUVRE/g,'CHARGES').replace(/Main-d\\?['’]oeuvre/g,'Charges').replace(/MAIN-D\\?['’]ŒUVRE/g,'CHARGES').replace(/Main-d\\?['’]œuvre/g,'Charges');
-// UI : onglet Achats devient Charges. Les noms techniques internes restent inchangés.
 html=html.replace(/(<button class="tab" data-tab="achats">)Achats(<\/button>)/i,'$1Charges$2');
-// Ajouter Stock aux listes de types d'achat sans modifier le modèle de données.
-html=html.replace(/(<option value="Achat direct">Achat direct<\/option>)/gi,'$1<option value="Stock">Stock</option>');
 const css=`
 .overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}
 .modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}
@@ -28,15 +21,14 @@ const css=`
 `;
 html=html.replace('</style>',css+'</style>');
 html=html.replace('</body>',`<script>
-function applyRentColors(){
- document.querySelectorAll('.stat b').forEach(el=>{const t=(el.textContent||'').trim();if(!/^-?\\d+%$/.test(t))return;
-  const pct=parseInt(t,10); el.classList.add('yaya-rent-pct'); el.classList.remove('rent-high','rent-good','rent-watch','rent-low');
-  el.classList.add(pct>=30?'rent-high':pct>=20?'rent-good':pct>=10?'rent-watch':'rent-low');
- });
+function applyYayaPatches(){
+ document.querySelectorAll('.stat b').forEach(el=>{const t=(el.textContent||'').trim();if(!/^-?\\d+%$/.test(t))return;const pct=parseInt(t,10);el.classList.add('yaya-rent-pct');el.classList.remove('rent-high','rent-good','rent-watch','rent-low');el.classList.add(pct>=30?'rent-high':pct>=20?'rent-good':pct>=10?'rent-watch':'rent-low');});
  document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').trim().toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});
+ document.querySelectorAll('select').forEach(sel=>{const labels=Array.from(sel.options).map(o=>(o.textContent||'').trim());if(labels.includes('BL')&&labels.includes('Facture')&&labels.includes('Achat direct')&&!labels.includes('Stock')){const opt=new Option('Stock','Stock');const i=labels.indexOf('Facture sous-traitant');if(i>=0)sel.add(opt,sel.options[i]);else sel.add(opt);}});
 }
-const _render=window.render; if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyRentColors,0);return r};
-setTimeout(applyRentColors,150);
+const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyYayaPatches,0);return r};
+new MutationObserver(()=>applyYayaPatches()).observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(applyYayaPatches,150);
 <\/script></body>`);
 document.open();document.write(html);document.close();
 }catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
