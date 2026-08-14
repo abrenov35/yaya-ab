@@ -3,63 +3,31 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V109';
-const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
-let html=await (await fetch(base,{cache:'no-store'})).text();
-html=html.replace(/<meta name="viewport"[^>]*>/i,'<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">');
-html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
-html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
-html=html.replace(/MAIN-D\\?['’]OEUVRE/g,'CHARGES').replace(/Main-d\\?['’]oeuvre/g,'Charges').replace(/MAIN-D\\?['’]ŒUVRE/g,'CHARGES').replace(/Main-d\\?['’]œuvre/g,'Charges');
-html=html.replace(/(<button class="tab" data-tab="achats">)Achats(<\/button>)/i,'$1Charges$2');
-html=html.replace(/Ajouter un achat\s*\/\s*une facture/gi,'Ajouter un achat / une charge');
-html=html.replace('const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Facture sous-traitant","Avoir"];','const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Stock","Facture sous-traitant","Avoir"];');
-html=html.replace('const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};','const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Stock":"b-doc","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};');
-html=html.replace(/<span class="sync" id="syncState"[^>]*>.*?<\/span>/i,'<span class="sync" id="yayaVersion">'+YAYA_VERSION+'</span><span class="sync" id="syncState" style="display:none"></span>');
-const css=`
-/* CHARTE UI AB RENOV V1 */
-:root{
-  --ab-font-app:13px;
-  --ab-font-brand-sub:9px;
-  --ab-font-nav:10px;
-  --ab-font-version:9px;
-  --ab-font-page-title:20px;
-  --ab-font-section-title:15px;
-  --ab-font-card-title:12px;
-  --ab-font-kpi:20px;
-  --ab-font-body:12px;
-  --ab-font-table:11px;
-  --ab-font-table-head:10px;
-  --ab-font-button:11px;
-  --ab-font-input:12px;
-  --ab-font-label:10px;
-  --ab-font-secondary:10px;
-  --ab-font-badge:9px;
-}
-html,body,button,input,select,textarea{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif!important}
-body{font-size:var(--ab-font-body)!important}
-button,.btn,.btnp,.btn2{font-size:var(--ab-font-button)!important;font-weight:700!important}
-input,select,textarea,.inp,.msel,.mnum{font-size:var(--ab-font-input)!important}
-label,.label,.form-label{font-size:var(--ab-font-label)!important;font-weight:700!important}
-table{font-size:var(--ab-font-table)!important}th{font-size:var(--ab-font-table-head)!important;font-weight:700!important}td{font-size:var(--ab-font-table)!important}
-small,.muted,.sub,.secondary{font-size:var(--ab-font-secondary)!important}
-.badge,.pill,.tag,.status{font-size:var(--ab-font-badge)!important;font-weight:700!important}
-h1{font-size:var(--ab-font-page-title)!important;font-weight:800!important}h2,h3,.section-title{font-size:var(--ab-font-section-title)!important;font-weight:700!important}.card-title{font-size:var(--ab-font-card-title)!important;font-weight:700!important}.kpi,.stat-value,.value{font-size:var(--ab-font-kpi)!important;font-weight:800!important}
-
-.hdr{background:#1e3a8a!important;color:#fff!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;padding:7px 12px!important;border-bottom:1px solid rgba(255,255,255,.12)!important;gap:8px!important;white-space:nowrap!important;position:sticky!important;top:0!important;z-index:100!important;overflow-x:auto!important;flex-wrap:nowrap!important;min-height:42px!important;box-shadow:none!important}.hdr .brand{display:flex!important;align-items:center!important;gap:8px!important;flex-wrap:nowrap!important;flex-shrink:0!important;margin-right:4px!important;padding-right:12px!important;border-right:1px solid rgba(255,255,255,.25)!important;height:24px!important}.hdr .brand b{font-size:var(--ab-font-app)!important;font-weight:800!important;line-height:1!important;white-space:nowrap!important}.hdr .brand span{font-size:var(--ab-font-brand-sub)!important;font-weight:700!important;letter-spacing:.12em!important;color:#f2c21a!important;white-space:nowrap!important;text-transform:uppercase!important}.hdr .tabs{display:flex!important;align-items:center!important;gap:8px!important;margin:0!important;padding:0!important;flex:0 0 auto!important;flex-wrap:nowrap!important;justify-content:flex-start!important}.hdr .tab{width:92px!important;height:28px!important;min-height:28px!important;padding:0 8px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;box-sizing:border-box!important;border:1px solid rgba(255,255,255,.42)!important;border-radius:5px!important;color:#fff!important;font-size:var(--ab-font-nav)!important;font-weight:700!important;cursor:pointer!important;flex-shrink:0!important;white-space:nowrap!important;background:transparent!important;box-shadow:none!important}.hdr .tab:hover{background:rgba(255,255,255,.10)!important}.hdr .tab.on{background:rgba(255,255,255,.18)!important;border:1px solid rgba(255,255,255,.42)!important;border-bottom:2px solid #f59e0b!important;color:#fff!important;box-shadow:none!important}.hdr #yayaVersion{font-size:var(--ab-font-version)!important;opacity:.65!important;font-weight:700!important;flex-shrink:0!important;padding:0 3px!important;margin:0!important;color:#fff!important;display:flex!important;align-items:center!important}
-.yaya-chantier-tools{display:flex!important;align-items:center!important;gap:12px!important;width:100%!important;margin-bottom:12px!important}.yaya-chantier-tools .btnp{flex:0 0 auto!important;white-space:nowrap!important;margin:0!important}.yaya-chantier-tools .yaya-search-wrap{position:relative!important;flex:1 1 auto!important;min-width:220px!important;margin:0!important}.yaya-chantier-tools .yaya-search-wrap input{width:100%!important;margin:0!important;font-size:var(--ab-font-input)!important}
-/* Page Heures écran unique */
-body.yaya-heures-screen{overflow-y:hidden!important}.yaya-heures-screen #pane-heures{height:calc(100vh - 43px)!important;overflow:hidden!important;box-sizing:border-box!important;padding-top:6px!important;padding-bottom:4px!important}.yaya-heures-screen #pane-heures>.card,.yaya-heures-screen #pane-heures .card{margin-top:0!important;margin-bottom:0!important}.yaya-heures-screen #pane-heures table{font-size:var(--ab-font-table)!important}.yaya-heures-screen #pane-heures th{padding-top:6px!important;padding-bottom:6px!important;font-size:var(--ab-font-table-head)!important;line-height:1.15!important}.yaya-heures-screen #pane-heures td{padding-top:5px!important;padding-bottom:5px!important;font-size:var(--ab-font-table)!important;line-height:1.1!important}.yaya-heures-screen #pane-heures tr{height:auto!important}.yaya-heures-screen #pane-heures button{min-height:30px!important;padding-top:5px!important;padding-bottom:5px!important;font-size:var(--ab-font-button)!important}.yaya-heures-screen #pane-heures input,.yaya-heures-screen #pane-heures select{min-height:30px!important;font-size:var(--ab-font-input)!important}.yaya-heures-screen #pane-heures h1,.yaya-heures-screen #pane-heures h2,.yaya-heures-screen #pane-heures h3{margin-top:4px!important;margin-bottom:6px!important}.yaya-heures-screen #pane-heures .yaya-hours-compact{transform-origin:top center!important}
-@media(max-width:650px){.yaya-chantier-tools{flex-wrap:wrap!important}.yaya-chantier-tools .yaya-search-wrap{flex-basis:100%!important}body.yaya-heures-screen{overflow-y:auto!important}.yaya-heures-screen #pane-heures{height:auto!important;overflow:visible!important}.yaya-heures-screen #pane-heures .yaya-hours-compact{transform:none!important;width:auto!important}}
-.overlay{align-items:center!important;justify-content:center!important;padding:24px!important;background:rgba(13,32,54,.58)!important;backdrop-filter:blur(3px)}.modal{width:min(620px,calc(100vw - 32px))!important;max-width:620px!important;max-height:calc(100vh - 48px)!important;overflow-y:auto!important;background:#fff!important;border-radius:18px!important;padding:22px!important;border:1px solid rgba(22,45,73,.10)!important;box-shadow:0 24px 70px rgba(13,32,54,.30)!important}.modal h5{margin:0 0 18px!important;padding-bottom:13px!important;min-height:38px;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px;border-bottom:1px solid rgba(22,45,73,.10);color:#162D49!important;font-size:var(--ab-font-section-title)!important;font-weight:700!important}.modal h5 button{flex:0 0 auto;min-height:34px;padding:6px 14px!important;border:1px solid rgba(22,45,73,.16)!important;border-radius:9px!important;background:#fff!important;color:#536273!important;font-size:var(--ab-font-button)!important;font-weight:700!important}.modal .mrow{display:flex!important;gap:10px!important;align-items:center!important;margin-top:10px!important}.modal .inp,.modal .msel,.modal .mnum{min-height:40px!important;border:1px solid rgba(22,45,73,.22)!important;border-radius:9px!important;background:#fff!important;color:#162D49!important;padding:9px 11px!important;outline:none!important;font-size:var(--ab-font-input)!important}.modal .inp:focus,.modal .msel:focus,.modal .mnum:focus{border-color:#C9A227!important;box-shadow:0 0 0 3px rgba(201,162,39,.14)!important}.modal .btnp,.modal .btn2{min-height:38px!important;border-radius:9px!important;font-weight:700!important;font-size:var(--ab-font-button)!important}.modal .btnp.go{background:#2E7D46!important}.modal .mfoot{padding-top:12px!important;margin-top:16px!important;border-top:1px solid rgba(22,45,73,.08);display:flex!important;gap:10px!important}.yaya-rent-pct{font-weight:850!important}.rent-high{color:#15803d!important}.rent-good{color:#65a30d!important}.rent-watch{color:#d97706!important}.rent-low{color:#dc2626!important}.yaya-add-charge{margin-left:8px!important}
+const src='https://raw.githubusercontent.com/abrenov35/yaya-ab/65471f76025e8576d3e4a986b4f328d0e0ea1986/index.html';
+let html=await (await fetch(src,{cache:'no-store'})).text();
+html=html.replace("const YAYA_VERSION='V109';","const YAYA_VERSION='V110';");
+const forced=`
+/* V110 - TYPOGRAPHIE HOMOGENE SUR TOUT YAYA */
+#pane-chantiers,#pane-achats,#pane-documents,#pane-heures,#pane-equipe{font-size:12px!important}
+#pane-chantiers :where(div,span,p,a,b,strong,li),
+#pane-achats :where(div,span,p,a,b,strong,li),
+#pane-documents :where(div,span,p,a,b,strong,li),
+#pane-heures :where(div,span,p,a,b,strong,li),
+#pane-equipe :where(div,span,p,a,b,strong,li){font-size:12px!important;line-height:1.25!important}
+#pane-chantiers :where(h1),#pane-achats :where(h1),#pane-documents :where(h1),#pane-heures :where(h1),#pane-equipe :where(h1){font-size:20px!important;font-weight:800!important}
+#pane-chantiers :where(h2,h3,h4,h5,.section-title),#pane-achats :where(h2,h3,h4,h5,.section-title),#pane-documents :where(h2,h3,h4,h5,.section-title),#pane-heures :where(h2,h3,h4,h5,.section-title),#pane-equipe :where(h2,h3,h4,h5,.section-title){font-size:15px!important;font-weight:700!important}
+#pane-chantiers :where(button,.btn,.btnp,.btn2),#pane-achats :where(button,.btn,.btnp,.btn2),#pane-documents :where(button,.btn,.btnp,.btn2),#pane-heures :where(button,.btn,.btnp,.btn2),#pane-equipe :where(button,.btn,.btnp,.btn2){font-size:11px!important;font-weight:700!important}
+#pane-chantiers :where(input,select,textarea),#pane-achats :where(input,select,textarea),#pane-documents :where(input,select,textarea),#pane-heures :where(input,select,textarea),#pane-equipe :where(input,select,textarea){font-size:12px!important}
+#pane-chantiers table,#pane-achats table,#pane-documents table,#pane-heures table,#pane-equipe table{font-size:11px!important}
+#pane-chantiers th,#pane-achats th,#pane-documents th,#pane-heures th,#pane-equipe th{font-size:10px!important;font-weight:700!important}
+#pane-chantiers td,#pane-achats td,#pane-documents td,#pane-heures td,#pane-equipe td{font-size:11px!important}
+#pane-chantiers :where(.badge,.pill,.tag,.status),#pane-achats :where(.badge,.pill,.tag,.status),#pane-documents :where(.badge,.pill,.tag,.status),#pane-heures :where(.badge,.pill,.tag,.status),#pane-equipe :where(.badge,.pill,.tag,.status){font-size:9px!important;font-weight:700!important}
+/* Les noms/titres de cartes restent lisibles mais ne dominent plus l'écran */
+#pane-chantiers :where(.card b,.card strong,.row b,.row strong),#pane-documents :where(.card b,.card strong),#pane-equipe :where(.card b,.card strong){font-size:12px!important}
+/* KPI uniquement lorsqu'une classe KPI explicite existe */
+#pane-chantiers :where(.kpi,.stat-value),#pane-achats :where(.kpi,.stat-value),#pane-documents :where(.kpi,.stat-value),#pane-heures :where(.kpi,.stat-value),#pane-equipe :where(.kpi,.stat-value){font-size:20px!important;font-weight:800!important}
 `;
-html=html.replace('</style>',css+'</style>');
-html=html.replace('</body>',`<script>
-function openChargeForChantier(cid){try{tab='achats';render();setTimeout(()=>{if(typeof openAchatModal==='function')openAchatModal();setTimeout(()=>{const ch=document.getElementById('acCh');if(ch)ch.value=cid;},0);},0);}catch(e){console.error(e);}}
-function alignChantierTools(){const pane=document.getElementById('pane-chantiers');if(!pane)return;const search=pane.querySelector('input[placeholder*="Rechercher un chantier"]');if(!search)return;let createBtn=[...pane.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Créer un chantier'));if(!createBtn)return;if(createBtn.closest('.yaya-chantier-tools'))return;const searchWrap=search.parentElement;const tools=document.createElement('div');tools.className='yaya-chantier-tools';createBtn.parentNode.insertBefore(tools,createBtn);tools.appendChild(createBtn);const sw=document.createElement('div');sw.className='yaya-search-wrap';searchWrap.parentNode.insertBefore(sw,searchWrap);while(searchWrap.firstChild)sw.appendChild(searchWrap.firstChild);tools.appendChild(sw);if(searchWrap!==pane)searchWrap.remove();}
-function fitHoursScreen(){const pane=document.getElementById('pane-heures');const active=(location.hash==='#heures')||(pane&&getComputedStyle(pane).display!=='none');document.body.classList.toggle('yaya-heures-screen',!!active);if(!pane||!active||innerWidth<=650)return;let box=pane.querySelector('.yaya-hours-compact');if(!box){box=document.createElement('div');box.className='yaya-hours-compact';while(pane.firstChild)box.appendChild(pane.firstChild);pane.appendChild(box);}box.style.transform='none';box.style.width='100%';requestAnimationFrame(()=>{const available=Math.max(100,pane.clientHeight-4);const needed=box.scrollHeight;if(needed>available){const scale=Math.max(.78,Math.min(1,available/needed));box.style.transform='scale('+scale+')';box.style.width=(100/scale)+'%';}});}
-function applyYayaPatches(){alignChantierTools();fitHoursScreen();document.querySelectorAll('.stat b').forEach(el=>{const t=(el.textContent||'').trim();if(!/^-?\\d+%$/.test(t))return;const pct=parseInt(t,10);el.classList.add('yaya-rent-pct');el.classList.remove('rent-high','rent-good','rent-watch','rent-low');el.classList.add(pct>=30?'rent-high':pct>=20?'rent-good':pct>=10?'rent-watch':'rent-low');});document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').trim().toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('button').forEach(btn=>{if((btn.textContent||'').trim().replace(/^\\+\\s*/,'')==='Ajouter un achat / une facture')btn.innerHTML=btn.innerHTML.replace('Ajouter un achat / une facture','Ajouter un achat / une charge');});document.querySelectorAll('button[onclick*="openAvenant"]').forEach(btn=>{const wrap=btn.parentElement;if(!wrap||wrap.querySelector('.yaya-add-charge'))return;const oc=btn.getAttribute('onclick')||'';const m=oc.match(/openAvenant\\(['\\"]([^'\\"]+)['\\"]\\)/);if(!m)return;const b=document.createElement('button');b.className='btn2 yaya-add-charge';b.textContent='+ Charge';b.onclick=()=>openChargeForChantier(m[1]);btn.insertAdjacentElement('afterend',b);});}
-const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyYayaPatches,0);return r};window.addEventListener('hashchange',()=>setTimeout(fitHoursScreen,20));window.addEventListener('resize',()=>setTimeout(fitHoursScreen,80));new MutationObserver(()=>applyYayaPatches()).observe(document.documentElement,{childList:true,subtree:true});setTimeout(applyYayaPatches,150);
-<\/script></body>`);
+html=html.replace('</style>',forced+'</style>');
 document.open();document.write(html);document.close();
 }catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
 </script></body></html>
