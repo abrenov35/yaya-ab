@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V146';
+const YAYA_VERSION='V147';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -421,6 +421,131 @@ const css=`
     height:26px !important;
   }
 }
+
+/* V147 — DOCUMENTS : même charte sobre/pro que Charges et AUTO-AB */
+#pane-docs .docs-toolbar,
+#pane-documents .docs-toolbar{
+  display:flex;
+  align-items:center;
+  margin:0 0 16px;
+}
+
+#pane-docs .btnp,
+#pane-documents .btnp{
+  min-height:38px !important;
+  padding:0 14px !important;
+  border:1px solid #b9c5d2 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  color:#102a46 !important;
+  box-shadow:none !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+#pane-docs .btnp:hover,
+#pane-documents .btnp:hover{
+  background:#f7f9fb !important;
+  border-color:#8fa0b3 !important;
+}
+
+/* Neutralise la grosse carte */
+#pane-docs .card,
+#pane-documents .card{
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  padding:0 !important;
+}
+
+/* Ligne documents : Type | Source | Chantier | Désignation | Date | Action */
+#pane-docs .docligne,
+#pane-documents .docligne,
+#pane-docs .doc-row-standard,
+#pane-documents .doc-row-standard{
+  display:grid !important;
+  grid-template-columns:120px 160px 170px minmax(220px,1fr) 100px 90px !important;
+  gap:12px !important;
+  align-items:center !important;
+  width:100% !important;
+  box-sizing:border-box !important;
+  min-height:52px !important;
+  padding:0 12px !important;
+  border-bottom:1px solid #e9eef3 !important;
+  background:#fff !important;
+}
+#pane-docs .docligne:first-child,
+#pane-documents .docligne:first-child,
+#pane-docs .doc-row-standard:first-child,
+#pane-documents .doc-row-standard:first-child{
+  border-top:1px solid #dce3eb !important;
+}
+#pane-docs .docligne:hover,
+#pane-documents .docligne:hover,
+#pane-docs .doc-row-standard:hover,
+#pane-documents .doc-row-standard:hover{
+  background:#fbfcfd !important;
+}
+
+/* Badges réduits */
+#pane-docs .badge,
+#pane-documents .badge{
+  height:28px !important;
+  padding:0 9px !important;
+  border-radius:6px !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+}
+
+/* Source / chantier plus sobres */
+#pane-docs .b-df,
+#pane-documents .b-df{
+  background:none !important;
+  color:#102a46 !important;
+  font-weight:800 !important;
+  padding:0 !important;
+  justify-content:flex-start !important;
+}
+#pane-docs .b-bl,
+#pane-documents .b-bl{
+  background:none !important;
+  color:#394d64 !important;
+  font-weight:600 !important;
+  padding:0 !important;
+  justify-content:flex-start !important;
+}
+
+/* Bouton voir sobre */
+#pane-docs button,
+#pane-documents button{
+  box-shadow:none !important;
+}
+#pane-docs .doc-view-btn,
+#pane-documents .doc-view-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  min-width:54px !important;
+  height:30px !important;
+  padding:0 10px !important;
+  border:1px solid #aebbc9 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  color:#5c6d81 !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+}
+
+@media(max-width:1100px){
+  #pane-docs .docligne,
+  #pane-documents .docligne,
+  #pane-docs .doc-row-standard,
+  #pane-documents .doc-row-standard{
+    grid-template-columns:100px 130px 135px minmax(150px,1fr) 90px 76px !important;
+    gap:8px !important;
+    padding:0 8px !important;
+  }
+}
 `
 
 
@@ -428,7 +553,27 @@ html=html.replace('</head>','<style>'+css+'</style></head>');
 html=html.replace('</body>',`<script>
 function alignChantierTools(){const pane=document.getElementById('pane-chantiers');if(!pane)return;const search=pane.querySelector('input[placeholder*="Rechercher un chantier"]');if(!search)return;const createBtn=[...pane.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Créer un chantier'));if(!createBtn||createBtn.closest('.yaya-chantier-tools'))return;const searchWrap=search.parentElement;const tools=document.createElement('div');tools.className='yaya-chantier-tools';createBtn.parentNode.insertBefore(tools,createBtn);tools.appendChild(createBtn);const sw=document.createElement('div');sw.className='yaya-search-wrap';while(searchWrap.firstChild)sw.appendChild(searchWrap.firstChild);searchWrap.parentNode.insertBefore(sw,searchWrap);searchWrap.remove();tools.appendChild(sw);}
 function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.charge-edit-btn,.charge-valid-btn,.charge-dup-btn,.charge-rejet-btn').forEach(b=>{if(b.classList.contains('charge-action-icon'))return;let ico='',label='';if(b.classList.contains('charge-open-btn')){ico='👁';label='Voir la pièce';}else if(b.classList.contains('charge-edit-btn')){ico='✏️';label='Modifier';}else if(b.classList.contains('charge-valid-btn')){ico='✓';label='Valider';}else if(b.classList.contains('charge-dup-btn')){ico='⧉';label='Classer comme doublon';}else if(b.classList.contains('charge-rejet-btn')){ico='✕';label='Rejeter';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.classList.add('charge-action-icon');}});}
-function applyPatches(){alignChantierTools();iconiserActionsCharges();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
+
+function styliserDocuments(){
+  const panes=[document.getElementById('pane-docs'),document.getElementById('pane-documents')].filter(Boolean);
+  panes.forEach(pane=>{
+    const add=[...pane.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Ajouter un document'));
+    if(add){
+      add.classList.add('docs-add-btn');
+      if(!add.parentElement.classList.contains('docs-toolbar')) add.parentElement.classList.add('docs-toolbar');
+    }
+    [...pane.querySelectorAll('button')].forEach(b=>{
+      const t=(b.textContent||'').trim().toUpperCase();
+      if(t==='VOIR') b.classList.add('doc-view-btn');
+    });
+    [...pane.querySelectorAll('.card > div')].forEach(row=>{
+      const txt=(row.textContent||'').trim();
+      if(!txt)return;
+      if(/MAIL|DOCUMENT/i.test(txt) && /VOIR/i.test(txt)) row.classList.add('doc-row-standard');
+    });
+  });
+}
+function applyPatches(){alignChantierTools();iconiserActionsCharges();styliserDocuments();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
 window.voirPiece=function(u){
   u=String(u||'').trim();if(!u)return;
   let src=u;
