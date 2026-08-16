@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V158';
+const YAYA_VERSION='V159';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -1198,6 +1198,39 @@ const css=`
     min-height:58px!important;padding:0 12px!important;
   }
 }
+
+/* V159 — HEURES : modale hebdomadaire centrée */
+#modalRoot .yaya-week-overlay{
+  position:fixed!important;inset:0!important;z-index:9999!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:20px!important;background:rgba(16,42,70,.38)!important;box-sizing:border-box!important;
+}
+#modalRoot .yaya-week-modal{
+  width:min(1040px,calc(100vw - 40px))!important;max-height:calc(100vh - 40px)!important;
+  overflow:auto!important;background:#fff!important;border-radius:14px!important;
+  box-shadow:0 18px 55px rgba(10,30,55,.24)!important;padding:22px!important;box-sizing:border-box!important;
+}
+.yaya-week-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}
+.yaya-week-head h5{margin:0!important;color:#102a46!important;font-size:18px!important}
+.yaya-week-close{height:38px;padding:0 16px;border:1px solid #c8d2de;border-radius:8px;background:#fff;color:#34465a;font-weight:700}
+.yaya-week-grid{display:grid;grid-template-columns:minmax(240px,2.3fr) repeat(5,minmax(88px,1fr));border-top:1px solid #dce4ec;border-left:1px solid #dce4ec}
+.yaya-week-cell{min-height:48px;padding:7px;border-right:1px solid #dce4ec;border-bottom:1px solid #dce4ec;box-sizing:border-box;display:flex;align-items:center}
+.yaya-week-day{justify-content:center;background:#f7f9fb;color:#102a46;font-weight:800;font-size:12px;text-align:center}
+.yaya-week-select{width:100%;height:38px;border:1px solid #c5d0dc;border-radius:7px;background:#fff;padding:0 10px;color:#24364b}
+.yaya-week-hours{width:100%;height:38px;border:1px solid #c5d0dc;border-radius:7px;text-align:center;color:#102a46;font-weight:700;box-sizing:border-box}
+.yaya-week-total-label{background:#f7f9fb;color:#102a46;font-weight:800}
+.yaya-week-total{justify-content:center;background:#f7f9fb;color:#16803a;font-weight:800}
+.yaya-week-total.warn{color:#d56a00;background:#fff8ed}
+.yaya-week-add{margin-top:12px;height:38px;padding:0 14px;border:1px dashed #7890aa;border-radius:7px;background:#fff;color:#102a46}
+.yaya-week-foot{display:flex;gap:10px;margin-top:18px}
+.yaya-week-save{height:44px;padding:0 20px;border:0;border-radius:8px;background:#2f8748;color:#fff;font-weight:800}
+.yaya-week-cancel{height:44px;padding:0 18px;border:1px solid #bdc9d6;border-radius:8px;background:#fff;color:#34465a}
+@media(max-width:760px){
+ #modalRoot .yaya-week-overlay{align-items:flex-start!important;padding:10px!important}
+ #modalRoot .yaya-week-modal{width:100%!important;max-height:calc(100vh - 20px)!important;padding:14px!important}
+ .yaya-week-table-wrap{overflow-x:auto}
+ .yaya-week-grid{min-width:820px}
+}
 `
 
 
@@ -1287,7 +1320,160 @@ function styliserDocuments(){
     });
   });
 }
-function applyPatches(){alignChantierTools();iconiserActionsCharges();styliserDocuments();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
+
+/* V159 — saisie hebdomadaire des heures, en conservant le stockage journalier existant */
+let yayaWeekCtx=null;
+
+function yayaIso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function yayaMonday(date){
+  const d=new Date(date);d.setHours(12,0,0,0);
+  const day=d.getDay()||7;d.setDate(d.getDate()-day+1);return d;
+}
+function yayaWeekDates(date){
+  const m=yayaMonday(date),a=[];
+  for(let i=0;i<5;i++){const d=new Date(m);d.setDate(m.getDate()+i);a.push(d)}
+  return a;
+}
+function yayaEscape(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+function yayaGetWorkers(){
+  if(typeof S==='undefined')return [];
+  return S.equipe||S.ouvriers||S.salaries||[];
+}
+function yayaWorkerName(id){
+  const w=yayaGetWorkers().find(x=>String(x.id)===String(id));
+  return w?(w.nom||w.prenom||w.name||'Ouvrier'):'Ouvrier';
+}
+function yayaProjects(){
+  if(typeof S==='undefined')return [];
+  return S.chantiers||[];
+}
+function yayaHourStore(){
+  if(typeof S==='undefined')return [];
+  return S.heures||[];
+}
+function yayaHourWorkerId(h){return String(h.ouvrierId??h.salarieId??h.equipeId??h.workerId??h.ouvrier??'')}
+function yayaHourDate(h){return String(h.date||h.jour||h.dateJour||'').slice(0,10)}
+function yayaHourProjectId(h){return String(h.chantierId??h.affectationId??h.motif??h.chantier??'')}
+function yayaHourValue(h){return Number(h.heures??h.nbHeures??h.h??h.duree??0)||0}
+
+function yayaOptionHtml(){
+  let out='<option value="">— Choisir chantier ou motif —</option>';
+  yayaProjects().forEach(c=>out+='<option value="'+yayaEscape(c.id)+'">'+yayaEscape(c.nom||c.name||'Chantier')+'</option>');
+  ['CP','Formation','Atelier','Administratif','Absence'].forEach(m=>out+='<option value="MOTIF:'+m+'">'+m+'</option>');
+  return out;
+}
+function yayaBlankRow(){
+  return {affectation:'',hours:['','','','','']};
+}
+function yayaExistingRows(workerId,dates){
+  const map=new Map();
+  yayaHourStore().filter(h=>yayaHourWorkerId(h)===String(workerId)).forEach(h=>{
+    const di=dates.findIndex(d=>yayaIso(d)===yayaHourDate(h));if(di<0)return;
+    const key=yayaHourProjectId(h);if(!key)return;
+    if(!map.has(key))map.set(key,{affectation:key,hours:['','','','','']});
+    map.get(key).hours[di]=yayaHourValue(h)||'';
+  });
+  const rows=[...map.values()];
+  while(rows.length<3)rows.push(yayaBlankRow());
+  return rows;
+}
+function yayaWeekRowHtml(row,index){
+  const opts=yayaOptionHtml().replace('value="'+yayaEscape(row.affectation)+'"','value="'+yayaEscape(row.affectation)+'" selected');
+  let s='<div class="yaya-week-cell"><select class="yaya-week-select" data-row="'+index+'">'+opts+'</select></div>';
+  for(let d=0;d<5;d++)s+='<div class="yaya-week-cell"><input class="yaya-week-hours" data-row="'+index+'" data-day="'+d+'" type="number" min="0" max="24" step="0.25" value="'+yayaEscape(row.hours[d])+'" placeholder="h" oninput="yayaWeekTotals()"></div>';
+  return s;
+}
+function yayaRenderWeekRows(){
+  const body=document.getElementById('yayaWeekRows');if(!body||!yayaWeekCtx)return;
+  body.innerHTML=yayaWeekCtx.rows.map(yayaWeekRowHtml).join('');
+  yayaWeekTotals();
+}
+function yayaWeekTotals(){
+  const expected=Number(yayaWeekCtx?.expected||8);
+  for(let d=0;d<5;d++){
+    let total=0;
+    document.querySelectorAll('.yaya-week-hours[data-day="'+d+'"]').forEach(i=>total+=Number(i.value)||0);
+    const el=document.getElementById('yayaTotal'+d);if(el){el.textContent=total.toLocaleString('fr-FR')+' h';el.classList.toggle('warn',total>expected)}
+  }
+}
+function yayaAddWeekRow(){
+  if(!yayaWeekCtx)return;
+  yayaWeekCtx.rows.push(yayaBlankRow());yayaRenderWeekRows();
+}
+function openYayaWeekHours(workerId,date){
+  const dates=yayaWeekDates(date||new Date());
+  const worker=yayaGetWorkers().find(x=>String(x.id)===String(workerId));
+  const expected=worker?Number(worker.heuresJour||worker.hJour||8)||8:8;
+  yayaWeekCtx={workerId:String(workerId),dates,expected,rows:yayaExistingRows(workerId,dates)};
+  const root=document.getElementById('modalRoot');if(!root)return;
+  const days=['LUNDI','MARDI','MERCREDI','JEUDI','VENDREDI'];
+  const head=days.map((n,i)=>'<div class="yaya-week-cell yaya-week-day">'+n+'<br><small>'+dates[i].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+'</small></div>').join('');
+  const totals=days.map((_,i)=>'<div class="yaya-week-cell yaya-week-total" id="yayaTotal'+i+'">0 h</div>').join('');
+  root.innerHTML='<div class="yaya-week-overlay" onclick="if(event.target===this)closeModal()"><div class="yaya-week-modal">'
+   +'<div class="yaya-week-head"><h5>'+yayaEscape(yayaWorkerName(workerId))+' — Semaine du '+dates[0].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' au '+dates[4].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+'</h5><button class="yaya-week-close" onclick="closeModal()">Fermer</button></div>'
+   +'<div class="yaya-week-table-wrap"><div class="yaya-week-grid"><div class="yaya-week-cell yaya-week-day">AFFECTATION</div>'+head+'<div id="yayaWeekRows" style="display:contents"></div><div class="yaya-week-cell yaya-week-total-label">TOTAL JOURNALIER</div>'+totals+'</div></div>'
+   +'<button class="yaya-week-add" onclick="yayaAddWeekRow()">＋ Ajouter une affectation</button>'
+   +'<div class="yaya-week-foot"><button class="yaya-week-save" onclick="yayaSaveWeek()">Enregistrer</button><button class="yaya-week-cancel" onclick="closeModal()">Annuler</button></div>'
+   +'</div></div>';
+  yayaRenderWeekRows();
+}
+async function yayaSaveWeek(){
+  if(!yayaWeekCtx)return;
+  const ctx=yayaWeekCtx;
+  const rows=[...document.querySelectorAll('#yayaWeekRows .yaya-week-select')].map((sel,r)=>({
+    affectation:sel.value,
+    hours:[0,1,2,3,4].map(d=>Number(document.querySelector('.yaya-week-hours[data-row="'+r+'"][data-day="'+d+'"]')?.value)||0)
+  }));
+  const dates=ctx.dates.map(yayaIso),store=yayaHourStore();
+  const old=store.filter(h=>yayaHourWorkerId(h)===ctx.workerId&&dates.includes(yayaHourDate(h)));
+  const keep=store.filter(h=>!(yayaHourWorkerId(h)===ctx.workerId&&dates.includes(yayaHourDate(h))));
+  const sample=old[0]||{};
+  const fresh=[];
+  rows.forEach(row=>{
+    if(!row.affectation)return;
+    row.hours.forEach((hours,d)=>{
+      if(hours<=0)return;
+      const h={...sample};
+      h.id=(typeof uid==='function'?uid():Date.now()+'_'+Math.random());
+      if('salarieId' in sample)h.salarieId=ctx.workerId; else if('equipeId' in sample)h.equipeId=ctx.workerId; else h.ouvrierId=ctx.workerId;
+      h.date=dates[d];h.jour=dates[d];h.heures=hours;h.nbHeures=hours;h.h=hours;
+      if(row.affectation.startsWith('MOTIF:')){h.chantierId='';h.motif=row.affectation.slice(6)}
+      else {h.chantierId=row.affectation;h.motif=''}
+      fresh.push(h);
+    });
+  });
+  const merged=keep.concat(fresh);
+  if(typeof S!=='undefined')S.heures=merged;
+  let ok=true;
+  try{
+    if(typeof apiPost==='function'){
+      ok=await apiPost('setHeures',merged);
+      if(ok===false&&typeof toast==='function')toast('Sauvegarde des heures impossible',true);
+    }
+  }catch(e){ok=false;if(typeof toast==='function')toast('Sauvegarde des heures impossible',true)}
+  if(ok!==false){closeModal();if(typeof render==='function')render();if(typeof toast==='function')toast('Semaine enregistrée ✓')}
+}
+/* Intercepte la modale journalière existante sans modifier les données/pages voisines */
+function yayaUpgradeHoursModal(){
+  const root=document.getElementById('modalRoot');if(!root)return;
+  const modal=root.querySelector('.modal');if(!modal||modal.classList.contains('yaya-week-modal'))return;
+  const title=(modal.querySelector('h5')?.textContent||'').trim();
+  const select=modal.querySelector('select');
+  const hours=modal.querySelector('input[type="number"],input[placeholder="h"]');
+  if(!select||!hours||!/Lun|Mar|Mer|Jeu|Ven|lundi|mardi|mercredi|jeudi|vendredi/i.test(title))return;
+  let workerId=modal.dataset.ouvrierId||modal.getAttribute('data-ouvrier-id')||'';
+  if(!workerId){
+    const name=title.split('—')[0].trim().toLowerCase();
+    const w=yayaGetWorkers().find(x=>String(x.nom||x.prenom||x.name||'').trim().toLowerCase()===name);
+    if(w)workerId=w.id;
+  }
+  if(!workerId)return;
+  const dm=title.match(/(\d{1,2})\s+(janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)/i);
+  openYayaWeekHours(workerId,new Date());
+}
+
+function applyPatches(){alignChantierTools();yayaUpgradeHoursModal();iconiserActionsCharges();styliserDocuments();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
 window.voirPiece=function(u){
   u=String(u||'').trim();if(!u)return;
   let src=u;
