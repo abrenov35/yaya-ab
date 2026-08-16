@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V156';
+const YAYA_VERSION='V157';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -979,6 +979,136 @@ const css=`
     flex:1 1 100% !important;
     width:100% !important;
     max-width:none !important;
+  }
+}
+
+/* V157 — HEADER YAYA : charte AB STOCK uniquement
+   Aucun contenu sous le header n'est ciblé. */
+.hdr{
+  background:#243f8f !important;
+  min-height:62px !important;
+  height:62px !important;
+  padding:8px 18px !important;
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+  color:#fff !important;
+  box-shadow:none !important;
+}
+
+/* Identité Yaya */
+.hdr .brand{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  height:42px !important;
+  padding-right:16px !important;
+  margin:0 !important;
+  border-right:1px solid rgba(255,255,255,.32) !important;
+  flex:0 0 auto !important;
+  white-space:nowrap !important;
+}
+.hdr .brand b{
+  color:#fff !important;
+  font-size:21px !important;
+  font-weight:800 !important;
+  line-height:1 !important;
+}
+.hdr .brand span{
+  color:#ffc928 !important;
+  font-size:10px !important;
+  font-weight:600 !important;
+  letter-spacing:.13em !important;
+  text-transform:uppercase !important;
+  white-space:nowrap !important;
+}
+
+/* Groupe d'onglets : mêmes proportions que AB STOCK */
+.hdr .tabs{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+  flex:0 0 auto !important;
+  margin:0 !important;
+}
+.hdr .tab{
+  position:relative !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:7px !important;
+  min-width:140px !important;
+  height:42px !important;
+  padding:0 16px !important;
+  border:1px solid #7d91c7 !important;
+  border-radius:7px !important;
+  background:#294796 !important;
+  color:#fff !important;
+  box-shadow:none !important;
+  font-size:13px !important;
+  font-weight:700 !important;
+  line-height:1 !important;
+  white-space:nowrap !important;
+}
+.hdr .tab:hover{
+  background:#3453a2 !important;
+}
+.hdr .tab.on{
+  background:#4964ad !important;
+  color:#fff !important;
+  border-color:#8fa3d7 !important;
+}
+.hdr .tab.on::after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:-1px;
+  height:3px;
+  background:#f5a300;
+  border-radius:0 0 6px 6px;
+}
+
+/* Icônes de navigation — purement visuelles */
+.hdr .tab[data-tab="chantiers"]::before{content:"🏗️";font-size:12px}
+.hdr .tab[data-tab="achats"]::before{content:"💳";font-size:12px}
+.hdr .tab[data-tab="documents"]::before{content:"📄";font-size:12px}
+.hdr .tab[data-tab="heures"]::before{content:"🕒";font-size:12px}
+.hdr .tab[data-tab="equipe"]::before{content:"👷";font-size:12px}
+
+/* Version juste après le dernier onglet */
+.hdr .sync,
+.hdr #yayaVersion{
+  margin:0 0 0 4px !important;
+  padding:0 !important;
+  color:rgba(255,255,255,.75) !important;
+  opacity:1 !important;
+  font-size:11px !important;
+  font-weight:700 !important;
+  white-space:nowrap !important;
+  flex:0 0 auto !important;
+}
+
+/* Le syncState masqué ne doit prendre aucune place */
+.hdr #syncState{
+  display:none !important;
+}
+
+/* Responsive : même ligne, défilement horizontal si nécessaire */
+@media(max-width:1050px){
+  .hdr{
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    scrollbar-width:none !important;
+  }
+  .hdr::-webkit-scrollbar{display:none !important}
+  .hdr .brand span{display:none !important}
+  .hdr .tab{
+    min-width:auto !important;
+    padding:0 13px !important;
   }
 }
 `
