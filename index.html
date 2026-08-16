@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V147';
+const YAYA_VERSION='V148';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -545,6 +545,62 @@ const css=`
     gap:8px !important;
     padding:0 8px !important;
   }
+}
+
+/* V148 — DOCUMENTS : alignement vertical et horizontal cohérent */
+#pane-docs .docligne,
+#pane-documents .docligne,
+#pane-docs .doc-row-standard,
+#pane-documents .doc-row-standard{
+  align-items:center !important;
+}
+
+#pane-docs .docligne > *,
+#pane-documents .docligne > *,
+#pane-docs .doc-row-standard > *,
+#pane-documents .doc-row-standard > *{
+  display:flex !important;
+  align-items:center !important;
+  min-height:52px !important;
+  margin:0 !important;
+  line-height:1.2 !important;
+}
+
+/* Type centré */
+#pane-docs .docligne > *:nth-child(1),
+#pane-documents .docligne > *:nth-child(1),
+#pane-docs .doc-row-standard > *:nth-child(1),
+#pane-documents .doc-row-standard > *:nth-child(1){
+  justify-content:center !important;
+}
+
+/* Source, chantier, désignation et date alignés à gauche */
+#pane-docs .docligne > *:nth-child(2),
+#pane-documents .docligne > *:nth-child(2),
+#pane-docs .doc-row-standard > *:nth-child(2),
+#pane-documents .doc-row-standard > *:nth-child(2),
+#pane-docs .docligne > *:nth-child(3),
+#pane-documents .docligne > *:nth-child(3),
+#pane-docs .doc-row-standard > *:nth-child(3),
+#pane-documents .doc-row-standard > *:nth-child(3),
+#pane-docs .docligne > *:nth-child(4),
+#pane-documents .docligne > *:nth-child(4),
+#pane-docs .doc-row-standard > *:nth-child(4),
+#pane-documents .doc-row-standard > *:nth-child(4),
+#pane-docs .docligne > *:nth-child(5),
+#pane-documents .docligne > *:nth-child(5),
+#pane-docs .doc-row-standard > *:nth-child(5),
+#pane-documents .doc-row-standard > *:nth-child(5){
+  justify-content:flex-start !important;
+  text-align:left !important;
+}
+
+/* Action centrée dans sa colonne */
+#pane-docs .docligne > *:last-child,
+#pane-documents .docligne > *:last-child,
+#pane-docs .doc-row-standard > *:last-child,
+#pane-documents .doc-row-standard > *:last-child{
+  justify-content:center !important;
 }
 `
 
