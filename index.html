@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V157';
+const YAYA_VERSION='V158';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -1106,6 +1106,67 @@ const css=`
     flex:1 1 220px !important;
     width:auto !important;
     min-width:180px !important;
+  }
+}
+
+/* V158 — CHANTIERS : bouton + recherche côte à côte, sans loupe */
+#pane-chantiers{
+  position:relative !important;
+}
+
+/* Le bouton reste à gauche */
+#pane-chantiers > div:first-child{
+  display:inline-flex !important;
+  align-items:center !important;
+  margin:0 !important;
+  vertical-align:top !important;
+}
+
+/* Le bloc recherche vient réellement à droite du bouton */
+#pane-chantiers > div:nth-child(2){
+  display:inline-block !important;
+  position:relative !important;
+  width:360px !important;
+  max-width:360px !important;
+  margin:0 0 14px 10px !important;
+  vertical-align:top !important;
+}
+
+/* champ plus compact */
+#pane-chantiers #filtreInput{
+  width:360px !important;
+  max-width:360px !important;
+  min-width:260px !important;
+  height:40px !important;
+  padding:0 14px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+}
+
+/* enlève totalement la loupe */
+#pane-chantiers > div:nth-child(2) > span{
+  display:none !important;
+}
+
+/* sécurité : annule l'ancien padding prévu pour l'icône */
+#pane-chantiers #filtreInput{
+  padding-left:14px !important;
+  padding-right:14px !important;
+}
+
+@media(max-width:760px){
+  #pane-chantiers > div:first-child,
+  #pane-chantiers > div:nth-child(2){
+    display:block !important;
+  }
+  #pane-chantiers > div:nth-child(2){
+    width:100% !important;
+    max-width:none !important;
+    margin:8px 0 14px !important;
+  }
+  #pane-chantiers #filtreInput{
+    width:100% !important;
+    max-width:none !important;
   }
 }
 `
