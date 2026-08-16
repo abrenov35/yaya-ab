@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V155';
+const YAYA_VERSION='V156';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -933,6 +933,166 @@ const css=`
   #pane-equipe > .card > .achligne > .badge:nth-of-type(3){grid-area:cout}
   #pane-equipe > .card > .achligne > button.btn2{grid-area:edit}
   #pane-equipe > .card > .achligne > .spacer{display:none !important}
+}
+
+/* V156 — ÉQUIPE : intégration du visuel validé, CSS uniquement */
+
+/* bouton Ajouter */
+#pane-equipe > div:first-child .btnp{
+  min-height:40px !important;
+  padding:0 16px !important;
+  border:1px solid #bcc9d8 !important;
+  border-radius:8px !important;
+  background:#fff !important;
+  color:#102a46 !important;
+  box-shadow:none !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+
+/* titres */
+#pane-equipe > .note{
+  margin:18px 0 8px !important;
+  color:#102a46 !important;
+  opacity:1 !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  letter-spacing:.02em !important;
+}
+
+/* cartes -> lignes continues */
+#pane-equipe > .card{
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  box-shadow:none !important;
+}
+
+/* structure : NOM | H/SEM | €/H | espace | CRAYON
+   La colonne TYPE reste dans le DOM mais est masquée. */
+#pane-equipe > .card > .achligne{
+  display:grid !important;
+  grid-template-columns: minmax(180px,1.25fr) minmax(130px,.9fr) minmax(110px,.8fr) minmax(80px,2fr) 44px 0 !important;
+  gap:14px !important;
+  align-items:center !important;
+  width:100% !important;
+  min-height:56px !important;
+  padding:0 16px 0 34px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  border-top:0 !important;
+  border-bottom:1px solid #e1e7ed !important;
+  border-left:2px solid #2dbb62 !important;
+  background:#fff !important;
+}
+
+/* nom */
+#pane-equipe > .card > .achligne > b:first-child{
+  grid-column:1 !important;
+  display:block !important;
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#102a46 !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+}
+
+/* masque SALARIÉ / SOUS-TRAITANT */
+#pane-equipe > .card > .achligne > span:nth-child(2){
+  display:none !important;
+}
+
+/* salariés : heures puis coût */
+#pane-equipe > .card > .achligne > span:nth-child(3){
+  grid-column:2 !important;
+}
+#pane-equipe > .card > .achligne > span:nth-child(4){
+  grid-column:3 !important;
+}
+
+/* heures + coût en texte simple */
+#pane-equipe > .card > .achligne > span:nth-child(3),
+#pane-equipe > .card > .achligne > span:nth-child(4){
+  display:flex !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  height:auto !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#334d68 !important;
+  font-size:11px !important;
+  font-weight:500 !important;
+}
+
+/* sous-traitants : leur unique 50 €/h est placé dans la colonne coût */
+#pane-equipe > .card > .achligne > span:nth-child(2).b-avenant + span:nth-child(3){
+  grid-column:3 !important;
+}
+
+/* spacer */
+#pane-equipe > .card > .achligne > .spacer{
+  grid-column:4 !important;
+}
+
+/* crayon à droite */
+#pane-equipe > .card > .achligne > button.btn2{
+  grid-column:5 !important;
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:34px !important;
+  min-width:34px !important;
+  max-width:34px !important;
+  height:34px !important;
+  padding:0 !important;
+  border:1px solid #0b63d8 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  color:#0b63d8 !important;
+  box-shadow:none !important;
+  font-size:0 !important;
+}
+#pane-equipe > .card > .achligne > button.btn2::before{
+  content:"✎";
+  font-size:14px !important;
+  line-height:1 !important;
+}
+#pane-equipe > .card > .achligne > button.btn2:hover{
+  background:#eef5ff !important;
+}
+
+/* bouton supprimer/retrait non affiché */
+#pane-equipe > .card > .achligne > button.x{
+  display:none !important;
+}
+
+/* séparation visuelle sous-traitants orange.
+   On cible les lignes qui contiennent le badge sous-traitant via :has(),
+   sans modifier le DOM ni le JS. */
+#pane-equipe > .card:has(.b-avenant) > .achligne{
+  border-left-color:#f0a126 !important;
+}
+
+@media(max-width:900px){
+  #pane-equipe > .card > .achligne{
+    grid-template-columns:minmax(120px,1.2fr) 105px 80px minmax(10px,1fr) 38px 0 !important;
+    gap:8px !important;
+    padding-left:14px !important;
+  }
 }
 `
 
