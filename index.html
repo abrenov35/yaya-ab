@@ -935,51 +935,50 @@ const css=`
   #pane-equipe > .card > .achligne > .spacer{display:none !important}
 }
 
-/* V156 — CHANTIERS : recherche à droite de Créer, sans toucher aux cartes */
-#pane-chantiers{
-  position:relative !important;
+/* V156 — barre d’actions Chantiers : bouton + recherche côte à côte */
+#pane-chantiers .yaya-chantier-tools{
+  display:flex !important;
+  align-items:center !important;
+  gap:10px !important;
+  flex-wrap:nowrap !important;
+  margin:0 0 14px !important;
 }
 
-/* espace réservé à la ligne d'outils */
-#pane-chantiers > div:first-child{
-  margin-bottom:14px !important;
+#pane-chantiers .yaya-chantier-tools > button{
+  flex:0 0 auto !important;
+  height:40px !important;
+  margin:0 !important;
 }
 
-/* cible uniquement le conteneur réel du champ recherche */
-#pane-chantiers > div:has(> #filtreInput){
-  position:absolute !important;
-  top:0 !important;
-  left:210px !important;
+#pane-chantiers .yaya-search-wrap{
+  flex:0 0 420px !important;
   width:420px !important;
   max-width:420px !important;
+  position:relative !important;
   margin:0 !important;
-  z-index:2 !important;
 }
 
-/* champ compact */
-#pane-chantiers #filtreInput{
+#pane-chantiers .yaya-search-wrap input{
   width:100% !important;
-  max-width:none !important;
   height:40px !important;
   margin:0 !important;
   padding:0 14px !important;
   box-sizing:border-box !important;
 }
 
-/* loupe uniquement dans le conteneur de recherche */
-#pane-chantiers > div:has(> #filtreInput) > span{
+/* retire la loupe déplacée avec le champ */
+#pane-chantiers .yaya-search-wrap > span{
   display:none !important;
 }
 
-/* mobile : retour sous le bouton */
 @media(max-width:700px){
-  #pane-chantiers > div:has(> #filtreInput){
-    position:relative !important;
-    top:auto !important;
-    left:auto !important;
+  #pane-chantiers .yaya-chantier-tools{
+    flex-wrap:wrap !important;
+  }
+  #pane-chantiers .yaya-search-wrap{
+    flex:1 1 100% !important;
     width:100% !important;
     max-width:none !important;
-    margin:8px 0 14px !important;
   }
 }
 `
