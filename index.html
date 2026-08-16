@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V157';
+const YAYA_VERSION='V155';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -934,191 +934,6 @@ const css=`
   #pane-equipe > .card > .achligne > button.btn2{grid-area:edit}
   #pane-equipe > .card > .achligne > .spacer{display:none !important}
 }
-
-/* V157 — ÉQUIPE calquée sur DOCUMENTS */
-#pane-equipe{
-  color:#24364b;
-}
-
-/* bouton Ajouter : identique Documents */
-#pane-equipe > div:first-child .btnp{
-  min-height:38px !important;
-  padding:0 14px !important;
-  border:1px solid #b9c5d2 !important;
-  border-radius:7px !important;
-  background:#fff !important;
-  color:#102a46 !important;
-  box-shadow:none !important;
-  font-size:12px !important;
-  font-weight:700 !important;
-}
-#pane-equipe > div:first-child .btnp:hover{
-  background:#f7f9fb !important;
-  border-color:#8fa0b3 !important;
-}
-
-/* titres de section */
-#pane-equipe > .note{
-  margin:18px 0 8px !important;
-  color:#66758a !important;
-  font-size:10px !important;
-  font-weight:700 !important;
-  letter-spacing:.08em !important;
-  text-transform:uppercase !important;
-  opacity:1 !important;
-}
-
-/* chaque card devient une ligne de tableau comme Documents */
-#pane-equipe > .card{
-  margin:0 !important;
-  padding:0 !important;
-  border:0 !important;
-  border-radius:0 !important;
-  background:#fff !important;
-  box-shadow:none !important;
-}
-
-#pane-equipe > .card > .achligne{
-  display:grid !important;
-  grid-template-columns:160px 150px 155px 110px minmax(20px,1fr) 44px 0 !important;
-  gap:12px !important;
-  align-items:center !important;
-  width:100% !important;
-  min-height:54px !important;
-  padding:0 16px !important;
-  margin:0 !important;
-  box-sizing:border-box !important;
-  border-top:0 !important;
-  border-bottom:1px solid #e2e8ef !important;
-  background:#fff !important;
-}
-#pane-equipe > .card:first-of-type > .achligne{
-  border-top:1px solid #d6dee7 !important;
-}
-#pane-equipe > .card > .achligne:hover{
-  background:#fbfcfd !important;
-}
-
-/* Nom */
-#pane-equipe > .card > .achligne > b:nth-child(1){
-  display:block !important;
-  margin:0 !important;
-  padding:0 !important;
-  border:0 !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  color:#102a46 !important;
-  font-size:12px !important;
-  font-weight:800 !important;
-  text-align:left !important;
-  white-space:nowrap !important;
-}
-
-/* TYPE = rectangle fin comme MAIL / DOCUMENT */
-#pane-equipe > .card > .achligne > span:nth-child(2){
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:130px !important;
-  min-width:130px !important;
-  max-width:130px !important;
-  height:32px !important;
-  min-height:32px !important;
-  padding:0 8px !important;
-  border-radius:7px !important;
-  background:#fff !important;
-  box-sizing:border-box !important;
-  font-size:10px !important;
-  font-weight:800 !important;
-}
-
-/* Salarié */
-#pane-equipe > .card > .achligne > span:nth-child(2).b-doc{
-  border:1px solid #9fd3b0 !important;
-  color:#08742d !important;
-}
-
-/* Sous-traitant */
-#pane-equipe > .card > .achligne > span:nth-child(2).b-avenant{
-  border:1px solid #e0c77f !important;
-  color:#8b6200 !important;
-}
-
-/* Heures / coût = texte simple comme colonnes Documents */
-#pane-equipe > .card > .achligne > span:nth-child(3),
-#pane-equipe > .card > .achligne > span:nth-child(4){
-  display:flex !important;
-  align-items:center !important;
-  justify-content:flex-start !important;
-  width:auto !important;
-  min-width:0 !important;
-  max-width:none !important;
-  height:auto !important;
-  min-height:0 !important;
-  padding:0 !important;
-  margin:0 !important;
-  border:0 !important;
-  border-radius:0 !important;
-  background:transparent !important;
-  color:#4f647c !important;
-  font-size:11px !important;
-  font-weight:500 !important;
-  text-align:left !important;
-}
-
-/* Sous-traitants : leur unique coût horaire va dans la colonne coût */
-#pane-equipe > .card > .achligne > span:nth-child(2).b-avenant + span:nth-child(3){
-  grid-column:4 !important;
-}
-
-/* espace flexible masqué */
-#pane-equipe > .card > .achligne > .spacer{
-  display:block !important;
-}
-
-/* crayon = exactement le style Documents */
-#pane-equipe > .card > .achligne > button.btn2{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:32px !important;
-  min-width:32px !important;
-  max-width:32px !important;
-  height:32px !important;
-  padding:0 !important;
-  border:1px solid #0b63d8 !important;
-  border-radius:7px !important;
-  background:#fff !important;
-  color:#0b63d8 !important;
-  box-shadow:none !important;
-  font-size:0 !important;
-  line-height:1 !important;
-}
-#pane-equipe > .card > .achligne > button.btn2::before{
-  content:"✎";
-  font-size:14px !important;
-}
-#pane-equipe > .card > .achligne > button.btn2:hover{
-  background:#eef5ff !important;
-}
-
-/* retrait masqué visuellement, fonctionnement conservé */
-#pane-equipe > .card > .achligne > button.x{
-  display:none !important;
-}
-
-@media(max-width:1050px){
-  #pane-equipe > .card > .achligne{
-    grid-template-columns:125px 135px 125px 92px minmax(10px,1fr) 40px 0 !important;
-    gap:8px !important;
-    padding:0 10px !important;
-  }
-  #pane-equipe > .card > .achligne > span:nth-child(2){
-    width:118px !important;
-    min-width:118px !important;
-    max-width:118px !important;
-  }
-}
 `
 
 
@@ -1128,53 +943,26 @@ function alignChantierTools(){const pane=document.getElementById('pane-chantiers
 function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.charge-edit-btn,.charge-valid-btn,.charge-dup-btn,.charge-rejet-btn').forEach(b=>{if(b.classList.contains('charge-action-icon'))return;let ico='',label='';if(b.classList.contains('charge-open-btn')){ico='👁';label='Voir la pièce';}else if(b.classList.contains('charge-edit-btn')){ico='✏️';label='Modifier';}else if(b.classList.contains('charge-valid-btn')){ico='✓';label='Valider';}else if(b.classList.contains('charge-dup-btn')){ico='⧉';label='Classer comme doublon';}else if(b.classList.contains('charge-rejet-btn')){ico='✕';label='Rejeter';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.classList.add('charge-action-icon');}});}
 
 
-/* V156 — crayon Documents : ouvre réellement editDocument(id) */
+/* V150 document edit helper */
 function modifierDocumentDepuisLigne(btn){
   const row=btn.closest('.doc-row-standard,.docligne');
   if(!row)return;
-
-  const direct=[...row.querySelectorAll('[onclick]')].find(el=>{
+  const existing=[...row.querySelectorAll('button,[onclick]')].find(el=>{
     if(el===btn)return false;
-    return /editDocument\s*\(/i.test(el.getAttribute('onclick')||'');
+    const oc=el.getAttribute&&el.getAttribute('onclick')||'';
+    return /editDoc|editDocument|openDocModal|openDocumentModal/i.test(oc);
   });
-  if(direct){direct.click();return;}
+  if(existing){ existing.click(); return; }
 
-  const norm=v=>String(v||'')
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-    .replace(/\s+/g,' ').trim().toUpperCase();
-
-  const rowText=norm(row.textContent);
-  const docs=[...(S.documents||[])].slice(-5).reverse();
-
-  let d=docs.find(x=>{
-    const c=chantierById(x.chantierId);
-    const type=norm(x.type);
-    const sujet=norm(String(x.sujet||'').split(' ').slice(0,2).join(' ')||'—');
-    const chantier=norm(c?c.nom:'?');
-    const titre=norm(String(x.titre||'').split(' ').slice(0,3).join(' '));
-    const date=String(x.date||'').slice(0,10).split('-').reverse().join('/');
-    return (!type||rowText.includes(type))
-      && (!sujet||rowText.includes(sujet))
-      && (!chantier||rowText.includes(chantier))
-      && (!titre||rowText.includes(titre))
-      && (!date||rowText.includes(norm(date)));
-  });
-
-  if(!d){
-    d=docs.find(x=>{
-      const c=chantierById(x.chantierId);
-      const chantier=norm(c?c.nom:'?');
-      const titre=norm(String(x.titre||'').split(' ').slice(0,3).join(' '));
-      return rowText.includes(chantier) && rowText.includes(titre);
-    });
+  const id=row.dataset.id||row.getAttribute('data-id')||'';
+  if(id){
+    if(typeof window.editDocument==='function'){window.editDocument(id);return;}
+    if(typeof window.editDoc==='function'){window.editDoc(id);return;}
   }
-
-  if(d && typeof editDocument==='function'){
-    editDocument(d.id);
-    return;
-  }
-
-  toast("Document non identifié pour modification",true);
+  if(typeof window.openDocModal==='function'){window.openDocModal(id||undefined);return;}
+  if(typeof window.openDocumentModal==='function'){window.openDocumentModal(id||undefined);return;}
+  if(typeof window.openDocument==='function'){window.openDocument(id||undefined);return;}
+  toast("Modification indisponible pour ce document",true);
 }
 
 function styliserDocuments(){
