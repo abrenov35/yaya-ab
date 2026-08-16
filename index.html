@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V148';
+const YAYA_VERSION='V149';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -602,6 +602,59 @@ const css=`
 #pane-documents .doc-row-standard > *:last-child{
   justify-content:center !important;
 }
+
+/* V149 — DOCUMENTS : actions œil + crayon harmonisées */
+#pane-docs .doc-actions,
+#pane-documents .doc-actions{
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  gap:6px !important;
+  min-height:52px !important;
+}
+
+#pane-docs .doc-view-btn,
+#pane-documents .doc-view-btn,
+#pane-docs .doc-edit-btn,
+#pane-documents .doc-edit-btn{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  flex:0 0 30px !important;
+  width:30px !important;
+  min-width:30px !important;
+  max-width:30px !important;
+  height:30px !important;
+  padding:0 !important;
+  border:1px solid #aebbc9 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  box-shadow:none !important;
+  font-size:13px !important;
+  line-height:1 !important;
+  cursor:pointer !important;
+}
+
+#pane-docs .doc-view-btn,
+#pane-documents .doc-view-btn{
+  color:#5c6d81 !important;
+}
+
+#pane-docs .doc-edit-btn,
+#pane-documents .doc-edit-btn{
+  color:#0b63d8 !important;
+  border-color:#0b63d8 !important;
+}
+
+#pane-docs .doc-view-btn:hover,
+#pane-documents .doc-view-btn:hover{
+  background:#f6f8fa !important;
+}
+
+#pane-docs .doc-edit-btn:hover,
+#pane-documents .doc-edit-btn:hover{
+  background:#eef5ff !important;
+}
 `
 
 
@@ -618,14 +671,59 @@ function styliserDocuments(){
       add.classList.add('docs-add-btn');
       if(!add.parentElement.classList.contains('docs-toolbar')) add.parentElement.classList.add('docs-toolbar');
     }
-    [...pane.querySelectorAll('button')].forEach(b=>{
-      const t=(b.textContent||'').trim().toUpperCase();
-      if(t==='VOIR') b.classList.add('doc-view-btn');
-    });
+
     [...pane.querySelectorAll('.card > div')].forEach(row=>{
       const txt=(row.textContent||'').trim();
-      if(!txt)return;
-      if(/MAIL|DOCUMENT/i.test(txt) && /VOIR/i.test(txt)) row.classList.add('doc-row-standard');
+      if(!txt || !/MAIL|DOCUMENT/i.test(txt)) return;
+      row.classList.add('doc-row-standard');
+
+      const buttons=[...row.querySelectorAll('button')];
+      let viewBtn=buttons.find(b=>/VOIR/i.test((b.textContent||'').trim()));
+      if(viewBtn){
+        viewBtn.textContent='◉';
+        viewBtn.title='Voir';
+        viewBtn.setAttribute('aria-label','Voir');
+        viewBtn.classList.add('doc-view-btn');
+      }
+
+      let actions = row.querySelector('.doc-actions');
+      if(!actions){
+        const last = row.lastElementChild;
+        if(last && last !== viewBtn && (last.tagName==='SPAN' || last.tagName==='DIV')){
+          actions = last;
+          actions.classList.add('doc-actions');
+        }else{
+          actions=document.createElement('span');
+          actions.className='doc-actions';
+          if(viewBtn) row.insertBefore(actions, viewBtn);
+          else row.appendChild(actions);
+        }
+      }
+      if(viewBtn && viewBtn.parentElement!==actions) actions.appendChild(viewBtn);
+
+      if(!actions.querySelector('.doc-edit-btn')){
+        const editBtn=document.createElement('button');
+        editBtn.type='button';
+        editBtn.className='doc-edit-btn';
+        editBtn.textContent='✎';
+        editBtn.title='Modifier';
+        editBtn.setAttribute('aria-label','Modifier');
+
+        const directEdit=buttons.find(b=>/MODIFIER|EDIT/i.test((b.textContent||'').trim()) && b!==viewBtn);
+        if(directEdit){
+          editBtn.onclick=()=>directEdit.click();
+          directEdit.style.display='none';
+        }else{
+          editBtn.onclick=()=>{
+            const id=row.dataset.id || row.getAttribute('data-id') || '';
+            if(id && typeof window.editDocument==='function') return window.editDocument(id);
+            if(id && typeof window.editDoc==='function') return window.editDoc(id);
+            const possible=[...row.querySelectorAll('[onclick]')].find(el=>/editDocument|editDoc|openDocument/i.test(el.getAttribute('onclick')||''));
+            if(possible) return possible.click();
+          };
+        }
+        actions.appendChild(editBtn);
+      }
     });
   });
 }
