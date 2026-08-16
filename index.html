@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V140';
+const YAYA_VERSION='V141';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -146,11 +146,12 @@ function applyPatches(){alignChantierTools();iconiserActionsCharges();document.q
 window.voirPiece=function(u){
   u=String(u||'').trim();if(!u)return;
   let src=u;
-  const drive=u.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if(drive){src='https://drive.google.com/file/d/'+drive[1]+'/preview';}
-  else if(/dropbox\.com/i.test(u)){
+  const driveMarker='drive.google.com/file/d/';
+  const drivePos=u.toLowerCase().indexOf(driveMarker);
+  if(drivePos>=0){const id=u.slice(drivePos+driveMarker.length).split('/')[0].split('?')[0].split('#')[0];src='https://drive.google.com/file/d/'+id+'/preview';}
+  else if(u.toLowerCase().includes('dropbox.com')){
     try{const d=new URL(u);d.searchParams.delete('dl');d.searchParams.set('raw','1');src=d.toString();}
-    catch(e){src=u.replace(/([?&])dl=[01]/i,'$1raw=1');if(!/[?&]raw=1/i.test(src))src+=(src.includes('?')?'&':'?')+'raw=1';}
+    catch(e){const p=u.split('?');const q=(p[1]||'').split('&').filter(x=>x&&x.slice(0,3)!=='dl='&&x.slice(0,4)!=='raw=').concat('raw=1');src=p[0]+'?'+q.join('&');}
   }
   const root=document.getElementById('modalRoot');if(!root)return;
   root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal piece-modal"><h5><span>Pièce jointe</span><button type="button" onclick="closeModal()">Fermer</button></h5><iframe class="piece-frame" src="'+esc(src)+'" title="Pièce jointe" loading="eager" allowfullscreen></iframe></div></div>';
