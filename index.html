@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V154';
+const YAYA_VERSION='V155';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -741,6 +741,198 @@ const css=`
       76px
       154px !important;
   }
+}
+
+/* V155 — ÉQUIPE : charte visuelle identique à Charges, CSS uniquement */
+#pane-equipe{
+  color:#24364b;
+}
+
+/* bouton Ajouter : même style sobre que Documents */
+#pane-equipe > div:first-child .btnp{
+  min-height:38px !important;
+  padding:0 14px !important;
+  border:1px solid #b9c5d2 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  color:#102a46 !important;
+  box-shadow:none !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+}
+#pane-equipe > div:first-child .btnp:hover{
+  background:#f7f9fb !important;
+  border-color:#8fa0b3 !important;
+}
+
+/* titres SALARIÉS / SOUS-TRAITANTS */
+#pane-equipe > .note{
+  color:#102a46 !important;
+  font-size:11px !important;
+  font-weight:800 !important;
+  letter-spacing:.04em !important;
+  opacity:1 !important;
+  margin-top:18px !important;
+  margin-bottom:7px !important;
+}
+
+/* chaque ancienne card devient une simple ligne de tableau */
+#pane-equipe > .card{
+  margin:0 !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:#fff !important;
+  box-shadow:none !important;
+}
+
+/* ligne : NOM | TYPE | H/SEM | €/H | ACTION */
+#pane-equipe > .card > .achligne{
+  display:grid !important;
+  grid-template-columns:150px 150px 150px 110px minmax(20px,1fr) 42px 0px !important;
+  gap:10px !important;
+  align-items:center !important;
+  width:100% !important;
+  min-height:54px !important;
+  padding:0 16px !important;
+  margin:0 !important;
+  box-sizing:border-box !important;
+  border-top:0 !important;
+  border-bottom:1px solid #e9eef3 !important;
+  background:#fff !important;
+  flex-wrap:nowrap !important;
+}
+#pane-equipe > .card:first-of-type > .achligne{
+  border-top:1px solid #dce3eb !important;
+}
+#pane-equipe > .card > .achligne:hover{
+  background:#fbfcfd !important;
+}
+
+/* nom */
+#pane-equipe > .card > .achligne > b:first-child{
+  display:block !important;
+  padding:0 !important;
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  color:#102a46 !important;
+  font-size:12px !important;
+  font-weight:800 !important;
+  text-align:left !important;
+  white-space:nowrap !important;
+}
+
+/* badges : rectangles blancs fins, comme BL/STOCK de Charges */
+#pane-equipe > .card > .achligne > .badge{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:130px !important;
+  min-width:130px !important;
+  max-width:130px !important;
+  height:32px !important;
+  padding:0 8px !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  box-sizing:border-box !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+}
+
+/* type salarié */
+#pane-equipe > .card > .achligne > .badge.b-doc:first-of-type{
+  border:1px solid #a9d7b7 !important;
+  color:#08742d !important;
+}
+
+/* type sous-traitant */
+#pane-equipe > .card > .achligne > .badge.b-avenant{
+  border:1px solid #e5c985 !important;
+  color:#8b6200 !important;
+}
+
+/* heures / coût : plus de pavé gris */
+#pane-equipe > .card > .achligne > .badge.b-doc:not(:first-of-type){
+  width:auto !important;
+  min-width:0 !important;
+  max-width:none !important;
+  justify-content:flex-start !important;
+  padding:0 !important;
+  border:0 !important;
+  background:transparent !important;
+  color:#4f647c !important;
+  font-size:11px !important;
+  font-weight:500 !important;
+}
+
+/* bouton Modifier = crayon bleu, même famille que Documents */
+#pane-equipe > .card > .achligne > button.btn2{
+  display:inline-flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  width:32px !important;
+  min-width:32px !important;
+  max-width:32px !important;
+  height:32px !important;
+  padding:0 !important;
+  border:1px solid #0b63d8 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  color:#0b63d8 !important;
+  box-shadow:none !important;
+  font-size:0 !important;
+  overflow:hidden !important;
+}
+#pane-equipe > .card > .achligne > button.btn2::before{
+  content:"✎";
+  font-size:14px !important;
+  line-height:1 !important;
+}
+#pane-equipe > .card > .achligne > button.btn2:hover{
+  background:#eef5ff !important;
+}
+
+/* masque le bouton retirer sans toucher à la fonction existante */
+#pane-equipe > .card > .achligne > button.x{
+  display:none !important;
+}
+
+/* sous-traitants : leur coût horaire se place dans la colonne €/h */
+#pane-equipe > .card > .achligne > .badge.b-avenant + .badge.b-doc{
+  grid-column:4 !important;
+}
+
+/* largeur moyenne */
+@media(max-width:1050px){
+  #pane-equipe > .card > .achligne{
+    grid-template-columns:120px 135px 125px 90px minmax(10px,1fr) 38px 0px !important;
+    gap:7px !important;
+    padding:0 10px !important;
+  }
+  #pane-equipe > .card > .achligne > .badge{
+    width:118px !important;
+    min-width:118px !important;
+    max-width:118px !important;
+  }
+}
+
+/* mobile : 2 lignes propres */
+@media(max-width:760px){
+  #pane-equipe > .card > .achligne{
+    grid-template-columns:1fr 118px 38px !important;
+    grid-template-areas:
+      "nom type edit"
+      "heures cout edit";
+    row-gap:5px !important;
+    min-height:72px !important;
+  }
+  #pane-equipe > .card > .achligne > b:first-child{grid-area:nom}
+  #pane-equipe > .card > .achligne > .badge:first-of-type{grid-area:type}
+  #pane-equipe > .card > .achligne > .badge:nth-of-type(2){grid-area:heures}
+  #pane-equipe > .card > .achligne > .badge:nth-of-type(3){grid-area:cout}
+  #pane-equipe > .card > .achligne > button.btn2{grid-area:edit}
+  #pane-equipe > .card > .achligne > .spacer{display:none !important}
 }
 `
 
