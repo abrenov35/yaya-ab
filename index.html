@@ -5,8 +5,75 @@
 (async()=>{try{
   const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/ea6b09202383c9d82ce6a353e6cff6455f922537/index.html';
   let html=await (await fetch(base,{cache:'no-store'})).text();
-  html=html.replace("const YAYA_VERSION='V159';","const YAYA_VERSION='V160';");
+  html=html.replace("const YAYA_VERSION='V159';","const YAYA_VERSION='V161';");
   html=html.replace('window.voirPiece=function(u){','window.voirPieceV159=function(u){');
+  const mobileCss=`
+/* V161 — CHARGES iPhone : 2 lignes stables, aucune colonne ne déborde */
+@media(max-width:760px){
+  #pane-achats{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
+  #pane-achats .controle-card,
+  #pane-achats .validees-card{width:100%!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
+  #pane-achats .controle-ligne,
+  #pane-achats .charge-validee-ligne{
+    display:grid!important;
+    grid-template-columns:82px minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "type fournisseur montant"
+      "chantier designation actions"!important;
+    gap:7px 10px!important;
+    min-width:0!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-height:88px!important;
+    padding:10px 9px!important;
+    box-sizing:border-box!important;
+    align-items:center!important;
+  }
+  #pane-achats .controle-ligne>.badge,
+  #pane-achats .charge-validee-ligne>.badge{
+    grid-area:type!important;
+    width:76px!important;min-width:76px!important;max-width:76px!important;
+    height:34px!important;padding:0 6px!important;justify-content:center!important;
+  }
+  #pane-achats .charge-fournisseur{grid-area:fournisseur!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:13px!important}
+  #pane-achats .charge-montant{grid-area:montant!important;justify-self:end!important;white-space:nowrap!important;font-size:13px!important}
+  #pane-achats .charge-chantier{grid-area:chantier!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:12px!important}
+  #pane-achats .charge-designation{grid-area:designation!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:12px!important}
+  #pane-achats .controle-actions,
+  #pane-achats .charge-validee-actions{
+    grid-area:actions!important;
+    display:flex!important;
+    align-items:center!important;
+    justify-content:flex-end!important;
+    flex-wrap:nowrap!important;
+    width:auto!important;min-width:0!important;max-width:none!important;
+    gap:4px!important;overflow:visible!important;
+  }
+  #pane-achats .charge-open-btn,
+  #pane-achats .charge-edit-btn,
+  #pane-achats .charge-valid-btn,
+  #pane-achats .charge-dup-btn,
+  #pane-achats .charge-rejet-btn{
+    flex:0 0 28px!important;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;padding:0!important;margin:0!important
+  }
+  #pane-achats .controle-title,
+  #pane-achats .section-title{margin-left:0!important;margin-right:0!important}
+}
+@media(max-width:390px){
+  #pane-achats .controle-ligne,
+  #pane-achats .charge-validee-ligne{grid-template-columns:74px minmax(0,1fr) auto!important;gap:6px 7px!important;padding:9px 7px!important}
+  #pane-achats .controle-ligne>.badge,
+  #pane-achats .charge-validee-ligne>.badge{width:68px!important;min-width:68px!important;max-width:68px!important;font-size:9px!important}
+  #pane-achats .controle-actions,
+  #pane-achats .charge-validee-actions{gap:3px!important}
+  #pane-achats .charge-open-btn,
+  #pane-achats .charge-edit-btn,
+  #pane-achats .charge-valid-btn,
+  #pane-achats .charge-dup-btn,
+  #pane-achats .charge-rejet-btn{flex-basis:26px!important;width:26px!important;min-width:26px!important;max-width:26px!important;height:26px!important}
+}
+`;
+  html=html.replace('</head>','<style>'+mobileCss+'</style></head>');
   const fix=`
 window.voirPiece=function(u){
   u=String(u||'').trim();if(!u)return;
