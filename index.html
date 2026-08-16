@@ -3,58 +3,85 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/feff6c6c2d95501a9a61cb87253fb7c02f6ac0b3/index.html';
+  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/4a4ac3e91fea00e99629d3e67f59865c3cf33a1b/index.html';
   let html=await (await fetch(base,{cache:'no-store'})).text();
-  html=html.replace("const YAYA_VERSION='V162';","const YAYA_VERSION='V163';");
+  html=html.replace("const YAYA_VERSION='V163';","const YAYA_VERSION='V165';");
   const css=`
-/* V163 — iPhone vertical : Documents */
-@media(max-width:760px) and (orientation:portrait){
-  #pane-documents,#pane-docs{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
-  #pane-documents .card,#pane-docs .card{width:100%!important;max-width:100%!important;padding:0!important;margin-bottom:0!important;overflow:hidden!important}
-  #pane-documents .card>.doc-row-standard,#pane-docs .card>.doc-row-standard,
-  #pane-documents .docligne,#pane-docs .docligne{
-    display:grid!important;
-    grid-template-columns:68px minmax(0,1fr) auto!important;
-    grid-template-areas:"type source date" "chantier designation actions"!important;
-    gap:6px 8px!important;
-    width:100%!important;max-width:100%!important;min-width:0!important;
-    min-height:0!important;height:auto!important;
-    padding:10px 8px!important;margin:0!important;box-sizing:border-box!important;
-    border-bottom:1px solid #e4e9ef!important;background:#fff!important;align-items:center!important;
-  }
-  #pane-documents .doc-row-standard>*,#pane-docs .doc-row-standard>*,#pane-documents .docligne>*,#pane-docs .docligne>*{
-    min-width:0!important;min-height:0!important;height:auto!important;margin:0!important;line-height:1.15!important;
-  }
-  #pane-documents .doc-row-standard>*:nth-child(1),#pane-docs .doc-row-standard>*:nth-child(1),#pane-documents .docligne>*:nth-child(1),#pane-docs .docligne>*:nth-child(1){grid-area:type!important}
-  #pane-documents .doc-row-standard>*:nth-child(2),#pane-docs .doc-row-standard>*:nth-child(2),#pane-documents .docligne>*:nth-child(2),#pane-docs .docligne>*:nth-child(2){grid-area:source!important;font-size:12px!important;font-weight:700!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(3),#pane-docs .doc-row-standard>*:nth-child(3),#pane-documents .docligne>*:nth-child(3),#pane-docs .docligne>*:nth-child(3){grid-area:chantier!important;font-size:11px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(4),#pane-docs .doc-row-standard>*:nth-child(4),#pane-documents .docligne>*:nth-child(4),#pane-docs .docligne>*:nth-child(4){grid-area:designation!important;font-size:11px!important;color:#687789!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(5),#pane-docs .doc-row-standard>*:nth-child(5),#pane-documents .docligne>*:nth-child(5),#pane-docs .docligne>*:nth-child(5){grid-area:date!important;justify-self:end!important;font-size:10.5px!important;color:#9aa4af!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(6),#pane-docs .doc-row-standard>*:nth-child(6),#pane-documents .docligne>*:nth-child(6),#pane-docs .docligne>*:nth-child(6){grid-area:actions!important;justify-self:end!important}
-  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,#pane-docs .badge.b-mail,#pane-docs .badge.b-doc{
-    width:62px!important;min-width:62px!important;max-width:62px!important;height:28px!important;min-height:28px!important;padding:0 4px!important;font-size:8px!important;border-radius:6px!important;
-  }
-  #pane-documents .doc-actions,#pane-docs .doc-actions{display:flex!important;gap:3px!important;align-items:center!important;justify-content:flex-end!important;min-height:0!important;height:auto!important}
-  #pane-documents .doc-view-btn,#pane-documents .doc-edit-btn,#pane-docs .doc-view-btn,#pane-docs .doc-edit-btn{width:26px!important;min-width:26px!important;max-width:26px!important;height:26px!important;padding:0!important;margin:0!important}
-  #pane-documents>.note,#pane-docs>.note{font-size:10.5px!important;line-height:1.3!important;margin:8px 0 0!important}
+/* V165 — RESPONSIVE GLOBAL, CSS UNIQUEMENT. Aucun changement du lecteur de pièces. */
+html,body{max-width:100%;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box}
+img,svg,video,canvas{max-width:100%;height:auto}
+input,select,textarea,button{max-width:100%}
 
-  /* Chantiers : cartes compactes sans débordement horizontal */
-  #pane-chantiers{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
-  #pane-chantiers .card{width:100%!important;max-width:100%!important;box-sizing:border-box!important;padding:10px!important;overflow:hidden!important}
-  #pane-chantiers .card .top{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px 8px!important;width:100%!important;max-width:100%!important}
-  #pane-chantiers .card .top>b:first-child{flex:1 1 55%!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:13px!important}
-  #pane-chantiers .card .top>.num{flex:0 0 auto!important;font-size:10.5px!important}
-  #pane-chantiers .card .top>.spacer{display:none!important}
-  #pane-chantiers .card .top>span[style*="width:150px"]{width:auto!important;flex:1 1 42%!important;text-align:left!important;font-size:11px!important;margin:0!important}
-  #pane-chantiers .card .top>span[style*="width:56px"]{width:auto!important;min-width:46px!important;flex:0 0 auto!important;margin:0!important;padding:3px 7px!important}
-  #pane-chantiers .card .top>button{flex:0 0 auto!important;margin-left:0!important;padding:5px 9px!important;font-size:10.5px!important}
-  #pane-chantiers .yaya-chantier-tools{width:100%!important;max-width:100%!important;gap:7px!important}
-  #pane-chantiers .yaya-search-wrap{flex:1 1 100%!important;width:100%!important;max-width:100%!important}
+@media(max-width:900px){
+  .wrap,.container,main{max-width:100%!important;width:100%!important}
+  .card,.panel,.pane{max-width:100%!important;min-width:0!important}
+  .top,.toolbar,.actions,.filters{max-width:100%!important}
+  table{max-width:100%}
+  .modal{max-width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
 }
-@media(max-width:390px) and (orientation:portrait){
-  #pane-chantiers .card .top>span[style*="width:150px"]{flex-basis:100%!important}
-  #pane-documents .card>.doc-row-standard,#pane-docs .card>.doc-row-standard,#pane-documents .docligne,#pane-docs .docligne{grid-template-columns:60px minmax(0,1fr) auto!important;gap:5px 6px!important;padding:9px 6px!important}
-  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,#pane-docs .badge.b-mail,#pane-docs .badge.b-doc{width:56px!important;min-width:56px!important;max-width:56px!important;font-size:7.5px!important}
+
+@media(max-width:760px){
+  body{font-size:13px!important}
+  .wrap,.container,main{padding-left:8px!important;padding-right:8px!important}
+  .card{max-width:100%!important;min-width:0!important}
+  .top,.toolbar,.actions,.filters{flex-wrap:wrap!important;gap:6px!important}
+  .top>*{min-width:0!important}
+  .inp,.msel,.mnum,input,select,textarea{font-size:16px}
+  .modal{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;margin:8px!important;padding:14px!important;border-radius:14px!important}
+  .modal .mrow{flex-wrap:wrap!important}
+  .modal .mfoot{position:sticky!important;bottom:-14px!important;background:#fff!important;z-index:2!important;padding:10px 0 4px!important;display:flex!important;gap:8px!important}
+  .modal .mfoot button{flex:1 1 auto!important}
+
+  /* tableaux larges : scroll local au lieu de faire déborder toute la page */
+  .table-wrap,.scroll,.wh-scroll{max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
+
+  /* Charges */
+  #pane-achats{max-width:100%!important;overflow-x:hidden!important}
+  #pane-achats .controle-ligne,#pane-achats .charge-validee-ligne{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    grid-template-columns:78px minmax(0,1fr) 72px!important;
+    grid-auto-rows:auto!important;gap:5px 7px!important;padding:9px 7px!important
+  }
+  #pane-achats .controle-ligne>*,#pane-achats .charge-validee-ligne>*{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #pane-achats .badge{max-width:76px!important;min-width:0!important;width:auto!important}
+
+  /* Documents : conserver le correctif V163 et empêcher tout débordement */
+  #pane-documents,#pane-docs{max-width:100%!important;overflow-x:hidden!important}
+  #pane-documents .card,#pane-docs .card{max-width:100%!important;min-width:0!important}
+
+  /* Equipe */
+  #pane-equipe{max-width:100%!important;overflow-x:hidden!important}
+  #pane-equipe>.card>.achligne{
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    grid-template-columns:minmax(100px,1.4fr) minmax(90px,1fr) 64px 64px 34px!important;
+    gap:5px!important;padding:8px!important
+  }
+  #pane-equipe>.card>.achligne>*{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+
+  /* Chantiers */
+  #pane-chantiers{max-width:100%!important;overflow-x:hidden!important}
+  #pane-chantiers .card{max-width:100%!important;min-width:0!important}
+  #pane-chantiers .card .top{max-width:100%!important;min-width:0!important;flex-wrap:wrap!important}
+
+  /* Heures : la grille hebdomadaire reste exploitable sur petit écran */
+  .week-hours-modal{width:calc(100vw - 12px)!important;max-width:none!important}
+  .wh-scroll{width:100%!important}
+  .wh-grid,.wh-summary{min-width:610px!important}
+}
+
+@media(max-width:430px) and (orientation:portrait){
+  .wrap,.container,main{padding-left:6px!important;padding-right:6px!important}
+  .btnp,.btn2,button{min-height:34px}
+  #pane-chantiers .card{padding:8px!important}
+  #pane-chantiers .card .top>b:first-child{flex:1 1 65%!important}
+  #pane-achats .controle-ligne,#pane-achats .charge-validee-ligne{grid-template-columns:70px minmax(0,1fr) 66px!important}
+  #pane-equipe>.card>.achligne{grid-template-columns:minmax(105px,1fr) 72px 58px 34px!important}
+}
+
+@media(min-width:431px) and (max-width:900px) and (orientation:landscape){
+  .modal{max-height:calc(100dvh - 12px)!important;margin:6px!important}
+  .card{max-width:100%!important}
 }
 `;
   html=html.replace('</head>','<style>'+css+'</style></head>');
