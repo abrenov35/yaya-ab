@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V152';
+const YAYA_VERSION='V153';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -818,14 +818,16 @@ const css=`
   }
 }
 
-/* V152 — CHARGES : colonne Type comme Documents */
+/* V153 — HOTFIX SAFE
+   Uniquement présentation des badges Type de Charges.
+   Aucun JavaScript ajouté/modifié. */
 #pane-achats .badge.b-doc{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
-  width:110px !important;
-  min-width:110px !important;
-  max-width:110px !important;
+  width:108px !important;
+  min-width:108px !important;
+  max-width:108px !important;
   height:30px !important;
   min-height:30px !important;
   padding:0 8px !important;
@@ -838,11 +840,10 @@ const css=`
   font-weight:800 !important;
 }
 
-/* première colonne élargie pour reprendre exactement le principe Documents */
 #pane-achats .controle-ligne,
 #pane-achats .charge-validee-ligne{
   grid-template-columns:
-    120px
+    118px
     minmax(110px,1.05fr)
     minmax(110px,1.05fr)
     minmax(180px,2.4fr)
@@ -854,7 +855,7 @@ const css=`
   #pane-achats .controle-ligne,
   #pane-achats .charge-validee-ligne{
     grid-template-columns:
-      110px
+      108px
       minmax(90px,.9fr)
       minmax(90px,.9fr)
       minmax(130px,1.7fr)
