@@ -1,236 +1,359 @@
 <!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAVAGEAU - Gestionnaire de Projets</title>
-    <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <div>
-                <span class="title">PAVAGEAU</span>
-                <span class="title-code" id="projectCode">2026-250</span>
-            </div>
-            <div class="actions">
-                <select class="btn" id="statusSelect" style="padding: 6px 12px;">
-                    <option>En cours</option>
-                    <option>Terminé</option>
-                    <option>En attente</option>
-                </select>
-                <button class="btn danger" onclick="deleteProject()">Supprimer</button>
-                <button class="btn" onclick="closeProject()">Fermer</button>
-            </div>
-        </div>
+<html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes"><title>Yaya — AB RENOV 35</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%231e3a8a%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2238%22 font-family=%22Arial%22 font-weight=%22700%22 fill=%22white%22%3EY%3C/text%3E%3C/svg%3E"></head>
+<body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
+<script>
+(async()=>{try{
+const YAYA_VERSION='V145';
+const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
+let html=await (await fetch(base,{cache:'no-store'})).text();
 
-        <div class="stats">
-            <div class="stat-card">
-                <div class="stat-label">Marché HT</div>
-                <div class="stat-value" id="marketValue">21 048 €</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Achats</div>
-                <div class="stat-value" id="purchasesValue">1 104 €</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Main-d'oeuvre</div>
-                <div class="stat-value" id="laborValue">630 €</div>
-            </div>
-            <div class="stat-card margin">
-                <div class="stat-label">Marge</div>
-                <div class="stat-value" style="color: #3B6D11;" id="marginValue">19 314 €</div>
-                <div class="stat-percent" id="marginPercent">92%</div>
-            </div>
-        </div>
+/* Correctifs fonctionnels conservés */
+const yayaFavicon='<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Crect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%231e3a8a%22/%3E%3Ctext x=%2232%22 y=%2243%22 text-anchor=%22middle%22 font-size=%2238%22 font-family=%22Arial%22 font-weight=%22700%22 fill=%22white%22%3EY%3C/text%3E%3C/svg%3E">';
+html=html.replace(/<head>/i,'<head>'+yayaFavicon);
+html=html.replace(/<meta name="viewport"[^>]*>/i,'<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">');
+html=html.replace('<div id="loader" style="display: none;">','<div id="loader" style="display: flex;">');
+html=html.replace('expChantiers.clear(); expChantiers.add(nid);','expChantiers.clear();');
+html=html.replace(/MAIN-D\\?['’]OEUVRE/g,'CHARGES').replace(/Main-d\\?['’]oeuvre/g,'Charges').replace(/MAIN-D\\?['’]ŒUVRE/g,'CHARGES').replace(/Main-d\\?['’]œuvre/g,'Charges');
+html=html.replace(/(<button class="tab" data-tab="achats">)Achats(<\/button>)/i,'$1Charges$2');
+html=html.replace(/Ajouter un achat\s*\/\s*une facture/gi,'Ajouter un achat / une charge');
+html=html.replace('const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Facture sous-traitant","Avoir"];','const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Stock","Facture sous-traitant","Avoir"];');
+html=html.replace('const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};','const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Stock":"b-doc","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};');
+html=html.replace(/<span class="sync" id="syncState"[^>]*>.*?<\/span>/i,'<span class="sync" id="yayaVersion">'+YAYA_VERSION+'</span><span class="sync" id="syncState" style="display:none"></span>');
+/* V118 — validation ciblée uniquement sur les lignes de charges */
+html=html.replace(/lienIco\(a\.lien\)\+'<button/g,"lienIco(a.lien)+chargeValidationHtml(a)+'<button");
+html=html.replace(/if\(S\.achats\.length\)\{/,"html+=resumeChargesAutoHtml();if(S.achats.length){");
+html=html.replace("const a={id:uid(),chantierId,typeDoc,fournisseur,designation,date,montantHT,sousTraitant,lien:achatLien};","const a={id:uid(),chantierId,typeDoc,fournisseur,designation,date,montantHT,sousTraitant,lien:achatLien,statutValidation:'VALIDEE',origine:'MANUELLE'};");
+html=html.replace('function achatsChantier(cid){ return S.achats.filter(a=>String(a.chantierId)===String(cid)); }','function achatsChantier(cid){ return S.achats.filter(a=>String(a.chantierId)===String(cid)&&a.statutValidation!=="A_VALIDER"&&a.statutValidation!=="REJETEE"&&a.statutValidation!=="DOUBLON"); }');
+/* V115 — charges automatiques incluses, validation opérateur */
+html=html.replace("const a={id:uid(),chantierId,typeDoc,fournisseur,designation,date,montantHT,sousTraitant,lien:achatLien};","const a={id:uid(),chantierId,typeDoc,fournisseur,designation,date,montantHT,sousTraitant,lien:achatLien,statutValidation:\"VALIDEE\",origine:\"MANUELLE\"};");
+html=html.replace("function toast(msg, err){","function chargeValidationHtml(a){\n  if(!a||a.statutValidation!==\"A_VALIDER\")return \"\";\n  return '<span class=\"charge-auto\"><span class=\"charge-auto-badge\">AUTO · À VALIDER</span><button class=\"charge-valid-btn\" onclick=\"validerChargeAuto(\\''+a.id+'\\')\">VALIDER</button></span>';\n}\nasync function validerChargeAuto(id){\n  const a=S.achats.find(x=>x.id===id);if(!a)return;\n  a.statutValidation=\"VALIDEE\";a.valideeLe=new Date().toISOString();\n  render();\n  if(await apiPost(\"setAchats\",S.achats))toast(\"Charge validée ✓\");\n}\nasync function ajouterChargeDetectee(charge){\n  charge=charge||{};\n  const a={id:charge.id||uid(),chantierId:String(charge.chantierId||\"\"),typeDoc:charge.typeDoc||\"BL\",fournisseur:charge.fournisseur||\"À vérifier\",designation:charge.designation||\"\",date:charge.date||isoDate(new Date()),montantHT:Number(charge.montantHT)||0,sousTraitant:charge.sousTraitant||\"\",lien:charge.lien||\"\",statutValidation:\"A_VALIDER\",origine:\"AB_DOCS\",confiance:Number(charge.confiance)||0};\n  if(!a.chantierId||!a.montantHT)throw new Error(\"Chantier et montant HT obligatoires\");\n  S.achats.push(a);render();\n  if(await apiPost(\"addAchat\",a)){toast(\"Charge automatique ajoutée — à valider\");return a;}\n  S.achats=S.achats.filter(x=>x.id!==a.id);render();throw new Error(\"Échec de sauvegarde\");\n}\nfunction resumeChargesAutoHtml(){\n  const enAttente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  if(!enAttente.length)return \"\";\n  const total=enAttente.reduce((t,a)=>t+(a.typeDoc===\"Avoir\"?-Number(a.montantHT||0):Number(a.montantHT||0)),0);\n  return '<div class=\"charge-auto-resume\"><b>'+enAttente.length+' charge'+(enAttente.length>1?'s':'')+' à valider</b><span>'+eur(total)+' € HT déjà inclus dans le total</span></div>';\n}\nfunction toast(msg, err){");
+html=html.split("+lienIco(a.lien)+'<button").join("+lienIco(a.lien)+chargeValidationHtml(a)+'<button");
+/* V124 — information opérationnelle, sans total prévisionnel */
+html=html.replace("function toast(msg, err){","function resumeChargesAutoHtml(){\n  const enAttente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  const chantiers=[...new Set(enAttente.map(a=>{const c=chantierById(a.chantierId);return c?c.nom:\"CHANTIER À VÉRIFIER\";}))];\n  const liste=chantiers.length?chantiers.map(n=>'<span class=\"chantier-attente\">'+esc(n)+'</span>').join(''):'<span class=\"aucune-attente\">Aucune pièce en attente</span>';\n  return '<div class=\"charge-attente-resume\"><div><small>PIÈCES À VALIDER</small><b>'+enAttente.length+'</b></div><div class=\"chantiers-attente\">'+liste+'</div></div>';\n}\nfunction toast(msg, err){");
+html=html.replace("function toast(msg, err){","async function classerChargeAuto(id,statut){\n  const a=S.achats.find(x=>x.id===id);if(!a)return;\n  a.statutValidation=statut;a.traiteeLe=new Date().toISOString();render();\n  if(await apiPost(\"setAchats\",S.achats))toast(statut===\"DOUBLON\"?\"Proposition classée comme doublon\":\"Proposition rejetée\");\n}\nfunction renderAchats(){\n  const el=document.getElementById(\"pane-achats\");\n  const attente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  const validees=S.achats.filter(a=>a.statutValidation!==\"A_VALIDER\"&&a.statutValidation!==\"REJETEE\"&&a.statutValidation!==\"DOUBLON\");\n\n  let html='<div class=\"charges-toolbar\"><button class=\"btnp charges-add-btn\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>';\n  html+='<div class=\"controle-title\"><b>À CONTRÔLER</b><span>'+attente.length+'</span></div>';\n\n  if(!attente.length){\n    html+='<div class=\"controle-vide\">Aucune charge automatique en attente</div>';\n  }else{\n    html+='<div class=\"card controle-card\">';\n    [...attente].reverse().forEach(a=>{\n      const c=chantierById(a.chantierId);\n      const voir=String(a.lien||\"\").startsWith(\"http\")\n        ? '<button class=\"charge-open-btn\" onclick=\"voirPiece(\\''+esc(a.lien)+'\\')\">VOIR</button>'\n        : \"\";\n      html+='<div class=\"controle-ligne charge-row-standard\">'\n        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"PIÈCE\").toUpperCase()+'</span>'\n        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"À vérifier\")+'</span>'\n        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"CHANTIER À VÉRIFIER\")+'</span>'\n        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'\n        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'\n        +'<div class=\"controle-actions\">'+voir\n          +'<button class=\"charge-edit-btn\" onclick=\"editAchat(\\''+a.id+'\\')\">MODIFIER</button>'\n          +'<button class=\"charge-valid-btn\" onclick=\"validerChargeAuto(\\''+a.id+'\\')\">VALIDER</button>'\n          +'<button class=\"charge-dup-btn\" onclick=\"classerChargeAuto(\\''+a.id+'\\',\\'DOUBLON\\')\">DOUBLON</button>'\n          +'<button class=\"charge-rejet-btn\" onclick=\"classerChargeAuto(\\''+a.id+'\\',\\'REJETEE\\')\">REJETER</button>'\n        +'</div></div>';\n    });\n    html+='</div>';\n  }\n\n  if(validees.length){\n    html+='<div class=\"section-title\">DERNIÈRES CHARGES VALIDÉES</div><div class=\"card validees-card\">';\n    [...validees].reverse().slice(0,5).forEach(a=>{\n      const c=chantierById(a.chantierId);\n      const voir=String(a.lien||\"\").startsWith(\"http\")\n        ? '<button class=\"charge-open-btn\" onclick=\"voirPiece(\\''+esc(a.lien)+'\\')\">VOIR</button>'\n        : \"\";\n      html+='<div class=\"charge-validee-ligne charge-row-standard\">'\n        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"\").toUpperCase()+'</span>'\n        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"\")+'</span>'\n        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"?\")+'</span>'\n        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'\n        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'\n        +'<span class=\"charge-validee-actions\">'+voir+'</span>'\n      +'</div>';\n    });\n    html+='</div>';\n  }\n  el.innerHTML=html;\n}\nfunction toast(msg, err){");
+html=html.replace("margin-bottom:14px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'+resumeChargesAutoHtml()","margin-bottom:10px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'");
+html=html.replace("function renderAchats(){","window.renderAchats=function(){");
+html=html.replace(/>OUVRIR<\/button>/g,'>VOIR</button>');
+html=html.replace(/>VOIR PJ<\/button>/g,'>VOIR</button>').replace(/>Remplacer PJ<\/button>/g,'>REMPLACER</button>');
+/* Neutralise définitivement l'ancien lecteur Drive qui ouvrait les URL non-Drive dans un onglet. */
+html=html.replace('function voirPiece(u){','function voirPieceAncienne(u){');
+html=html.replace("async function validerChargeAuto(id){","async function validerChargeAuto(id){\n  if(!await confirmerActionCharge('Valider cette charge ?','Elle sera intégrée définitivement dans la fiche du chantier.','VALIDER'))return;");
+html=html.replace("async function classerChargeAuto(id,statut){","async function classerChargeAuto(id,statut){\n  const confirme=statut===\"DOUBLON\"?await confirmerActionCharge('Confirmer le doublon ?','La proposition sera retirée de la file sans supprimer le mail ni la pièce.','DOUBLON'):await confirmerActionCharge('Rejeter cette proposition ?','La proposition sera retirée de la file sans supprimer le document original.','REJETER');\n  if(!confirme)return;");
+html=html.replace("function toast(msg, err){","function confirmerActionCharge(titre,message,action){\n  return new Promise(resolve=>{\n    const fond=document.createElement('div');fond.className='confirm-charge-fond';\n    fond.innerHTML='<div class=\"confirm-charge-box\"><h5>'+esc(titre)+'</h5><p>'+esc(message)+'</p><div><button class=\"confirm-charge-cancel\">ANNULER</button><button class=\"confirm-charge-ok\">'+esc(action)+'</button></div></div>';\n    const finir=v=>{fond.remove();resolve(v)};\n    fond.querySelector('.confirm-charge-cancel').onclick=()=>finir(false);\n    fond.querySelector('.confirm-charge-ok').onclick=()=>finir(true);\n    fond.onclick=e=>{if(e.target===fond)finir(false)};\n    document.body.appendChild(fond);fond.querySelector('.confirm-charge-cancel').focus();\n  });\n}\nfunction toast(msg, err){");
 
-        <div class="menu-tabs">
-            <div class="tab active" onclick="switchTab(event, 'marche')">Marché</div>
-            <div class="tab" onclick="switchTab(event, 'achats')">Achats</div>
-            <div class="tab" onclick="switchTab(event, 'heures')">Heures</div>
-        </div>
+const css=`
+/* YAYA V145 — ACHATS / CHARGES : TABLEAU PRO */
 
-        <!-- TAB MARCHÉ -->
-        <div id="marche-tab" class="tab-content">
-            <div class="section">
-                <div class="section-title">Marché</div>
-                <div class="items-list" id="marketList"></div>
-                <button class="add-btn" onclick="openMarketModal('new')">+ Ajouter un élément</button>
-            </div>
+:root{
+  --y-navy:#162d49;
+  --y-text:#24364b;
+  --y-muted:#6f7f92;
+  --y-line:#dfe5ec;
+  --y-line-soft:#edf1f5;
+  --y-green:#0f766e;
+  --y-violet:#6b5aa6;
+  --y-danger:#b42318;
+}
 
-            <div class="section">
-                <div class="section-title">Dépenses</div>
-                <div class="items-list" id="expensesList"></div>
-                <button class="add-btn" onclick="openExpenseModal('new')">+ Ajouter une dépense</button>
-            </div>
+#pane-achats{
+  color:var(--y-text);
+}
 
-            <div class="section">
-                <div class="section-title">Enregistrer un Document</div>
-                
-                <div style="background: var(--bg-accent); border: 1px solid var(--border-accent); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem;">
-                    <div style="display: flex; gap: 12px; align-items: flex-start; margin-bottom: 1rem;">
-                        <button class="btn primary" onclick="document.getElementById('fileInputDoc').click()" style="flex-shrink: 0;">
-                            📄 Déposer un document (PDF ou photo)
-                        </button>
-                        <button class="btn" onclick="alert('Capture photo - À implémenter')">📷 Coller une capture</button>
-                        <input type="file" id="fileInputDoc" multiple accept=".pdf,.jpg,.jpeg,.png,.gif" onchange="handleDocumentUpload(event)" style="display:none;">
-                    </div>
+/* Bouton principal */
+.charges-toolbar{
+  display:flex;
+  align-items:center;
+  margin:0 0 14px;
+}
+.charges-add-btn{
+  min-height:38px;
+  padding:0 16px;
+  border-radius:7px;
+  font-size:13px;
+  font-weight:700;
+}
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr auto; gap: 12px; align-items: end;">
-                        <div>
-                            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">Choisir le chantier</label>
-                            <select id="documentChantier" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
-                                <option>Choisir un chantier</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label style="display: block; font-size: 12px; margin-bottom: 4px; color: var(--text-secondary);">Type</label>
-                            <select id="documentType" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
-                                <option value="BL">BL</option>
-                                <option value="FACTURE">Facture</option>
-                                <option value="PHOTO">Photo</option>
-                                <option value="PLAN">Plan</option>
-                                <option value="AUTRE">Autre</option>
-                            </select>
-                        </div>
-                        <div>
-                            <input type="text" id="documentFournisseur" placeholder="Fournisseur" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
-                        </div>
-                        <div>
-                            <input type="date" id="documentDate" style="width: 100%; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
-                        </div>
-                    </div>
-                    <div style="margin-top: 1rem; display: flex; gap: 12px;">
-                        <input type="number" id="documentMontant" placeholder="Montant HT €" style="flex: 1; padding: 8px; border: 0.5px solid var(--border); border-radius: var(--radius);">
-                        <button class="btn primary" onclick="saveDocument()" style="background: #4CAF50; border-color: #4CAF50;">Enregistrer</button>
-                    </div>
-                </div>
+/* Titres */
+.controle-title{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:6px 0 8px;
+  color:var(--y-navy);
+  font-size:12px;
+  font-weight:800;
+  text-transform:uppercase;
+}
+.controle-title>span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  padding:0 6px;
+  border:1px solid #cfd7e1;
+  border-radius:999px;
+  background:#fff;
+  color:var(--y-navy);
+  font-size:10px;
+  font-weight:800;
+}
 
-                <div class="section-title" style="margin-top: 1.5rem;">Derniers Enregistrés</div>
-                <div class="items-list" id="documentsList"></div>
-            </div>
-        </div>
+.section-title{
+  margin:18px 0 8px;
+  color:var(--y-muted);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
 
-        <!-- TAB ACHATS -->
-        <div id="achats-tab" class="tab-content" style="display:none;">
-            <div class="section">
-                <div class="section-title">Achats</div>
-                <div class="stat-card" style="margin-bottom: 1rem;">
-                    <div class="stat-label">Total des achats</div>
-                    <div class="stat-value" id="totalPurchases">1 104 €</div>
-                </div>
-                <div class="items-list" id="achatsList"></div>
-            </div>
-        </div>
+/* Conteneurs façon tableau, sans grosse carte */
+.controle-card,
+.validees-card{
+  border:0 !important;
+  border-radius:0 !important;
+  background:transparent !important;
+  box-shadow:none !important;
+  overflow:visible !important;
+  padding:0 !important;
+}
 
-        <!-- TAB DOCUMENTS -->
-        <div id="documents-tab" class="tab-content" style="display:none;">
-            <div class="section">
-                <div class="section-title">Documents Chantier</div>
-                
-                <div class="upload-area" onclick="document.getElementById('fileInput').click();">
-                    <div class="upload-icon">📄</div>
-                    <div class="upload-text">Glissez vos documents ici ou cliquez pour parcourir</div>
-                    <div class="upload-subtext">PDF, images (JPG, PNG) • Max 50 MB</div>
-                    <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png,.gif" onchange="handleFileUpload(event)">
-                </div>
+/* TABLEAU :
+   TYPE | FOURNISSEUR | CHANTIER | DÉSIGNATION | MONTANT | ACTIONS */
+.controle-ligne,
+.charge-validee-ligne{
+  display:grid;
+  grid-template-columns:80px 190px 190px minmax(260px,1fr) 110px 150px;
+  column-gap:16px;
+  align-items:center;
+  min-height:48px;
+  padding:0 8px;
+  border-bottom:1px solid var(--y-line-soft);
+  background:#fff;
+}
+.controle-ligne:first-child,
+.charge-validee-ligne:first-child{
+  border-top:1px solid var(--y-line);
+}
+.controle-ligne:hover,
+.charge-validee-ligne:hover{
+  background:#fbfcfd;
+}
 
-                <div class="items-list" id="documentsList" style="margin-top: 1rem;"></div>
-            </div>
-        </div>
+/* léger repère vertical à gauche comme sur PJ */
+.controle-ligne{
+  border-left:3px solid #d0a15a;
+}
+.charge-validee-ligne{
+  border-left:3px solid #2f8f58;
+}
 
-        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 2rem;">
-            <button class="archive-btn" onclick="archiveProject()">Archiver</button>
-        </div>
-    </div>
+/* type */
+.badge.b-doc{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:max-content;
+  min-width:38px;
+  height:28px;
+  padding:0 8px;
+  border-radius:6px;
+  background:#e8eaed;
+  color:#1f2937;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+}
 
-    <!-- MODAL MARCHÉ -->
-    <div id="marketModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Ajouter un élément de marché</h2>
-                <button class="close-btn" onclick="closeModal('marketModal')">&times;</button>
-            </div>
-            <form onsubmit="saveMarketItem(event)">
-                <div class="form-group">
-                    <label>Type</label>
-                    <select id="marketType" required>
-                        <option value="DEVIS">Devis</option>
-                        <option value="AVENANT">Avenant</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nom</label>
-                    <input type="text" id="marketName" required placeholder="Nom de l'élément">
-                </div>
-                <div class="form-group">
-                    <label>Montant (€)</label>
-                    <input type="number" id="marketValue" required step="0.01" placeholder="0.00">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn" onclick="closeModal('marketModal')">Annuler</button>
-                    <button type="submit" class="btn primary">Ajouter</button>
-                </div>
-            </form>
-        </div>
-    </div>
+/* fournisseur et chantier : pas de grosses pastilles */
+.charge-fournisseur,
+.charge-chantier{
+  display:block;
+  min-width:0;
+  height:auto;
+  padding:0;
+  border-radius:0;
+  background:none;
+  font-size:11px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.charge-fournisseur{
+  color:var(--y-navy);
+  font-weight:800;
+}
+.charge-chantier{
+  color:#44566c;
+  font-weight:500;
+}
 
-    <!-- MODAL DÉPENSES -->
-    <div id="expenseModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Ajouter une dépense</h2>
-                <button class="close-btn" onclick="closeModal('expenseModal')">&times;</button>
-            </div>
-            <form onsubmit="saveExpense(event)">
-                <div class="form-group">
-                    <label>Type</label>
-                    <select id="expenseType" required>
-                        <option value="BL">Bon de Livraison</option>
-                        <option value="AVOIR">Avoir</option>
-                        <option value="FACTURE">Facture</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Nom</label>
-                    <input type="text" id="expenseName" required placeholder="Nom de la dépense">
-                </div>
-                <div class="form-group">
-                    <label>Montant (€)</label>
-                    <input type="number" id="expenseValue" required step="0.01" placeholder="0.00">
-                </div>
-                <div class="form-group">
-                    <label>Description (optionnel)</label>
-                    <textarea id="expenseDesc" placeholder="Description..."></textarea>
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn" onclick="closeModal('expenseModal')">Annuler</button>
-                    <button type="submit" class="btn primary">Ajouter</button>
-                </div>
-            </form>
-        </div>
-    </div>
+/* désignation */
+.charge-designation{
+  min-width:0;
+  color:#52647a;
+  font-size:11px;
+  line-height:1.2;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
 
-    <!-- MODAL ÉDITION NOM -->
-    <div id="editNameModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Modifier le nom</h2>
-                <button class="close-btn" onclick="closeModal('editNameModal')">&times;</button>
-            </div>
-            <form onsubmit="saveEditedName(event)">
-                <div class="form-group">
-                    <label>Nouveau nom</label>
-                    <input type="text" id="editedName" required placeholder="Entrez le nouveau nom">
-                </div>
-                <div class="form-actions">
-                    <button type="button" class="btn" onclick="closeModal('editNameModal')">Annuler</button>
-                    <button type="submit" class="btn primary">Enregistrer</button>
-                </div>
-            </form>
-        </div>
-    </div>
+/* montant */
+.charge-montant{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  height:auto;
+  padding:0;
+  border:0;
+  border-radius:0;
+  background:none;
+  color:var(--y-navy);
+  font-size:12px;
+  font-weight:800;
+  white-space:nowrap;
+}
 
-    <script src="app.js"></script>
-</body>
-</html>
+/* actions */
+.controle-actions,
+.charge-validee-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:6px;
+  min-width:0;
+}
+.charge-open-btn,
+.charge-edit-btn,
+.charge-valid-btn,
+.charge-dup-btn,
+.charge-rejet-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  padding:0;
+  border:1px solid #9daabc;
+  border-radius:8px;
+  background:#fff;
+  color:#59697d;
+  font-size:16px;
+  line-height:1;
+  cursor:pointer;
+}
+.charge-edit-btn{
+  color:#0b63d8;
+  border-color:#0b63d8;
+}
+.charge-valid-btn{
+  color:#16803d;
+  border-color:#6fb88a;
+}
+.charge-open-btn:hover,
+.charge-dup-btn:hover{
+  background:#f5f7f9;
+}
+.charge-edit-btn:hover{
+  background:#eef5ff;
+}
+.charge-valid-btn:hover{
+  background:#eef8f2;
+}
+.charge-rejet-btn{
+  color:var(--y-danger);
+}
+.charge-rejet-btn:hover{
+  background:#fff1f0;
+}
+
+/* écran moyen */
+@media(max-width:1250px){
+  .controle-ligne,
+  .charge-validee-ligne{
+    grid-template-columns:70px 150px 150px minmax(180px,1fr) 100px 145px;
+    column-gap:10px;
+    padding:0 6px;
+  }
+}
+
+/* mobile */
+@media(max-width:850px){
+  .controle-ligne,
+  .charge-validee-ligne{
+    grid-template-columns:54px minmax(0,1fr) 92px;
+    grid-template-areas:
+      "type fournisseur montant"
+      "chantier designation actions";
+    row-gap:6px;
+    min-height:78px;
+    padding:7px 6px;
+  }
+  .controle-ligne>.badge,
+  .charge-validee-ligne>.badge{grid-area:type}
+  .charge-fournisseur{grid-area:fournisseur}
+  .charge-chantier{grid-area:chantier}
+  .charge-designation{grid-area:designation}
+  .charge-montant{grid-area:montant}
+  .controle-actions,
+  .charge-validee-actions{grid-area:actions}
+  .charge-open-btn,
+  .charge-edit-btn,
+  .charge-valid-btn,
+  .charge-dup-btn,
+  .charge-rejet-btn{
+    width:32px;
+    height:32px;
+    border-radius:7px;
+    font-size:14px;
+  }
+}
+
+.piece-modal{
+  width:min(92vw,920px)!important;
+  height:min(86vh,720px)!important;
+  max-width:920px!important;
+}
+.piece-modal h5{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.piece-frame{
+  width:100%;
+  height:calc(100% - 46px);
+  border:0;
+  border-radius:8px;
+  background:#f8fafc;
+}
+`
+
+
+html=html.replace('</head>','<style>'+css+'</style></head>');
+html=html.replace('</body>',`<script>
+function alignChantierTools(){const pane=document.getElementById('pane-chantiers');if(!pane)return;const search=pane.querySelector('input[placeholder*="Rechercher un chantier"]');if(!search)return;const createBtn=[...pane.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Créer un chantier'));if(!createBtn||createBtn.closest('.yaya-chantier-tools'))return;const searchWrap=search.parentElement;const tools=document.createElement('div');tools.className='yaya-chantier-tools';createBtn.parentNode.insertBefore(tools,createBtn);tools.appendChild(createBtn);const sw=document.createElement('div');sw.className='yaya-search-wrap';while(searchWrap.firstChild)sw.appendChild(searchWrap.firstChild);searchWrap.parentNode.insertBefore(sw,searchWrap);searchWrap.remove();tools.appendChild(sw);}
+function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.charge-edit-btn,.charge-valid-btn,.charge-dup-btn,.charge-rejet-btn').forEach(b=>{if(b.classList.contains('charge-action-icon'))return;let ico='',label='';if(b.classList.contains('charge-open-btn')){ico='👁';label='Voir la pièce';}else if(b.classList.contains('charge-edit-btn')){ico='✏️';label='Modifier';}else if(b.classList.contains('charge-valid-btn')){ico='✓';label='Valider';}else if(b.classList.contains('charge-dup-btn')){ico='⧉';label='Classer comme doublon';}else if(b.classList.contains('charge-rejet-btn')){ico='✕';label='Rejeter';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.classList.add('charge-action-icon');}});}
+function applyPatches(){alignChantierTools();iconiserActionsCharges();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
+window.voirPiece=function(u){
+  u=String(u||'').trim();if(!u)return;
+  let src=u;
+  const driveMarker='drive.google.com/file/d/';
+  const drivePos=u.toLowerCase().indexOf(driveMarker);
+  if(drivePos>=0){const id=u.slice(drivePos+driveMarker.length).split('/')[0].split('?')[0].split('#')[0];src='https://drive.google.com/file/d/'+id+'/preview';}
+  else if(u.toLowerCase().includes('dropbox.com')){
+    try{const d=new URL(u);d.searchParams.delete('dl');d.searchParams.set('raw','1');src=d.toString();}
+    catch(e){const p=u.split('?');const q=(p[1]||'').split('&').filter(x=>x&&x.slice(0,3)!=='dl='&&x.slice(0,4)!=='raw=').concat('raw=1');src=p[0]+'?'+q.join('&');}
+  }
+  const root=document.getElementById('modalRoot');if(!root)return;
+  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal piece-modal"><h5><span>Pièce jointe</span><button type="button" onclick="closeModal()">Fermer</button></h5><iframe class="piece-frame" src="'+esc(src)+'" title="Pièce jointe" loading="eager" allowfullscreen></iframe></div></div>';
+};
+const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyPatches,0);return r};new MutationObserver(()=>applyPatches()).observe(document.documentElement,{childList:true,subtree:true});setTimeout(applyPatches,100);
+<\/script></body>`);
+
+document.open();document.write(html);document.close();
+}catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
+</script></body></html>
