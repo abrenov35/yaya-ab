@@ -5,7 +5,7 @@
 (async()=>{try{
   const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/ea6b09202383c9d82ce6a353e6cff6455f922537/index.html';
   let html=await (await fetch(base,{cache:'no-store'})).text();
-  html=html.replace("const YAYA_VERSION='V159';","const YAYA_VERSION='V161';");
+  html=html.replace("const YAYA_VERSION='V159';","const YAYA_VERSION='V162';");
   html=html.replace('window.voirPiece=function(u){','window.voirPieceV159=function(u){');
   const mobileCss=`
 /* V161 — CHARGES iPhone : 2 lignes stables, aucune colonne ne déborde */
@@ -71,6 +71,94 @@
   #pane-achats .charge-valid-btn,
   #pane-achats .charge-dup-btn,
   #pane-achats .charge-rejet-btn{flex-basis:26px!important;width:26px!important;min-width:26px!important;max-width:26px!important;height:26px!important}
+}
+
+/* V162 — DOCUMENTS iPhone : 2 lignes compactes, actions visibles */
+@media(max-width:760px){
+  #pane-documents,
+  #pane-docs{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
+  #pane-documents .card,
+  #pane-docs .card{width:100%!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
+  #pane-documents .docligne,
+  #pane-documents .doc-row-standard,
+  #pane-docs .docligne,
+  #pane-docs .doc-row-standard{
+    display:grid!important;
+    grid-template-columns:82px minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "type source date"
+      "chantier designation actions"!important;
+    gap:7px 10px!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    min-height:88px!important;
+    padding:10px 9px!important;
+    box-sizing:border-box!important;
+    align-items:center!important;
+  }
+  #pane-documents .docligne > *,
+  #pane-documents .doc-row-standard > *,
+  #pane-docs .docligne > *,
+  #pane-docs .doc-row-standard > *{
+    min-height:0!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+  #pane-documents .docligne > *:nth-child(1),
+  #pane-documents .doc-row-standard > *:nth-child(1),
+  #pane-docs .docligne > *:nth-child(1),
+  #pane-docs .doc-row-standard > *:nth-child(1){grid-area:type!important}
+  #pane-documents .docligne > *:nth-child(2),
+  #pane-documents .doc-row-standard > *:nth-child(2),
+  #pane-docs .docligne > *:nth-child(2),
+  #pane-docs .doc-row-standard > *:nth-child(2){grid-area:source!important}
+  #pane-documents .docligne > *:nth-child(3),
+  #pane-documents .doc-row-standard > *:nth-child(3),
+  #pane-docs .docligne > *:nth-child(3),
+  #pane-docs .doc-row-standard > *:nth-child(3){grid-area:chantier!important}
+  #pane-documents .docligne > *:nth-child(4),
+  #pane-documents .doc-row-standard > *:nth-child(4),
+  #pane-docs .docligne > *:nth-child(4),
+  #pane-docs .doc-row-standard > *:nth-child(4){grid-area:designation!important}
+  #pane-documents .docligne > *:nth-child(5),
+  #pane-documents .doc-row-standard > *:nth-child(5),
+  #pane-docs .docligne > *:nth-child(5),
+  #pane-docs .doc-row-standard > *:nth-child(5){grid-area:date!important;justify-self:end!important;white-space:nowrap!important}
+  #pane-documents .docligne > *:nth-child(6),
+  #pane-documents .doc-row-standard > *:nth-child(6),
+  #pane-docs .docligne > *:nth-child(6),
+  #pane-docs .doc-row-standard > *:nth-child(6){grid-area:actions!important;justify-self:end!important}
+  #pane-documents .docligne > *:nth-child(2),
+  #pane-documents .docligne > *:nth-child(3),
+  #pane-documents .docligne > *:nth-child(4),
+  #pane-documents .doc-row-standard > *:nth-child(2),
+  #pane-documents .doc-row-standard > *:nth-child(3),
+  #pane-documents .doc-row-standard > *:nth-child(4),
+  #pane-docs .docligne > *:nth-child(2),
+  #pane-docs .docligne > *:nth-child(3),
+  #pane-docs .docligne > *:nth-child(4),
+  #pane-docs .doc-row-standard > *:nth-child(2),
+  #pane-docs .doc-row-standard > *:nth-child(3),
+  #pane-docs .doc-row-standard > *:nth-child(4){overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #pane-documents .badge,
+  #pane-docs .badge{width:76px!important;min-width:76px!important;max-width:76px!important;height:34px!important;padding:0 6px!important;font-size:9px!important;justify-content:center!important}
+  #pane-documents .doc-actions,
+  #pane-docs .doc-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;min-height:0!important}
+  #pane-documents .doc-view-btn,
+  #pane-documents .doc-edit-btn,
+  #pane-docs .doc-view-btn,
+  #pane-docs .doc-edit-btn{width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;padding:0!important;margin:0!important}
+  #pane-documents > .note,
+  #pane-docs > .note{font-size:11px!important;line-height:1.35!important;margin-top:10px!important}
+}
+@media(max-width:390px){
+  #pane-documents .docligne,
+  #pane-documents .doc-row-standard,
+  #pane-docs .docligne,
+  #pane-docs .doc-row-standard{grid-template-columns:74px minmax(0,1fr) auto!important;gap:6px 7px!important;padding:9px 7px!important}
+  #pane-documents .badge,
+  #pane-docs .badge{width:68px!important;min-width:68px!important;max-width:68px!important;font-size:8.5px!important}
 }
 `;
   html=html.replace('</head>','<style>'+mobileCss+'</style></head>');
