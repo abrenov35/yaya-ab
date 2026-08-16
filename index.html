@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V141';
+const YAYA_VERSION='V142';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -30,11 +30,60 @@ html=html.replace("function toast(msg, err){","function chargeValidationHtml(a){
 html=html.split("+lienIco(a.lien)+'<button").join("+lienIco(a.lien)+chargeValidationHtml(a)+'<button");
 /* V124 — information opérationnelle, sans total prévisionnel */
 html=html.replace("function toast(msg, err){","function resumeChargesAutoHtml(){\n  const enAttente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  const chantiers=[...new Set(enAttente.map(a=>{const c=chantierById(a.chantierId);return c?c.nom:\"CHANTIER À VÉRIFIER\";}))];\n  const liste=chantiers.length?chantiers.map(n=>'<span class=\"chantier-attente\">'+esc(n)+'</span>').join(''):'<span class=\"aucune-attente\">Aucune pièce en attente</span>';\n  return '<div class=\"charge-attente-resume\"><div><small>PIÈCES À VALIDER</small><b>'+enAttente.length+'</b></div><div class=\"chantiers-attente\">'+liste+'</div></div>';\n}\nfunction toast(msg, err){");
-html=html.replace("function toast(msg, err){","async function classerChargeAuto(id,statut){\n  const a=S.achats.find(x=>x.id===id);if(!a)return;\n  a.statutValidation=statut;a.traiteeLe=new Date().toISOString();render();\n  if(await apiPost(\"setAchats\",S.achats))toast(statut===\"DOUBLON\"?\"Proposition classée comme doublon\":\"Proposition rejetée\");\n}\nfunction renderAchats(){\n  const el=document.getElementById(\"pane-achats\");\n  const attente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  const validees=S.achats.filter(a=>a.statutValidation!==\"A_VALIDER\"&&a.statutValidation!==\"REJETEE\"&&a.statutValidation!==\"DOUBLON\");\n  let html='<div style=\"margin-bottom:14px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'+resumeChargesAutoHtml();\n  html+='<div class=\"controle-title\"><b>À CONTRÔLER</b><span>'+attente.length+'</span></div>';\n  if(!attente.length){html+='<div class=\"controle-vide\">Aucune charge automatique en attente</div>';}else{\n    html+='<div class=\"card controle-card\">';\n    [...attente].reverse().forEach(a=>{const c=chantierById(a.chantierId);const voir=String(a.lien||\"\").startsWith(\"http\")?'<button class=\"charge-open-btn\" onclick=\"voirPiece(\\''+esc(a.lien)+'\\')\">OUVRIR</button>':\"\";html+='<div class=\"controle-ligne\"><span class=\"badge b-doc\">'+esc(a.typeDoc||\"PIÈCE\").toUpperCase()+'</span><b>'+esc(a.fournisseur||\"À vérifier\")+'</b><span class=\"badge b-bl\">'+(c?esc(c.nom):\"CHANTIER À VÉRIFIER\")+'</span><small>'+esc(a.designation||\"\")+'</small><strong>'+eur(a.montantHT)+' € HT</strong><div class=\"controle-actions\">'+voir+'<button class=\"charge-edit-btn\" onclick=\"editAchat(\\''+a.id+'\\')\">MODIFIER</button><button class=\"charge-valid-btn\" onclick=\"validerChargeAuto(\\''+a.id+'\\')\">VALIDER</button><button class=\"charge-dup-btn\" onclick=\"classerChargeAuto(\\''+a.id+'\\',\\'DOUBLON\\')\">DOUBLON</button><button class=\"charge-rejet-btn\" onclick=\"classerChargeAuto(\\''+a.id+'\\',\\'REJETEE\\')\">REJETER</button></div></div>';});\n    html+='</div>';\n  }\n  if(validees.length){html+='<div class=\"note\" style=\"margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px\">Dernières charges validées</div><div class=\"card\">';[...validees].reverse().slice(0,5).forEach(a=>{const c=chantierById(a.chantierId);const voir=String(a.lien||\"\").startsWith(\"http\")?'<button class=\"charge-open-btn\" onclick=\"voirPiece(\\''+esc(a.lien)+'\\')\">VOIR</button>':\"\";html+='<div class=\"achligne ligR\" style=\"padding:9px 0\"><span class=\"badge b-doc\">'+esc(a.typeDoc||\"\").toUpperCase()+'</span><span><span class=\"badge b-df\">'+esc(a.fournisseur||\"\")+'</span></span><span><span class=\"badge b-bl\">'+(c?esc(c.nom):\"?\")+'</span></span><small class=\"des\">'+esc(a.designation||\"\")+'</small><b style=\"text-align:right\">'+eur(a.montantHT)+' € HT</b><span>'+voir+'</span></div>';});html+='</div>';}\n  el.innerHTML=html;\n}\nfunction toast(msg, err){");
-html=html.replace("function renderAchats(){","window.renderAchats=function(){");
+html=html.replace("function toast(msg, err){","async function classerChargeAuto(id,statut){
+  const a=S.achats.find(x=>x.id===id);if(!a)return;
+  a.statutValidation=statut;a.traiteeLe=new Date().toISOString();render();
+  if(await apiPost(\"setAchats\",S.achats))toast(statut===\"DOUBLON\"?\"Proposition classée comme doublon\":\"Proposition rejetée\");
+}
+function renderAchats(){
+  const el=document.getElementById(\"pane-achats\");
+  const attente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");
+  const validees=S.achats.filter(a=>a.statutValidation!==\"A_VALIDER\"&&a.statutValidation!==\"REJETEE\"&&a.statutValidation!==\"DOUBLON\");
+  let html='<div class=\"charges-toolbar\"><button class=\"btnp charges-add-btn\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>';
+  html+='<div class=\"controle-title\"><b>À CONTRÔLER</b><span>'+attente.length+'</span></div>';
+  if(!attente.length){
+    html+='<div class=\"controle-vide\">Aucune charge automatique en attente</div>';
+  }else{
+    html+='<div class=\"card controle-card\">';
+    [...attente].reverse().forEach(a=>{
+      const c=chantierById(a.chantierId);
+      const voir=String(a.lien||\"\").startsWith(\"http\")?'<button class=\"charge-open-btn\" onclick=\"voirPiece(\''+esc(a.lien)+'\')\">VOIR</button>':\"\";
+      html+='<div class=\"controle-ligne charge-row-standard\">'
+        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"PIÈCE\").toUpperCase()+'</span>'
+        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"À vérifier\")+'</span>'
+        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"CHANTIER À VÉRIFIER\")+'</span>'
+        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'
+        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'
+        +'<div class=\"controle-actions\">'+voir
+          +'<button class=\"charge-edit-btn\" onclick=\"editAchat(\''+a.id+'\')\">MODIFIER</button>'
+          +'<button class=\"charge-valid-btn\" onclick=\"validerChargeAuto(\''+a.id+'\')\">VALIDER</button>'
+          +'<button class=\"charge-dup-btn\" onclick=\"classerChargeAuto(\''+a.id+'\',\'DOUBLON\')\">DOUBLON</button>'
+          +'<button class=\"charge-rejet-btn\" onclick=\"classerChargeAuto(\''+a.id+'\',\'REJETEE\')\">REJETER</button>'
+        +'</div></div>';
+    });
+    html+='</div>';
+  }
+  if(validees.length){
+    html+='<div class=\"section-title\">DERNIÈRES CHARGES VALIDÉES</div><div class=\"card validees-card\">';
+    [...validees].reverse().slice(0,5).forEach(a=>{
+      const c=chantierById(a.chantierId);
+      const voir=String(a.lien||\"\").startsWith(\"http\")?'<button class=\"charge-open-btn\" onclick=\"voirPiece(\''+esc(a.lien)+'\')\">VOIR</button>':\"\";
+      html+='<div class=\"charge-validee-ligne charge-row-standard\">'
+        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"\").toUpperCase()+'</span>'
+        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"\")+'</span>'
+        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"?\")+'</span>'
+        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'
+        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'
+        +'<span class=\"charge-validee-actions\">'+voir+'</span>'
+      +'</div>';
+    });
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+function toast(msg, err){");
 html=html.replace("margin-bottom:14px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'+resumeChargesAutoHtml()","margin-bottom:10px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'");
-html=html.replace(/class=\"controle-ligne\"/g,'class="controle-ligne charge-row-standard"');
-html=html.replace(/class=\"achligne ligR\" style=\"padding:9px 0\"/g,'class="achligne ligR charge-row-standard" style="padding:5px 4px"');
+html=html.replace("function renderAchats(){","window.renderAchats=function(){");
 html=html.replace(/>OUVRIR<\/button>/g,'>VOIR</button>');
 html=html.replace(/>VOIR PJ<\/button>/g,'>VOIR</button>').replace(/>Remplacer PJ<\/button>/g,'>REMPLACER</button>');
 /* Neutralise définitivement l'ancien lecteur Drive qui ouvrait les URL non-Drive dans un onglet. */
@@ -49,531 +98,235 @@ html=html.replace("function toast(msg, err){","function confirmerActionCharge(ti
 //
 // 1. Ouvre index.html dans VSCode
 // 2. Cherche le ligne ~80-100 : const css=`
-// 3. Remplace TOUT le contenu jusqu'au dernier backtick
-// 4. Copie-colle le bloc ci-dessous
-//
-// ============================================================
+/* YAYA V142 — PAGE ACHATS / CHARGES */
 
-const css=`
-/* ========================================
-   YAYA V142+ — CHARGES TABLEAU HORIZONTAL
-   Compaction + Refinement visuel + Mobile Landscape
-   ======================================== */
-
-:root {
-  --color-primary: #1e3a8a;
-  --color-success: #16803d;
-  --color-warning: #b45309;
-  --color-danger: #b91c1c;
-  --color-text: #162d49;
-  --color-subtle: #64748b;
-  --color-border: #e2e8f0;
-  --color-bg-light: #f8fafc;
+:root{
+  --charge-navy:#162d49;
+  --charge-muted:#64748b;
+  --charge-border:#dfe5ec;
+  --charge-row:#f8fafc;
+  --charge-green:#16803d;
+  --charge-red:#b91c1c;
 }
 
-/* TITRE SECTION */
-.controle-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 10px 0 6px;
-  color: var(--color-subtle);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.charges-toolbar{
+  display:flex;
+  align-items:center;
+  margin:0 0 10px;
 }
-.controle-title > b {
-  font-weight: 800;
-  color: var(--color-text);
-}
-.controle-title > span {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #fee2e2;
-  color: var(--color-danger);
-  font-size: 8px;
-  font-weight: 900;
-  line-height: 1;
+.charges-add-btn{
+  min-height:38px;
+  padding:0 18px;
+  border-radius:8px;
+  white-space:nowrap;
 }
 
-/* SECTION TITLE */
-.section-title {
-  display: flex;
-  align-items: center;
-  margin: 12px 0 5px;
-  padding: 0 6px;
-  color: var(--color-subtle);
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.controle-title{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin:8px 0 6px;
+  color:var(--charge-navy);
+  font-size:13px;
+  font-weight:900;
+  text-transform:uppercase;
+}
+.controle-title>span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:20px;
+  height:20px;
+  padding:0 5px;
+  border-radius:999px;
+  background:#fee2e2;
+  color:var(--charge-red);
+  font-size:10px;
+  font-weight:900;
 }
 
-/* CARD & CONTAINER */
-.controle-card,
-.validees-card {
-  border: 1px solid var(--color-border);
-  background: #fff;
-  border-radius: 7px;
-  overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-  margin-bottom: 12px;
-}
-.controle-card:hover,
-.validees-card:hover {
-  border-color: #cbd5e1;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.06);
+.section-title{
+  margin:16px 0 6px;
+  color:var(--charge-muted);
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.09em;
+  text-transform:uppercase;
 }
 
-/* LIGNE TABLEAU — Grille 6 colonnes */
+.controle-card,.validees-card{
+  border:1px solid var(--charge-border);
+  border-radius:10px;
+  background:#fff;
+  overflow:hidden;
+  box-shadow:0 1px 3px rgba(15,23,42,.06);
+}
+.controle-vide{
+  padding:12px 14px;
+  border:1px dashed var(--charge-border);
+  border-radius:9px;
+  color:var(--charge-muted);
+  font-size:11px;
+}
+
 .controle-ligne,
-.achligne.ligR.charge-row-standard {
-  display: grid;
-  grid-template-columns: 65px 135px 135px 1fr 80px 145px;
-  gap: 8px;
-  align-items: center;
-  min-height: 34px;
-  padding: 5px 8px;
-  border-bottom: 1px solid #f1f5f9;
-  font-size: 10px;
-  transition: background-color 0.15s ease-out;
+.charge-validee-ligne{
+  display:grid;
+  grid-template-columns:64px 170px 170px minmax(180px,1fr) 100px 150px;
+  column-gap:10px;
+  align-items:center;
+  min-height:42px;
+  padding:5px 10px;
+  border-bottom:1px solid #edf1f5;
 }
 .controle-ligne:last-child,
-.achligne.ligR.charge-row-standard:last-child {
-  border-bottom: 0;
-}
+.charge-validee-ligne:last-child{border-bottom:0}
 .controle-ligne:hover,
-.achligne.ligR.charge-row-standard:hover {
-  background: var(--color-bg-light);
+.charge-validee-ligne:hover{background:var(--charge-row)}
+
+.badge,
+.charge-fournisseur,
+.charge-chantier{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:0;
+  height:28px;
+  padding:0 8px;
+  border-radius:7px;
+  font-size:10px;
+  font-weight:800;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.badge.b-doc{
+  background:#e5e7eb;
+  color:#111827;
+}
+.charge-fournisseur{
+  background:#ddd0f3;
+  color:#6246a8;
+}
+.charge-chantier{
+  background:#b9eadc;
+  color:#006b5c;
+}
+.charge-designation{
+  min-width:0;
+  color:var(--charge-muted);
+  font-size:10px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.charge-montant{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height:28px;
+  padding:0 10px;
+  border:1px solid #d8dee6;
+  border-radius:999px;
+  background:#fff;
+  color:var(--charge-navy);
+  font-size:11px;
+  font-weight:900;
+  white-space:nowrap;
 }
 
-/* BADGES */
-.badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 5px;
-  font-size: 8px;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  transition: all 0.15s ease-out;
-}
-.badge.b-bl,
-.badge.b-doc {
-  background: #dbeafe;
-  color: #0c4a6e;
-}
-.badge.b-df,
-.b-df {
-  background: #fce7f3;
-  color: #831843;
-}
-.badge.b-ad,
-.b-ad {
-  background: #d1fae5;
-  color: #065f46;
-}
-.badge.b-fst,
-.b-fst {
-  background: #e0e7ff;
-  color: #3730a3;
-}
-.badge.b-avoir,
-.b-avoir {
-  background: #f3e8ff;
-  color: #581c87;
-}
-
-/* Badge fournisseur */
-.controle-ligne > span:nth-child(2) .badge,
-.controle-ligne > b:nth-child(2) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 5px;
-  background: #e0e7ff;
-  color: var(--color-primary);
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Badge chantier */
-.controle-ligne > span:nth-child(3) .badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-width: 0;
-  height: 26px;
-  padding: 0 6px;
-  border-radius: 5px;
-  background: #d1fae5;
-  color: #065f46;
-  font-size: 10px;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Description */
-.controle-ligne > small,
-.controle-ligne > span:nth-child(4),
-.achligne.ligR.charge-row-standard > small {
-  color: var(--color-subtle);
-  font-size: 9px;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Montant */
-.controle-ligne > strong,
-.controle-ligne > b[style*="text-align:right"],
-.achligne.ligR.charge-row-standard > strong {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 26px;
-  padding: 0 6px;
-  border: 1px solid var(--color-border);
-  border-radius: 5px;
-  background: #fff;
-  color: var(--color-text);
-  font-size: 10px;
-  font-weight: 800;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-}
-
-/* ACTIONS */
 .controle-actions,
-.achligne.ligR.charge-row-standard > span:last-child {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  justify-content: flex-end;
-  min-width: 0;
-  flex-wrap: nowrap;
+.charge-validee-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:4px;
+  min-width:0;
+  white-space:nowrap;
 }
-
-.charge-action-btn,
 .charge-open-btn,
 .charge-edit-btn,
 .charge-valid-btn,
 .charge-dup-btn,
-.charge-rejet-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  border: 1px solid var(--color-border);
-  border-radius: 5px;
-  background: #fff;
-  font-size: 12px;
-  line-height: 1;
-  cursor: pointer;
-  transition: all 0.15s ease-out;
-  flex-shrink: 0;
-  color: currentColor;
+.charge-rejet-btn{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  padding:0;
+  border:1px solid #cfd6df;
+  border-radius:6px;
+  background:#fff;
+  cursor:pointer;
+  font-size:13px;
+  line-height:1;
 }
+.charge-open-btn:hover{background:#fff7db}
+.charge-edit-btn:hover{background:#e9f2ff}
+.charge-valid-btn{
+  color:var(--charge-green);
+  border-color:#8fd2aa;
+  font-weight:900;
+}
+.charge-valid-btn:hover{background:#e9f8ef}
+.charge-dup-btn:hover{background:#f2ebff}
+.charge-rejet-btn{
+  color:var(--charge-red);
+}
+.charge-rejet-btn:hover{background:#feecec}
 
-.charge-action-btn:hover,
-.charge-open-btn:hover,
-.charge-edit-btn:hover,
-.charge-valid-btn:hover,
-.charge-dup-btn:hover,
-.charge-rejet-btn:hover {
-  border-color: currentColor;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.1);
-}
-
-.charge-open-btn {
-  color: var(--color-warning);
-}
-.charge-open-btn:hover {
-  background: #fef3c7;
-}
-
-.charge-edit-btn {
-  color: #0c4a6e;
-}
-.charge-edit-btn:hover {
-  background: #dbeafe;
-}
-
-.charge-valid-btn {
-  color: var(--color-success);
-  border-color: #86efac;
-  font-weight: 900;
-}
-.charge-valid-btn:hover {
-  background: #dcfce7;
-}
-
-.charge-dup-btn {
-  color: #6b21a8;
-}
-.charge-dup-btn:hover {
-  background: #f3e8ff;
-}
-
-.charge-rejet-btn {
-  color: var(--color-danger);
-}
-.charge-rejet-btn:hover {
-  background: #fee2e2;
-}
-
-/* ========================================
-   RESPONSIVE — Tablet (1200px - 1399px)
-   ======================================== */
-
-@media (max-width: 1399px) {
+@media(max-width:1250px){
   .controle-ligne,
-  .achligne.ligR.charge-row-standard {
-    grid-template-columns: 60px 125px 125px 1fr 70px 130px;
-    gap: 7px;
-    padding: 4px 7px;
-    min-height: 32px;
-  }
-
-  .controle-ligne > span:nth-child(2) .badge,
-  .controle-ligne > b:nth-child(2),
-  .controle-ligne > span:nth-child(3) .badge {
-    height: 24px;
-    font-size: 9px;
-    padding: 0 5px;
-  }
-
-  .controle-ligne > strong {
-    height: 24px;
-    font-size: 9px;
-    padding: 0 5px;
-  }
-
-  .badge {
-    height: 24px;
-    font-size: 8px;
-    padding: 0 5px;
-  }
-
-  .charge-action-btn,
-  .charge-open-btn,
-  .charge-edit-btn,
-  .charge-valid-btn,
-  .charge-dup-btn,
-  .charge-rejet-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
+  .charge-validee-ligne{
+    grid-template-columns:58px 140px 140px minmax(150px,1fr) 92px 142px;
+    column-gap:7px;
+    padding:5px 7px;
   }
 }
 
-/* ========================================
-   RESPONSIVE — Mobile Portrait (< 1200px)
-   ======================================== */
-
-@media (max-width: 1199px) {
+@media(max-width:850px){
   .controle-ligne,
-  .achligne.ligR.charge-row-standard {
-    grid-template-columns: 50px 1fr;
-    gap: 6px;
-    padding: 4px 6px;
-    min-height: 30px;
+  .charge-validee-ligne{
+    grid-template-columns:54px minmax(0,1fr) 90px;
+    grid-template-areas:
+      "type fournisseur montant"
+      "chantier designation actions";
+    row-gap:5px;
+    min-height:72px;
   }
-
-  .controle-ligne > .badge:first-child,
-  .controle-ligne > span:first-child {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .controle-ligne > span:nth-child(2),
-  .controle-ligne > span:nth-child(3),
-  .controle-ligne > span:nth-child(4),
-  .controle-ligne > b:nth-child(2),
-  .controle-ligne > strong,
-  .achligne.ligR.charge-row-standard > strong {
-    grid-column: 2;
-  }
-
-  .controle-ligne > small,
+  .controle-ligne>.badge,
+  .charge-validee-ligne>.badge{grid-area:type}
+  .charge-fournisseur{grid-area:fournisseur}
+  .charge-chantier{grid-area:chantier}
+  .charge-designation{grid-area:designation}
+  .charge-montant{grid-area:montant}
   .controle-actions,
-  .achligne.ligR.charge-row-standard > small,
-  .achligne.ligR.charge-row-standard > span:last-child {
-    grid-column: 1 / -1;
-    margin-top: 2px;
-  }
-
-  .controle-ligne > span:nth-child(2) .badge,
-  .controle-ligne > b:nth-child(2),
-  .controle-ligne > span:nth-child(3) .badge,
-  .controle-ligne > strong {
-    height: 24px;
-    font-size: 9px;
-    padding: 0 4px;
-  }
-
-  .controle-actions,
-  .achligne.ligR.charge-row-standard > span:last-child {
-    justify-content: flex-start;
-    min-height: 26px;
-  }
-
-  .charge-action-btn,
-  .charge-open-btn,
-  .charge-edit-btn,
-  .charge-valid-btn,
-  .charge-dup-btn,
-  .charge-rejet-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
+  .charge-validee-actions{grid-area:actions}
+  .charge-fournisseur,
+  .charge-chantier{
+    justify-content:flex-start;
+    padding:0 7px;
   }
 }
 
-/* ========================================
-   RESPONSIVE — Mobile Landscape (< 1200px + panoramique)
-   ======================================== */
-
-@media (max-width: 1199px) and (orientation: landscape) {
-  .controle-title {
-    margin: 5px 0 3px;
-    gap: 4px;
-    font-size: 9px;
-  }
-
-  .controle-title > span {
-    min-width: 16px;
-    height: 16px;
-    font-size: 7px;
-  }
-
-  .section-title {
-    margin: 6px 0 3px;
-    font-size: 8px;
-  }
-
-  .controle-card,
-  .validees-card {
-    margin-bottom: 8px;
-    border-radius: 5px;
-  }
-
-  .controle-ligne,
-  .achligne.ligR.charge-row-standard {
-    grid-template-columns: 50px 1fr;
-    gap: 5px;
-    padding: 3px 5px;
-    min-height: 26px;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 9px;
-  }
-
-  .controle-ligne > span:nth-child(2) .badge,
-  .controle-ligne > b:nth-child(2),
-  .controle-ligne > span:nth-child(3) .badge {
-    height: 22px;
-    font-size: 8px;
-    padding: 0 3px;
-    border-radius: 4px;
-  }
-
-  .controle-ligne > strong {
-    height: 22px;
-    font-size: 8px;
-    padding: 0 3px;
-    border-radius: 4px;
-  }
-
-  .badge {
-    height: 22px;
-    font-size: 7px;
-    padding: 0 4px;
-    border-radius: 4px;
-  }
-
-  .controle-ligne > small,
-  .controle-ligne > span:nth-child(4) {
-    font-size: 8px;
-    margin-top: 1px;
-  }
-
-  .controle-actions {
-    gap: 3px;
-    min-height: 22px;
-    margin-top: 1px;
-  }
-
-  .charge-action-btn,
-  .charge-open-btn,
-  .charge-edit-btn,
-  .charge-valid-btn,
-  .charge-dup-btn,
-  .charge-rejet-btn {
-    width: 22px;
-    height: 22px;
-    font-size: 10px;
-  }
+.piece-modal{
+  width:min(94vw,980px)!important;
+  height:min(88vh,760px)!important;
+  max-width:980px!important;
 }
-
-/* ========================================
-   RESPONSIVE — Mobile Landscape Large (≥ 600px hauteur)
-   Revient à grille 6 colonnes si place
-   ======================================== */
-
-@media (max-width: 1199px) and (orientation: landscape) and (min-height: 600px) {
-  .controle-ligne,
-  .achligne.ligR.charge-row-standard {
-    grid-template-columns: 50px 110px 110px 1fr 65px 130px;
-    gap: 5px;
-    padding: 3px 6px;
-    min-height: 28px;
-  }
-
-  .controle-ligne > span:nth-child(2) .badge,
-  .controle-ligne > b:nth-child(2),
-  .controle-ligne > span:nth-child(3) .badge {
-    height: 24px;
-    font-size: 8px;
-  }
-
-  .controle-ligne > small,
-  .controle-actions {
-    grid-column: auto;
-    margin-top: 0;
-  }
-
-  .charge-action-btn,
-  .charge-open-btn,
-  .charge-edit-btn,
-  .charge-valid-btn,
-  .charge-dup-btn,
-  .charge-rejet-btn {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
-  }
+.piece-modal h5{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.piece-frame{
+  width:100%;
+  height:calc(100% - 46px);
+  border:0;
+  border-radius:8px;
+  background:#f8fafc;
 }
 `
 
