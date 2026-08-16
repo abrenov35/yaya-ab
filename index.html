@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V149';
+const YAYA_VERSION='V150';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -655,6 +655,47 @@ const css=`
 #pane-documents .doc-edit-btn:hover{
   background:#eef5ff !important;
 }
+
+/* V150 — badges documents plus fins, comme la référence */
+#pane-docs .doc-row-standard > *:nth-child(1),
+#pane-documents .doc-row-standard > *:nth-child(1),
+#pane-docs .docligne > *:nth-child(1),
+#pane-documents .docligne > *:nth-child(1){
+  min-height:34px !important;
+}
+
+#pane-docs .doc-row-standard > *:nth-child(1) .badge,
+#pane-documents .doc-row-standard > *:nth-child(1) .badge,
+#pane-docs .docligne > *:nth-child(1) .badge,
+#pane-documents .docligne > *:nth-child(1) .badge,
+#pane-docs .badge.b-mail,
+#pane-documents .badge.b-mail,
+#pane-docs .badge.b-doc,
+#pane-documents .badge.b-doc{
+  width:110px !important;
+  min-width:110px !important;
+  max-width:110px !important;
+  height:30px !important;
+  min-height:30px !important;
+  padding:0 8px !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  box-sizing:border-box !important;
+  justify-content:center !important;
+  font-size:10px !important;
+  font-weight:800 !important;
+}
+
+#pane-docs .badge.b-mail,
+#pane-documents .badge.b-mail{
+  border:1px solid #e4b69e !important;
+  color:#a34200 !important;
+}
+#pane-docs .badge.b-doc,
+#pane-documents .badge.b-doc{
+  border:1px solid #a9d7b7 !important;
+  color:#08742d !important;
+}
 `
 
 
@@ -663,6 +704,28 @@ html=html.replace('</body>',`<script>
 function alignChantierTools(){const pane=document.getElementById('pane-chantiers');if(!pane)return;const search=pane.querySelector('input[placeholder*="Rechercher un chantier"]');if(!search)return;const createBtn=[...pane.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Créer un chantier'));if(!createBtn||createBtn.closest('.yaya-chantier-tools'))return;const searchWrap=search.parentElement;const tools=document.createElement('div');tools.className='yaya-chantier-tools';createBtn.parentNode.insertBefore(tools,createBtn);tools.appendChild(createBtn);const sw=document.createElement('div');sw.className='yaya-search-wrap';while(searchWrap.firstChild)sw.appendChild(searchWrap.firstChild);searchWrap.parentNode.insertBefore(sw,searchWrap);searchWrap.remove();tools.appendChild(sw);}
 function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.charge-edit-btn,.charge-valid-btn,.charge-dup-btn,.charge-rejet-btn').forEach(b=>{if(b.classList.contains('charge-action-icon'))return;let ico='',label='';if(b.classList.contains('charge-open-btn')){ico='👁';label='Voir la pièce';}else if(b.classList.contains('charge-edit-btn')){ico='✏️';label='Modifier';}else if(b.classList.contains('charge-valid-btn')){ico='✓';label='Valider';}else if(b.classList.contains('charge-dup-btn')){ico='⧉';label='Classer comme doublon';}else if(b.classList.contains('charge-rejet-btn')){ico='✕';label='Rejeter';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.classList.add('charge-action-icon');}});}
 
+
+/* V150 document edit helper */
+function modifierDocumentDepuisLigne(btn){
+  const row=btn.closest('.doc-row-standard,.docligne');
+  if(!row)return;
+  const existing=[...row.querySelectorAll('button,[onclick]')].find(el=>{
+    if(el===btn)return false;
+    const oc=el.getAttribute&&el.getAttribute('onclick')||'';
+    return /editDoc|editDocument|openDocModal|openDocumentModal/i.test(oc);
+  });
+  if(existing){ existing.click(); return; }
+
+  const id=row.dataset.id||row.getAttribute('data-id')||'';
+  if(id){
+    if(typeof window.editDocument==='function'){window.editDocument(id);return;}
+    if(typeof window.editDoc==='function'){window.editDoc(id);return;}
+  }
+  if(typeof window.openDocModal==='function'){window.openDocModal(id||undefined);return;}
+  if(typeof window.openDocumentModal==='function'){window.openDocumentModal(id||undefined);return;}
+  if(typeof window.openDocument==='function'){window.openDocument(id||undefined);return;}
+  toast("Modification indisponible pour ce document",true);
+}
 function styliserDocuments(){
   const panes=[document.getElementById('pane-docs'),document.getElementById('pane-documents')].filter(Boolean);
   panes.forEach(pane=>{
@@ -714,13 +777,7 @@ function styliserDocuments(){
           editBtn.onclick=()=>directEdit.click();
           directEdit.style.display='none';
         }else{
-          editBtn.onclick=()=>{
-            const id=row.dataset.id || row.getAttribute('data-id') || '';
-            if(id && typeof window.editDocument==='function') return window.editDocument(id);
-            if(id && typeof window.editDoc==='function') return window.editDoc(id);
-            const possible=[...row.querySelectorAll('[onclick]')].find(el=>/editDocument|editDoc|openDocument/i.test(el.getAttribute('onclick')||''));
-            if(possible) return possible.click();
-          };
+          editBtn.onclick=()=>modifierDocumentDepuisLigne(editBtn);
         }
         actions.appendChild(editBtn);
       }
