@@ -3,85 +3,144 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/4a4ac3e91fea00e99629d3e67f59865c3cf33a1b/index.html';
+  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/cf25c0a122a2de1a4629d8945c21c228eca72006/index.html';
   let html=await (await fetch(base,{cache:'no-store'})).text();
-  html=html.replace("const YAYA_VERSION='V163';","const YAYA_VERSION='V165';");
+  html=html.replace("const YAYA_VERSION='V165';","const YAYA_VERSION='V166';");
   const css=`
-/* V165 — RESPONSIVE GLOBAL, CSS UNIQUEMENT. Aucun changement du lecteur de pièces. */
-html,body{max-width:100%;overflow-x:hidden}
-*,*::before,*::after{box-sizing:border-box}
-img,svg,video,canvas{max-width:100%;height:auto}
-input,select,textarea,button{max-width:100%}
-
-@media(max-width:900px){
-  .wrap,.container,main{max-width:100%!important;width:100%!important}
-  .card,.panel,.pane{max-width:100%!important;min-width:0!important}
-  .top,.toolbar,.actions,.filters{max-width:100%!important}
-  table{max-width:100%}
-  .modal{max-width:calc(100vw - 24px)!important;max-height:calc(100dvh - 24px)!important;overflow:auto!important}
-}
-
+/* V166 — vraies cartes mobiles pour Charges + Documents, CSS uniquement */
 @media(max-width:760px){
-  body{font-size:13px!important}
-  .wrap,.container,main{padding-left:8px!important;padding-right:8px!important}
-  .card{max-width:100%!important;min-width:0!important}
-  .top,.toolbar,.actions,.filters{flex-wrap:wrap!important;gap:6px!important}
-  .top>*{min-width:0!important}
-  .inp,.msel,.mnum,input,select,textarea{font-size:16px}
-  .modal{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;max-height:calc(100dvh - 16px)!important;margin:8px!important;padding:14px!important;border-radius:14px!important}
-  .modal .mrow{flex-wrap:wrap!important}
-  .modal .mfoot{position:sticky!important;bottom:-14px!important;background:#fff!important;z-index:2!important;padding:10px 0 4px!important;display:flex!important;gap:8px!important}
-  .modal .mfoot button{flex:1 1 auto!important}
-
-  /* tableaux larges : scroll local au lieu de faire déborder toute la page */
-  .table-wrap,.scroll,.wh-scroll{max-width:100%!important;overflow-x:auto!important;-webkit-overflow-scrolling:touch}
-
-  /* Charges */
-  #pane-achats{max-width:100%!important;overflow-x:hidden!important}
-  #pane-achats .controle-ligne,#pane-achats .charge-validee-ligne{
-    width:100%!important;max-width:100%!important;min-width:0!important;
-    grid-template-columns:78px minmax(0,1fr) 72px!important;
-    grid-auto-rows:auto!important;gap:5px 7px!important;padding:9px 7px!important
+  /* ===== CHARGES ===== */
+  #pane-achats .controle-card,
+  #pane-achats .validees-card{
+    overflow:visible!important;
+    width:100%!important;
+    max-width:100%!important;
   }
-  #pane-achats .controle-ligne>*,#pane-achats .charge-validee-ligne>*{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
-  #pane-achats .badge{max-width:76px!important;min-width:0!important;width:auto!important}
-
-  /* Documents : conserver le correctif V163 et empêcher tout débordement */
-  #pane-documents,#pane-docs{max-width:100%!important;overflow-x:hidden!important}
-  #pane-documents .card,#pane-docs .card{max-width:100%!important;min-width:0!important}
-
-  /* Equipe */
-  #pane-equipe{max-width:100%!important;overflow-x:hidden!important}
-  #pane-equipe>.card>.achligne{
-    width:100%!important;max-width:100%!important;min-width:0!important;
-    grid-template-columns:minmax(100px,1.4fr) minmax(90px,1fr) 64px 64px 34px!important;
-    gap:5px!important;padding:8px!important
+  #pane-achats .controle-ligne,
+  #pane-achats .charge-validee-ligne{
+    display:grid!important;
+    grid-template-columns:72px minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "type fournisseur montant"
+      "chantier designation designation"
+      "actions actions actions"!important;
+    gap:7px 8px!important;
+    width:100%!important;
+    max-width:100%!important;
+    min-width:0!important;
+    min-height:0!important;
+    height:auto!important;
+    padding:10px 8px!important;
+    box-sizing:border-box!important;
+    align-items:center!important;
+    overflow:hidden!important;
   }
-  #pane-equipe>.card>.achligne>*{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important}
+  #pane-achats .controle-ligne>.badge,
+  #pane-achats .charge-validee-ligne>.badge{
+    grid-area:type!important;
+    width:68px!important;min-width:68px!important;max-width:68px!important;
+    height:30px!important;min-height:30px!important;
+    justify-content:center!important;padding:0 4px!important;font-size:9px!important;
+  }
+  #pane-achats .charge-fournisseur{
+    grid-area:fournisseur!important;
+    min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+    font-size:12px!important;font-weight:800!important;
+  }
+  #pane-achats .charge-montant{
+    grid-area:montant!important;justify-self:end!important;
+    white-space:nowrap!important;font-size:12px!important;
+  }
+  #pane-achats .charge-chantier{
+    grid-area:chantier!important;
+    min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+    font-size:11px!important;color:#43556a!important;
+  }
+  #pane-achats .charge-designation{
+    grid-area:designation!important;
+    min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+    font-size:11px!important;color:#7a8796!important;
+  }
+  #pane-achats .controle-actions,
+  #pane-achats .charge-validee-actions{
+    grid-area:actions!important;
+    display:flex!important;align-items:center!important;justify-content:flex-end!important;
+    width:100%!important;max-width:none!important;min-width:0!important;
+    gap:5px!important;overflow:visible!important;padding-top:1px!important;
+  }
+  #pane-achats .charge-open-btn,
+  #pane-achats .charge-edit-btn,
+  #pane-achats .charge-valid-btn,
+  #pane-achats .charge-dup-btn,
+  #pane-achats .charge-rejet-btn{
+    flex:0 0 30px!important;width:30px!important;min-width:30px!important;max-width:30px!important;
+    height:30px!important;min-height:30px!important;padding:0!important;margin:0!important;
+  }
 
-  /* Chantiers */
-  #pane-chantiers{max-width:100%!important;overflow-x:hidden!important}
-  #pane-chantiers .card{max-width:100%!important;min-width:0!important}
-  #pane-chantiers .card .top{max-width:100%!important;min-width:0!important;flex-wrap:wrap!important}
-
-  /* Heures : la grille hebdomadaire reste exploitable sur petit écran */
-  .week-hours-modal{width:calc(100vw - 12px)!important;max-width:none!important}
-  .wh-scroll{width:100%!important}
-  .wh-grid,.wh-summary{min-width:610px!important}
+  /* ===== DOCUMENTS ===== */
+  #pane-documents .card,
+  #pane-docs .card{
+    width:100%!important;max-width:100%!important;overflow:visible!important;padding:0!important;
+  }
+  #pane-documents .docligne,
+  #pane-documents .doc-row-standard,
+  #pane-docs .docligne,
+  #pane-docs .doc-row-standard{
+    display:grid!important;
+    grid-template-columns:72px minmax(0,1fr) auto!important;
+    grid-template-areas:
+      "type source date"
+      "chantier designation designation"
+      "actions actions actions"!important;
+    gap:7px 8px!important;
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:0!important;height:auto!important;
+    padding:10px 8px!important;margin:0!important;box-sizing:border-box!important;
+    align-items:center!important;overflow:hidden!important;
+  }
+  #pane-documents .docligne>*,#pane-documents .doc-row-standard>*,
+  #pane-docs .docligne>*,#pane-docs .doc-row-standard>*{
+    min-width:0!important;min-height:0!important;height:auto!important;margin:0!important;
+  }
+  #pane-documents .docligne>*:nth-child(1),#pane-documents .doc-row-standard>*:nth-child(1),
+  #pane-docs .docligne>*:nth-child(1),#pane-docs .doc-row-standard>*:nth-child(1){grid-area:type!important}
+  #pane-documents .docligne>*:nth-child(2),#pane-documents .doc-row-standard>*:nth-child(2),
+  #pane-docs .docligne>*:nth-child(2),#pane-docs .doc-row-standard>*:nth-child(2){grid-area:source!important;font-size:12px!important;font-weight:800!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #pane-documents .docligne>*:nth-child(3),#pane-documents .doc-row-standard>*:nth-child(3),
+  #pane-docs .docligne>*:nth-child(3),#pane-docs .doc-row-standard>*:nth-child(3){grid-area:chantier!important;font-size:11px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#43556a!important}
+  #pane-documents .docligne>*:nth-child(4),#pane-documents .doc-row-standard>*:nth-child(4),
+  #pane-docs .docligne>*:nth-child(4),#pane-docs .doc-row-standard>*:nth-child(4){grid-area:designation!important;font-size:11px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#7a8796!important}
+  #pane-documents .docligne>*:nth-child(5),#pane-documents .doc-row-standard>*:nth-child(5),
+  #pane-docs .docligne>*:nth-child(5),#pane-docs .doc-row-standard>*:nth-child(5){grid-area:date!important;justify-self:end!important;white-space:nowrap!important;font-size:10px!important;color:#98a1ab!important}
+  #pane-documents .docligne>*:nth-child(6),#pane-documents .doc-row-standard>*:nth-child(6),
+  #pane-docs .docligne>*:nth-child(6),#pane-docs .doc-row-standard>*:nth-child(6){grid-area:actions!important;width:100%!important;justify-self:stretch!important}
+  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,
+  #pane-docs .badge.b-mail,#pane-docs .badge.b-doc{
+    width:68px!important;min-width:68px!important;max-width:68px!important;
+    height:30px!important;min-height:30px!important;padding:0 4px!important;font-size:8px!important;
+  }
+  #pane-documents .doc-actions,#pane-docs .doc-actions{
+    display:flex!important;align-items:center!important;justify-content:flex-end!important;
+    width:100%!important;gap:5px!important;min-height:0!important;height:auto!important;padding-top:1px!important;
+  }
+  #pane-documents .doc-view-btn,#pane-documents .doc-edit-btn,
+  #pane-docs .doc-view-btn,#pane-docs .doc-edit-btn{
+    width:30px!important;min-width:30px!important;max-width:30px!important;height:30px!important;min-height:30px!important;padding:0!important;margin:0!important;
+  }
 }
 
-@media(max-width:430px) and (orientation:portrait){
-  .wrap,.container,main{padding-left:6px!important;padding-right:6px!important}
-  .btnp,.btn2,button{min-height:34px}
-  #pane-chantiers .card{padding:8px!important}
-  #pane-chantiers .card .top>b:first-child{flex:1 1 65%!important}
-  #pane-achats .controle-ligne,#pane-achats .charge-validee-ligne{grid-template-columns:70px minmax(0,1fr) 66px!important}
-  #pane-equipe>.card>.achligne{grid-template-columns:minmax(105px,1fr) 72px 58px 34px!important}
-}
-
-@media(min-width:431px) and (max-width:900px) and (orientation:landscape){
-  .modal{max-height:calc(100dvh - 12px)!important;margin:6px!important}
-  .card{max-width:100%!important}
+@media(max-width:390px){
+  #pane-achats .controle-ligne,#pane-achats .charge-validee-ligne,
+  #pane-documents .docligne,#pane-documents .doc-row-standard,
+  #pane-docs .docligne,#pane-docs .doc-row-standard{
+    grid-template-columns:64px minmax(0,1fr) auto!important;
+    gap:6px!important;padding:9px 6px!important;
+  }
+  #pane-achats .controle-ligne>.badge,#pane-achats .charge-validee-ligne>.badge,
+  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,
+  #pane-docs .badge.b-mail,#pane-docs .badge.b-doc{
+    width:60px!important;min-width:60px!important;max-width:60px!important;font-size:7.5px!important;
+  }
 }
 `;
   html=html.replace('</head>','<style>'+css+'</style></head>');
