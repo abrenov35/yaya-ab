@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V142';
+const YAYA_VERSION='V143';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -30,58 +30,7 @@ html=html.replace("function toast(msg, err){","function chargeValidationHtml(a){
 html=html.split("+lienIco(a.lien)+'<button").join("+lienIco(a.lien)+chargeValidationHtml(a)+'<button");
 /* V124 — information opérationnelle, sans total prévisionnel */
 html=html.replace("function toast(msg, err){","function resumeChargesAutoHtml(){\n  const enAttente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  const chantiers=[...new Set(enAttente.map(a=>{const c=chantierById(a.chantierId);return c?c.nom:\"CHANTIER À VÉRIFIER\";}))];\n  const liste=chantiers.length?chantiers.map(n=>'<span class=\"chantier-attente\">'+esc(n)+'</span>').join(''):'<span class=\"aucune-attente\">Aucune pièce en attente</span>';\n  return '<div class=\"charge-attente-resume\"><div><small>PIÈCES À VALIDER</small><b>'+enAttente.length+'</b></div><div class=\"chantiers-attente\">'+liste+'</div></div>';\n}\nfunction toast(msg, err){");
-html=html.replace("function toast(msg, err){","async function classerChargeAuto(id,statut){
-  const a=S.achats.find(x=>x.id===id);if(!a)return;
-  a.statutValidation=statut;a.traiteeLe=new Date().toISOString();render();
-  if(await apiPost(\"setAchats\",S.achats))toast(statut===\"DOUBLON\"?\"Proposition classée comme doublon\":\"Proposition rejetée\");
-}
-function renderAchats(){
-  const el=document.getElementById(\"pane-achats\");
-  const attente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");
-  const validees=S.achats.filter(a=>a.statutValidation!==\"A_VALIDER\"&&a.statutValidation!==\"REJETEE\"&&a.statutValidation!==\"DOUBLON\");
-  let html='<div class=\"charges-toolbar\"><button class=\"btnp charges-add-btn\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>';
-  html+='<div class=\"controle-title\"><b>À CONTRÔLER</b><span>'+attente.length+'</span></div>';
-  if(!attente.length){
-    html+='<div class=\"controle-vide\">Aucune charge automatique en attente</div>';
-  }else{
-    html+='<div class=\"card controle-card\">';
-    [...attente].reverse().forEach(a=>{
-      const c=chantierById(a.chantierId);
-      const voir=String(a.lien||\"\").startsWith(\"http\")?'<button class=\"charge-open-btn\" onclick=\"voirPiece(\''+esc(a.lien)+'\')\">VOIR</button>':\"\";
-      html+='<div class=\"controle-ligne charge-row-standard\">'
-        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"PIÈCE\").toUpperCase()+'</span>'
-        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"À vérifier\")+'</span>'
-        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"CHANTIER À VÉRIFIER\")+'</span>'
-        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'
-        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'
-        +'<div class=\"controle-actions\">'+voir
-          +'<button class=\"charge-edit-btn\" onclick=\"editAchat(\''+a.id+'\')\">MODIFIER</button>'
-          +'<button class=\"charge-valid-btn\" onclick=\"validerChargeAuto(\''+a.id+'\')\">VALIDER</button>'
-          +'<button class=\"charge-dup-btn\" onclick=\"classerChargeAuto(\''+a.id+'\',\'DOUBLON\')\">DOUBLON</button>'
-          +'<button class=\"charge-rejet-btn\" onclick=\"classerChargeAuto(\''+a.id+'\',\'REJETEE\')\">REJETER</button>'
-        +'</div></div>';
-    });
-    html+='</div>';
-  }
-  if(validees.length){
-    html+='<div class=\"section-title\">DERNIÈRES CHARGES VALIDÉES</div><div class=\"card validees-card\">';
-    [...validees].reverse().slice(0,5).forEach(a=>{
-      const c=chantierById(a.chantierId);
-      const voir=String(a.lien||\"\").startsWith(\"http\")?'<button class=\"charge-open-btn\" onclick=\"voirPiece(\''+esc(a.lien)+'\')\">VOIR</button>':\"\";
-      html+='<div class=\"charge-validee-ligne charge-row-standard\">'
-        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"\").toUpperCase()+'</span>'
-        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"\")+'</span>'
-        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"?\")+'</span>'
-        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'
-        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'
-        +'<span class=\"charge-validee-actions\">'+voir+'</span>'
-      +'</div>';
-    });
-    html+='</div>';
-  }
-  el.innerHTML=html;
-}
-function toast(msg, err){");
+html=html.replace("function toast(msg, err){","async function classerChargeAuto(id,statut){\n  const a=S.achats.find(x=>x.id===id);if(!a)return;\n  a.statutValidation=statut;a.traiteeLe=new Date().toISOString();render();\n  if(await apiPost(\"setAchats\",S.achats))toast(statut===\"DOUBLON\"?\"Proposition classée comme doublon\":\"Proposition rejetée\");\n}\nfunction renderAchats(){\n  const el=document.getElementById(\"pane-achats\");\n  const attente=S.achats.filter(a=>a.statutValidation===\"A_VALIDER\");\n  const validees=S.achats.filter(a=>a.statutValidation!==\"A_VALIDER\"&&a.statutValidation!==\"REJETEE\"&&a.statutValidation!==\"DOUBLON\");\n\n  let html='<div class=\"charges-toolbar\"><button class=\"btnp charges-add-btn\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>';\n  html+='<div class=\"controle-title\"><b>À CONTRÔLER</b><span>'+attente.length+'</span></div>';\n\n  if(!attente.length){\n    html+='<div class=\"controle-vide\">Aucune charge automatique en attente</div>';\n  }else{\n    html+='<div class=\"card controle-card\">';\n    [...attente].reverse().forEach(a=>{\n      const c=chantierById(a.chantierId);\n      const voir=String(a.lien||\"\").startsWith(\"http\")\n        ? '<button class=\"charge-open-btn\" onclick=\"voirPiece(\\''+esc(a.lien)+'\\')\">VOIR</button>'\n        : \"\";\n      html+='<div class=\"controle-ligne charge-row-standard\">'\n        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"PIÈCE\").toUpperCase()+'</span>'\n        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"À vérifier\")+'</span>'\n        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"CHANTIER À VÉRIFIER\")+'</span>'\n        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'\n        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'\n        +'<div class=\"controle-actions\">'+voir\n          +'<button class=\"charge-edit-btn\" onclick=\"editAchat(\\''+a.id+'\\')\">MODIFIER</button>'\n          +'<button class=\"charge-valid-btn\" onclick=\"validerChargeAuto(\\''+a.id+'\\')\">VALIDER</button>'\n          +'<button class=\"charge-dup-btn\" onclick=\"classerChargeAuto(\\''+a.id+'\\',\\'DOUBLON\\')\">DOUBLON</button>'\n          +'<button class=\"charge-rejet-btn\" onclick=\"classerChargeAuto(\\''+a.id+'\\',\\'REJETEE\\')\">REJETER</button>'\n        +'</div></div>';\n    });\n    html+='</div>';\n  }\n\n  if(validees.length){\n    html+='<div class=\"section-title\">DERNIÈRES CHARGES VALIDÉES</div><div class=\"card validees-card\">';\n    [...validees].reverse().slice(0,5).forEach(a=>{\n      const c=chantierById(a.chantierId);\n      const voir=String(a.lien||\"\").startsWith(\"http\")\n        ? '<button class=\"charge-open-btn\" onclick=\"voirPiece(\\''+esc(a.lien)+'\\')\">VOIR</button>'\n        : \"\";\n      html+='<div class=\"charge-validee-ligne charge-row-standard\">'\n        +'<span class=\"badge b-doc\">'+esc(a.typeDoc||\"\").toUpperCase()+'</span>'\n        +'<span class=\"charge-fournisseur\">'+esc(a.fournisseur||\"\")+'</span>'\n        +'<span class=\"charge-chantier\">'+(c?esc(c.nom):\"?\")+'</span>'\n        +'<small class=\"charge-designation\">'+esc(a.designation||\"\")+'</small>'\n        +'<strong class=\"charge-montant\">'+eur(a.montantHT)+' € HT</strong>'\n        +'<span class=\"charge-validee-actions\">'+voir+'</span>'\n      +'</div>';\n    });\n    html+='</div>';\n  }\n  el.innerHTML=html;\n}\nfunction toast(msg, err){");
 html=html.replace("margin-bottom:14px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'+resumeChargesAutoHtml()","margin-bottom:10px\"><button class=\"btnp\" onclick=\"openAchatModal()\">➕ Ajouter un achat / une charge</button></div>'");
 html=html.replace("function renderAchats(){","window.renderAchats=function(){");
 html=html.replace(/>OUVRIR<\/button>/g,'>VOIR</button>');
@@ -92,13 +41,8 @@ html=html.replace("async function validerChargeAuto(id){","async function valide
 html=html.replace("async function classerChargeAuto(id,statut){","async function classerChargeAuto(id,statut){\n  const confirme=statut===\"DOUBLON\"?await confirmerActionCharge('Confirmer le doublon ?','La proposition sera retirée de la file sans supprimer le mail ni la pièce.','DOUBLON'):await confirmerActionCharge('Rejeter cette proposition ?','La proposition sera retirée de la file sans supprimer le document original.','REJETER');\n  if(!confirme)return;");
 html=html.replace("function toast(msg, err){","function confirmerActionCharge(titre,message,action){\n  return new Promise(resolve=>{\n    const fond=document.createElement('div');fond.className='confirm-charge-fond';\n    fond.innerHTML='<div class=\"confirm-charge-box\"><h5>'+esc(titre)+'</h5><p>'+esc(message)+'</p><div><button class=\"confirm-charge-cancel\">ANNULER</button><button class=\"confirm-charge-ok\">'+esc(action)+'</button></div></div>';\n    const finir=v=>{fond.remove();resolve(v)};\n    fond.querySelector('.confirm-charge-cancel').onclick=()=>finir(false);\n    fond.querySelector('.confirm-charge-ok').onclick=()=>finir(true);\n    fond.onclick=e=>{if(e.target===fond)finir(false)};\n    document.body.appendChild(fond);fond.querySelector('.confirm-charge-cancel').focus();\n  });\n}\nfunction toast(msg, err){");
 
-// ============================================================
-// INSTRUCTIONS POUR INTÉGRER DANS index.html
-// ============================================================
-//
-// 1. Ouvre index.html dans VSCode
-// 2. Cherche le ligne ~80-100 : const css=`
-/* YAYA V142 — PAGE ACHATS / CHARGES */
+const css=`
+/* YAYA V143 — PAGE ACHATS / CHARGES */
 
 :root{
   --charge-navy:#162d49;
