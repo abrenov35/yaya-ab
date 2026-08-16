@@ -3,61 +3,13 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/feff6c6c2d95501a9a61cb87253fb7c02f6ac0b3/index.html';
+  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/f70c954f873fa0a38f8673939a414ccf37a10fa2/index.html';
   let html=await (await fetch(base,{cache:'no-store'})).text();
-  html=html.replace("const YAYA_VERSION='V162';","const YAYA_VERSION='V163';");
-  const css=`
-/* V163 — iPhone vertical : Documents */
-@media(max-width:760px) and (orientation:portrait){
-  #pane-documents,#pane-docs{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
-  #pane-documents .card,#pane-docs .card{width:100%!important;max-width:100%!important;padding:0!important;margin-bottom:0!important;overflow:hidden!important}
-  #pane-documents .card>.doc-row-standard,#pane-docs .card>.doc-row-standard,
-  #pane-documents .docligne,#pane-docs .docligne{
-    display:grid!important;
-    grid-template-columns:68px minmax(0,1fr) auto!important;
-    grid-template-areas:"type source date" "chantier designation actions"!important;
-    gap:6px 8px!important;
-    width:100%!important;max-width:100%!important;min-width:0!important;
-    min-height:0!important;height:auto!important;
-    padding:10px 8px!important;margin:0!important;box-sizing:border-box!important;
-    border-bottom:1px solid #e4e9ef!important;background:#fff!important;align-items:center!important;
-  }
-  #pane-documents .doc-row-standard>*,#pane-docs .doc-row-standard>*,#pane-documents .docligne>*,#pane-docs .docligne>*{
-    min-width:0!important;min-height:0!important;height:auto!important;margin:0!important;line-height:1.15!important;
-  }
-  #pane-documents .doc-row-standard>*:nth-child(1),#pane-docs .doc-row-standard>*:nth-child(1),#pane-documents .docligne>*:nth-child(1),#pane-docs .docligne>*:nth-child(1){grid-area:type!important}
-  #pane-documents .doc-row-standard>*:nth-child(2),#pane-docs .doc-row-standard>*:nth-child(2),#pane-documents .docligne>*:nth-child(2),#pane-docs .docligne>*:nth-child(2){grid-area:source!important;font-size:12px!important;font-weight:700!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(3),#pane-docs .doc-row-standard>*:nth-child(3),#pane-documents .docligne>*:nth-child(3),#pane-docs .docligne>*:nth-child(3){grid-area:chantier!important;font-size:11px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(4),#pane-docs .doc-row-standard>*:nth-child(4),#pane-documents .docligne>*:nth-child(4),#pane-docs .docligne>*:nth-child(4){grid-area:designation!important;font-size:11px!important;color:#687789!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(5),#pane-docs .doc-row-standard>*:nth-child(5),#pane-documents .docligne>*:nth-child(5),#pane-docs .docligne>*:nth-child(5){grid-area:date!important;justify-self:end!important;font-size:10.5px!important;color:#9aa4af!important;white-space:nowrap!important}
-  #pane-documents .doc-row-standard>*:nth-child(6),#pane-docs .doc-row-standard>*:nth-child(6),#pane-documents .docligne>*:nth-child(6),#pane-docs .docligne>*:nth-child(6){grid-area:actions!important;justify-self:end!important}
-  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,#pane-docs .badge.b-mail,#pane-docs .badge.b-doc{
-    width:62px!important;min-width:62px!important;max-width:62px!important;height:28px!important;min-height:28px!important;padding:0 4px!important;font-size:8px!important;border-radius:6px!important;
-  }
-  #pane-documents .doc-actions,#pane-docs .doc-actions{display:flex!important;gap:3px!important;align-items:center!important;justify-content:flex-end!important;min-height:0!important;height:auto!important}
-  #pane-documents .doc-view-btn,#pane-documents .doc-edit-btn,#pane-docs .doc-view-btn,#pane-docs .doc-edit-btn{width:26px!important;min-width:26px!important;max-width:26px!important;height:26px!important;padding:0!important;margin:0!important}
-  #pane-documents>.note,#pane-docs>.note{font-size:10.5px!important;line-height:1.3!important;margin:8px 0 0!important}
-
-  /* Chantiers : cartes compactes sans débordement horizontal */
-  #pane-chantiers{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
-  #pane-chantiers .card{width:100%!important;max-width:100%!important;box-sizing:border-box!important;padding:10px!important;overflow:hidden!important}
-  #pane-chantiers .card .top{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px 8px!important;width:100%!important;max-width:100%!important}
-  #pane-chantiers .card .top>b:first-child{flex:1 1 55%!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:13px!important}
-  #pane-chantiers .card .top>.num{flex:0 0 auto!important;font-size:10.5px!important}
-  #pane-chantiers .card .top>.spacer{display:none!important}
-  #pane-chantiers .card .top>span[style*="width:150px"]{width:auto!important;flex:1 1 42%!important;text-align:left!important;font-size:11px!important;margin:0!important}
-  #pane-chantiers .card .top>span[style*="width:56px"]{width:auto!important;min-width:46px!important;flex:0 0 auto!important;margin:0!important;padding:3px 7px!important}
-  #pane-chantiers .card .top>button{flex:0 0 auto!important;margin-left:0!important;padding:5px 9px!important;font-size:10.5px!important}
-  #pane-chantiers .yaya-chantier-tools{width:100%!important;max-width:100%!important;gap:7px!important}
-  #pane-chantiers .yaya-search-wrap{flex:1 1 100%!important;width:100%!important;max-width:100%!important}
-}
-@media(max-width:390px) and (orientation:portrait){
-  #pane-chantiers .card .top>span[style*="width:150px"]{flex-basis:100%!important}
-  #pane-documents .card>.doc-row-standard,#pane-docs .card>.doc-row-standard,#pane-documents .docligne,#pane-docs .docligne{grid-template-columns:60px minmax(0,1fr) auto!important;gap:5px 6px!important;padding:9px 6px!important}
-  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,#pane-docs .badge.b-mail,#pane-docs .badge.b-doc{width:56px!important;min-width:56px!important;max-width:56px!important;font-size:7.5px!important}
-}
-`;
-  html=html.replace('</head>','<style>'+css+'</style></head>');
+  html=html.replace("html=html.replace(\"const YAYA_VERSION='V162';\",\"const YAYA_VERSION='V163';\");","html=html.replace(\"const YAYA_VERSION='V162';\",\"const YAYA_VERSION='V164';\");");
+  const inject=`  const __vf=new TextDecoder().decode(Uint8Array.from(atob('Y29uc3QgZml4PWAKKGZ1bmN0aW9uKCl7CiAgbGV0IHZpZXdlcj1udWxsLGZyYW1lPW51bGwsb3BlbkxvY2s9MDsKICBmdW5jdGlvbiBwaWVjZVNyYyh1KXsKICAgIGxldCBzcmM9U3RyaW5nKHV8fCcnKS50cmltKCksbG93PXNyYy50b0xvd2VyQ2FzZSgpLG09J2RyaXZlLmdvb2dsZS5jb20vZmlsZS9kLycscD1sb3cuaW5kZXhPZihtKTsKICAgIGlmKHA+PTApe2NvbnN0IGlkPXNyYy5zbGljZShwK20ubGVuZ3RoKS5zcGxpdCgnLycpWzBdLnNwbGl0KCc/JylbMF0uc3BsaXQoJyMnKVswXTtyZXR1cm4gJ2h0dHBzOi8vZHJpdmUuZ29vZ2xlLmNvbS9maWxlL2QvJytpZCsnL3ByZXZpZXcnO30KICAgIGlmKGxvdy5pbmNsdWRlcygnZHJvcGJveC5jb20nKSl7dHJ5e2NvbnN0IGQ9bmV3IFVSTChzcmMpO2Quc2VhcmNoUGFyYW1zLmRlbGV0ZSgnZGwnKTtkLnNlYXJjaFBhcmFtcy5zZXQoJ3JhdycsJzEnKTtyZXR1cm4gZC50b1N0cmluZygpO31jYXRjaChlKXtjb25zdCBhPXNyYy5zcGxpdCgnPycpO2NvbnN0IHE9KGFbMV18fCcnKS5zcGxpdCgnJicpLmZpbHRlcih4PT54JiZ4LnNsaWNlKDAsMykhPT0nZGw9JyYmeC5zbGljZSgwLDQpIT09J3Jhdz0nKS5jb25jYXQoJ3Jhdz0xJyk7cmV0dXJuIGFbMF0rJz8nK3Euam9pbignJicpO319CiAgICByZXR1cm4gc3JjOwogIH0KICBmdW5jdGlvbiBlbnN1cmVWaWV3ZXIoKXsKICAgIHZpZXdlcj1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgneWF5YVBpZWNlVmlld2VyJyk7CiAgICBpZih2aWV3ZXIpe2ZyYW1lPXZpZXdlci5xdWVyeVNlbGVjdG9yKCdpZnJhbWUnKTtyZXR1cm4gdmlld2VyO30KICAgIHZpZXdlcj1kb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTt2aWV3ZXIuaWQ9J3lheWFQaWVjZVZpZXdlcic7CiAgICB2aWV3ZXIuc3R5bGUuY3NzVGV4dD0ncG9zaXRpb246Zml4ZWQ7aW5zZXQ6MDt6LWluZGV4OjEwMDUwO2Rpc3BsYXk6bm9uZTthbGlnbi1pdGVtczpjZW50ZXI7anVzdGlmeS1jb250ZW50OmNlbnRlcjtwYWRkaW5nOjE4cHg7YmFja2dyb3VuZDpyZ2JhKDEzLDMyLDU0LC41OCk7Ym94LXNpemluZzpib3JkZXItYm94JzsKICAgIHZpZXdlci5pbm5lckhUTUw9JzxkaXYgY2xhc3M9Im1vZGFsIHBpZWNlLW1vZGFsIiBzdHlsZT0iZGlzcGxheTpmbGV4O2ZsZXgtZGlyZWN0aW9uOmNvbHVtbjt3aWR0aDptaW4oOTJ2dyw5MjBweCk7aGVpZ2h0Om1pbig4NnZoLDcyMHB4KTttYXgtd2lkdGg6OTIwcHgiPjxoNT48c3Bhbj5QacOoY2Ugam9pbnRlPC9zcGFuPjxidXR0b24gdHlwZT0iYnV0dG9uIiBpZD0ieWF5YVBpZWNlQ2xvc2UiPkZlcm1lcjwvYnV0dG9uPjwvaDU+PGlmcmFtZSBjbGFzcz0icGllY2UtZnJhbWUiIHNyYz0iYWJvdXQ6YmxhbmsiIHRpdGxlPSJQacOoY2Ugam9pbnRlIiBsb2FkaW5nPSJlYWdlciIgcmVmZXJyZXJwb2xpY3k9Im5vLXJlZmVycmVyIiBzdHlsZT0iZmxleDoxO21pbi1oZWlnaHQ6MCI+PC9pZnJhbWU+PC9kaXY+JzsKICAgIGRvY3VtZW50LmJvZHkuYXBwZW5kQ2hpbGQodmlld2VyKTtmcmFtZT12aWV3ZXIucXVlcnlTZWxlY3RvcignaWZyYW1lJyk7CiAgICB2aWV3ZXIucXVlcnlTZWxlY3RvcignI3lheWFQaWVjZUNsb3NlJykub25jbGljaz13aW5kb3cuY2xvc2VQaWVjZVZpZXdlcjsKICAgIHZpZXdlci5hZGRFdmVudExpc3RlbmVyKCdjbGljaycsZT0+e2lmKGUudGFyZ2V0PT09dmlld2VyKXdpbmRvdy5jbG9zZVBpZWNlVmlld2VyKCk7fSk7CiAgICByZXR1cm4gdmlld2VyOwogIH0KICB3aW5kb3cuY2xvc2VQaWVjZVZpZXdlcj1mdW5jdGlvbigpe2NvbnN0IHY9ZW5zdXJlVmlld2VyKCk7di5zdHlsZS5kaXNwbGF5PSdub25lJztkb2N1bWVudC5ib2R5LnN0eWxlLm92ZXJmbG93PScnO2lmKGZyYW1lKXt0cnl7ZnJhbWUuc3JjPSdhYm91dDpibGFuayd9Y2F0Y2goZSl7fX19OwogIHdpbmRvdy52b2lyUGllY2U9ZnVuY3Rpb24odSl7Y29uc3Qgbm93PURhdGUubm93KCk7aWYobm93LW9wZW5Mb2NrPDM1MClyZXR1cm47b3BlbkxvY2s9bm93O3U9U3RyaW5nKHV8fCcnKS50cmltKCk7aWYoIXUpcmV0dXJuO2NvbnN0IHY9ZW5zdXJlVmlld2VyKCk7ZG9jdW1lbnQuYm9keS5zdHlsZS5vdmVyZmxvdz0naGlkZGVuJztpZihmcmFtZSl7dHJ5e2ZyYW1lLnNyYz0nYWJvdXQ6YmxhbmsnfWNhdGNoKGUpe307cmVxdWVzdEFuaW1hdGlvbkZyYW1lKCgpPT57ZnJhbWUuc3JjPXBpZWNlU3JjKHUpO30pO312LnN0eWxlLmRpc3BsYXk9J2ZsZXgnO307CiAgY29uc3Qgb2xkQ2xvc2U9d2luZG93LmNsb3NlTW9kYWw7CiAgd2luZG93LmNsb3NlTW9kYWw9ZnVuY3Rpb24oKXtjb25zdCBwdj1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgneWF5YVBpZWNlVmlld2VyJyk7aWYocHYmJnB2LnN0eWxlLmRpc3BsYXkhPT0nbm9uZScpe3dpbmRvdy5jbG9zZVBpZWNlVmlld2VyKCk7cmV0dXJuO31pZih0eXBlb2Ygb2xkQ2xvc2U9PT0nZnVuY3Rpb24nKXJldHVybiBvbGRDbG9zZS5hcHBseSh0aGlzLGFyZ3VtZW50cyk7Y29uc3Qgcm9vdD1kb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnbW9kYWxSb290Jyk7aWYocm9vdClyb290LmlubmVySFRNTD0nJzt9Owp9KSgpOwpgOwogIGh0bWw9aHRtbC5yZXBsYWNlKCdjb25zdCBfcmVuZGVyPXdpbmRvdy5yZW5kZXI7JyxmaXgrJ2NvbnN0IF9yZW5kZXI9d2luZG93LnJlbmRlcjsnKTs='),c=>c.charCodeAt(0)));
+  html=html.replace(/const fix=\`[\s\S]*?\`;\n  html=html\.replace\('const _render=window\.render;',fix\+'const _render=window\.render;'\);/,__vf);
+  document.open();document.write(html);document.close();`;
+  html=html.replace('  document.open();document.write(html);document.close();',inject);
   document.open();document.write(html);document.close();
 }catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
 </script></body></html>
