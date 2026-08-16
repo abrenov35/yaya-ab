@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V143';
+const YAYA_VERSION='V144';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -42,91 +42,107 @@ html=html.replace("async function classerChargeAuto(id,statut){","async function
 html=html.replace("function toast(msg, err){","function confirmerActionCharge(titre,message,action){\n  return new Promise(resolve=>{\n    const fond=document.createElement('div');fond.className='confirm-charge-fond';\n    fond.innerHTML='<div class=\"confirm-charge-box\"><h5>'+esc(titre)+'</h5><p>'+esc(message)+'</p><div><button class=\"confirm-charge-cancel\">ANNULER</button><button class=\"confirm-charge-ok\">'+esc(action)+'</button></div></div>';\n    const finir=v=>{fond.remove();resolve(v)};\n    fond.querySelector('.confirm-charge-cancel').onclick=()=>finir(false);\n    fond.querySelector('.confirm-charge-ok').onclick=()=>finir(true);\n    fond.onclick=e=>{if(e.target===fond)finir(false)};\n    document.body.appendChild(fond);fond.querySelector('.confirm-charge-cancel').focus();\n  });\n}\nfunction toast(msg, err){");
 
 const css=`
-/* YAYA V143 — PAGE ACHATS / CHARGES */
+/* YAYA V144 — ACHATS / CHARGES : SOBRE & PRO */
 
 :root{
-  --charge-navy:#162d49;
-  --charge-muted:#64748b;
-  --charge-border:#dfe5ec;
-  --charge-row:#f8fafc;
-  --charge-green:#16803d;
-  --charge-red:#b91c1c;
+  --y-navy:#162d49;
+  --y-text:#24364b;
+  --y-muted:#718096;
+  --y-line:#e7ebf0;
+  --y-soft:#f7f8fa;
+  --y-green:#0f766e;
+  --y-violet:#6d5aa8;
+  --y-danger:#b42318;
+}
+
+#pane-achats{
+  color:var(--y-text);
 }
 
 .charges-toolbar{
   display:flex;
   align-items:center;
-  margin:0 0 10px;
+  margin:0 0 12px;
 }
 .charges-add-btn{
   min-height:38px;
-  padding:0 18px;
+  padding:0 16px;
   border-radius:8px;
-  white-space:nowrap;
+  font-size:13px;
+  font-weight:700;
 }
 
 .controle-title{
   display:flex;
   align-items:center;
-  gap:7px;
-  margin:8px 0 6px;
-  color:var(--charge-navy);
-  font-size:13px;
-  font-weight:900;
+  gap:8px;
+  margin:10px 0 7px;
+  color:var(--y-navy);
+  font-size:12px;
+  font-weight:800;
+  letter-spacing:.02em;
   text-transform:uppercase;
 }
 .controle-title>span{
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  min-width:20px;
-  height:20px;
+  min-width:19px;
+  height:19px;
   padding:0 5px;
   border-radius:999px;
-  background:#fee2e2;
-  color:var(--charge-red);
+  background:#eef1f4;
+  color:var(--y-navy);
   font-size:10px;
-  font-weight:900;
+  font-weight:800;
 }
 
 .section-title{
-  margin:16px 0 6px;
-  color:var(--charge-muted);
+  margin:16px 0 7px;
+  color:var(--y-muted);
   font-size:10px;
-  font-weight:800;
-  letter-spacing:.09em;
+  font-weight:700;
+  letter-spacing:.08em;
   text-transform:uppercase;
 }
 
-.controle-card,.validees-card{
-  border:1px solid var(--charge-border);
+.controle-card,
+.validees-card{
+  border:1px solid var(--y-line);
   border-radius:10px;
   background:#fff;
   overflow:hidden;
-  box-shadow:0 1px 3px rgba(15,23,42,.06);
+  box-shadow:0 1px 2px rgba(16,24,40,.04);
 }
+
 .controle-vide{
   padding:12px 14px;
-  border:1px dashed var(--charge-border);
+  border:1px solid var(--y-line);
   border-radius:9px;
-  color:var(--charge-muted);
+  background:#fff;
+  color:var(--y-muted);
   font-size:11px;
 }
 
+/* TYPE | FOURNISSEUR | CHANTIER | DÉSIGNATION | MONTANT | ACTIONS */
 .controle-ligne,
 .charge-validee-ligne{
   display:grid;
-  grid-template-columns:64px 170px 170px minmax(180px,1fr) 100px 150px;
-  column-gap:10px;
+  grid-template-columns:58px 150px 150px minmax(220px,1fr) 96px 132px;
+  gap:10px;
   align-items:center;
-  min-height:42px;
-  padding:5px 10px;
-  border-bottom:1px solid #edf1f5;
+  min-height:40px;
+  padding:5px 12px;
+  border-bottom:1px solid var(--y-line);
 }
 .controle-ligne:last-child,
-.charge-validee-ligne:last-child{border-bottom:0}
+.charge-validee-ligne:last-child{
+  border-bottom:0;
+}
 .controle-ligne:hover,
-.charge-validee-ligne:hover{background:var(--charge-row)}
+.charge-validee-ligne:hover{
+  background:#fbfcfd;
+}
 
 .badge,
 .charge-fournisseur,
@@ -135,47 +151,48 @@ const css=`
   align-items:center;
   justify-content:center;
   min-width:0;
-  height:28px;
+  height:26px;
   padding:0 8px;
-  border-radius:7px;
+  border-radius:6px;
   font-size:10px;
-  font-weight:800;
+  font-weight:700;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
+/* badges volontairement discrets */
 .badge.b-doc{
-  background:#e5e7eb;
-  color:#111827;
+  background:#eceef1;
+  color:#25364a;
 }
 .charge-fournisseur{
-  background:#ddd0f3;
-  color:#6246a8;
+  background:#f0ebf8;
+  color:var(--y-violet);
 }
 .charge-chantier{
-  background:#b9eadc;
-  color:#006b5c;
+  background:#e2f2ee;
+  color:var(--y-green);
 }
+
 .charge-designation{
   min-width:0;
-  color:var(--charge-muted);
+  color:#607086;
   font-size:10px;
+  line-height:1.2;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
 }
+
 .charge-montant{
-  display:inline-flex;
+  display:flex;
   align-items:center;
-  justify-content:center;
-  height:28px;
-  padding:0 10px;
-  border:1px solid #d8dee6;
-  border-radius:999px;
-  background:#fff;
-  color:var(--charge-navy);
+  justify-content:flex-end;
+  min-width:0;
+  color:var(--y-navy);
   font-size:11px;
-  font-weight:900;
+  font-weight:800;
   white-space:nowrap;
 }
 
@@ -186,8 +203,8 @@ const css=`
   justify-content:flex-end;
   gap:4px;
   min-width:0;
-  white-space:nowrap;
 }
+
 .charge-open-btn,
 .charge-edit-btn,
 .charge-valid-btn,
@@ -196,48 +213,60 @@ const css=`
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:28px;
-  height:28px;
+  width:26px;
+  height:26px;
   padding:0;
-  border:1px solid #cfd6df;
-  border-radius:6px;
+  border:1px solid #cfd6de;
+  border-radius:5px;
   background:#fff;
-  cursor:pointer;
-  font-size:13px;
+  color:#334155;
+  font-size:12px;
   line-height:1;
+  cursor:pointer;
 }
-.charge-open-btn:hover{background:#fff7db}
-.charge-edit-btn:hover{background:#e9f2ff}
+.charge-open-btn:hover,
+.charge-edit-btn:hover,
+.charge-dup-btn:hover{
+  background:#f4f6f8;
+}
 .charge-valid-btn{
-  color:var(--charge-green);
-  border-color:#8fd2aa;
-  font-weight:900;
+  color:#16794d;
+  border-color:#b9d9c7;
 }
-.charge-valid-btn:hover{background:#e9f8ef}
-.charge-dup-btn:hover{background:#f2ebff}
+.charge-valid-btn:hover{
+  background:#eef8f2;
+}
 .charge-rejet-btn{
-  color:var(--charge-red);
+  color:var(--y-danger);
 }
-.charge-rejet-btn:hover{background:#feecec}
+.charge-rejet-btn:hover{
+  background:#fff2f0;
+}
 
-@media(max-width:1250px){
+/* Évite que l'ancien style de .card ajoute des espacements incohérents */
+#pane-achats .controle-card,
+#pane-achats .validees-card{
+  padding:0 !important;
+}
+
+@media(max-width:1180px){
   .controle-ligne,
   .charge-validee-ligne{
-    grid-template-columns:58px 140px 140px minmax(150px,1fr) 92px 142px;
-    column-gap:7px;
-    padding:5px 7px;
+    grid-template-columns:54px 125px 125px minmax(150px,1fr) 88px 132px;
+    gap:7px;
+    padding:5px 8px;
   }
 }
 
-@media(max-width:850px){
+@media(max-width:820px){
   .controle-ligne,
   .charge-validee-ligne{
-    grid-template-columns:54px minmax(0,1fr) 90px;
+    grid-template-columns:52px minmax(0,1fr) 84px;
     grid-template-areas:
       "type fournisseur montant"
       "chantier designation actions";
     row-gap:5px;
-    min-height:72px;
+    min-height:68px;
   }
   .controle-ligne>.badge,
   .charge-validee-ligne>.badge{grid-area:type}
@@ -247,17 +276,12 @@ const css=`
   .charge-montant{grid-area:montant}
   .controle-actions,
   .charge-validee-actions{grid-area:actions}
-  .charge-fournisseur,
-  .charge-chantier{
-    justify-content:flex-start;
-    padding:0 7px;
-  }
 }
 
 .piece-modal{
-  width:min(94vw,980px)!important;
-  height:min(88vh,760px)!important;
-  max-width:980px!important;
+  width:min(92vw,920px)!important;
+  height:min(86vh,720px)!important;
+  max-width:920px!important;
 }
 .piece-modal h5{
   display:flex;
@@ -275,6 +299,7 @@ const css=`
 `
 
 
+html=html.replace('</head>','<style>'+css+'</style></head>');
 html=html.replace('</body>',`<script>
 function alignChantierTools(){const pane=document.getElementById('pane-chantiers');if(!pane)return;const search=pane.querySelector('input[placeholder*="Rechercher un chantier"]');if(!search)return;const createBtn=[...pane.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Créer un chantier'));if(!createBtn||createBtn.closest('.yaya-chantier-tools'))return;const searchWrap=search.parentElement;const tools=document.createElement('div');tools.className='yaya-chantier-tools';createBtn.parentNode.insertBefore(tools,createBtn);tools.appendChild(createBtn);const sw=document.createElement('div');sw.className='yaya-search-wrap';while(searchWrap.firstChild)sw.appendChild(searchWrap.firstChild);searchWrap.parentNode.insertBefore(sw,searchWrap);searchWrap.remove();tools.appendChild(sw);}
 function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.charge-edit-btn,.charge-valid-btn,.charge-dup-btn,.charge-rejet-btn').forEach(b=>{if(b.classList.contains('charge-action-icon'))return;let ico='',label='';if(b.classList.contains('charge-open-btn')){ico='👁';label='Voir la pièce';}else if(b.classList.contains('charge-edit-btn')){ico='✏️';label='Modifier';}else if(b.classList.contains('charge-valid-btn')){ico='✓';label='Valider';}else if(b.classList.contains('charge-dup-btn')){ico='⧉';label='Classer comme doublon';}else if(b.classList.contains('charge-rejet-btn')){ico='✕';label='Rejeter';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.classList.add('charge-action-icon');}});}
