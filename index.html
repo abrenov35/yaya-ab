@@ -3,192 +3,61 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/ea6b09202383c9d82ce6a353e6cff6455f922537/index.html';
+  const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/feff6c6c2d95501a9a61cb87253fb7c02f6ac0b3/index.html';
   let html=await (await fetch(base,{cache:'no-store'})).text();
-  html=html.replace("const YAYA_VERSION='V159';","const YAYA_VERSION='V162';");
-  html=html.replace('window.voirPiece=function(u){','window.voirPieceV159=function(u){');
-  const mobileCss=`
-/* V161 — CHARGES iPhone : 2 lignes stables, aucune colonne ne déborde */
-@media(max-width:760px){
-  #pane-achats{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
-  #pane-achats .controle-card,
-  #pane-achats .validees-card{width:100%!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
-  #pane-achats .controle-ligne,
-  #pane-achats .charge-validee-ligne{
+  html=html.replace("const YAYA_VERSION='V162';","const YAYA_VERSION='V163';");
+  const css=`
+/* V163 — iPhone vertical : Documents */
+@media(max-width:760px) and (orientation:portrait){
+  #pane-documents,#pane-docs{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
+  #pane-documents .card,#pane-docs .card{width:100%!important;max-width:100%!important;padding:0!important;margin-bottom:0!important;overflow:hidden!important}
+  #pane-documents .card>.doc-row-standard,#pane-docs .card>.doc-row-standard,
+  #pane-documents .docligne,#pane-docs .docligne{
     display:grid!important;
-    grid-template-columns:82px minmax(0,1fr) auto!important;
-    grid-template-areas:
-      "type fournisseur montant"
-      "chantier designation actions"!important;
-    gap:7px 10px!important;
-    min-width:0!important;
-    width:100%!important;
-    max-width:100%!important;
-    min-height:88px!important;
-    padding:10px 9px!important;
-    box-sizing:border-box!important;
-    align-items:center!important;
+    grid-template-columns:68px minmax(0,1fr) auto!important;
+    grid-template-areas:"type source date" "chantier designation actions"!important;
+    gap:6px 8px!important;
+    width:100%!important;max-width:100%!important;min-width:0!important;
+    min-height:0!important;height:auto!important;
+    padding:10px 8px!important;margin:0!important;box-sizing:border-box!important;
+    border-bottom:1px solid #e4e9ef!important;background:#fff!important;align-items:center!important;
   }
-  #pane-achats .controle-ligne>.badge,
-  #pane-achats .charge-validee-ligne>.badge{
-    grid-area:type!important;
-    width:76px!important;min-width:76px!important;max-width:76px!important;
-    height:34px!important;padding:0 6px!important;justify-content:center!important;
+  #pane-documents .doc-row-standard>*,#pane-docs .doc-row-standard>*,#pane-documents .docligne>*,#pane-docs .docligne>*{
+    min-width:0!important;min-height:0!important;height:auto!important;margin:0!important;line-height:1.15!important;
   }
-  #pane-achats .charge-fournisseur{grid-area:fournisseur!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:13px!important}
-  #pane-achats .charge-montant{grid-area:montant!important;justify-self:end!important;white-space:nowrap!important;font-size:13px!important}
-  #pane-achats .charge-chantier{grid-area:chantier!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:12px!important}
-  #pane-achats .charge-designation{grid-area:designation!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:12px!important}
-  #pane-achats .controle-actions,
-  #pane-achats .charge-validee-actions{
-    grid-area:actions!important;
-    display:flex!important;
-    align-items:center!important;
-    justify-content:flex-end!important;
-    flex-wrap:nowrap!important;
-    width:auto!important;min-width:0!important;max-width:none!important;
-    gap:4px!important;overflow:visible!important;
+  #pane-documents .doc-row-standard>*:nth-child(1),#pane-docs .doc-row-standard>*:nth-child(1),#pane-documents .docligne>*:nth-child(1),#pane-docs .docligne>*:nth-child(1){grid-area:type!important}
+  #pane-documents .doc-row-standard>*:nth-child(2),#pane-docs .doc-row-standard>*:nth-child(2),#pane-documents .docligne>*:nth-child(2),#pane-docs .docligne>*:nth-child(2){grid-area:source!important;font-size:12px!important;font-weight:700!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #pane-documents .doc-row-standard>*:nth-child(3),#pane-docs .doc-row-standard>*:nth-child(3),#pane-documents .docligne>*:nth-child(3),#pane-docs .docligne>*:nth-child(3){grid-area:chantier!important;font-size:11px!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #pane-documents .doc-row-standard>*:nth-child(4),#pane-docs .doc-row-standard>*:nth-child(4),#pane-documents .docligne>*:nth-child(4),#pane-docs .docligne>*:nth-child(4){grid-area:designation!important;font-size:11px!important;color:#687789!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+  #pane-documents .doc-row-standard>*:nth-child(5),#pane-docs .doc-row-standard>*:nth-child(5),#pane-documents .docligne>*:nth-child(5),#pane-docs .docligne>*:nth-child(5){grid-area:date!important;justify-self:end!important;font-size:10.5px!important;color:#9aa4af!important;white-space:nowrap!important}
+  #pane-documents .doc-row-standard>*:nth-child(6),#pane-docs .doc-row-standard>*:nth-child(6),#pane-documents .docligne>*:nth-child(6),#pane-docs .docligne>*:nth-child(6){grid-area:actions!important;justify-self:end!important}
+  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,#pane-docs .badge.b-mail,#pane-docs .badge.b-doc{
+    width:62px!important;min-width:62px!important;max-width:62px!important;height:28px!important;min-height:28px!important;padding:0 4px!important;font-size:8px!important;border-radius:6px!important;
   }
-  #pane-achats .charge-open-btn,
-  #pane-achats .charge-edit-btn,
-  #pane-achats .charge-valid-btn,
-  #pane-achats .charge-dup-btn,
-  #pane-achats .charge-rejet-btn{
-    flex:0 0 28px!important;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;padding:0!important;margin:0!important
-  }
-  #pane-achats .controle-title,
-  #pane-achats .section-title{margin-left:0!important;margin-right:0!important}
-}
-@media(max-width:390px){
-  #pane-achats .controle-ligne,
-  #pane-achats .charge-validee-ligne{grid-template-columns:74px minmax(0,1fr) auto!important;gap:6px 7px!important;padding:9px 7px!important}
-  #pane-achats .controle-ligne>.badge,
-  #pane-achats .charge-validee-ligne>.badge{width:68px!important;min-width:68px!important;max-width:68px!important;font-size:9px!important}
-  #pane-achats .controle-actions,
-  #pane-achats .charge-validee-actions{gap:3px!important}
-  #pane-achats .charge-open-btn,
-  #pane-achats .charge-edit-btn,
-  #pane-achats .charge-valid-btn,
-  #pane-achats .charge-dup-btn,
-  #pane-achats .charge-rejet-btn{flex-basis:26px!important;width:26px!important;min-width:26px!important;max-width:26px!important;height:26px!important}
-}
+  #pane-documents .doc-actions,#pane-docs .doc-actions{display:flex!important;gap:3px!important;align-items:center!important;justify-content:flex-end!important;min-height:0!important;height:auto!important}
+  #pane-documents .doc-view-btn,#pane-documents .doc-edit-btn,#pane-docs .doc-view-btn,#pane-docs .doc-edit-btn{width:26px!important;min-width:26px!important;max-width:26px!important;height:26px!important;padding:0!important;margin:0!important}
+  #pane-documents>.note,#pane-docs>.note{font-size:10.5px!important;line-height:1.3!important;margin:8px 0 0!important}
 
-/* V162 — DOCUMENTS iPhone : 2 lignes compactes, actions visibles */
-@media(max-width:760px){
-  #pane-documents,
-  #pane-docs{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
-  #pane-documents .card,
-  #pane-docs .card{width:100%!important;max-width:100%!important;overflow:hidden!important;box-sizing:border-box!important}
-  #pane-documents .docligne,
-  #pane-documents .doc-row-standard,
-  #pane-docs .docligne,
-  #pane-docs .doc-row-standard{
-    display:grid!important;
-    grid-template-columns:82px minmax(0,1fr) auto!important;
-    grid-template-areas:
-      "type source date"
-      "chantier designation actions"!important;
-    gap:7px 10px!important;
-    width:100%!important;
-    max-width:100%!important;
-    min-width:0!important;
-    min-height:88px!important;
-    padding:10px 9px!important;
-    box-sizing:border-box!important;
-    align-items:center!important;
-  }
-  #pane-documents .docligne > *,
-  #pane-documents .doc-row-standard > *,
-  #pane-docs .docligne > *,
-  #pane-docs .doc-row-standard > *{
-    min-height:0!important;
-    min-width:0!important;
-    margin:0!important;
-  }
-  #pane-documents .docligne > *:nth-child(1),
-  #pane-documents .doc-row-standard > *:nth-child(1),
-  #pane-docs .docligne > *:nth-child(1),
-  #pane-docs .doc-row-standard > *:nth-child(1){grid-area:type!important}
-  #pane-documents .docligne > *:nth-child(2),
-  #pane-documents .doc-row-standard > *:nth-child(2),
-  #pane-docs .docligne > *:nth-child(2),
-  #pane-docs .doc-row-standard > *:nth-child(2){grid-area:source!important}
-  #pane-documents .docligne > *:nth-child(3),
-  #pane-documents .doc-row-standard > *:nth-child(3),
-  #pane-docs .docligne > *:nth-child(3),
-  #pane-docs .doc-row-standard > *:nth-child(3){grid-area:chantier!important}
-  #pane-documents .docligne > *:nth-child(4),
-  #pane-documents .doc-row-standard > *:nth-child(4),
-  #pane-docs .docligne > *:nth-child(4),
-  #pane-docs .doc-row-standard > *:nth-child(4){grid-area:designation!important}
-  #pane-documents .docligne > *:nth-child(5),
-  #pane-documents .doc-row-standard > *:nth-child(5),
-  #pane-docs .docligne > *:nth-child(5),
-  #pane-docs .doc-row-standard > *:nth-child(5){grid-area:date!important;justify-self:end!important;white-space:nowrap!important}
-  #pane-documents .docligne > *:nth-child(6),
-  #pane-documents .doc-row-standard > *:nth-child(6),
-  #pane-docs .docligne > *:nth-child(6),
-  #pane-docs .doc-row-standard > *:nth-child(6){grid-area:actions!important;justify-self:end!important}
-  #pane-documents .docligne > *:nth-child(2),
-  #pane-documents .docligne > *:nth-child(3),
-  #pane-documents .docligne > *:nth-child(4),
-  #pane-documents .doc-row-standard > *:nth-child(2),
-  #pane-documents .doc-row-standard > *:nth-child(3),
-  #pane-documents .doc-row-standard > *:nth-child(4),
-  #pane-docs .docligne > *:nth-child(2),
-  #pane-docs .docligne > *:nth-child(3),
-  #pane-docs .docligne > *:nth-child(4),
-  #pane-docs .doc-row-standard > *:nth-child(2),
-  #pane-docs .doc-row-standard > *:nth-child(3),
-  #pane-docs .doc-row-standard > *:nth-child(4){overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-  #pane-documents .badge,
-  #pane-docs .badge{width:76px!important;min-width:76px!important;max-width:76px!important;height:34px!important;padding:0 6px!important;font-size:9px!important;justify-content:center!important}
-  #pane-documents .doc-actions,
-  #pane-docs .doc-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:4px!important;min-height:0!important}
-  #pane-documents .doc-view-btn,
-  #pane-documents .doc-edit-btn,
-  #pane-docs .doc-view-btn,
-  #pane-docs .doc-edit-btn{width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;padding:0!important;margin:0!important}
-  #pane-documents > .note,
-  #pane-docs > .note{font-size:11px!important;line-height:1.35!important;margin-top:10px!important}
+  /* Chantiers : cartes compactes sans débordement horizontal */
+  #pane-chantiers{overflow-x:hidden!important;width:100%!important;max-width:100%!important}
+  #pane-chantiers .card{width:100%!important;max-width:100%!important;box-sizing:border-box!important;padding:10px!important;overflow:hidden!important}
+  #pane-chantiers .card .top{display:flex!important;flex-wrap:wrap!important;align-items:center!important;gap:6px 8px!important;width:100%!important;max-width:100%!important}
+  #pane-chantiers .card .top>b:first-child{flex:1 1 55%!important;min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;font-size:13px!important}
+  #pane-chantiers .card .top>.num{flex:0 0 auto!important;font-size:10.5px!important}
+  #pane-chantiers .card .top>.spacer{display:none!important}
+  #pane-chantiers .card .top>span[style*="width:150px"]{width:auto!important;flex:1 1 42%!important;text-align:left!important;font-size:11px!important;margin:0!important}
+  #pane-chantiers .card .top>span[style*="width:56px"]{width:auto!important;min-width:46px!important;flex:0 0 auto!important;margin:0!important;padding:3px 7px!important}
+  #pane-chantiers .card .top>button{flex:0 0 auto!important;margin-left:0!important;padding:5px 9px!important;font-size:10.5px!important}
+  #pane-chantiers .yaya-chantier-tools{width:100%!important;max-width:100%!important;gap:7px!important}
+  #pane-chantiers .yaya-search-wrap{flex:1 1 100%!important;width:100%!important;max-width:100%!important}
 }
-@media(max-width:390px){
-  #pane-documents .docligne,
-  #pane-documents .doc-row-standard,
-  #pane-docs .docligne,
-  #pane-docs .doc-row-standard{grid-template-columns:74px minmax(0,1fr) auto!important;gap:6px 7px!important;padding:9px 7px!important}
-  #pane-documents .badge,
-  #pane-docs .badge{width:68px!important;min-width:68px!important;max-width:68px!important;font-size:8.5px!important}
+@media(max-width:390px) and (orientation:portrait){
+  #pane-chantiers .card .top>span[style*="width:150px"]{flex-basis:100%!important}
+  #pane-documents .card>.doc-row-standard,#pane-docs .card>.doc-row-standard,#pane-documents .docligne,#pane-docs .docligne{grid-template-columns:60px minmax(0,1fr) auto!important;gap:5px 6px!important;padding:9px 6px!important}
+  #pane-documents .badge.b-mail,#pane-documents .badge.b-doc,#pane-docs .badge.b-mail,#pane-docs .badge.b-doc{width:56px!important;min-width:56px!important;max-width:56px!important;font-size:7.5px!important}
 }
 `;
-  html=html.replace('</head>','<style>'+mobileCss+'</style></head>');
-  const fix=`
-window.voirPiece=function(u){
-  u=String(u||'').trim();if(!u)return;
-  const root=document.getElementById('modalRoot');if(!root)return;
-  const oldFrame=root.querySelector('iframe.piece-frame');
-  if(oldFrame){try{oldFrame.src='about:blank'}catch(e){};try{oldFrame.remove()}catch(e){}}
-  root.innerHTML='';
-  let src=u;
-  const low=u.toLowerCase();
-  const driveMarker='drive.google.com/file/d/';
-  const drivePos=low.indexOf(driveMarker);
-  if(drivePos>=0){const id=u.slice(drivePos+driveMarker.length).split('/')[0].split('?')[0].split('#')[0];src='https://drive.google.com/file/d/'+id+'/preview';}
-  else if(low.includes('dropbox.com')){
-    try{const d=new URL(u);d.searchParams.delete('dl');d.searchParams.set('raw','1');src=d.toString();}
-    catch(e){const p=u.split('?');const q=(p[1]||'').split('&').filter(x=>x&&x.slice(0,3)!=='dl='&&x.slice(0,4)!=='raw=').concat('raw=1');src=p[0]+'?'+q.join('&');}
-  }
-  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal piece-modal"><h5><span>Pièce jointe</span><button type="button" onclick="closeModal()">Fermer</button></h5><iframe class="piece-frame" src="'+esc(src)+'" title="Pièce jointe" loading="lazy" referrerpolicy="no-referrer"></iframe></div></div>';
-};
-const _yayaCloseModal=window.closeModal;
-window.closeModal=function(){
-  const root=document.getElementById('modalRoot');
-  if(root){const f=root.querySelector('iframe.piece-frame');if(f){try{f.src='about:blank'}catch(e){};try{f.remove()}catch(e){}}}
-  if(typeof _yayaCloseModal==='function')return _yayaCloseModal.apply(this,arguments);
-  if(root)root.innerHTML='';
-};
-`;
-  html=html.replace('const _render=window.render;',fix+'const _render=window.render;');
+  html=html.replace('</head>','<style>'+css+'</style></head>');
   document.open();document.write(html);document.close();
 }catch(e){document.getElementById('boot').textContent='Erreur de chargement : '+e.message}})();
 </script></body></html>
