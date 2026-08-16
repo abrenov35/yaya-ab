@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V158';
+const YAYA_VERSION='V159';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -1109,60 +1109,73 @@ const css=`
   }
 }
 
-/* V158 — CHANTIERS : bouton + recherche côte à côte, sans loupe */
+/* V159 — CHANTIERS : bouton + recherche côte à côte SANS toucher aux cartes */
+
+/* Le panneau devient une grille seulement pour ses 2 premiers blocs */
 #pane-chantiers{
-  position:relative !important;
+  display:grid !important;
+  grid-template-columns:auto 360px minmax(0,1fr) !important;
+  column-gap:10px !important;
+  align-items:start !important;
 }
 
-/* Le bouton reste à gauche */
+/* bloc bouton */
 #pane-chantiers > div:first-child{
-  display:inline-flex !important;
-  align-items:center !important;
-  margin:0 !important;
-  vertical-align:top !important;
+  grid-column:1 !important;
+  grid-row:1 !important;
+  margin:0 0 14px 0 !important;
+  display:block !important;
 }
 
-/* Le bloc recherche vient réellement à droite du bouton */
-#pane-chantiers > div:nth-child(2){
-  display:inline-block !important;
-  position:relative !important;
+/* bloc recherche : uniquement celui qui contient filtreInput */
+#pane-chantiers > div:has(#filtreInput){
+  grid-column:2 !important;
+  grid-row:1 !important;
   width:360px !important;
-  max-width:360px !important;
-  margin:0 0 14px 10px !important;
-  vertical-align:top !important;
+  margin:0 0 14px 0 !important;
+  position:relative !important;
 }
 
-/* champ plus compact */
+/* champ recherche */
 #pane-chantiers #filtreInput{
   width:360px !important;
   max-width:360px !important;
-  min-width:260px !important;
+  min-width:0 !important;
   height:40px !important;
-  padding:0 14px !important;
   margin:0 !important;
+  padding:0 14px !important;
   box-sizing:border-box !important;
 }
 
-/* enlève totalement la loupe */
-#pane-chantiers > div:nth-child(2) > span{
+/* enlève uniquement la loupe du bloc recherche */
+#pane-chantiers > div:has(#filtreInput) > span{
   display:none !important;
 }
 
-/* sécurité : annule l'ancien padding prévu pour l'icône */
-#pane-chantiers #filtreInput{
-  padding-left:14px !important;
-  padding-right:14px !important;
+/* IMPORTANT : toutes les cartes chantier reprennent toute la largeur */
+#pane-chantiers > .card{
+  grid-column:1 / -1 !important;
+  width:100% !important;
+}
+
+/* tout autre bloc direct du panneau passe pleine largeur */
+#pane-chantiers > div:not(:first-child):not(:has(#filtreInput)):not(.card){
+  grid-column:1 / -1 !important;
 }
 
 @media(max-width:760px){
-  #pane-chantiers > div:first-child,
-  #pane-chantiers > div:nth-child(2){
-    display:block !important;
+  #pane-chantiers{
+    grid-template-columns:1fr !important;
   }
-  #pane-chantiers > div:nth-child(2){
+  #pane-chantiers > div:first-child,
+  #pane-chantiers > div:has(#filtreInput),
+  #pane-chantiers > .card,
+  #pane-chantiers > div:not(:first-child):not(:has(#filtreInput)):not(.card){
+    grid-column:1 !important;
+  }
+  #pane-chantiers > div:has(#filtreInput){
+    grid-row:2 !important;
     width:100% !important;
-    max-width:none !important;
-    margin:8px 0 14px !important;
   }
   #pane-chantiers #filtreInput{
     width:100% !important;
