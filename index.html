@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V153';
+const YAYA_VERSION='V154';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -697,127 +697,6 @@ const css=`
   color:#08742d !important;
 }
 
-/* V151 — ÉQUIPE : même charte sobre/pro que Documents */
-
-.yaya-equipe-pane .equipe-add-btn{
-  min-height:38px !important;
-  padding:0 14px !important;
-  border:1px solid #b9c5d2 !important;
-  border-radius:7px !important;
-  background:#fff !important;
-  color:#102a46 !important;
-  box-shadow:none !important;
-  font-size:12px !important;
-  font-weight:700 !important;
-}
-.yaya-equipe-pane .equipe-add-btn:hover{
-  background:#f7f9fb !important;
-  border-color:#8fa0b3 !important;
-}
-
-/* titres SALARIÉS / SOUS-TRAITANTS */
-.yaya-equipe-pane .equipe-section-title{
-  margin:18px 0 7px !important;
-  color:#66758a !important;
-  font-size:10px !important;
-  font-weight:700 !important;
-  letter-spacing:.08em !important;
-  text-transform:uppercase !important;
-}
-
-/* lignes sans grosses cartes */
-.yaya-equipe-pane .equipe-row{
-  display:grid !important;
-  grid-template-columns:150px 150px 170px 100px minmax(40px,1fr) 56px !important;
-  gap:10px !important;
-  align-items:center !important;
-  width:100% !important;
-  min-height:52px !important;
-  padding:0 10px !important;
-  margin:0 !important;
-  box-sizing:border-box !important;
-  border-bottom:1px solid #e9eef3 !important;
-  background:#fff !important;
-}
-.yaya-equipe-pane .equipe-row:first-of-type{
-  border-top:1px solid #dce3eb !important;
-}
-.yaya-equipe-pane .equipe-row:hover{
-  background:#fbfcfd !important;
-}
-
-/* tout centré verticalement */
-.yaya-equipe-pane .equipe-row > *{
-  margin:0 !important;
-  align-self:center !important;
-}
-
-/* nom */
-.yaya-equipe-pane .equipe-row > *:first-child{
-  color:#102a46 !important;
-  font-size:12px !important;
-  font-weight:800 !important;
-}
-
-/* badges SALARIÉ / SOUS-TRAITANT : rectangles fins */
-.yaya-equipe-pane .equipe-row .badge,
-.yaya-equipe-pane .equipe-row [class*="badge"]{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:120px !important;
-  min-width:120px !important;
-  max-width:120px !important;
-  height:30px !important;
-  min-height:30px !important;
-  padding:0 8px !important;
-  border-radius:7px !important;
-  background:#fff !important;
-  box-sizing:border-box !important;
-  font-size:10px !important;
-  font-weight:800 !important;
-}
-
-/* badge salarié vert / sous-traitant ambre */
-.yaya-equipe-pane .equipe-row .equipe-badge-salarie{
-  border:1px solid #a9d7b7 !important;
-  color:#08742d !important;
-}
-.yaya-equipe-pane .equipe-row .equipe-badge-st{
-  border:1px solid #e5c985 !important;
-  color:#8b6200 !important;
-}
-
-/* bouton crayon identique Documents */
-.yaya-equipe-pane .equipe-edit-btn{
-  display:inline-flex !important;
-  align-items:center !important;
-  justify-content:center !important;
-  width:30px !important;
-  min-width:30px !important;
-  max-width:30px !important;
-  height:30px !important;
-  padding:0 !important;
-  border:1px solid #0b63d8 !important;
-  border-radius:7px !important;
-  background:#fff !important;
-  color:#0b63d8 !important;
-  box-shadow:none !important;
-  font-size:13px !important;
-  line-height:1 !important;
-}
-.yaya-equipe-pane .equipe-edit-btn:hover{
-  background:#eef5ff !important;
-}
-
-@media(max-width:1050px){
-  .yaya-equipe-pane .equipe-row{
-    grid-template-columns:120px 125px 130px 90px minmax(20px,1fr) 46px !important;
-    gap:7px !important;
-    padding:0 7px !important;
-  }
-}
-
 /* V153 — HOTFIX SAFE
    Uniquement présentation des badges Type de Charges.
    Aucun JavaScript ajouté/modifié. */
@@ -894,59 +773,6 @@ function modifierDocumentDepuisLigne(btn){
   toast("Modification indisponible pour ce document",true);
 }
 
-function styliserEquipe(){
-  const add=[...document.querySelectorAll('button')].find(b=>(b.textContent||'').includes('Ajouter un salarié'));
-  if(!add)return;
-
-  const pane=add.closest('[id^="pane-"]') || add.closest('.pane') || add.parentElement?.parentElement;
-  if(!pane)return;
-  pane.classList.add('yaya-equipe-pane');
-  add.classList.add('equipe-add-btn');
-
-  /* titres de section */
-  [...pane.querySelectorAll('small,div,p,span')].forEach(el=>{
-    const t=(el.textContent||'').trim();
-    if(/^(SALARIÉS|SOUS-TRAITANTS)\s*\(\d+\)$/i.test(t) && el.children.length===0){
-      el.classList.add('equipe-section-title');
-    }
-  });
-
-  /* repère les lignes via leur bouton crayon existant, sans toucher au onclick */
-  [...pane.querySelectorAll('button')].forEach(btn=>{
-    if(btn===add)return;
-    const txt=(btn.textContent||'').trim();
-    const title=(btn.title||'').toLowerCase();
-    if(!(txt==='✎'||txt==='✏️'||txt==='🖉'||txt==='✐'||title.includes('modif')||title.includes('édit')))return;
-
-    let row=btn.parentElement;
-    for(let i=0;i<5 && row && row!==pane;i++){
-      const rt=(row.textContent||'');
-      if((rt.includes('€/h')||rt.includes('€ /h')) && rt.length<220){
-        row.classList.add('equipe-row');
-        break;
-      }
-      row=row.parentElement;
-    }
-
-    btn.classList.add('equipe-edit-btn');
-    btn.textContent='✎';
-    btn.title='Modifier';
-    btn.setAttribute('aria-label','Modifier');
-  });
-
-  /* classe les badges selon leur texte */
-  [...pane.querySelectorAll('*')].forEach(el=>{
-    if(el.children.length)return;
-    const t=(el.textContent||'').trim().toUpperCase();
-    if(t==='SALARIÉ'){
-      el.classList.add('equipe-badge-salarie');
-      if(!el.classList.contains('badge'))el.classList.add('badge');
-    }else if(t==='SOUS-TRAITANT'){
-      el.classList.add('equipe-badge-st');
-      if(!el.classList.contains('badge'))el.classList.add('badge');
-    }
-  });
-}
 function styliserDocuments(){
   const panes=[document.getElementById('pane-docs'),document.getElementById('pane-documents')].filter(Boolean);
   panes.forEach(pane=>{
@@ -1005,7 +831,7 @@ function styliserDocuments(){
     });
   });
 }
-function applyPatches(){alignChantierTools();iconiserActionsCharges();styliserDocuments();styliserEquipe();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
+function applyPatches(){alignChantierTools();iconiserActionsCharges();styliserDocuments();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
 window.voirPiece=function(u){
   u=String(u||'').trim();if(!u)return;
   let src=u;
