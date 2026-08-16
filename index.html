@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V157';
+const YAYA_VERSION='V158';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -1109,6 +1109,93 @@ const css=`
   .hdr .tab{
     min-width:auto !important;
     padding:0 13px !important;
+  }
+}
+
+/* V158 — ÉQUIPE : tableau visuel calqué sur CHARGES, uniquement #pane-equipe */
+#pane-equipe{color:#24364b!important}
+#pane-equipe > div:first-child{margin-bottom:16px!important}
+#pane-equipe > div:first-child .btnp{
+  min-height:48px!important;padding:0 18px!important;
+  border:1px solid #b8c7d8!important;border-radius:7px!important;
+  background:#fff!important;color:#102a46!important;box-shadow:none!important;
+  font-size:12px!important;font-weight:700!important;
+}
+#pane-equipe > .note{
+  color:#102a46!important;font-size:11px!important;font-weight:800!important;
+  letter-spacing:0!important;opacity:1!important;margin:18px 0 8px!important;
+}
+/* Les cartes deviennent les lignes d'un tableau continu */
+#pane-equipe > .card{
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  background:#fff!important;box-shadow:none!important;
+  border-left:3px solid #31a85a!important;
+}
+#pane-equipe > .card > .achligne{
+  display:grid!important;
+  grid-template-columns:160px 180px 200px 150px minmax(20px,1fr) 42px 0px!important;
+  gap:0!important;align-items:center!important;width:100%!important;
+  min-height:64px!important;padding:0 16px!important;margin:0!important;
+  box-sizing:border-box!important;background:#fff!important;
+  border-bottom:1px solid #e2e8ef!important;
+}
+#pane-equipe > .card:first-of-type > .achligne{
+  border-top:1px solid #d6e0e9!important;
+}
+#pane-equipe > .card > .achligne > b:first-child{
+  color:#102a46!important;font-size:14px!important;font-weight:800!important;
+  background:transparent!important;border:0!important;padding:0!important;
+  text-align:left!important;white-space:nowrap!important;
+}
+/* Statut */
+#pane-equipe > .card > .achligne > .badge:first-of-type{
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:136px!important;min-width:136px!important;height:38px!important;
+  padding:0 10px!important;border-radius:7px!important;box-sizing:border-box!important;
+  font-size:10px!important;font-weight:800!important;
+}
+#pane-equipe > .card > .achligne > .badge.b-doc:first-of-type{
+  background:#fff!important;border:1px solid #a9d7b7!important;color:#08742d!important;
+}
+#pane-equipe > .card > .achligne > .badge.b-avenant:first-of-type{
+  background:#fff!important;border:1px solid #e5c985!important;color:#8b6200!important;
+}
+/* Heures et tarif = texte secondaire, sans badge */
+#pane-equipe > .card > .achligne > .badge.b-doc:not(:first-of-type){
+  width:auto!important;min-width:0!important;height:auto!important;
+  padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+  color:#4f647c!important;font-size:11px!important;font-weight:500!important;
+  justify-content:flex-start!important;
+}
+/* sous-traitant : tarif aligné dans la même colonne €/h */
+#pane-equipe > .card > .achligne > .badge.b-avenant + .badge.b-doc{
+  grid-column:4!important;
+}
+/* action complètement à droite */
+#pane-equipe > .card > .achligne > button.btn2{
+  grid-column:6!important;justify-self:end!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;
+  width:36px!important;min-width:36px!important;height:36px!important;padding:0!important;
+  border:1px solid #b8c7d8!important;border-radius:7px!important;
+  background:#fff!important;color:#0b63d8!important;box-shadow:none!important;
+  font-size:0!important;
+}
+#pane-equipe > .card > .achligne > button.btn2::before{
+  content:"✎";font-size:14px!important;line-height:1!important;
+}
+#pane-equipe > .card > .achligne > button.x{display:none!important}
+
+/* séparation nette avant SOUS-TRAITANTS sans changer le DOM */
+#pane-equipe > .note + .card{}
+
+/* responsive : conserve le tableau, scroll horizontal plutôt que grosses cartes */
+@media(max-width:760px){
+  #pane-equipe{overflow-x:auto!important}
+  #pane-equipe > div:first-child,#pane-equipe > .note{min-width:760px!important}
+  #pane-equipe > .card{min-width:760px!important}
+  #pane-equipe > .card > .achligne{
+    grid-template-columns:150px 160px 150px 130px minmax(20px,1fr) 42px 0px!important;
+    min-height:58px!important;padding:0 12px!important;
   }
 }
 `
