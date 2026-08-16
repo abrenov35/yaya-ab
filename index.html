@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V155';
+const YAYA_VERSION='V156';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -933,6 +933,54 @@ const css=`
   #pane-equipe > .card > .achligne > .badge:nth-of-type(3){grid-area:cout}
   #pane-equipe > .card > .achligne > button.btn2{grid-area:edit}
   #pane-equipe > .card > .achligne > .spacer{display:none !important}
+}
+
+/* V156 — CHANTIERS : recherche à droite de Créer, sans toucher aux cartes */
+#pane-chantiers{
+  position:relative !important;
+}
+
+/* espace réservé à la ligne d'outils */
+#pane-chantiers > div:first-child{
+  margin-bottom:14px !important;
+}
+
+/* cible uniquement le conteneur réel du champ recherche */
+#pane-chantiers > div:has(> #filtreInput){
+  position:absolute !important;
+  top:0 !important;
+  left:210px !important;
+  width:420px !important;
+  max-width:420px !important;
+  margin:0 !important;
+  z-index:2 !important;
+}
+
+/* champ compact */
+#pane-chantiers #filtreInput{
+  width:100% !important;
+  max-width:none !important;
+  height:40px !important;
+  margin:0 !important;
+  padding:0 14px !important;
+  box-sizing:border-box !important;
+}
+
+/* loupe uniquement dans le conteneur de recherche */
+#pane-chantiers > div:has(> #filtreInput) > span{
+  display:none !important;
+}
+
+/* mobile : retour sous le bouton */
+@media(max-width:700px){
+  #pane-chantiers > div:has(> #filtreInput){
+    position:relative !important;
+    top:auto !important;
+    left:auto !important;
+    width:100% !important;
+    max-width:none !important;
+    margin:8px 0 14px !important;
+  }
 }
 `
 
