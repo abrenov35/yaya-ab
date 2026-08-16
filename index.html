@@ -3,7 +3,7 @@
 <body><div id="boot" style="font-family:system-ui;padding:30px;text-align:center;color:#162D49">Chargement de Yaya…</div>
 <script>
 (async()=>{try{
-const YAYA_VERSION='V139';
+const YAYA_VERSION='V140';
 const base='https://raw.githubusercontent.com/abrenov35/yaya-ab/362bf7657744a0bf32e449940ed6066402fb4afc/index.html';
 let html=await (await fetch(base,{cache:'no-store'})).text();
 
@@ -37,6 +37,8 @@ html=html.replace(/class=\"controle-ligne\"/g,'class="controle-ligne charge-row-
 html=html.replace(/class=\"achligne ligR\" style=\"padding:9px 0\"/g,'class="achligne ligR charge-row-standard" style="padding:5px 4px"');
 html=html.replace(/>OUVRIR<\/button>/g,'>VOIR</button>');
 html=html.replace(/>VOIR PJ<\/button>/g,'>VOIR</button>').replace(/>Remplacer PJ<\/button>/g,'>REMPLACER</button>');
+/* Neutralise définitivement l'ancien lecteur Drive qui ouvrait les URL non-Drive dans un onglet. */
+html=html.replace('function voirPiece(u){','function voirPieceAncienne(u){');
 html=html.replace("async function validerChargeAuto(id){","async function validerChargeAuto(id){\n  if(!await confirmerActionCharge('Valider cette charge ?','Elle sera intégrée définitivement dans la fiche du chantier.','VALIDER'))return;");
 html=html.replace("async function classerChargeAuto(id,statut){","async function classerChargeAuto(id,statut){\n  const confirme=statut===\"DOUBLON\"?await confirmerActionCharge('Confirmer le doublon ?','La proposition sera retirée de la file sans supprimer le mail ni la pièce.','DOUBLON'):await confirmerActionCharge('Rejeter cette proposition ?','La proposition sera retirée de la file sans supprimer le document original.','REJETER');\n  if(!confirme)return;");
 html=html.replace("function toast(msg, err){","function confirmerActionCharge(titre,message,action){\n  return new Promise(resolve=>{\n    const fond=document.createElement('div');fond.className='confirm-charge-fond';\n    fond.innerHTML='<div class=\"confirm-charge-box\"><h5>'+esc(titre)+'</h5><p>'+esc(message)+'</p><div><button class=\"confirm-charge-cancel\">ANNULER</button><button class=\"confirm-charge-ok\">'+esc(action)+'</button></div></div>';\n    const finir=v=>{fond.remove();resolve(v)};\n    fond.querySelector('.confirm-charge-cancel').onclick=()=>finir(false);\n    fond.querySelector('.confirm-charge-ok').onclick=()=>finir(true);\n    fond.onclick=e=>{if(e.target===fond)finir(false)};\n    document.body.appendChild(fond);fond.querySelector('.confirm-charge-cancel').focus();\n  });\n}\nfunction toast(msg, err){");
