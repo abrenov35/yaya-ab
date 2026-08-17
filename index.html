@@ -785,6 +785,63 @@
   color:#08742d !important;
 }
 
+/* V174 — Documents : disposition mobile sans chevauchement */
+@media(max-width:760px){
+  #pane-docs .docligne,
+  #pane-documents .docligne,
+  #pane-docs .doc-row-standard,
+  #pane-documents .doc-row-standard{
+    grid-template-columns:92px minmax(0,1fr) 68px !important;
+    grid-template-areas:
+      "type source date"
+      "type chantier actions"
+      "designation designation designation" !important;
+    gap:4px 10px !important;
+    min-height:92px !important;
+    padding:9px 10px !important;
+  }
+  #pane-docs .docligne > *,
+  #pane-documents .docligne > *,
+  #pane-docs .doc-row-standard > *,
+  #pane-documents .doc-row-standard > *{
+    min-width:0 !important;
+    min-height:28px !important;
+    overflow:hidden !important;
+  }
+  #pane-docs .docligne > *:nth-child(1),
+  #pane-documents .docligne > *:nth-child(1),
+  #pane-docs .doc-row-standard > *:nth-child(1),
+  #pane-documents .doc-row-standard > *:nth-child(1){grid-area:type;align-self:start !important}
+  #pane-docs .docligne > *:nth-child(2),
+  #pane-documents .docligne > *:nth-child(2),
+  #pane-docs .doc-row-standard > *:nth-child(2),
+  #pane-documents .doc-row-standard > *:nth-child(2){grid-area:source}
+  #pane-docs .docligne > *:nth-child(3),
+  #pane-documents .docligne > *:nth-child(3),
+  #pane-docs .doc-row-standard > *:nth-child(3),
+  #pane-documents .doc-row-standard > *:nth-child(3){grid-area:chantier}
+  #pane-docs .docligne > *:nth-child(4),
+  #pane-documents .docligne > *:nth-child(4),
+  #pane-docs .doc-row-standard > *:nth-child(4),
+  #pane-documents .doc-row-standard > *:nth-child(4){grid-area:designation;color:#65758a !important}
+  #pane-docs .docligne > *:nth-child(5),
+  #pane-documents .docligne > *:nth-child(5),
+  #pane-docs .doc-row-standard > *:nth-child(5),
+  #pane-documents .doc-row-standard > *:nth-child(5){grid-area:date;justify-content:flex-end !important;font-size:10px !important}
+  #pane-docs .docligne > *:last-child,
+  #pane-documents .docligne > *:last-child,
+  #pane-docs .doc-row-standard > *:last-child,
+  #pane-documents .doc-row-standard > *:last-child{grid-area:actions;justify-content:flex-end !important}
+  #pane-docs .doc-row-standard > *:nth-child(1) .badge,
+  #pane-documents .doc-row-standard > *:nth-child(1) .badge,
+  #pane-docs .docligne > *:nth-child(1) .badge,
+  #pane-documents .docligne > *:nth-child(1) .badge{
+    width:88px !important;
+    min-width:88px !important;
+    max-width:88px !important;
+  }
+}
+
 /* V153 — HOTFIX SAFE
    Uniquement présentation des badges Type de Charges.
    Aucun JavaScript ajouté/modifié. */
@@ -1400,7 +1457,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V173</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V174</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1720,7 +1777,7 @@ function renderDocuments(){
     for(const d of sorted){
       const c=chantierById(d.chantierId);
       const btnVoir=String(d.lien||"").startsWith("http")?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" title="Voir la pièce" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer;vertical-align:middle;margin-right:4px">VOIR</button>':'';
-      html+='<div class="achligne ligR" style="padding:9px 0"><span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc((String(d.sujet||'').split(' ').slice(0,2).join(' '))||'—')+'</span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span><small class="des">'+esc((String(d.titre||'').split(' ').slice(0,3).join(' ')))+'</small><small style="color:#aaa;white-space:nowrap">'+String(esc(d.date||'')).slice(0,10).split('-').reverse().join('/')+'</small><span style="white-space:nowrap">'+btnVoir+'</span></div>';
+      html+='<div class="achligne ligR" data-id="'+esc(d.id)+'" style="padding:9px 0"><span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc((String(d.sujet||'').split(' ').slice(0,2).join(' '))||'—')+'</span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span><small class="des">'+esc((String(d.titre||'').split(' ').slice(0,3).join(' ')))+'</small><small style="color:#aaa;white-space:nowrap">'+String(esc(d.date||'')).slice(0,10).split('-').reverse().join('/')+'</small><span style="white-space:nowrap">'+btnVoir+'</span></div>';
     }
     html+='</div>';
     html+='<div class="note" style="margin-top:6px">Le détail complet de chaque document est dans la fiche de son chantier.</div>';
