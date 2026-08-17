@@ -1353,7 +1353,7 @@
   border-radius:12px;box-shadow:0 2px 8px rgba(20,39,60,.05);overflow:hidden
 }
 #pane-equipe .equipe-row{
-  display:grid;grid-template-columns:120px minmax(170px,1.2fr) minmax(130px,.8fr) minmax(110px,.65fr) 34px;
+  display:grid;grid-template-columns:minmax(170px,1fr) 160px 34px;
   gap:14px;align-items:center;min-height:56px;padding:0 16px;border-bottom:1px solid #e8ecf0;background:#fff
 }
 #pane-equipe .equipe-row:last-child{border-bottom:0}
@@ -1374,14 +1374,11 @@
 @media(max-width:760px){
   #pane-equipe .equipe-list{border-radius:10px}
   #pane-equipe .equipe-row{
-    grid-template-columns:92px minmax(0,1fr) 32px;grid-template-areas:"type nom edit" "info1 info1 info2";
-    gap:6px 9px;min-height:68px;padding:9px 10px
+    grid-template-columns:minmax(0,1fr) 112px 30px;
+    gap:8px;min-height:54px;padding:0 10px
   }
-  #pane-equipe .equipe-type{grid-area:type;width:88px;height:28px;font-size:8px}
-  #pane-equipe .equipe-nom{grid-area:nom}
-  #pane-equipe .equipe-info:nth-of-type(2){grid-area:info1}
-  #pane-equipe .equipe-info:nth-of-type(3){grid-area:info2;text-align:right}
-  #pane-equipe .equipe-edit{grid-area:edit;width:30px;height:30px}
+  #pane-equipe .equipe-info{text-align:right}
+  #pane-equipe .equipe-edit{width:30px;height:30px}
 }
 </style></head>
 <body>
@@ -1397,7 +1394,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V170</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V171</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1933,10 +1930,8 @@ function renderEquipe(){
   const sal=S.salaries.filter(s=>s.type!=="Sous-traitant"&&s.statut!=="Archivé").sort(byNomE);
   const salArch=S.salaries.filter(s=>s.type!=="Sous-traitant"&&s.statut==="Archivé").sort(byNomE);
   const ligneEq=s=>'<div class="equipe-row'+(s.statut==="Archivé"?' equipe-row-archive':'')+'">'
-      +'<span class="equipe-type">'+(s.statut==="Archivé"?'ARCHIVÉ':(s.type==="Sous-traitant"?'SOUS-TRAITANT':'SALARIÉ'))+'</span>'
       +'<b class="equipe-nom">'+esc(s.nom)+'</b>'
-      +'<span class="equipe-info">'+(s.type!=="Sous-traitant"?eur(s.heuresContrat)+' h / semaine':'—')+'</span>'
-      +'<span class="equipe-info">'+eur(s.tauxHoraire)+' € / h</span>'
+      +'<span class="equipe-info">'+eur(s.heuresContrat)+' h / semaine</span>'
       +'<button class="equipe-edit" title="Modifier '+esc(s.nom)+'" aria-label="Modifier '+esc(s.nom)+'" onclick="editSalarie(\''+s.id+'\')">✎</button>'
       +'</div>';
   const bloc=(titre,liste)=>{ if(!liste.length)return ''; let h='<div class="equipe-section-title"><span>'+titre+'</span><span>'+liste.length+'</span></div><div class="equipe-list">'; for(const s of liste)h+=ligneEq(s); return h+'</div>'; };
