@@ -1457,7 +1457,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V174</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V175</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1766,21 +1766,43 @@ async function saveDocument(){
   }
 }
 
+function historiquePiecesYaya(){
+  const vus=new Set();
+  const cleLien=l=>String(l||'').trim().replace(/[?&](dl|raw)=\d/gi,'').replace(/[?&]$/,'');
+  const pieces=[];
+  (S.achats||[]).forEach((a,i)=>{
+    const lien=String(a.lien||'').trim();
+    if(!lien.startsWith('http'))return;
+    const cle=cleLien(lien);if(cle&&vus.has(cle))return;if(cle)vus.add(cle);
+    pieces.push({id:a.id,chantierId:a.chantierId,type:a.typeDoc||'Charge',titre:a.designation||'Pièce de charge',sujet:a.fournisseur||'Charge',date:a.date||'',lien,origine:'charge',ordre:i});
+  });
+  (S.documents||[]).forEach((d,i)=>{
+    const lien=String(d.lien||'').trim();
+    const cle=cleLien(lien);if(cle&&vus.has(cle))return;if(cle)vus.add(cle);
+    pieces.push({...d,origine:'document',ordre:(S.documents.length-i)});
+  });
+  return pieces.sort((a,b)=>{
+    const da=String(a.horodatage||a.createdAt||a.dateCreation||a.date||'');
+    const db=String(b.horodatage||b.createdAt||b.dateCreation||b.date||'');
+    return db.localeCompare(da)||(Number(b.ordre)||0)-(Number(a.ordre)||0);
+  });
+}
+
 function renderDocuments(){
   const el=document.getElementById('pane-documents');
   const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openDocumentModal()">➕ Ajouter un document</button></div>';
-  if(S.documents.length){
-    html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Tous les ajouts — '+S.documents.length+' élément'+(S.documents.length>1?'s':'')+'</div>';
-    const sorted=[...S.documents].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  const sorted=historiquePiecesYaya();
+  if(sorted.length){
+    html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Historique des pièces déposées — '+sorted.length+' élément'+(sorted.length>1?'s':'')+'</div>';
     html+='<div class="card">';
     for(const d of sorted){
       const c=chantierById(d.chantierId);
       const btnVoir=String(d.lien||"").startsWith("http")?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" title="Voir la pièce" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer;vertical-align:middle;margin-right:4px">VOIR</button>':'';
-      html+='<div class="achligne ligR" data-id="'+esc(d.id)+'" style="padding:9px 0"><span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc((String(d.sujet||'').split(' ').slice(0,2).join(' '))||'—')+'</span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span><small class="des">'+esc((String(d.titre||'').split(' ').slice(0,3).join(' ')))+'</small><small style="color:#aaa;white-space:nowrap">'+String(esc(d.date||'')).slice(0,10).split('-').reverse().join('/')+'</small><span style="white-space:nowrap">'+btnVoir+'</span></div>';
+      html+='<div class="achligne ligR" data-id="'+esc(d.id)+'" data-origin="'+esc(d.origine||'document')+'" style="padding:9px 0"><span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS')+'</span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc((String(d.sujet||'').split(' ').slice(0,2).join(' '))||'—')+'</span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span><small class="des">'+esc(String(d.titre||''))+'</small><small style="color:#aaa;white-space:nowrap">'+String(esc(d.date||'')).slice(0,10).split('-').reverse().join('/')+'</small><span style="white-space:nowrap">'+btnVoir+'</span></div>';
     }
     html+='</div>';
-    html+='<div class="note" style="margin-top:6px">Le détail complet de chaque document est dans la fiche de son chantier.</div>';
+    html+='<div class="note" style="margin-top:6px">Toutes les pièces connues de Yaya sont affichées ici, y compris celles liées aux charges.</div>';
   }
 
   el.innerHTML=html;
@@ -1969,7 +1991,7 @@ function renderAchats(){
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openAchatModal()">➕ Ajouter un achat / une charge</button></div>';
   html+=resumeChargesAutoHtml();if(S.achats.length){
     html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Derniers enregistrés</div>';
-    const sorted=[...S.achats].reverse().slice(0,5);
+    const sorted=S.achats.map((a,i)=>({a,i})).sort((x,y)=>String(y.a.horodatage||y.a.createdAt||y.a.dateCreation||y.a.date||'').localeCompare(String(x.a.horodatage||x.a.createdAt||x.a.dateCreation||x.a.date||''))||y.i-x.i).slice(0,5).map(x=>x.a);
     html+='<div class="card">';
     for(const a of sorted){
       const c=chantierById(a.chantierId);
@@ -2734,6 +2756,11 @@ function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.c
 function modifierDocumentDepuisLigne(btn){
   const row=btn.closest('.doc-row-standard,.docligne');
   if(!row)return;
+  const id=row.dataset.id||row.getAttribute('data-id')||'';
+  if(row.dataset.origin==='charge'&&id&&typeof window.editAchat==='function'){
+    window.editAchat(id);
+    return;
+  }
   const existing=[...row.querySelectorAll('button,[onclick]')].find(el=>{
     if(el===btn)return false;
     const oc=el.getAttribute&&el.getAttribute('onclick')||'';
@@ -2741,7 +2768,6 @@ function modifierDocumentDepuisLigne(btn){
   });
   if(existing){ existing.click(); return; }
 
-  const id=row.dataset.id||row.getAttribute('data-id')||'';
   if(id){
     if(typeof window.editDocument==='function'){window.editDocument(id);return;}
     if(typeof window.editDoc==='function'){window.editDoc(id);return;}
