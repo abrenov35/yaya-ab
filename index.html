@@ -1348,7 +1348,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V167</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V168</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1586,7 +1586,15 @@ function docsChantier(cid){ return S.documents.filter(d=>String(d.chantierId)===
 function voirMessageYaya(id){
   const d=S.documents.find(x=>String(x.id)===String(id));
   if(!d) return;
+  const lien=String(d.lien||'');
+  if(lien.startsWith('http')&&!/mail\.google\.com/i.test(lien)){
+    voirPiece(lien);
+    return;
+  }
   const date=String(d.date||'').slice(0,10).split('-').reverse().join('/');
+  const contenu=esc(d.titre||'Aucun contenu disponible.')
+    .replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')
+    .replace(/\n/g,'<br>');
   const root=document.getElementById('modalRoot');
   root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()">'
     +'<div class="modal message-modal">'
@@ -1594,7 +1602,7 @@ function voirMessageYaya(id){
     +'<div class="message-meta"><span class="badge b-mail">MAIL</span>'
     +(d.sujet?'<span class="badge b-df">'+esc(d.sujet)+'</span>':'')
     +(date?'<span>'+esc(date)+'</span>':'')+'</div>'
-    +'<div class="message-extrait">'+esc(d.titre||'Aucun extrait disponible.').replace(/\n/g,'<br>')+'</div>'
+    +'<div class="message-extrait">'+contenu+'</div>'
     +'</div></div>';
 }
 
@@ -1654,8 +1662,8 @@ function renderDocuments(){
   const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openDocumentModal()">➕ Ajouter un document</button></div>';
   if(S.documents.length){
-    html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Derniers enregistrés</div>';
-    const sorted=[...S.documents].slice(-5).reverse();
+    html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Tous les ajouts — '+S.documents.length+' élément'+(S.documents.length>1?'s':'')+'</div>';
+    const sorted=[...S.documents].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
     html+='<div class="card">';
     for(const d of sorted){
       const c=chantierById(d.chantierId);
@@ -1751,7 +1759,7 @@ function renderChantiers(){
             +'<span class="badge b-df message-categorie">'+esc(d.sujet||'ÉCHANGE')+'</span>'
             +'<span class="message-apercu">'+esc(d.titre||'Aucun extrait disponible')+'</span>'
             +'<small class="message-date">'+esc(dateMsg)+'</small>'
-            +'<span class="message-actions"><button class="btn2 message-view-btn" title="Voir l’extrait du mail" aria-label="Voir l’extrait du mail" onclick="voirMessageYaya(\''+d.id+'\')">👁</button></span>'
+            +'<span class="message-actions"><button class="btn2 message-view-btn" title="Voir le message" aria-label="Voir le message" onclick="voirMessageYaya(\''+d.id+'\')">👁</button></span>'
             +'</div>';
         }
       }
