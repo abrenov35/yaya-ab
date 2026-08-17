@@ -815,15 +815,15 @@
   #pane-docs .docligne > *:nth-child(2),
   #pane-documents .docligne > *:nth-child(2),
   #pane-docs .doc-row-standard > *:nth-child(2),
-  #pane-documents .doc-row-standard > *:nth-child(2){grid-area:source}
+  #pane-documents .doc-row-standard > *:nth-child(2){grid-area:source;font-size:10px !important;font-weight:800 !important;white-space:nowrap !important;text-overflow:ellipsis !important}
   #pane-docs .docligne > *:nth-child(3),
   #pane-documents .docligne > *:nth-child(3),
   #pane-docs .doc-row-standard > *:nth-child(3),
-  #pane-documents .doc-row-standard > *:nth-child(3){grid-area:chantier}
+  #pane-documents .doc-row-standard > *:nth-child(3){grid-area:chantier;font-size:10px !important;font-weight:700 !important;white-space:nowrap !important;text-overflow:ellipsis !important}
   #pane-docs .docligne > *:nth-child(4),
   #pane-documents .docligne > *:nth-child(4),
   #pane-docs .doc-row-standard > *:nth-child(4),
-  #pane-documents .doc-row-standard > *:nth-child(4){grid-area:designation;color:#65758a !important}
+  #pane-documents .doc-row-standard > *:nth-child(4){grid-area:designation;color:#65758a !important;font-size:12px !important;line-height:1.25 !important;white-space:normal !important}
   #pane-docs .docligne > *:nth-child(5),
   #pane-documents .docligne > *:nth-child(5),
   #pane-docs .doc-row-standard > *:nth-child(5),
@@ -839,6 +839,16 @@
     width:88px !important;
     min-width:88px !important;
     max-width:88px !important;
+  }
+  #pane-documents .card{
+    display:flex !important;
+    flex-direction:column !important;
+    gap:7px !important;
+  }
+  #pane-documents .doc-row-standard{
+    border:1px solid #e2e7ec !important;
+    border-radius:9px !important;
+    box-shadow:none !important;
   }
 }
 
@@ -1457,7 +1467,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V175</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V176</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -2789,7 +2799,7 @@ function styliserDocuments(){
 
     [...pane.querySelectorAll('.card > div')].forEach(row=>{
       const txt=(row.textContent||'').trim();
-      if(!txt || !/MAIL|DOCUMENT/i.test(txt)) return;
+      if(!txt || !row.dataset.id) return;
       row.classList.add('doc-row-standard');
 
       const buttons=[...row.querySelectorAll('button')];
