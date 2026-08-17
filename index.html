@@ -1480,7 +1480,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V177</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V178</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -2023,7 +2023,7 @@ function renderAchats(){
         +'<span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span></span>'
         +'<small class="des">'+esc(a.designation||"")+'</small>'
         +'<b style="text-align:right">'+eur(a.montantHT)+' €</b>'
-        +'<span style="white-space:nowrap">'+btnVoir+'</span></div>';
+        +'<span style="white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:6px">'+btnVoir+'<button class="charge-edit-btn" onclick="editAchat(\''+a.id+'\')" title="Modifier la charge" aria-label="Modifier la charge">✏️</button></span></div>';
     }
     html+='</div>';
     html+='<div class="note" style="margin-top:6px">Le détail complet de chaque achat est dans la fiche de son chantier.</div>';
