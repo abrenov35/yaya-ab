@@ -1334,6 +1334,55 @@
   .message-actions{grid-area:action}
   .message-modal{width:calc(100vw - 20px)!important;max-width:calc(100vw - 20px)!important;padding:14px!important}
 }
+
+/* V169 — page Équipe sobre, alignée sur Charges et Documents */
+#pane-equipe{color:#172b43!important;overflow:visible!important}
+#pane-equipe .equipe-toolbar{margin:0 0 16px!important}
+#pane-equipe .equipe-toolbar .btnp{
+  min-height:40px!important;padding:0 15px!important;border:1px solid #b9c4cf!important;
+  border-radius:7px!important;background:#fff!important;color:#172b43!important;
+  box-shadow:none!important;font-size:12px!important;font-weight:750!important
+}
+#pane-equipe .equipe-toolbar .btnp:hover{background:#f6f7f9!important;border-color:#8d9baa!important}
+#pane-equipe .equipe-section-title{
+  display:flex;align-items:center;justify-content:space-between;margin:18px 0 7px;
+  padding:0 2px;color:#667486;font-size:11px;font-weight:750;letter-spacing:.06em
+}
+#pane-equipe .equipe-list{
+  width:100%;margin:0 0 14px;background:#fff;border:1px solid #e0e5ea;
+  border-radius:12px;box-shadow:0 2px 8px rgba(20,39,60,.05);overflow:hidden
+}
+#pane-equipe .equipe-row{
+  display:grid;grid-template-columns:120px minmax(170px,1.2fr) minmax(130px,.8fr) minmax(110px,.65fr) 34px;
+  gap:14px;align-items:center;min-height:56px;padding:0 16px;border-bottom:1px solid #e8ecf0;background:#fff
+}
+#pane-equipe .equipe-row:last-child{border-bottom:0}
+#pane-equipe .equipe-row:hover{background:#fafbfc}
+#pane-equipe .equipe-type{
+  display:inline-flex;align-items:center;justify-content:center;width:108px;height:30px;
+  border:1px solid #cbd2d9;border-radius:7px;background:#fff;color:#34465a;
+  font-size:9.5px;font-weight:800;white-space:nowrap
+}
+#pane-equipe .equipe-nom{min-width:0;color:#132942;font-size:12.5px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pane-equipe .equipe-info{color:#687688;font-size:11.5px;white-space:nowrap}
+#pane-equipe .equipe-edit{
+  display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;padding:0;
+  border:1px solid #bfc8d1;border-radius:7px;background:#fff;color:#31465d;font-size:14px;cursor:pointer
+}
+#pane-equipe .equipe-edit:hover{background:#f2f4f6;border-color:#8f9ca9}
+#pane-equipe .equipe-row-archive{opacity:.58;background:#fafafa}
+@media(max-width:760px){
+  #pane-equipe .equipe-list{border-radius:10px}
+  #pane-equipe .equipe-row{
+    grid-template-columns:92px minmax(0,1fr) 32px;grid-template-areas:"type nom edit" "info1 info1 info2";
+    gap:6px 9px;min-height:68px;padding:9px 10px
+  }
+  #pane-equipe .equipe-type{grid-area:type;width:88px;height:28px;font-size:8px}
+  #pane-equipe .equipe-nom{grid-area:nom}
+  #pane-equipe .equipe-info:nth-of-type(2){grid-area:info1}
+  #pane-equipe .equipe-info:nth-of-type(3){grid-area:info2;text-align:right}
+  #pane-equipe .equipe-edit{grid-area:edit;width:30px;height:30px}
+}
 </style></head>
 <body>
 
@@ -1348,7 +1397,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V168</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V169</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1884,22 +1933,24 @@ function renderAchats(){
 
 function renderEquipe(){
   const el=document.getElementById("pane-equipe");
-  let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openSalarieModal()">➕ Ajouter un salarié</button></div>';
+  let html='<div class="equipe-toolbar"><button class="btnp" onclick="openSalarieModal()">➕ Ajouter un membre</button></div>';
   const byNomE=(a,b)=>String(a.nom).localeCompare(String(b.nom),'fr');
   const sal=S.salaries.filter(s=>s.type!=="Sous-traitant"&&s.statut!=="Archivé").sort(byNomE);
   const sts=S.salaries.filter(s=>s.type==="Sous-traitant"&&s.statut!=="Archivé").sort(byNomE);
   const salArch=S.salaries.filter(s=>s.type!=="Sous-traitant"&&s.statut==="Archivé").sort(byNomE);
   const stsArch=S.salaries.filter(s=>s.type==="Sous-traitant"&&s.statut==="Archivé").sort(byNomE);
-  const ligneEq=s=>'<div style="display:grid;grid-template-columns:120px 110px 150px 140px auto auto;gap:8px;align-items:center;padding:10px 8px;border-bottom:1px solid rgba(22,45,73,.08);opacity:'+(s.statut==="Archivé"?'.6':'1')+';background:'+(s.statut==="Archivé"?'rgba(0,0,0,.02)':'transparent')+'"><b style="color:#1c2b48">'+esc(s.nom)+'</b>'+
-      (s.statut==="Archivé"?'<span class="badge" style="background:rgba(128,128,128,.2);color:#555;min-width:110px;padding:3px 8px;text-align:center;font-size:10px">ARCHIVÉ</span>':(s.type==="Sous-traitant"?'<span class="badge b-avenant" style="min-width:110px;padding:3px 8px;text-align:center;font-size:10px">SOUS-TRAITANT</span>':'<span class="badge b-green" style="min-width:110px;padding:3px 8px;text-align:center;font-size:10px">SALARIÉ</span>'))+
-      (s.type!=="Sous-traitant"?'<span style="font-size:12px;color:#666;text-align:center">'+s.heuresContrat+' h/sem</span>':'<span></span>')+
-      '<span style="font-size:12px;color:#666;text-align:center">'+eur(s.tauxHoraire)+' €/h</span>'+
-      '<span></span>'+
-      '<span style="white-space:nowrap;display:flex;gap:4px;justify-content:flex-end;align-items:center">'+(s.statut==="Archivé"?'<button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button>':'<button class="btn2" style="padding:2px 8px;font-size:11px" onclick="editSalarie(\''+s.id+'\')">✎</button>')+'</span></div>';
-  if(sal.length){ html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Salariés ('+sal.length+')</div>'; for(const s of sal) html+=ligneEq(s); }
-  if(sts.length){ html+='<div class="note" style="margin:16px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Sous-traitants ('+sts.length+')</div>'; for(const s of sts) html+=ligneEq(s); }
-  if(salArch.length){ html+='<div class="note" style="margin:18px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px;opacity:.6">Salariés archivés ('+salArch.length+')</div>'; for(const s of salArch) html+=ligneEq(s); }
-  if(stsArch.length){ html+='<div class="note" style="margin:16px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px;opacity:.6">Sous-traitants archivés ('+stsArch.length+')</div>'; for(const s of stsArch) html+=ligneEq(s); }
+  const ligneEq=s=>'<div class="equipe-row'+(s.statut==="Archivé"?' equipe-row-archive':'')+'">'
+      +'<span class="equipe-type">'+(s.statut==="Archivé"?'ARCHIVÉ':(s.type==="Sous-traitant"?'SOUS-TRAITANT':'SALARIÉ'))+'</span>'
+      +'<b class="equipe-nom">'+esc(s.nom)+'</b>'
+      +'<span class="equipe-info">'+(s.type!=="Sous-traitant"?eur(s.heuresContrat)+' h / semaine':'—')+'</span>'
+      +'<span class="equipe-info">'+eur(s.tauxHoraire)+' € / h</span>'
+      +'<button class="equipe-edit" title="Modifier '+esc(s.nom)+'" aria-label="Modifier '+esc(s.nom)+'" onclick="editSalarie(\''+s.id+'\')">✎</button>'
+      +'</div>';
+  const bloc=(titre,liste)=>{ if(!liste.length)return ''; let h='<div class="equipe-section-title"><span>'+titre+'</span><span>'+liste.length+'</span></div><div class="equipe-list">'; for(const s of liste)h+=ligneEq(s); return h+'</div>'; };
+  html+=bloc('SALARIÉS',sal);
+  html+=bloc('SOUS-TRAITANTS',sts);
+  html+=bloc('SALARIÉS ARCHIVÉS',salArch);
+  html+=bloc('SOUS-TRAITANTS ARCHIVÉS',stsArch);
   el.innerHTML=html;
 }
 
