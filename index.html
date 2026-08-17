@@ -1353,7 +1353,7 @@
   border-radius:12px;box-shadow:0 2px 8px rgba(20,39,60,.05);overflow:hidden
 }
 #pane-equipe .equipe-row{
-  display:grid;grid-template-columns:minmax(170px,1fr) 160px 34px;
+  display:grid;grid-template-columns:minmax(170px,1fr) 160px 110px 34px;
   gap:14px;align-items:center;min-height:56px;padding:0 16px;border-bottom:1px solid #e8ecf0;background:#fff
 }
 #pane-equipe .equipe-row:last-child{border-bottom:0}
@@ -1374,10 +1374,10 @@
 @media(max-width:760px){
   #pane-equipe .equipe-list{border-radius:10px}
   #pane-equipe .equipe-row{
-    grid-template-columns:minmax(0,1fr) 112px 30px;
+    grid-template-columns:minmax(0,1fr) 88px 65px 30px;
     gap:8px;min-height:54px;padding:0 10px
   }
-  #pane-equipe .equipe-info{text-align:right}
+  #pane-equipe .equipe-info{text-align:right;font-size:10px}
   #pane-equipe .equipe-edit{width:30px;height:30px}
 }
 </style></head>
@@ -1394,7 +1394,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V171</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V172</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1932,6 +1932,7 @@ function renderEquipe(){
   const ligneEq=s=>'<div class="equipe-row'+(s.statut==="Archivé"?' equipe-row-archive':'')+'">'
       +'<b class="equipe-nom">'+esc(s.nom)+'</b>'
       +'<span class="equipe-info">'+eur(s.heuresContrat)+' h / semaine</span>'
+      +'<span class="equipe-info">'+eur(s.tauxHoraire)+' € / h</span>'
       +'<button class="equipe-edit" title="Modifier '+esc(s.nom)+'" aria-label="Modifier '+esc(s.nom)+'" onclick="editSalarie(\''+s.id+'\')">✎</button>'
       +'</div>';
   const bloc=(titre,liste)=>{ if(!liste.length)return ''; let h='<div class="equipe-section-title"><span>'+titre+'</span><span>'+liste.length+'</span></div><div class="equipe-list">'; for(const s of liste)h+=ligneEq(s); return h+'</div>'; };
