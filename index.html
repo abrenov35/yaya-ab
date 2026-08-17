@@ -1397,7 +1397,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V169</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V170</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1601,7 +1601,7 @@ function totalSalarie(sid){ return weekRows().filter(h=>String(h.salarieId)===St
 function isValidated(){ const v=S.validations.find(v=>v.semaine===wk()); return v && String(v.validee).toUpperCase()==="OUI"; }
 function chantierById(id){ return S.chantiers.find(c=>String(c.id)===String(id)); }
 function heuresChantier(cid){ return S.heures.filter(h=>h.type==="chantier"&&String(h.ref)===String(cid)).reduce((t,h)=>t+h.heures,0); }
-function coutMO(cid){ let t=0; for(const h of S.heures){ if(h.type==="chantier"&&String(h.ref)===String(cid)){ const s=S.salaries.find(s=>String(s.id)===String(h.salarieId)); t+=h.heures*(h.taux!=null?h.taux:(s?s.tauxHoraire:0)); } } return t; }
+function coutMO(cid){ let t=0; for(const h of S.heures){ if(h.type==="chantier"&&String(h.ref)===String(cid)){ const s=S.salaries.find(s=>String(s.id)===String(h.salarieId)); if(!s||s.type==="Sous-traitant") continue; t+=h.heures*(h.taux!=null?h.taux:s.tauxHoraire); } } return t; }
 function achatsChantier(cid){ return S.achats.filter(a=>String(a.chantierId)===String(cid)&&a.statutValidation!=="A_VALIDER"&&a.statutValidation!=="REJETEE"&&a.statutValidation!=="DOUBLON"); }
 function avenantsChantier(cid){ return S.avenants.filter(v=>String(v.chantierId)===String(cid)); }
 function totalDevis(c){ return (c.montantDevisHT||0)+avenantsChantier(c.id).reduce((t,v)=>t+v.montantHT,0); }
@@ -1738,7 +1738,6 @@ function renderHeures(){
   html+='<th>Total</th></tr>';
   const byNomH=(a,b)=>String(a.nom).localeCompare(String(b.nom),'fr');
   const salH=S.salaries.filter(s=>s.type!=="Sous-traitant").sort(byNomH);
-  const stsH=S.salaries.filter(s=>s.type==="Sous-traitant").sort(byNomH);
   const ligneH=s=>{
     html+='<tr><td class="who">'+esc(s.nom)+'</td>';
     for(let d=0;d<6;d++){
@@ -1758,10 +1757,6 @@ function renderHeures(){
   if(salH.length){
     html+='<tr><td colspan="8" style="padding:14px 8px 4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#1c2b48;border:none">Salariés ('+salH.length+')</td></tr>';
     for(const s of salH) ligneH(s);
-  }
-  if(stsH.length){
-    html+='<tr><td colspan="8" style="padding:20px 8px 4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#c9a24b;border:none">Sous-traitants ('+stsH.length+')</td></tr>';
-    for(const s of stsH) ligneH(s);
   }
   html+='</table></div>';
   el.innerHTML=html;
@@ -1936,9 +1931,7 @@ function renderEquipe(){
   let html='<div class="equipe-toolbar"><button class="btnp" onclick="openSalarieModal()">➕ Ajouter un membre</button></div>';
   const byNomE=(a,b)=>String(a.nom).localeCompare(String(b.nom),'fr');
   const sal=S.salaries.filter(s=>s.type!=="Sous-traitant"&&s.statut!=="Archivé").sort(byNomE);
-  const sts=S.salaries.filter(s=>s.type==="Sous-traitant"&&s.statut!=="Archivé").sort(byNomE);
   const salArch=S.salaries.filter(s=>s.type!=="Sous-traitant"&&s.statut==="Archivé").sort(byNomE);
-  const stsArch=S.salaries.filter(s=>s.type==="Sous-traitant"&&s.statut==="Archivé").sort(byNomE);
   const ligneEq=s=>'<div class="equipe-row'+(s.statut==="Archivé"?' equipe-row-archive':'')+'">'
       +'<span class="equipe-type">'+(s.statut==="Archivé"?'ARCHIVÉ':(s.type==="Sous-traitant"?'SOUS-TRAITANT':'SALARIÉ'))+'</span>'
       +'<b class="equipe-nom">'+esc(s.nom)+'</b>'
@@ -1948,9 +1941,7 @@ function renderEquipe(){
       +'</div>';
   const bloc=(titre,liste)=>{ if(!liste.length)return ''; let h='<div class="equipe-section-title"><span>'+titre+'</span><span>'+liste.length+'</span></div><div class="equipe-list">'; for(const s of liste)h+=ligneEq(s); return h+'</div>'; };
   html+=bloc('SALARIÉS',sal);
-  html+=bloc('SOUS-TRAITANTS',sts);
   html+=bloc('SALARIÉS ARCHIVÉS',salArch);
-  html+=bloc('SOUS-TRAITANTS ARCHIVÉS',stsArch);
   el.innerHTML=html;
 }
 
@@ -2647,7 +2638,7 @@ function openSalarieModal(){
   const root=document.getElementById("modalRoot");
   let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:600px"><h5>Ajouter un salarié<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
   html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Prénom / Nom</label><input class="inp" id="eqNom" placeholder="Prénom / nom" style="flex:1;min-width:140px"></div>';
-  html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Type</label><select class="inp" id="eqType"><option>Salarié</option><option>Sous-traitant</option></select></div>';
+  html+='<input type="hidden" id="eqType" value="Salarié">';
   html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Heures contrat / semaine</label><input class="inp" id="eqH" type="number" placeholder="Heures contrat / sem" style="width:100%"></div>';
   html+='<div class="row" style="margin-bottom:12px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Coût horaire € (chargé)</label><input class="inp" id="eqT" type="number" placeholder="Coût horaire € (chargé)" style="width:100%"></div>';
   html+='<div class="note" style="margin-bottom:14px;font-size:12px">Le coût horaire chargé sert à valoriser les heures dans la marge des chantiers.</div>';
