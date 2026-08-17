@@ -316,6 +316,7 @@
 }
 .charge-open-btn,
 .charge-edit-btn,
+.charge-delete-btn,
 .charge-valid-btn,
 .charge-dup-btn,
 .charge-rejet-btn{
@@ -338,6 +339,10 @@
 .charge-edit-btn{
   color:#0b63d8;
   border-color:#0b63d8;
+}
+.charge-delete-btn{
+  color:#d33b3b;
+  border-color:#e6a5a5;
 }
 .charge-valid-btn{
   color:var(--y-green);
@@ -552,7 +557,7 @@
 #pane-docs .doc-row-standard,
 #pane-documents .doc-row-standard{
   display:grid !important;
-  grid-template-columns:120px 160px 170px minmax(220px,1fr) 100px 90px !important;
+  grid-template-columns:120px 160px 170px minmax(220px,1fr) 100px 112px !important;
   gap:12px !important;
   align-items:center !important;
   width:100% !important;
@@ -629,7 +634,7 @@
   #pane-documents .docligne,
   #pane-docs .doc-row-standard,
   #pane-documents .doc-row-standard{
-    grid-template-columns:100px 130px 135px minmax(150px,1fr) 90px 76px !important;
+    grid-template-columns:100px 130px 135px minmax(150px,1fr) 90px 106px !important;
     gap:8px !important;
     padding:0 8px !important;
   }
@@ -704,7 +709,9 @@
 #pane-docs .doc-view-btn,
 #pane-documents .doc-view-btn,
 #pane-docs .doc-edit-btn,
-#pane-documents .doc-edit-btn{
+#pane-documents .doc-edit-btn,
+#pane-docs .doc-delete-btn,
+#pane-documents .doc-delete-btn{
   display:inline-flex !important;
   align-items:center !important;
   justify-content:center !important;
@@ -732,6 +739,11 @@
 #pane-documents .doc-edit-btn{
   color:#0b63d8 !important;
   border-color:#0b63d8 !important;
+}
+#pane-docs .doc-delete-btn,
+#pane-documents .doc-delete-btn{
+  color:#d33b3b !important;
+  border-color:#e6a5a5 !important;
 }
 
 #pane-docs .doc-view-btn:hover,
@@ -791,7 +803,7 @@
   #pane-documents .docligne,
   #pane-docs .doc-row-standard,
   #pane-documents .doc-row-standard{
-    grid-template-columns:92px minmax(0,1fr) 68px !important;
+    grid-template-columns:92px minmax(0,1fr) 106px !important;
     grid-template-areas:
       "type source date"
       "type chantier actions"
@@ -1480,7 +1492,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V178</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V179</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -2023,7 +2035,7 @@ function renderAchats(){
         +'<span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span></span>'
         +'<small class="des">'+esc(a.designation||"")+'</small>'
         +'<b style="text-align:right">'+eur(a.montantHT)+' €</b>'
-        +'<span style="white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:6px">'+btnVoir+'<button class="charge-edit-btn" onclick="editAchat(\''+a.id+'\')" title="Modifier la charge" aria-label="Modifier la charge">✏️</button></span></div>';
+        +'<span style="white-space:nowrap;display:flex;align-items:center;justify-content:flex-end;gap:6px">'+btnVoir+'<button class="charge-edit-btn" onclick="editAchat(\''+a.id+'\')" title="Modifier la charge" aria-label="Modifier la charge">✏️</button><button class="charge-delete-btn" onclick="delAchat(\''+a.id+'\')" title="Supprimer de Yaya" aria-label="Supprimer de Yaya">✕</button></span></div>';
     }
     html+='</div>';
     html+='<div class="note" style="margin-top:6px">Le détail complet de chaque achat est dans la fiche de son chantier.</div>';
@@ -2523,9 +2535,9 @@ async function saveAchat(id){
   if(await apiPost("setAchats",S.achats)) toast("Achat modifié ✓");
 }
 async function delAchat(id){
-  if(!confirm("Supprimer cet achat ?")) return;
+  if(!confirm("Supprimer cette charge de Yaya ?\n\nLe fichier original Drive ou Dropbox sera conservé.")) return;
   S.achats=S.achats.filter(a=>a.id!==id);
-  render(); await apiPost("setAchats",S.achats);
+  render(); if(await apiPost("setAchats",S.achats))toast("Charge supprimée de Yaya");
 }
 
 async function addSalarie(){
@@ -2682,7 +2694,7 @@ async function delDocument(id){
   const overlay=document.createElement('div');
   overlay.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:center;justify-content:center';
   overlay.innerHTML='<div style="background:#fff;border-radius:16px;padding:24px;max-width:300px;width:90%;text-align:center">'
-    +'<div style="font-weight:700;margin-bottom:16px">Supprimer ce document ?</div>'
+    +'<div style="font-weight:700;margin-bottom:7px">Supprimer ce document de Yaya ?</div><div style="font-size:12px;color:#68778a;margin-bottom:16px">Le fichier original Drive ou Dropbox sera conservé.</div>'
     +'<button id="del-ok-doc" style="width:100%;padding:10px;border-radius:10px;border:none;background:#e53e3e;color:#fff;font-weight:600;cursor:pointer;margin-bottom:8px">Supprimer</button>'
     +'<button id="del-ann-doc" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:14px;cursor:pointer">Annuler</button>'
     +'</div>';
@@ -2801,6 +2813,18 @@ function modifierDocumentDepuisLigne(btn){
   toast("Modification indisponible pour ce document",true);
 }
 
+function supprimerDocumentDepuisLigne(btn){
+  const row=btn.closest('.doc-row-standard,.docligne');
+  if(!row)return;
+  const id=row.dataset.id||row.getAttribute('data-id')||'';
+  if(!id)return;
+  if(row.dataset.origin==='charge'){
+    if(typeof window.delAchat==='function')window.delAchat(id);
+  }else if(typeof window.delDocument==='function'){
+    window.delDocument(id);
+  }
+}
+
 function styliserDocuments(){
   const panes=[document.getElementById('pane-docs'),document.getElementById('pane-documents')].filter(Boolean);
   panes.forEach(pane=>{
@@ -2855,6 +2879,16 @@ function styliserDocuments(){
           editBtn.onclick=()=>modifierDocumentDepuisLigne(editBtn);
         }
         actions.appendChild(editBtn);
+      }
+      if(!actions.querySelector('.doc-delete-btn')){
+        const deleteBtn=document.createElement('button');
+        deleteBtn.type='button';
+        deleteBtn.className='doc-delete-btn';
+        deleteBtn.textContent='✕';
+        deleteBtn.title='Supprimer de Yaya';
+        deleteBtn.setAttribute('aria-label','Supprimer de Yaya');
+        deleteBtn.onclick=()=>supprimerDocumentDepuisLigne(deleteBtn);
+        actions.appendChild(deleteBtn);
       }
     });
   });
