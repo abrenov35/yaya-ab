@@ -426,6 +426,12 @@
   border-radius:8px;
   background:#f8fafc;
 }
+.piece-image{
+  display:block;
+  height:auto;
+  max-height:calc(100% - 46px);
+  object-fit:contain;
+}
 
 /* V146 — HOTFIX ACTIONS : aucune action ne peut sortir du tableau */
 #pane-achats .controle-card,
@@ -1394,7 +1400,7 @@
     <button class="tab" data-tab="heures">Heures</button>
     <button class="tab" data-tab="equipe">Équipe</button>
   </div>
-  <span class="sync" id="yayaVersion">V172</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V173</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -2901,26 +2907,12 @@ function yayaUpgradeHoursModal(){
 }
 
 function applyPatches(){alignChantierTools();yayaUpgradeHoursModal();iconiserActionsCharges();styliserDocuments();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
-window.voirPieceV159=function(u){
-  u=String(u||'').trim();if(!u)return;
-  let src=u;
-  const driveMarker='drive.google.com/file/d/';
-  const drivePos=u.toLowerCase().indexOf(driveMarker);
-  if(drivePos>=0){const id=u.slice(drivePos+driveMarker.length).split('/')[0].split('?')[0].split('#')[0];src='https://drive.google.com/file/d/'+id+'/preview';}
-  else if(u.toLowerCase().includes('dropbox.com')){
-    try{const d=new URL(u);d.searchParams.delete('dl');d.searchParams.set('raw','1');src=d.toString();}
-    catch(e){const p=u.split('?');const q=(p[1]||'').split('&').filter(x=>x&&x.slice(0,3)!=='dl='&&x.slice(0,4)!=='raw=').concat('raw=1');src=p[0]+'?'+q.join('&');}
-  }
-  const root=document.getElementById('modalRoot');if(!root)return;
-  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal piece-modal"><h5><span>Pièce jointe</span><button type="button" onclick="closeModal()">Fermer</button></h5><iframe class="piece-frame" src="'+esc(src)+'" title="Pièce jointe" loading="eager" allowfullscreen></iframe></div></div>';
-};
-
+let yayaPieceSession=0;
 window.voirPiece=function(u){
   u=String(u||'').trim();if(!u)return;
   const root=document.getElementById('modalRoot');if(!root)return;
-  const oldFrame=root.querySelector('iframe.piece-frame');
-  if(oldFrame){try{oldFrame.src='about:blank'}catch(e){};try{oldFrame.remove()}catch(e){}}
-  root.innerHTML='';
+  yayaPieceSession++;
+  root.replaceChildren();
   let src=u;
   const low=u.toLowerCase();
   const driveMarker='drive.google.com/file/d/';
@@ -2930,14 +2922,25 @@ window.voirPiece=function(u){
     try{const d=new URL(u);d.searchParams.delete('dl');d.searchParams.set('raw','1');src=d.toString();}
     catch(e){const p=u.split('?');const q=(p[1]||'').split('&').filter(x=>x&&x.slice(0,3)!=='dl='&&x.slice(0,4)!=='raw=').concat('raw=1');src=p[0]+'?'+q.join('&');}
   }
-  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal piece-modal"><h5><span>Pièce jointe</span><button type="button" onclick="closeModal()">Fermer</button></h5><iframe class="piece-frame" src="'+esc(src)+'" title="Pièce jointe" loading="lazy" referrerpolicy="no-referrer"></iframe></div></div>';
+  const overlay=document.createElement('div');overlay.className='overlay';
+  overlay.onclick=function(e){if(e.target===overlay)closeModal();};
+  const modal=document.createElement('div');modal.className='modal piece-modal';
+  const head=document.createElement('h5');
+  const title=document.createElement('span');title.textContent='Pièce jointe';
+  const close=document.createElement('button');close.type='button';close.textContent='Fermer';close.onclick=closeModal;
+  head.append(title,close);modal.appendChild(head);overlay.appendChild(modal);root.appendChild(overlay);
+  const image=/\.(jpe?g|png|webp|gif|bmp|svg)(?:[?#]|$)/i.test(src);
+  if(image){
+    const img=document.createElement('img');img.className='piece-frame piece-image';img.alt='Pièce jointe';img.src=src;modal.appendChild(img);
+  }else{
+    const frame=document.createElement('iframe');frame.className='piece-frame';frame.title='Pièce jointe';frame.loading='eager';frame.allowFullscreen=true;modal.appendChild(frame);
+    requestAnimationFrame(function(){if(root.contains(frame))frame.src=src;});
+  }
 };
-const _yayaCloseModal=window.closeModal;
 window.closeModal=function(){
+  yayaPieceSession++;
   const root=document.getElementById('modalRoot');
-  if(root){const f=root.querySelector('iframe.piece-frame');if(f){try{f.src='about:blank'}catch(e){};try{f.remove()}catch(e){}}}
-  if(typeof _yayaCloseModal==='function')return _yayaCloseModal.apply(this,arguments);
-  if(root)root.innerHTML='';
+  if(root)root.replaceChildren();
 };
 const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyPatches,0);return r};new MutationObserver(()=>applyPatches()).observe(document.documentElement,{childList:true,subtree:true});setTimeout(applyPatches,100);
 </script></body></html>
