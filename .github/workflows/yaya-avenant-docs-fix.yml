@@ -1,0 +1,88 @@
+name: Yaya - avenant et filtre documents charges
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/yaya-avenant-docs-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Patch index.html
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          original = s
+
+          # 1) Page Documents : ne pas afficher les pièces déjà gérées comme charges.
+          old_sorted = "const sorted=historiquePiecesYaya();"
+          new_sorted = """const idsPiecesCharges=new Set((S.achats||[]).map(a=>String(a.idPiece||a.documentId||a.docId||a.pieceId||'')).filter(Boolean));
+          const liensCharges=new Set((S.achats||[]).map(a=>String(a.lien||'').trim()).filter(Boolean));
+          const typesCharges=new Set(['facture','facture fournisseur','bl','bon de livraison','avoir','devis fournisseur']);
+          const sorted=historiquePiecesYaya().filter(d=>{
+            const id=String(d.id||'');
+            const lien=String(d.lien||'').trim();
+            const type=String(d.type||d.typeDoc||'').trim().toLowerCase();
+            if(idsPiecesCharges.has(id)||liensCharges.has(lien)) return false;
+            return !typesCharges.has(type);
+          });"""
+          if old_sorted not in s:
+              raise SystemExit('Pattern renderDocuments introuvable')
+          s = s.replace(old_sorted, new_sorted, 1)
+
+          # 2) Bouton + Avenant : le remonter dans la zone financière, juste avant Dépenses.
+          focus_dep = """      if(ach.length){
+        f+='<div class=\"seclabel\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"""
+          focus_new = """      f+='<div style=\"margin:8px 0 10px;display:flex;justify-content:flex-start\"><button class=\"btn2\" onclick=\"openAvenant(\\''+c.id+'\\')\">+ Avenant</button></div>';
+      if(ach.length){
+        f+='<div class=\"seclabel\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"""
+          if focus_dep not in s:
+              raise SystemExit('Pattern Dépenses focus introuvable')
+          s = s.replace(focus_dep, focus_new, 1)
+
+          focus_bottom = """      f+='<div style=\"margin-top:9px;display:flex;gap:8px\"><button class=\"btn2\" onclick=\"openAvenant(\\''+c.id+'\\')\">+ Avenant</button><span class=\"spacer\"></span><button class=\"btn2\" onclick=\"archiverChantier(\\''+c.id+'\\')\">Archiver</button></div></div>';"""
+          focus_bottom_new = """      f+='<div style=\"margin-top:9px;display:flex;justify-content:flex-end\"><button class=\"btn2\" onclick=\"archiverChantier(\\''+c.id+'\\')\">Archiver</button></div></div>';"""
+          if focus_bottom not in s:
+              raise SystemExit('Pattern bas fiche focus introuvable')
+          s = s.replace(focus_bottom, focus_bottom_new, 1)
+
+          # Deuxième rendu : cartes chantier développées.
+          list_dep = """    if(ach.length){
+      html+='<div class=\"seclabel\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"""
+          list_new = """    html+='<div style=\"margin:8px 0 10px;display:flex;justify-content:flex-start\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"openAvenant(\\''+c.id+'\\')\">＋ Avenant</button></div>';
+    if(ach.length){
+      html+='<div class=\"seclabel\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"""
+          if list_dep not in s:
+              raise SystemExit('Pattern Dépenses liste introuvable')
+          s = s.replace(list_dep, list_new, 1)
+
+          list_bottom = """    html+='<div style=\"margin-top:9px;display:flex;gap:8px\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"openAvenant(\\''+c.id+'\\')\">＋ Avenant</button><span class=\"spacer\"></span><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"archiverChantier(\\''+c.id+'\\')\">🗄 Archiver</button></div>';"""
+          list_bottom_new = """    html+='<div style=\"margin-top:9px;display:flex;justify-content:flex-end\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"archiverChantier(\\''+c.id+'\\')\">🗄 Archiver</button></div>';"""
+          if list_bottom not in s:
+              raise SystemExit('Pattern bas fiche liste introuvable')
+          s = s.replace(list_bottom, list_bottom_new, 1)
+
+          if s == original:
+              raise SystemExit('Aucune modification appliquée')
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit and push
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Yaya: remonte Avenant et masque les charges dans Documents"
+          git push
