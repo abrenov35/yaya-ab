@@ -24,7 +24,6 @@ jobs:
           s = p.read_text(encoding='utf-8')
           original = s
 
-          # 1) Page Documents : ne pas afficher les pièces déjà gérées comme charges.
           old_sorted = "const sorted=historiquePiecesYaya();"
           new_sorted = """const idsPiecesCharges=new Set((S.achats||[]).map(a=>String(a.idPiece||a.documentId||a.docId||a.pieceId||'')).filter(Boolean));
           const liensCharges=new Set((S.achats||[]).map(a=>String(a.lien||'').trim()).filter(Boolean));
@@ -40,7 +39,6 @@ jobs:
               raise SystemExit('Pattern renderDocuments introuvable')
           s = s.replace(old_sorted, new_sorted, 1)
 
-          # 2) Bouton + Avenant : le remonter dans la zone financière, juste avant Dépenses.
           focus_dep = """      if(ach.length){
         f+='<div class=\"seclabel\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"""
           focus_new = """      f+='<div style=\"margin:8px 0 10px;display:flex;justify-content:flex-start\"><button class=\"btn2\" onclick=\"openAvenant(\\''+c.id+'\\')\">+ Avenant</button></div>';
@@ -56,7 +54,6 @@ jobs:
               raise SystemExit('Pattern bas fiche focus introuvable')
           s = s.replace(focus_bottom, focus_bottom_new, 1)
 
-          # Deuxième rendu : cartes chantier développées.
           list_dep = """    if(ach.length){
       html+='<div class=\"seclabel\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"""
           list_new = """    html+='<div style=\"margin:8px 0 10px;display:flex;justify-content:flex-start\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"openAvenant(\\''+c.id+'\\')\">＋ Avenant</button></div>';
@@ -74,7 +71,6 @@ jobs:
 
           if s == original:
               raise SystemExit('Aucune modification appliquée')
-
           p.write_text(s, encoding='utf-8')
           PY
 
@@ -86,3 +82,5 @@ jobs:
           git diff --cached --quiet && exit 0
           git commit -m "Yaya: remonte Avenant et masque les charges dans Documents"
           git push
+
+# trigger 2
