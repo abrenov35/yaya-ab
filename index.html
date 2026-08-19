@@ -1487,7 +1487,57 @@
   #pane-equipe .equipe-info{text-align:right;font-size:10px}
   #pane-equipe .equipe-edit{width:30px;height:30px}
 }
-</style></head>
+</style>
+<style>
+/* V181 — FICHE CHANTIER : toolbar d'actions sous les informations financières */
+.chantier-fin-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+  margin:12px 0 14px;
+  padding:8px 10px;
+  border:1px solid #dce3eb;
+  border-radius:9px;
+  background:#f7f9fb;
+}
+.chantier-fin-toolbar .btn2{
+  min-height:34px;
+  padding:0 12px !important;
+  border:1px solid #b9c5d2 !important;
+  border-radius:7px !important;
+  background:#fff !important;
+  color:#172b43 !important;
+  font-size:12px !important;
+  font-weight:700 !important;
+  box-shadow:none !important;
+  white-space:nowrap;
+}
+.chantier-fin-toolbar .btn2:hover{
+  background:#f1f4f7 !important;
+  border-color:#8fa0b3 !important;
+}
+.chantier-fin-toolbar .chantier-archive-btn{
+  margin-left:auto;
+}
+@media(max-width:640px){
+  .chantier-fin-toolbar{
+    gap:6px;
+    padding:7px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .chantier-fin-toolbar::-webkit-scrollbar{display:none}
+  .chantier-fin-toolbar .btn2{
+    flex:0 0 auto;
+    min-height:32px;
+    padding:0 10px !important;
+    font-size:11px !important;
+  }
+}
+</style>
+</head>
 <body>
 
 <div id="loader" style="display: flex;"><div class="spin"></div><div>Connexion à la base Yaya…</div></div>
@@ -1502,7 +1552,7 @@
     <button class="tab" data-tab="equipe">Équipe</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V180</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V181</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1899,6 +1949,14 @@ function renderHeures(){
   el.innerHTML=html;
 }
 
+function chantierToolbarHtml(cid){
+  return '<div class="chantier-fin-toolbar">'
+    +'<button class="btn2" onclick="openAvenant(\''+cid+'\')">＋ Marché</button>'
+    +'<button class="btn2" onclick="openDocumentModal(\''+cid+'\')">＋ Document</button>'
+    +'<button class="btn2 chantier-archive-btn" onclick="archiverChantier(\''+cid+'\')">Archiver chantier</button>'
+    +'</div>';
+}
+
 function renderChantiers(){
   const el=document.getElementById("pane-chantiers");
   if(focusChantier){
@@ -1920,6 +1978,7 @@ function renderChantiers(){
         +'<div class="stat"><small>Achats</small><b>'+eur(totAch)+' &euro;</b><span class="sub">'+ach.length+' doc</span></div>'
         +'<div class="stat"><small>Main-d&apos;oeuvre</small><b>'+eur(mo)+' &euro;</b><span class="sub">'+hh+' h</span></div>'
         +'<div class="stat '+(marge>=0?'marge-pos':'marge-neg')+'"><small>Marge</small><b>'+eur(marge)+' &euro;</b><span class="sub">'+pct+'%</span></div></div>';
+      f+=chantierToolbarHtml(c.id);
       f+='<div class="seclabel"><span>March&eacute;</span><span>'+eur(devisTot)+' &euro;</span></div>';
       f+='<div class="achligne ligM"><span class="badge b-devis">DEVIS</span><span>'+esc(c.numero||'-')+'</span><b class="editable" style="text-align:right" onclick="editMontantDevis(\''+c.id+'\')">'+eur(c.montantDevisHT)+' &euro;</b><span style="white-space:nowrap">'+lienIco(c.notes)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editMontantDevis(\''+c.id+'\')">&#9998;</button></span></div>';
       for(const v of avs) f+='<div class="achligne ligM"><span class="badge b-avenant">AVENANT</span><span>'+esc(v.libelle)+'</span><b class="editable" style="text-align:right" onclick="editMontantAvenant(\''+v.id+'\')">'+eur(v.montantHT)+' &euro;</b><span style="white-space:nowrap">'+lienIco(v.lien)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editMontantAvenant(\''+v.id+'\')">&#9998;</button><button class="x" onclick="delAvenant(\''+v.id+'\')">&#10005;</button></span></div>';
@@ -1958,7 +2017,7 @@ function renderChantiers(){
             +'</div>';
         }
       }
-      f+='<div style="margin-top:9px;display:flex;gap:8px"><button class="btn2" onclick="openAvenant(\''+c.id+'\')">+ Avenant</button><span class="spacer"></span><button class="btn2" onclick="archiverChantier(\''+c.id+'\')">Archiver</button></div></div>';
+      f+='</div>';
       el.innerHTML=f; convertAvoirBadges(); return;
     }
   }
@@ -2013,6 +2072,7 @@ function renderChantiers(){
       +'<div class="stat"><small>Charges</small><b>'+eur(mo)+' €</b><span class="sub">'+hh+' h saisies</span></div>'
       +'<div class="stat '+(marge>=0?'marge-pos':'marge-neg')+'"><small>Marge estimée</small><b>'+eur(marge)+' €</b><span class="sub">'+pct+' % du devis</span></div>'
       +'</div>';
+    html+=chantierToolbarHtml(c.id);
     const lienIco=u=>String(u||"").startsWith("http")?' <button onclick="voirPiece(\''+esc(u)+'\')" title="Voir la pièce" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer;vertical-align:middle;margin-right:4px">VOIR</button>':'';
     html+='<div class="seclabel"><span>Marché</span><span>'+eur(devisTot)+' €</span></div>';
     html+='<div class="achligne ligM"><span class="badge b-devis">DEVIS</span><span>N° '+esc(c.numero||"—")+'</span><b class="editable" style="text-align:right" title="Modifier" onclick="editMontantDevis(\''+c.id+'\')">'+eur(c.montantDevisHT)+' €</b><span style="white-space:nowrap">'+lienIco(c.notes)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" title="Modifier" onclick="editMontantDevis(\''+c.id+'\')">✎</button></span></div>';
@@ -2023,7 +2083,7 @@ function renderChantiers(){
       html+='<div class="seclabel"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';
       for(const a of ach) html+='<div class="achligne ligD"><span class="badge '+badgeDoc(a.typeDoc)+'"'+(a.typeDoc==="Avoir"?' ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer"':'')+'>'+(esc(a.typeDoc).toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span>'+'</span><small class="des">'+esc(a.designation||"")+'</small><b class="editable" style="text-align:right" title="Modifier le montant" onclick="editMontantAchat(\''+a.id+'\')">'+(a.typeDoc==="Avoir"?'+':'-')+' '+eur(a.montantHT)+' €</b><span style="white-space:nowrap">'+lienIco(a.lien)+chargeValidationHtml(a)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" title="Modifier" onclick="editAchat(\''+a.id+'\')">✎</button><button class="x" title="Supprimer" onclick="delAchat(\''+a.id+'\')">✕</button></span></div>';
     }
-    html+='<div style="margin-top:9px;display:flex;gap:8px"><button class="btn2" style="font-size:12.5px" onclick="openAvenant(\''+c.id+'\')">＋ Avenant</button><span class="spacer"></span><button class="btn2" style="font-size:12.5px" onclick="archiverChantier(\''+c.id+'\')">🗄 Archiver</button></div>';
+
     html+='</div>';
   }
   if(archives.length){
@@ -2754,15 +2814,16 @@ function openAchatModal(){
 
 
 
-function openDocumentModal(){
-  const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
+function openDocumentModal(cid){
+  cid=String(cid||'');
+  const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'"'+(String(c.id)===cid?' selected':'')+'>'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
   const root=document.getElementById("modalRoot");
   let html='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:580px"><h5>Ajouter un document<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>';
   html+='<div class="row" style="margin-bottom:10px;margin-top:14px"><button class="btnp" onclick="document.getElementById(\'docFile\').click()">📎 Déposer un document (PDF ou photo)</button></div>';
   html+='<input type="file" id="docFile" accept="application/pdf,image/*" style="display:none" onchange="lireDocument(this)">';
   html+='<span class="note" id="docEtat"></span>';
   html+='<input type="hidden" id="docLien">';
-  html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Chantier</label><select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__">— Choisir le chantier —</option>'+chOpts+'</select></div>';
+  html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Chantier</label><select class="inp" id="docCh" style="flex:2;min-width:130px"><option value="__"'+(cid?'':' selected')+'>— Choisir le chantier —</option>'+chOpts+'</select></div>';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Sujet / Description</label><input class="inp" id="docSujet" placeholder="Sujet / description" style="flex:3" maxlength="30"></div>';
   html+='<div class="row" style="margin-bottom:8px"><label style="font-size:12px;font-weight:600;color:#555;display:block;margin-bottom:4px">Type de document</label><select class="inp" id="docType" style="flex:0 0 100px"><option value="__">— Type —</option>'+TYPES_DOC2.map(t=>'<option>'+t+'</option>').join('')+'</select></div>';
   html+='<div class="row"><button class="btnp go" onclick="saveDocument().then(()=>closeModal())" style="flex:0 0 auto">Enregistrer</button></div><input type="hidden" id="docLien"><input type="hidden" id="docTitre"></div></div>';
