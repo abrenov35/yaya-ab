@@ -1,4 +1,4 @@
-name: Yaya - avenant et filtre documents charges
+name: Yaya - exclure les charges des Documents
 
 on:
   push:
@@ -14,68 +14,56 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Patch index.html safely
+      - name: Patch Documents
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          import re
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-          original = s
-
-          # 1. Exclure les justificatifs de charges de la page Documents.
-          if 'const idsPiecesCharges=new Set(' not in s:
-              marker = 'const sorted=historiquePiecesYaya();'
-              if marker not in s:
-                  raise SystemExit('renderDocuments: marqueur introuvable')
-              replacement = """const idsPiecesCharges=new Set((S.achats||[]).map(a=>String(a.idPiece||a.documentId||a.docId||a.pieceId||'')).filter(Boolean));
-          const liensCharges=new Set((S.achats||[]).map(a=>String(a.lien||'').trim()).filter(Boolean));
-          const typesCharges=new Set(['facture','facture fournisseur','bl','bon de livraison','avoir','devis fournisseur']);
-          const sorted=historiquePiecesYaya().filter(d=>{
-            const id=String(d.id||'');
-            const lien=String(d.lien||'').trim();
-            const type=String(d.type||d.typeDoc||'').trim().toLowerCase();
-            if(idsPiecesCharges.has(id)||liensCharges.has(lien)) return false;
-            return !typesCharges.has(type);
-          });"""
-              s = s.replace(marker, replacement, 1)
-
-          # 2. Retirer le bouton Avenant du bas des fiches, tout en conservant Archiver.
-          s, n1 = re.subn(
-              r'<button class=\\"btn2\\"(?: style=\\"font-size:12\\.5px\\")? onclick=\\"openAvenant\([^<]+?</button><span class=\\"spacer\\"></span>',
-              '', s
-          )
-
-          # 3. Ajouter le bouton Avenant juste avant la zone Dépenses dans les deux rendus chantier.
-          if 'yaya-avenant-finance' not in s:
-              patterns = [
-                  ("      if(ach.length){\n        f+='<div class=\\\"seclabel\\\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';",
-                   "      f+='<div class=\\\"yaya-avenant-finance\\\" style=\\\"margin:8px 0 10px;display:flex;justify-content:flex-start\\\"><button class=\\\"btn2\\\" onclick=\\\"openAvenant(\\\\''+c.id+'\\\\')\\\">+ Avenant</button></div>';\n      if(ach.length){\n        f+='<div class=\\\"seclabel\\\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"),
-                  ("    if(ach.length){\n      html+='<div class=\\\"seclabel\\\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';",
-                   "    html+='<div class=\\\"yaya-avenant-finance\\\" style=\\\"margin:8px 0 10px;display:flex;justify-content:flex-start\\\"><button class=\\\"btn2\\\" style=\\\"font-size:12.5px\\\" onclick=\\\"openAvenant(\\\\''+c.id+'\\\\')\\\">＋ Avenant</button></div>';\n    if(ach.length){\n      html+='<div class=\\\"seclabel\\\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"),
-              ]
-              done = 0
-              for old, new in patterns:
-                  if old in s:
-                      s = s.replace(old, new, 1)
-                      done += 1
-              if done == 0:
-                  raise SystemExit('Zone Dépenses introuvable')
-
-          if s == original:
-              raise SystemExit('Aucune modification à appliquer')
-
-          p.write_text(s, encoding='utf-8')
-          print('Patch appliqué')
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old="""function historiquePiecesYaya(){
+  const vus=new Set();
+  const cleLien=l=>String(l||'').trim().replace(/[?&](dl|raw)=\\d/gi,'').replace(/[?&]$/,'');
+  const pieces=[];
+  (S.achats||[]).forEach((a,i)=>{
+    const lien=String(a.lien||'').trim();
+    if(!lien.startsWith('http'))return;
+    const cle=cleLien(lien);if(cle&&vus.has(cle))return;if(cle)vus.add(cle);
+    pieces.push({id:a.id,chantierId:a.chantierId,type:a.typeDoc||'Charge',titre:a.designation||'Pièce de charge',sujet:a.fournisseur||'Charge',date:a.date||'',lien,origine:'charge',ordre:i});
+  });
+  (S.documents||[]).forEach((d,i)=>{
+    const lien=String(d.lien||'').trim();
+    const cle=cleLien(lien);if(cle&&vus.has(cle))return;if(cle)vus.add(cle);
+    pieces.push({...d,origine:'document',ordre:(S.documents.length-i)});
+  });
+  return pieces.sort((a,b)=>{
+"""
+          new="""function historiquePiecesYaya(){
+  const vus=new Set();
+  const cleLien=l=>String(l||'').trim().replace(/[?&](dl|raw)=\\d/gi,'').replace(/[?&]$/,'');
+  const pieces=[];
+  // La page Documents ne doit contenir que S.documents.
+  // Les justificatifs de charges restent dans Charges et dans la fiche chantier.
+  const liensCharges=new Set((S.achats||[]).map(a=>cleLien(a.lien)).filter(Boolean));
+  (S.documents||[]).forEach((d,i)=>{
+    const lien=String(d.lien||'').trim();
+    const cle=cleLien(lien);
+    if(cle&&liensCharges.has(cle))return;
+    if(cle&&vus.has(cle))return;if(cle)vus.add(cle);
+    pieces.push({...d,origine:'document',ordre:(S.documents.length-i)});
+  });
+  return pieces.sort((a,b)=>{
+"""
+          if old not in s:
+              raise SystemExit('Bloc historiquePiecesYaya introuvable')
+          s=s.replace(old,new,1)
+          s=s.replace("Toutes les pièces connues de Yaya sont affichées ici, y compris celles liées aux charges.","Les justificatifs de charges sont disponibles dans Charges et dans la fiche du chantier.",1)
+          p.write_text(s,encoding='utf-8')
           PY
-
       - name: Commit and push
         run: |
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Yaya: avenant en zone financière et charges hors Documents"
+          git commit -m "Yaya: exclut les justificatifs de charges de Documents"
           git push
