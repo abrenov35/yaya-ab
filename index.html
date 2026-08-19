@@ -1707,7 +1707,17 @@ function isValidated(){ const v=S.validations.find(v=>v.semaine===wk()); return 
 function chantierById(id){ return S.chantiers.find(c=>String(c.id)===String(id)); }
 function heuresChantier(cid){ return S.heures.filter(h=>h.type==="chantier"&&String(h.ref)===String(cid)).reduce((t,h)=>t+h.heures,0); }
 function coutMO(cid){ let t=0; for(const h of S.heures){ if(h.type==="chantier"&&String(h.ref)===String(cid)){ const s=S.salaries.find(s=>String(s.id)===String(h.salarieId)); if(!s||s.type==="Sous-traitant") continue; t+=h.heures*(h.taux!=null?h.taux:s.tauxHoraire); } } return t; }
-function achatsChantier(cid){ return S.achats.filter(a=>String(a.chantierId)===String(cid)&&a.statutValidation!=="A_VALIDER"&&a.statutValidation!=="REJETEE"&&a.statutValidation!=="DOUBLON"); }
+function achatsChantier(cid){
+  return S.achats
+    .filter(a=>String(a.chantierId)===String(cid)&&a.statutValidation!=="A_VALIDER"&&a.statutValidation!=="REJETEE"&&a.statutValidation!=="DOUBLON")
+    .map((a,i)=>({a,i}))
+    .sort((x,y)=>{
+      const dx=String(x.a.horodatage||x.a.createdAt||x.a.dateCreation||x.a.date||'');
+      const dy=String(y.a.horodatage||y.a.createdAt||y.a.dateCreation||y.a.date||'');
+      return dy.localeCompare(dx)||y.i-x.i;
+    })
+    .map(x=>x.a);
+}
 function avenantsChantier(cid){ return S.avenants.filter(v=>String(v.chantierId)===String(cid)); }
 function totalDevis(c){ return (c.montantDevisHT||0)+avenantsChantier(c.id).reduce((t,v)=>t+v.montantHT,0); }
 
