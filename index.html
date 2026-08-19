@@ -1837,7 +1837,7 @@ function renderDocuments(){
   const el=document.getElementById('pane-documents');
   const chOpts=S.chantiers.filter(c=>c.statut!=="Terminé"&&c.statut!=="Archivé").sort((a,b)=>String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'})).map(c=>'<option value="'+c.id+'">'+esc(c.nom)+' ('+esc(c.numero)+')</option>').join('');
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openDocumentModal()">➕ Ajouter un document</button></div>';
-  const sorted=historiquePiecesYaya();
+  const sorted=historiquePiecesYaya().filter(d=>String(d.origine||'document')!=='charge');
   if(sorted.length){
     html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Historique des pièces déposées — '+sorted.length+' élément'+(sorted.length>1?'s':'')+'</div>';
     html+='<div class="card">';
@@ -1847,7 +1847,7 @@ function renderDocuments(){
       html+='<div class="achligne ligR" data-id="'+esc(d.id)+'" data-origin="'+esc(d.origine||'document')+'" style="padding:9px 0"><span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS')+'</span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc((String(d.sujet||'').split(' ').slice(0,2).join(' '))||'—')+'</span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span><small class="des">'+esc(String(d.titre||''))+'</small><small style="color:#aaa;white-space:nowrap">'+String(esc(d.date||'')).slice(0,10).split('-').reverse().join('/')+'</small><span style="white-space:nowrap">'+btnVoir+'</span></div>';
     }
     html+='</div>';
-    html+='<div class="note" style="margin-top:6px">Toutes les pièces connues de Yaya sont affichées ici, y compris celles liées aux charges.</div>';
+    html+='<div class="note" style="margin-top:6px">Les pièces de charges restent disponibles dans Charges et dans la fiche du chantier.</div>';
   }
 
   el.innerHTML=html;
