@@ -15,17 +15,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Patch index.html
+      - name: Patch index.html safely
         run: |
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
           original = s
 
-          old_sorted = "const sorted=historiquePiecesYaya();"
-          new_sorted = """const idsPiecesCharges=new Set((S.achats||[]).map(a=>String(a.idPiece||a.documentId||a.docId||a.pieceId||'')).filter(Boolean));
+          # 1. Exclure les justificatifs de charges de la page Documents.
+          if 'const idsPiecesCharges=new Set(' not in s:
+              marker = 'const sorted=historiquePiecesYaya();'
+              if marker not in s:
+                  raise SystemExit('renderDocuments: marqueur introuvable')
+              replacement = """const idsPiecesCharges=new Set((S.achats||[]).map(a=>String(a.idPiece||a.documentId||a.docId||a.pieceId||'')).filter(Boolean));
           const liensCharges=new Set((S.achats||[]).map(a=>String(a.lien||'').trim()).filter(Boolean));
           const typesCharges=new Set(['facture','facture fournisseur','bl','bon de livraison','avoir','devis fournisseur']);
           const sorted=historiquePiecesYaya().filter(d=>{
@@ -35,43 +40,35 @@ jobs:
             if(idsPiecesCharges.has(id)||liensCharges.has(lien)) return false;
             return !typesCharges.has(type);
           });"""
-          if old_sorted not in s:
-              raise SystemExit('Pattern renderDocuments introuvable')
-          s = s.replace(old_sorted, new_sorted, 1)
+              s = s.replace(marker, replacement, 1)
 
-          focus_dep = """      if(ach.length){
-        f+='<div class=\"seclabel\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"""
-          focus_new = """      f+='<div style=\"margin:8px 0 10px;display:flex;justify-content:flex-start\"><button class=\"btn2\" onclick=\"openAvenant(\\''+c.id+'\\')\">+ Avenant</button></div>';
-      if(ach.length){
-        f+='<div class=\"seclabel\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"""
-          if focus_dep not in s:
-              raise SystemExit('Pattern Dépenses focus introuvable')
-          s = s.replace(focus_dep, focus_new, 1)
+          # 2. Retirer le bouton Avenant du bas des fiches, tout en conservant Archiver.
+          s, n1 = re.subn(
+              r'<button class=\\"btn2\\"(?: style=\\"font-size:12\\.5px\\")? onclick=\\"openAvenant\([^<]+?</button><span class=\\"spacer\\"></span>',
+              '', s
+          )
 
-          focus_bottom = """      f+='<div style=\"margin-top:9px;display:flex;gap:8px\"><button class=\"btn2\" onclick=\"openAvenant(\\''+c.id+'\\')\">+ Avenant</button><span class=\"spacer\"></span><button class=\"btn2\" onclick=\"archiverChantier(\\''+c.id+'\\')\">Archiver</button></div></div>';"""
-          focus_bottom_new = """      f+='<div style=\"margin-top:9px;display:flex;justify-content:flex-end\"><button class=\"btn2\" onclick=\"archiverChantier(\\''+c.id+'\\')\">Archiver</button></div></div>';"""
-          if focus_bottom not in s:
-              raise SystemExit('Pattern bas fiche focus introuvable')
-          s = s.replace(focus_bottom, focus_bottom_new, 1)
-
-          list_dep = """    if(ach.length){
-      html+='<div class=\"seclabel\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"""
-          list_new = """    html+='<div style=\"margin:8px 0 10px;display:flex;justify-content:flex-start\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"openAvenant(\\''+c.id+'\\')\">＋ Avenant</button></div>';
-    if(ach.length){
-      html+='<div class=\"seclabel\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"""
-          if list_dep not in s:
-              raise SystemExit('Pattern Dépenses liste introuvable')
-          s = s.replace(list_dep, list_new, 1)
-
-          list_bottom = """    html+='<div style=\"margin-top:9px;display:flex;gap:8px\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"openAvenant(\\''+c.id+'\\')\">＋ Avenant</button><span class=\"spacer\"></span><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"archiverChantier(\\''+c.id+'\\')\">🗄 Archiver</button></div>';"""
-          list_bottom_new = """    html+='<div style=\"margin-top:9px;display:flex;justify-content:flex-end\"><button class=\"btn2\" style=\"font-size:12.5px\" onclick=\"archiverChantier(\\''+c.id+'\\')\">🗄 Archiver</button></div>';"""
-          if list_bottom not in s:
-              raise SystemExit('Pattern bas fiche liste introuvable')
-          s = s.replace(list_bottom, list_bottom_new, 1)
+          # 3. Ajouter le bouton Avenant juste avant la zone Dépenses dans les deux rendus chantier.
+          if 'yaya-avenant-finance' not in s:
+              patterns = [
+                  ("      if(ach.length){\n        f+='<div class=\\\"seclabel\\\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';",
+                   "      f+='<div class=\\\"yaya-avenant-finance\\\" style=\\\"margin:8px 0 10px;display:flex;justify-content:flex-start\\\"><button class=\\\"btn2\\\" onclick=\\\"openAvenant(\\\\''+c.id+'\\\\')\\\">+ Avenant</button></div>';\n      if(ach.length){\n        f+='<div class=\\\"seclabel\\\"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';"),
+                  ("    if(ach.length){\n      html+='<div class=\\\"seclabel\\\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';",
+                   "    html+='<div class=\\\"yaya-avenant-finance\\\" style=\\\"margin:8px 0 10px;display:flex;justify-content:flex-start\\\"><button class=\\\"btn2\\\" style=\\\"font-size:12.5px\\\" onclick=\\\"openAvenant(\\\\''+c.id+'\\\\')\\\">＋ Avenant</button></div>';\n    if(ach.length){\n      html+='<div class=\\\"seclabel\\\"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';"),
+              ]
+              done = 0
+              for old, new in patterns:
+                  if old in s:
+                      s = s.replace(old, new, 1)
+                      done += 1
+              if done == 0:
+                  raise SystemExit('Zone Dépenses introuvable')
 
           if s == original:
-              raise SystemExit('Aucune modification appliquée')
+              raise SystemExit('Aucune modification à appliquer')
+
           p.write_text(s, encoding='utf-8')
+          print('Patch appliqué')
           PY
 
       - name: Commit and push
@@ -80,7 +77,5 @@ jobs:
           git config user.name "GitHub Actions"
           git add index.html
           git diff --cached --quiet && exit 0
-          git commit -m "Yaya: remonte Avenant et masque les charges dans Documents"
+          git commit -m "Yaya: avenant en zone financière et charges hors Documents"
           git push
-
-# trigger 2
