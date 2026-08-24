@@ -1,3 +1,4 @@
+# Trigger v2
 name: Yaya - montant marché HT manuel
 
 on:
@@ -30,26 +31,18 @@ jobs:
               s = s.replace(old, new)
               print(f'{n} remplacement(s): {old[:70]}')
 
-          # Le montant officiel du marché devient une donnée propre du chantier.
           replace_required(
               'S.chantiers.forEach(c=>{ c.montantDevisHT=Number(c.montantDevisHT)||0; });',
               'S.chantiers.forEach(c=>{ c.montantDevisHT=Number(c.montantDevisHT)||0; c.montantMarcheHT=Number(c.montantMarcheHT)||0; });'
           )
-
-          # Tous les usages existants de totalDevis (affichage marché, marge, KPI)
-          # pointent désormais vers le montant officiel manuel et non la somme des devis.
           replace_required(
               'function totalDevis(c){ return (c.montantDevisHT||0)+avenantsChantier(c.id).reduce((t,v)=>t+v.montantHT,0); }',
               'function totalDevis(c){ return Number(c&&c.montantMarcheHT)||0; }'
           )
-
-          # Nouveau chantier : le marché officiel démarre à 0 et reste indépendant du devis.
           replace_required(
               'S.chantiers.push({id:nid,nom,numero,montantDevisHT:devis,statut:"En cours",notes:devisLien});',
               'S.chantiers.push({id:nid,nom,numero,montantDevisHT:devis,montantMarcheHT:0,statut:"En cours",notes:devisLien});'
           )
-
-          # Barre MARCHÉ cliquable, dans les deux rendus de fiche chantier.
           replace_required(
               'f+=\'<div class="seclabel"><span>March&eacute;</span><span>\'+eur(devisTot)+\' &euro;</span></div>\';',
               'f+=\'<div class="seclabel"><span>March&eacute;</span><span class="editable" title="Modifier le montant officiel du marché HT" onclick="editMontantMarche(\\\'\'+c.id+\'\\\')" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">\'+eur(devisTot)+\' &euro;</span></div>\';'
@@ -59,7 +52,6 @@ jobs:
               'html+=\'<div class="seclabel"><span>Marché</span><span class="editable" title="Modifier le montant officiel du marché HT" onclick="editMontantMarche(\\\'\'+c.id+\'\\\')" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">\'+eur(devisTot)+\' €</span></div>\';'
           )
 
-          # Fonction d'édition/sauvegarde du marché officiel.
           anchor = 'function demanderMontant(actuel){'
           if 'async function editMontantMarche(cid)' not in s:
               if anchor not in s:
@@ -82,7 +74,6 @@ jobs:
 '''
               s = s.replace(anchor, fn + anchor, 1)
 
-          # Les devis ne doivent plus annoncer ni déclencher une mise à jour du marché.
           replace_required('toast("Devis 1 ajouté ✓ (marché HT mis à jour)")', 'toast("Devis 1 ajouté ✓")')
           replace_required('toast("Devis ajouté ✓ (marché HT mis à jour)")', 'toast("Devis ajouté ✓")')
           replace_required('if(!confirm("Supprimer ce devis ? Le marché HT du chantier sera recalculé.")) return;', 'if(!confirm("Supprimer ce devis ?")) return;')
