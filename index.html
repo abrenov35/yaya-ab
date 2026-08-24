@@ -1603,8 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <div id="chantierToolbarSearch"></div>
-  <span class="sync" id="yayaVersion">V186</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V187</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -2990,7 +2989,7 @@ function archiverSalarieModal(id){
 
 </script>
 <script>
-function syncChantierSearchToolbar(){const host=document.getElementById('chantierToolbarSearch');if(!host)return;host.classList.toggle('on',tab==='chantiers'&&!focusChantier);if(tab!=='chantiers'||focusChantier)return;const pane=document.getElementById('pane-chantiers'),search=pane&&pane.querySelector('input[placeholder*="Rechercher un chantier"]');if(!search)return;const wrap=search.parentElement;host.replaceChildren(...Array.from(wrap.childNodes));wrap.remove();}
+function syncChantierSearchToolbar(){/* V187 : la recherche reste dans la page Chantiers. */}
 function alignChantierTools(){syncChantierSearchToolbar();}
 function iconiserActionsCharges(){document.querySelectorAll('.charge-open-btn,.charge-edit-btn,.charge-valid-btn,.charge-dup-btn,.charge-rejet-btn').forEach(b=>{if(b.classList.contains('charge-action-icon'))return;let ico='',label='';if(b.classList.contains('charge-open-btn')){ico='👁';label='Voir la pièce';}else if(b.classList.contains('charge-edit-btn')){ico='✏️';label='Modifier';}else if(b.classList.contains('charge-valid-btn')){ico='✓';label='Valider';}else if(b.classList.contains('charge-dup-btn')){ico='⧉';label='Classer comme doublon';}else if(b.classList.contains('charge-rejet-btn')){ico='✕';label='Rejeter';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.classList.add('charge-action-icon');}});}
 
