@@ -2,99 +2,12 @@ name: Yaya - montant marché HT manuel
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/yaya-marche-manuel.yml'
-  issues:
-    types: [opened]
 
 permissions:
   contents: write
 
 jobs:
-  patch-index:
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.issue.title == '[YAYA] patch marché HT'
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: Dissocier le marché HT des devis
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path('index.html')
-          s = p.read_text(encoding='utf-8')
-
-          def replace_required(old, new, minimum=1):
-              global s
-              n = s.count(old)
-              if n < minimum:
-                  raise SystemExit(f'Motif introuvable ou incomplet ({n}): {old[:120]}')
-              s = s.replace(old, new)
-              print(f'{n} remplacement(s): {old[:70]}')
-
-          replace_required(
-              'S.chantiers.forEach(c=>{ c.montantDevisHT=Number(c.montantDevisHT)||0; });',
-              'S.chantiers.forEach(c=>{ c.montantDevisHT=Number(c.montantDevisHT)||0; c.montantMarcheHT=Number(c.montantMarcheHT)||0; });'
-          )
-          replace_required(
-              'function totalDevis(c){ return (c.montantDevisHT||0)+avenantsChantier(c.id).reduce((t,v)=>t+v.montantHT,0); }',
-              'function totalDevis(c){ return Number(c&&c.montantMarcheHT)||0; }'
-          )
-          replace_required(
-              'S.chantiers.push({id:nid,nom,numero,montantDevisHT:devis,statut:"En cours",notes:devisLien});',
-              'S.chantiers.push({id:nid,nom,numero,montantDevisHT:devis,montantMarcheHT:0,statut:"En cours",notes:devisLien});'
-          )
-          replace_required(
-              'f+=\'<div class="seclabel"><span>March&eacute;</span><span>\'+eur(devisTot)+\' &euro;</span></div>\';',
-              'f+=\'<div class="seclabel"><span>March&eacute;</span><span class="editable" title="Modifier le montant officiel du marché HT" onclick="editMontantMarche(\\\'\'+c.id+\'\\\')" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">\'+eur(devisTot)+\' &euro;</span></div>\';'
-          )
-          replace_required(
-              'html+=\'<div class="seclabel"><span>Marché</span><span>\'+eur(devisTot)+\' €</span></div>\';',
-              'html+=\'<div class="seclabel"><span>Marché</span><span class="editable" title="Modifier le montant officiel du marché HT" onclick="editMontantMarche(\\\'\'+c.id+\'\\\')" style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted;text-underline-offset:3px">\'+eur(devisTot)+\' €</span></div>\';'
-          )
-
-          anchor = 'function demanderMontant(actuel){'
-          if 'async function editMontantMarche(cid)' not in s:
-              if anchor not in s:
-                  raise SystemExit('Point insertion editMontantMarche introuvable')
-              fn = '''async function editMontantMarche(cid){
-  const c=chantierById(cid); if(!c) return;
-  const v=prompt("Montant officiel du marché HT (en euros) :", Number(c.montantMarcheHT)||0);
-  if(v===null) return;
-  const propre=String(v).trim().replace(/\\s/g,"").replace(",",".");
-  if(propre===""){ toast("Indique un montant HT",true); return; }
-  const montant=Number(propre);
-  if(!Number.isFinite(montant)||montant<0){ toast("Montant HT invalide",true); return; }
-  const avant=Number(c.montantMarcheHT)||0;
-  c.montantMarcheHT=montant;
-  render();
-  if(await apiPost("setChantiers",S.chantiers)) toast("Montant du marché HT enregistré ✓");
-  else { c.montantMarcheHT=avant; render(); }
-}
-
-'''
-              s = s.replace(anchor, fn + anchor, 1)
-
-          replace_required('toast("Devis 1 ajouté ✓ (marché HT mis à jour)")', 'toast("Devis 1 ajouté ✓")')
-          replace_required('toast("Devis ajouté ✓ (marché HT mis à jour)")', 'toast("Devis ajouté ✓")')
-          replace_required('if(!confirm("Supprimer ce devis ? Le marché HT du chantier sera recalculé.")) return;', 'if(!confirm("Supprimer ce devis ?")) return;')
-
-          p.write_text(s, encoding='utf-8')
-          PY
-
-      - name: Contrôler la modification
-        run: |
-          grep -n "montantMarcheHT\|editMontantMarche" index.html
-          git diff --check
-          git diff -- index.html
-
-      - name: Commit and push
-        run: |
-          git config user.email "github-actions@github.com"
-          git config user.name "GitHub Actions"
-          git add index.html
-          git diff --cached --quiet && exit 1
-          git commit -m "Yaya: dissocie le marché HT des devis"
-          git push
+      - run: echo "Le patch marché HT est désormais intégré directement sur main."
