@@ -1289,26 +1289,26 @@
 .hdr .tab[data-tab="evolution"]::before{content:"📈";font-size:12px}
 
 /* V192 — suivi du CA signé à partir de 2026 */
-.evo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
-.evo-toolbar h3{margin:0;color:#172b43;font-size:18px}
-.evo-kpis{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin-bottom:16px}
-.evo-kpi{background:#fff;border:1px solid #dbe2ea;border-radius:10px;padding:14px}
-.evo-kpi small{display:block;color:#68778a;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:7px}
-.evo-kpi b{font-size:21px;color:#172b43;font-variant-numeric:tabular-nums}
+.evo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.evo-toolbar h3{margin:0;color:#172b43;font-size:16px}
+.evo-kpis{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:6px;margin-bottom:8px}
+.evo-kpi{background:#fff;border:1px solid #dbe2ea;border-radius:8px;padding:8px 10px}
+.evo-kpi small{display:block;color:#68778a;font-size:9px;font-weight:700;text-transform:uppercase;margin-bottom:3px}
+.evo-kpi b{font-size:16px;color:#172b43;font-variant-numeric:tabular-nums}
 .evo-kpi.positive b{color:#2e7d46}.evo-kpi.negative b{color:#b3352c}
-.evo-chart{background:#fff;border:1px solid #dbe2ea;border-radius:10px;padding:14px;margin-bottom:16px}
-.evo-chart-row{display:grid;grid-template-columns:72px 1fr 100px;gap:10px;align-items:center;margin:8px 0;font-size:12px}
-.evo-bars{height:24px;position:relative;background:#f2f5f8;border-radius:5px;overflow:hidden}
+.evo-chart{background:#fff;border:1px solid #dbe2ea;border-radius:8px;padding:8px 10px;margin-bottom:8px}
+.evo-chart-row{display:grid;grid-template-columns:60px 1fr 82px;gap:7px;align-items:center;margin:3px 0;font-size:11px}
+.evo-bars{height:16px;position:relative;background:#f2f5f8;border-radius:4px;overflow:hidden}
 .evo-bar-current,.evo-bar-previous{position:absolute;left:0;border-radius:4px;min-width:0}
-.evo-bar-current{top:2px;height:10px;background:#243f8f}.evo-bar-previous{bottom:2px;height:7px;background:#f5a300;opacity:.8}
+.evo-bar-current{top:1px;height:7px;background:#243f8f}.evo-bar-previous{bottom:1px;height:5px;background:#f5a300;opacity:.8}
 .evo-table{width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden}
-.evo-table th{background:#243f8f;color:#fff;padding:10px 8px;font-size:11px;text-align:right}
+.evo-table th{background:#243f8f;color:#fff;padding:6px 7px;font-size:10px;text-align:right}
 .evo-table th:first-child,.evo-table td:first-child{text-align:left}
-.evo-table td{padding:9px 8px;border-bottom:1px solid #e8edf2;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
+.evo-table td{padding:5px 7px;border-bottom:1px solid #e8edf2;text-align:right;font-size:11px;font-variant-numeric:tabular-nums}
 .evo-up{color:#2e7d46;font-weight:800}.evo-down{color:#b3352c;font-weight:800}.evo-neutral{color:#68778a;font-weight:700}
 .signature-date{display:inline-block;min-width:150px;text-align:center;font-size:11px;color:#68778a;white-space:nowrap;padding:3px 9px;border-radius:12px;background:#f1f4f7}
 .signature-date.missing{color:#a36a00;background:#fff4d8}
-@media(max-width:800px){.evo-kpis{grid-template-columns:repeat(2,minmax(130px,1fr))}.evo-chart-row{grid-template-columns:54px 1fr 82px}.evo-table{min-width:620px}.evo-table-wrap{overflow-x:auto}}
+@media(max-width:800px){.evo-kpis{grid-template-columns:repeat(2,minmax(130px,1fr))}.evo-chart-row{grid-template-columns:48px 1fr 76px}.evo-table{min-width:560px}.evo-table-wrap{overflow-x:auto}}
 
 /* Version juste après le dernier onglet */
 .hdr .sync,
@@ -1603,7 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V192</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V193</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
