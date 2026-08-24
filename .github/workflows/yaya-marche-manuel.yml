@@ -1,6 +1,7 @@
 name: Yaya - montant marché HT manuel
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
@@ -13,7 +14,7 @@ permissions:
 
 jobs:
   patch-index:
-    if: github.event_name == 'push' || github.event.issue.title == '[YAYA] patch marché HT'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || github.event.issue.title == '[YAYA] patch marché HT'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
