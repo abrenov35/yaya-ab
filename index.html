@@ -1600,12 +1600,11 @@
     <button class="tab" data-tab="achats">Charges</button>
     <button class="tab" data-tab="documents">Documents</button>
     <button class="tab" data-tab="heures">Heures</button>
-    <button class="tab" data-tab="equipe">Équipe</button>
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
   <div id="chantierToolbarSearch"></div>
-  <span class="sync" id="yayaVersion">V185</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V186</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1974,10 +1973,10 @@ function renderDocuments(){
 function renderHeures(){
   const el=document.getElementById("pane-heures");
   if(!S.salaries.length){
-    el.innerHTML='<div class="gpanel"><h4>Bienvenue</h4><div class="note">Commence par ajouter l\'équipe (onglet Équipe) et au moins un chantier (onglet Chantiers), puis reviens ici pour saisir les heures de la semaine.</div></div>';
+    el.innerHTML='<div style="margin-bottom:12px"><button class="btn2" onclick="ouvrirEquipe()">👷 Équipe</button></div><div class="gpanel"><h4>Bienvenue</h4><div class="note">Commence par ajouter l\'équipe puis au moins un chantier, et reviens ici pour saisir les heures de la semaine.</div></div>';
     return;
   }
-  let html='<div class="weekbar"><button class="navbtn" onclick="navWeek(-1)">‹</button><b>'+fmtSemaine(monday)+'</b><button class="navbtn" onclick="navWeek(1)">›</button><span class="spacer"></span><button class="btn2" onclick="reload().then(()=>toast(\'Données actualisées\'))">⟳ Actualiser</button></div>';
+  let html='<div class="weekbar"><button class="navbtn" onclick="navWeek(-1)">‹</button><b>'+fmtSemaine(monday)+'</b><button class="navbtn" onclick="navWeek(1)">›</button><span class="spacer"></span><button class="btn2" onclick="ouvrirEquipe()">👷 Équipe</button><button class="btn2" onclick="reload().then(()=>toast(\'Données actualisées\'))">⟳ Actualiser</button></div>';
   html+='<div class="tblwrap"><table><tr><th style="text-align:left">Salarié</th>';
   for(let d=0;d<6;d++) html+='<th>'+JOURS[d]+'<br><small>'+addDays(monday,d).toLocaleDateString("fr-FR",{day:"numeric",month:"numeric"})+'</small></th>';
   html+='<th>Total</th></tr>';
@@ -2005,6 +2004,12 @@ function renderHeures(){
   }
   html+='</table></div>';
   el.innerHTML=html;
+}
+
+function ouvrirEquipe(){
+  tab="equipe";
+  location.hash=tab;
+  render();
 }
 
 function chantierToolbarHtml(cid){
