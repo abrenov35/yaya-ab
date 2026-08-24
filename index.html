@@ -1288,7 +1288,7 @@
 .hdr .tab[data-tab="equipe"]::before{content:"👷";font-size:12px}
 .hdr .tab[data-tab="evolution"]::before{content:"📈";font-size:12px}
 
-/* V184 — suivi du CA signé à partir de 2027 */
+/* V192 — suivi du CA signé à partir de 2026 */
 .evo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
 .evo-toolbar h3{margin:0;color:#172b43;font-size:18px}
 .evo-kpis{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin-bottom:16px}
@@ -1603,7 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V191</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V192</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1629,7 +1629,7 @@ const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Stock","Facture sous-t
 
 // ═════════ ÉTAT ═════════
 let S = { chantiers:[], salaries:[], heures:[], achats:[], avenants:[], documents:[], validations:[] };
-let anneeEvolution=2027;
+let anneeEvolution=2026;
 let monday = mondayOf(new Date());
 const TABS=["chantiers","achats","documents","heures","equipe","evolution"];
 let tab = TABS.includes(location.hash.slice(1)) ? location.hash.slice(1) : "chantiers";
@@ -2227,9 +2227,9 @@ function renderEvolution(){
   const el=document.getElementById("pane-evolution"); if(!el)return;
   const mois=["Janvier","Février","Mars","Avril","Mai","Juin","Juillet","Août","Septembre","Octobre","Novembre","Décembre"];
   const anneeDateSignature=c=>{const m=String(c.dateSignature||"").match(/^(\d{4})-(\d{2})/);return m?{annee:Number(m[1]),mois:Number(m[2])-1}:null;};
-  const anneesTrouvees=S.chantiers.map(anneeDateSignature).filter(Boolean).map(d=>d.annee).filter(a=>a>=2027);
-  const maxAnnee=Math.max(2027,new Date().getFullYear(),...anneesTrouvees);
-  if(anneeEvolution<2027||anneeEvolution>maxAnnee)anneeEvolution=maxAnnee;
+  const anneesTrouvees=S.chantiers.map(anneeDateSignature).filter(Boolean).map(d=>d.annee).filter(a=>a>=2026);
+  const maxAnnee=Math.max(2026,new Date().getFullYear(),...anneesTrouvees);
+  if(anneeEvolution<2026||anneeEvolution>maxAnnee)anneeEvolution=maxAnnee;
   const valeurs=annee=>{const a=Array(12).fill(0),nb=Array(12).fill(0);S.chantiers.forEach(c=>{const d=anneeDateSignature(c);if(!d||d.annee!==annee)return;a[d.mois]+=totalDevis(c);nb[d.mois]++;});return{montants:a,nombres:nb};};
   const actuel=valeurs(anneeEvolution),precedent=valeurs(anneeEvolution-1);
   const cumul=arr=>{let t=0;return arr.map(v=>(t+=v));};
@@ -2238,18 +2238,18 @@ function renderEvolution(){
   const moisAvecCA=actuel.montants.filter(v=>v>0).length,moyenne=moisAvecCA?total/moisAvecCA:0;
   const evolution=totalPrec?Math.round((total-totalPrec)/totalPrec*100):null;
   const classeEvo=evolution==null?'evo-neutral':evolution>=0?'evo-up':'evo-down';
-  const options=Array.from({length:maxAnnee-2027+1},(_,i)=>2027+i).map(a=>'<option value="'+a+'"'+(a===anneeEvolution?' selected':'')+'>'+a+'</option>').join('');
+  const options=Array.from({length:maxAnnee-2026+1},(_,i)=>2026+i).map(a=>'<option value="'+a+'"'+(a===anneeEvolution?' selected':'')+'>'+a+'</option>').join('');
   const maxMensuel=Math.max(1,...actuel.montants,...precedent.montants);
-  let html='<div class="evo-toolbar"><div><h3>Évolution du CA signé HT</h3><div class="note">Chantiers signés à partir du 1er janvier 2027</div></div><select class="inp" style="width:110px" onchange="anneeEvolution=Number(this.value);renderEvolution()">'+options+'</select></div>';
+  let html='<div class="evo-toolbar"><div><h3>Évolution du CA signé HT</h3><div class="note">Chantiers signés à partir du 1er janvier 2026</div></div><select class="inp" style="width:110px" onchange="anneeEvolution=Number(this.value);renderEvolution()">'+options+'</select></div>';
   html+='<div class="evo-kpis">'
     +'<div class="evo-kpi"><small>CA signé '+anneeEvolution+'</small><b>'+eur(total)+' €</b></div>'
     +'<div class="evo-kpi"><small>Chantiers signés</small><b>'+nbChantiers+'</b></div>'
     +'<div class="evo-kpi"><small>Moyenne mensuelle</small><b>'+eur(moyenne)+' €</b></div>'
     +'<div class="evo-kpi '+(evolution==null?'':evolution>=0?'positive':'negative')+'"><small>Évolution / '+(anneeEvolution-1)+'</small><b class="'+classeEvo+'">'+(evolution==null?'Base de départ':(evolution>0?'+':'')+evolution+' %')+'</b></div></div>';
-  html+='<div class="evo-chart"><div style="display:flex;gap:16px;font-size:11px;margin-bottom:10px"><span><b style="color:#243f8f">■</b> '+anneeEvolution+'</span>'+(anneeEvolution>2027?'<span><b style="color:#f5a300">■</b> '+(anneeEvolution-1)+'</span>':'')+'</div>';
-  mois.forEach((m,i)=>{html+='<div class="evo-chart-row"><b>'+m.slice(0,4)+'.</b><div class="evo-bars"><div class="evo-bar-current" style="width:'+(actuel.montants[i]/maxMensuel*100)+'%"></div>'+(anneeEvolution>2027?'<div class="evo-bar-previous" style="width:'+(precedent.montants[i]/maxMensuel*100)+'%"></div>':'')+'</div><span style="text-align:right">'+eur(actuel.montants[i])+' €</span></div>';});
+  html+='<div class="evo-chart"><div style="display:flex;gap:16px;font-size:11px;margin-bottom:10px"><span><b style="color:#243f8f">■</b> '+anneeEvolution+'</span>'+(anneeEvolution>2026?'<span><b style="color:#f5a300">■</b> '+(anneeEvolution-1)+'</span>':'')+'</div>';
+  mois.forEach((m,i)=>{html+='<div class="evo-chart-row"><b>'+m.slice(0,4)+'.</b><div class="evo-bars"><div class="evo-bar-current" style="width:'+(actuel.montants[i]/maxMensuel*100)+'%"></div>'+(anneeEvolution>2026?'<div class="evo-bar-previous" style="width:'+(precedent.montants[i]/maxMensuel*100)+'%"></div>':'')+'</div><span style="text-align:right">'+eur(actuel.montants[i])+' €</span></div>';});
   html+='</div><div class="evo-table-wrap"><table class="evo-table"><thead><tr><th>Mois</th><th>CA HT du mois</th><th>Cumul '+anneeEvolution+'</th><th>Cumul '+(anneeEvolution-1)+'</th><th>Évolution</th></tr></thead><tbody>';
-  mois.forEach((m,i)=>{const ep=cumPrecedent[i]?Math.round((cumActuel[i]-cumPrecedent[i])/cumPrecedent[i]*100):null,cl=ep==null?'evo-neutral':ep>=0?'evo-up':'evo-down';html+='<tr><td>'+m+'</td><td>'+eur(actuel.montants[i])+' €</td><td><b>'+eur(cumActuel[i])+' €</b></td><td>'+(anneeEvolution===2027?'—':eur(cumPrecedent[i])+' €')+'</td><td class="'+cl+'">'+(anneeEvolution===2027||ep==null?'—':(ep>0?'+':'')+ep+' %')+'</td></tr>';});
+  mois.forEach((m,i)=>{const ep=cumPrecedent[i]?Math.round((cumActuel[i]-cumPrecedent[i])/cumPrecedent[i]*100):null,cl=ep==null?'evo-neutral':ep>=0?'evo-up':'evo-down';html+='<tr><td>'+m+'</td><td>'+eur(actuel.montants[i])+' €</td><td><b>'+eur(cumActuel[i])+' €</b></td><td>'+(anneeEvolution===2026?'—':eur(cumPrecedent[i])+' €')+'</td><td class="'+cl+'">'+(anneeEvolution===2026||ep==null?'—':(ep>0?'+':'')+ep+' %')+'</td></tr>';});
   html+='</tbody></table></div>';
   if(!nbChantiers)html+='<div class="note" style="margin-top:12px">Aucun chantier signé en '+anneeEvolution+'. Le tableau se remplira automatiquement à partir des dates de signature saisies dans AB Planning.</div>';
   el.innerHTML=html;
