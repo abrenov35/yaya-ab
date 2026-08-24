@@ -1306,7 +1306,7 @@
 .evo-table th:first-child,.evo-table td:first-child{text-align:left}
 .evo-table td{padding:9px 8px;border-bottom:1px solid #e8edf2;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
 .evo-up{color:#2e7d46;font-weight:800}.evo-down{color:#b3352c;font-weight:800}.evo-neutral{color:#68778a;font-weight:700}
-.signature-date{font-size:11px;color:#68778a;white-space:nowrap;padding:3px 9px;border-radius:12px;background:#f1f4f7}
+.signature-date{display:inline-block;min-width:150px;text-align:center;font-size:11px;color:#68778a;white-space:nowrap;padding:3px 9px;border-radius:12px;background:#f1f4f7}
 .signature-date.missing{color:#a36a00;background:#fff4d8}
 @media(max-width:800px){.evo-kpis{grid-template-columns:repeat(2,minmax(130px,1fr))}.evo-chart-row{grid-template-columns:54px 1fr 82px}.evo-table{min-width:620px}.evo-table-wrap{overflow-x:auto}}
 
@@ -1603,7 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V187</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V188</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1644,7 +1644,7 @@ function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; 
 function fmtSemaine(m){ const f=addDays(m,5); const o={day:"numeric",month:"short"}; return "Semaine du "+m.toLocaleDateString("fr-FR",o)+" au "+f.toLocaleDateString("fr-FR",o); }
 const eur = n => (Number(n)||0).toLocaleString("fr-FR",{maximumFractionDigits:0});
 const esc = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-function signatureChantierHtml(c){const m=String(c&&c.dateSignature||"").match(/^(\d{4})-(\d{2})/);if(m){const d=new Date(Number(m[1]),Number(m[2])-1,1),lib=d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});return '<span class="signature-date">Signé : '+esc(lib.charAt(0).toUpperCase()+lib.slice(1))+'</span>';}if(c&&(c.source==="AB Planning"||c.sourcePlanningId))return '<span class="signature-date missing">Signature à compléter</span>';return '';}
+function signatureChantierHtml(c){const m=String(c&&c.dateSignature||"").match(/^(\d{4})-(\d{2})/);if(m){const d=new Date(Number(m[1]),Number(m[2])-1,1),lib=d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});return '<span class="signature-date">Signé : '+esc(lib.charAt(0).toUpperCase()+lib.slice(1))+'</span>';}return '<span class="signature-date missing">Signature à compléter</span>';}
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Stock":"b-doc","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};
 const badgeDoc=t=>BADGE_DOC[t]||"b-doc";
@@ -2105,9 +2105,9 @@ function renderChantiers(){
     const marge=devisTot-totAch-mo;
     const pct=devisTot?Math.round(marge/devisTot*100):0;
     const exp=expChantiers.has(String(c.id));
-    html+='<div class="card"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span>'+signatureChantierHtml(c)
+    html+='<div class="card"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span>'
       +(c.statut==="Terminé"?'<span class="num" style="font-size:11px">✓ Terminé</span>':'')
-      +'<span class="spacer"></span>';
+      +'<span class="spacer"></span>'+signatureChantierHtml(c);
     if(!exp){
       const okM=marge>=0;
       html+='<span style="font-size:12.5px;white-space:nowrap;font-variant-numeric:tabular-nums;display:inline-block;width:150px;text-align:right">Marché <b>'+eur(devisTot)+' €</b></span>'
@@ -2151,7 +2151,7 @@ function renderChantiers(){
     html+='<div style="margin-top:18px"><button class="btn2" onclick="toggleArchives()">'+(showArchives?'Masquer':'Voir')+' les chantiers archivés ('+archives.length+')</button></div>';
     if(showArchives){
       for(const c of archives){
-        html+='<div class="card" style="opacity:.75;margin-top:8px"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span><span class="spacer"></span>'
+        html+='<div class="card" style="opacity:.75;margin-top:8px"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span><span class="spacer"></span>'+signatureChantierHtml(c)
           +'<button class="btn2" style="padding:4px 11px;font-size:12px" onclick="restaurerChantier(\''+c.id+'\')">↩ Restaurer</button>'
           +'<button class="btn2" style="padding:4px 14px;font-size:12px;color:#e53e3e;border-color:rgba(229,62,62,.4)" onclick="delChantier(\''+c.id+'\')">Supprimer</button></div></div>';
       }
