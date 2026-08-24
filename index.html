@@ -32,8 +32,28 @@
       val.addEventListener('click',()=>window.editMontantMarche(cid));
     });
   }
+  function installReloadButton(){
+    if(document.getElementById('yayaReloadBtn'))return;
+    const hdr=document.querySelector('.hdr');
+    const tabs=hdr&&hdr.querySelector('.tabs');
+    if(!hdr||!tabs)return;
+    const btn=document.createElement('button');
+    btn.id='yayaReloadBtn';
+    btn.type='button';
+    btn.className='tab';
+    btn.textContent='↻ Recharger';
+    btn.title='Recharger la page (F5)';
+    btn.setAttribute('aria-label','Recharger la page');
+    btn.style.padding='5px 8px';
+    btn.style.fontSize='11px';
+    btn.style.opacity='.72';
+    btn.style.flexShrink='0';
+    btn.addEventListener('click',()=>window.location.reload());
+    tabs.insertAdjacentElement('afterend',btn);
+  }
   function install(){
     if(!ready())return setTimeout(install,120);
+    installReloadButton();
     S.chantiers.forEach(c=>{c.montantMarcheHT=Number(c.montantMarcheHT)||0;});
     totalDevis=function(c){return Number(c&&c.montantMarcheHT)||0;};
     window.editMontantMarche=async function(cid){
