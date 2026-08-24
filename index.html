@@ -1603,7 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V189</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V190</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1622,6 +1622,7 @@
 "use strict";
 // ═════════ CONFIG ═════════
 const API = "https://script.google.com/macros/s/AKfycbx6IwMFf2plAq7i8qf8qF6f6MMC-1-WynAqn1ZRqCZrVqHeE9a1ygSSTzp5uOf0L3bn/exec";
+const PLANNING_API = "https://script.google.com/macros/s/AKfycbxOE2bAsnGKn1TvOlxBK1qJpe2nblhC4l8YWmAxTUe3VM383YaNrPmH3i1U2g-Sp7LJxA/exec";
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam"];
 const NON_PRODUCTIFS = ["Dépôt","Déplacement","Approvisionnement","Réunion","SAV","Formation","Autre"];
 const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Stock","Facture sous-traitant","Avoir"];
@@ -1777,6 +1778,34 @@ async function apiPost(action, data){
     return false;
   }
 }
+function getChantiersPlanning(){
+  return new Promise((resolve,reject)=>{
+    const callback="yayaPlanning_"+Date.now()+"_"+Math.random().toString(36).slice(2);
+    const script=document.createElement("script");
+    const timer=setTimeout(()=>finir(new Error("Planning indisponible")),15000);
+    const finir=(erreur,data)=>{
+      clearTimeout(timer);
+      if(script.parentNode)script.remove();
+      try{delete window[callback]}catch(_){window[callback]=undefined}
+      erreur?reject(erreur):resolve(Array.isArray(data)?data:[]);
+    };
+    window[callback]=data=>finir(null,data);
+    script.onerror=()=>finir(new Error("Planning indisponible"));
+    script.src=PLANNING_API+"?action=getChantiers&callback="+encodeURIComponent(callback)+"&_ts="+Date.now();
+    document.head.appendChild(script);
+  });
+}
+async function synchroniserDatesPlanning(){
+  try{
+    const planning=await getChantiersPlanning();
+    const parId=new Map(planning.map(c=>[String(c.id||""),c]));
+    S.chantiers.forEach(c=>{
+      const planningId=String(c.sourcePlanningId||"")||String(c.id||"").replace(/^planning-/,"");
+      const source=planningId&&parId.get(planningId);
+      if(source&&source.dateSignature)c.dateSignature=String(source.dateSignature).slice(0,7);
+    });
+  }catch(e){console.warn("Dates de signature Planning non récupérées :",e);}
+}
 async function reload(){
   try{
     syncMsg("chargement…");
@@ -1792,6 +1821,7 @@ async function reload(){
     S.documents=(S.documents||[]);
     S.avenants=(S.avenants||[]); S.avenants.forEach(v=>{ v.montantHT=Number(v.montantHT)||0; v.date=fixDate(v.date); });
     S.validations.forEach(v=>{ v.semaine=fixDate(v.semaine); });
+    await synchroniserDatesPlanning();
     syncMsg("✓ connecté");
     render();
   }catch(e){
