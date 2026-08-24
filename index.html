@@ -1306,6 +1306,8 @@
 .evo-table th:first-child,.evo-table td:first-child{text-align:left}
 .evo-table td{padding:9px 8px;border-bottom:1px solid #e8edf2;text-align:right;font-size:12px;font-variant-numeric:tabular-nums}
 .evo-up{color:#2e7d46;font-weight:800}.evo-down{color:#b3352c;font-weight:800}.evo-neutral{color:#68778a;font-weight:700}
+.signature-date{font-size:11px;color:#68778a;white-space:nowrap;padding:3px 9px;border-radius:12px;background:#f1f4f7}
+.signature-date.missing{color:#a36a00;background:#fff4d8}
 @media(max-width:800px){.evo-kpis{grid-template-columns:repeat(2,minmax(130px,1fr))}.evo-chart-row{grid-template-columns:54px 1fr 82px}.evo-table{min-width:620px}.evo-table-wrap{overflow-x:auto}}
 
 /* Version juste après le dernier onglet */
@@ -1603,7 +1605,7 @@
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
   <div id="chantierToolbarSearch"></div>
-  <span class="sync" id="yayaVersion">V184</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V185</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1644,6 +1646,7 @@ function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; 
 function fmtSemaine(m){ const f=addDays(m,5); const o={day:"numeric",month:"short"}; return "Semaine du "+m.toLocaleDateString("fr-FR",o)+" au "+f.toLocaleDateString("fr-FR",o); }
 const eur = n => (Number(n)||0).toLocaleString("fr-FR",{maximumFractionDigits:0});
 const esc = s => String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function signatureChantierHtml(c){const m=String(c&&c.dateSignature||"").match(/^(\d{4})-(\d{2})/);if(m){const d=new Date(Number(m[1]),Number(m[2])-1,1),lib=d.toLocaleDateString("fr-FR",{month:"long",year:"numeric"});return '<span class="signature-date">Signé : '+esc(lib.charAt(0).toUpperCase()+lib.slice(1))+'</span>';}if(c&&(c.source==="AB Planning"||c.sourcePlanningId))return '<span class="signature-date missing">Signature à compléter</span>';return '';}
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Stock":"b-doc","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};
 const badgeDoc=t=>BADGE_DOC[t]||"b-doc";
@@ -2024,7 +2027,7 @@ function renderChantiers(){
       const marge=devisTot-totAch-mo,pct=devisTot?Math.round(marge/devisTot*100):0;
       const lienIco=u=>String(u||"").startsWith("http")?' <button onclick="voirPiece(\''+esc(u)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer;vertical-align:middle;margin-right:4px">VOIR</button>':'';
       let f='';
-      f+='<div class="card"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span><span class="spacer"></span>'
+      f+='<div class="card"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span>'+signatureChantierHtml(c)+'<span class="spacer"></span>'
         +'<select class="msel" style="flex:none;font-size:12px;padding:4px 7px" onchange="setStatut(\''+c.id+'\',this.value)">'+['En cours','Termin&eacute;'].map(s=>'<option'+(c.statut===s?' selected':'')+'>'+s+'</option>').join('')+'</select>'
         +''
         +'<button class="btn2" style="padding:4px 14px;font-size:12px;color:#e53e3e;border-color:rgba(229,62,62,.4)" onclick="delChantier(\''+c.id+'\')">Supprimer</button>'
@@ -2098,7 +2101,7 @@ function renderChantiers(){
     const marge=devisTot-totAch-mo;
     const pct=devisTot?Math.round(marge/devisTot*100):0;
     const exp=expChantiers.has(String(c.id));
-    html+='<div class="card"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span>'
+    html+='<div class="card"><div class="top"><b>'+esc(c.nom)+'</b><span class="num">'+esc(c.numero)+'</span>'+signatureChantierHtml(c)
       +(c.statut==="Terminé"?'<span class="num" style="font-size:11px">✓ Terminé</span>':'')
       +'<span class="spacer"></span>';
     if(!exp){
