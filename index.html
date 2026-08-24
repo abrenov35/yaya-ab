@@ -1603,7 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V193</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V194</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1626,6 +1626,7 @@ const PLANNING_API = "https://script.google.com/macros/s/AKfycbxOE2bAsnGKn1TvOlx
 const JOURS = ["Lun","Mar","Mer","Jeu","Ven","Sam"];
 const NON_PRODUCTIFS = ["Dépôt","Déplacement","Approvisionnement","Réunion","SAV","Formation","Autre"];
 const TYPES_DOC = ["BL","Facture","Devis","Achat direct","Stock","Facture sous-traitant","Avoir"];
+const CA_MANUEL_2026_ID = "__CA_SIGNE_2026__";
 
 // ═════════ ÉTAT ═════════
 let S = { chantiers:[], salaries:[], heures:[], achats:[], avenants:[], documents:[], validations:[] };
@@ -1977,6 +1978,7 @@ function historiquePiecesYaya(){
     pieces.push({id:a.id,chantierId:a.chantierId,type:a.typeDoc||'Charge',titre:a.designation||'Pièce de charge',sujet:a.fournisseur||'Charge',date:a.date||'',lien,origine:'charge',ordre:i});
   });
   (S.documents||[]).forEach((d,i)=>{
+    if(String(d.id)===CA_MANUEL_2026_ID)return;
     const lien=String(d.lien||'').trim();
     const cle=cleLien(lien);if(cle&&vus.has(cle))return;if(cle)vus.add(cle);
     pieces.push({...d,origine:'document',ordre:(S.documents.length-i)});
@@ -2230,7 +2232,7 @@ function renderEvolution(){
   const anneesTrouvees=S.chantiers.map(anneeDateSignature).filter(Boolean).map(d=>d.annee).filter(a=>a>=2026);
   const maxAnnee=Math.max(2026,new Date().getFullYear(),...anneesTrouvees);
   if(anneeEvolution<2026||anneeEvolution>maxAnnee)anneeEvolution=maxAnnee;
-  const valeurs=annee=>{const a=Array(12).fill(0),nb=Array(12).fill(0);S.chantiers.forEach(c=>{const d=anneeDateSignature(c);if(!d||d.annee!==annee)return;a[d.mois]+=totalDevis(c);nb[d.mois]++;});return{montants:a,nombres:nb};};
+  const valeurs=annee=>{const a=Array(12).fill(0),nb=Array(12).fill(0);S.chantiers.forEach(c=>{const d=anneeDateSignature(c);if(!d||d.annee!==annee)return;a[d.mois]+=totalDevis(c);nb[d.mois]++;});const manuels=annee===2026?montantsCaManuel2026():Array(12).fill(null);manuels.forEach((v,i)=>{if(v!==null)a[i]=v;});return{montants:a,nombres:nb,manuels};};
   const actuel=valeurs(anneeEvolution),precedent=valeurs(anneeEvolution-1);
   const cumul=arr=>{let t=0;return arr.map(v=>(t+=v));};
   const cumActuel=cumul(actuel.montants),cumPrecedent=cumul(precedent.montants);
@@ -2240,7 +2242,7 @@ function renderEvolution(){
   const classeEvo=evolution==null?'evo-neutral':evolution>=0?'evo-up':'evo-down';
   const options=Array.from({length:maxAnnee-2026+1},(_,i)=>2026+i).map(a=>'<option value="'+a+'"'+(a===anneeEvolution?' selected':'')+'>'+a+'</option>').join('');
   const maxMensuel=Math.max(1,...actuel.montants,...precedent.montants);
-  let html='<div class="evo-toolbar"><div><h3>Évolution du CA signé HT</h3><div class="note">Chantiers signés à partir du 1er janvier 2026</div></div><select class="inp" style="width:110px" onchange="anneeEvolution=Number(this.value);renderEvolution()">'+options+'</select></div>';
+  let html='<div class="evo-toolbar"><div><h3>Évolution du CA signé HT</h3><div class="note">Chantiers signés à partir du 1er janvier 2026</div></div><div style="display:flex;gap:7px;align-items:center"><button class="btn2" onclick="openCaManuel2026()">✎ Historique 2026</button><select class="inp" style="width:110px" onchange="anneeEvolution=Number(this.value);renderEvolution()">'+options+'</select></div></div>';
   html+='<div class="evo-kpis">'
     +'<div class="evo-kpi"><small>CA signé '+anneeEvolution+'</small><b>'+eur(total)+' €</b></div>'
     +'<div class="evo-kpi"><small>Chantiers signés</small><b>'+nbChantiers+'</b></div>'
@@ -2249,10 +2251,45 @@ function renderEvolution(){
   html+='<div class="evo-chart"><div style="display:flex;gap:16px;font-size:11px;margin-bottom:10px"><span><b style="color:#243f8f">■</b> '+anneeEvolution+'</span>'+(anneeEvolution>2026?'<span><b style="color:#f5a300">■</b> '+(anneeEvolution-1)+'</span>':'')+'</div>';
   mois.forEach((m,i)=>{html+='<div class="evo-chart-row"><b>'+m.slice(0,4)+'.</b><div class="evo-bars"><div class="evo-bar-current" style="width:'+(actuel.montants[i]/maxMensuel*100)+'%"></div>'+(anneeEvolution>2026?'<div class="evo-bar-previous" style="width:'+(precedent.montants[i]/maxMensuel*100)+'%"></div>':'')+'</div><span style="text-align:right">'+eur(actuel.montants[i])+' €</span></div>';});
   html+='</div><div class="evo-table-wrap"><table class="evo-table"><thead><tr><th>Mois</th><th>CA HT du mois</th><th>Cumul '+anneeEvolution+'</th><th>Cumul '+(anneeEvolution-1)+'</th><th>Évolution</th></tr></thead><tbody>';
-  mois.forEach((m,i)=>{const ep=cumPrecedent[i]?Math.round((cumActuel[i]-cumPrecedent[i])/cumPrecedent[i]*100):null,cl=ep==null?'evo-neutral':ep>=0?'evo-up':'evo-down';html+='<tr><td>'+m+'</td><td>'+eur(actuel.montants[i])+' €</td><td><b>'+eur(cumActuel[i])+' €</b></td><td>'+(anneeEvolution===2026?'—':eur(cumPrecedent[i])+' €')+'</td><td class="'+cl+'">'+(anneeEvolution===2026||ep==null?'—':(ep>0?'+':'')+ep+' %')+'</td></tr>';});
+  mois.forEach((m,i)=>{const ep=cumPrecedent[i]?Math.round((cumActuel[i]-cumPrecedent[i])/cumPrecedent[i]*100):null,cl=ep==null?'evo-neutral':ep>=0?'evo-up':'evo-down',manuel=actuel.manuels[i]!==null;html+='<tr><td>'+m+(manuel?' <small style="color:#a36a00;font-weight:700">MANUEL</small>':'')+'</td><td>'+eur(actuel.montants[i])+' €</td><td><b>'+eur(cumActuel[i])+' €</b></td><td>'+(anneeEvolution===2026?'—':eur(cumPrecedent[i])+' €')+'</td><td class="'+cl+'">'+(anneeEvolution===2026||ep==null?'—':(ep>0?'+':'')+ep+' %')+'</td></tr>';});
   html+='</tbody></table></div>';
   if(!nbChantiers)html+='<div class="note" style="margin-top:12px">Aucun chantier signé en '+anneeEvolution+'. Le tableau se remplira automatiquement à partir des dates de signature saisies dans AB Planning.</div>';
   el.innerHTML=html;
+}
+
+function montantsCaManuel2026(){
+  const doc=(S.documents||[]).find(d=>String(d.id)===CA_MANUEL_2026_ID);
+  if(!doc)return Array(12).fill(null);
+  try{
+    const valeurs=JSON.parse(String(doc.sujet||"[]"));
+    return Array.from({length:12},(_,i)=>valeurs[i]===null||valeurs[i]===""||valeurs[i]===undefined?null:Number(valeurs[i])||0);
+  }catch(_){return Array(12).fill(null);}
+}
+function openCaManuel2026(){
+  const mois=["Janvier","Février","Mars","Avril","Mai","Juin"],valeurs=montantsCaManuel2026();
+  const root=document.getElementById("modalRoot");
+  root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:430px"><h5>Historique CA signé 2026<button onclick="closeModal()" style="margin-left:8px;padding:6px 14px;border-radius:8px;border:1px solid #ddd;background:#fff">Fermer</button></h5>'
+    +'<div class="note" style="margin:10px 0">Ces totaux remplacent le détail des chantiers pour les mois renseignés.</div>'
+    +mois.map((m,i)=>'<div class="mrow" style="display:grid;grid-template-columns:105px 1fr;align-items:center"><label style="font-size:12px;font-weight:700">'+m+'</label><input class="mnum" id="ca2026_'+i+'" type="number" min="0" step="0.01" placeholder="Total HT €" value="'+(valeurs[i]===null?'':valeurs[i])+'"></div>').join('')
+    +'<div class="mfoot"><button class="btnp go" onclick="saveCaManuel2026()">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div></div></div>';
+}
+async function saveCaManuel2026(){
+  const valeurs=[];
+  for(let i=0;i<6;i++){
+    const brut=document.getElementById('ca2026_'+i).value.trim();
+    if(brut===''){valeurs.push(null);continue;}
+    const montant=Number(brut);
+    if(!Number.isFinite(montant)||montant<0){toast('Montant incorrect',true);return;}
+    valeurs.push(montant);
+  }
+  while(valeurs.length<12)valeurs.push(null);
+  const avant=(S.documents||[]).map(d=>({...d}));
+  let doc=S.documents.find(d=>String(d.id)===CA_MANUEL_2026_ID);
+  if(!doc){doc={id:CA_MANUEL_2026_ID,chantierId:"",type:"Divers",titre:"Historique CA signé 2026",sujet:"",date:"2026-01-01",lien:""};S.documents.push(doc);}
+  doc.sujet=JSON.stringify(valeurs);
+  closeModal();renderEvolution();
+  if(await apiPost('setDocuments',S.documents))toast('Historique 2026 enregistré ✓');
+  else{S.documents=avant;renderEvolution();}
 }
 
 function renderEquipe(){
