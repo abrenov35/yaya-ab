@@ -1603,7 +1603,7 @@
     <button class="tab" data-tab="evolution">Évolution CA</button>
     <a class="fiche-inter-tab" href="https://abrenov35.github.io/docs-chantier-ab/" target="_blank" rel="noopener noreferrer" style="text-decoration:none;display:inline-flex;align-items:center">Fiche inter</a>
   </div>
-  <span class="sync" id="yayaVersion">V190</span><span class="sync" id="syncState" style="display:none"></span>
+  <span class="sync" id="yayaVersion">V191</span><span class="sync" id="syncState" style="display:none"></span>
 </div>
 
 <div class="body">
@@ -1799,9 +1799,18 @@ async function synchroniserDatesPlanning(){
   try{
     const planning=await getChantiersPlanning();
     const parId=new Map(planning.map(c=>[String(c.id||""),c]));
+    const nomCle=nom=>String(nom||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim().replace(/\s+/g," ").toUpperCase();
+    const planningParNom=new Map();
+    const yayaParNom=new Map();
+    planning.forEach(c=>{const k=nomCle(c.nom);if(k){const a=planningParNom.get(k)||[];a.push(c);planningParNom.set(k,a);}});
+    S.chantiers.forEach(c=>{const k=nomCle(c.nom);if(k){const a=yayaParNom.get(k)||[];a.push(c);yayaParNom.set(k,a);}});
     S.chantiers.forEach(c=>{
       const planningId=String(c.sourcePlanningId||"")||String(c.id||"").replace(/^planning-/,"");
-      const source=planningId&&parId.get(planningId);
+      let source=planningId&&parId.get(planningId);
+      if(!source){
+        const k=nomCle(c.nom),sources=planningParNom.get(k)||[],cibles=yayaParNom.get(k)||[];
+        if(sources.length===1&&cibles.length===1)source=sources[0];
+      }
       if(source&&source.dateSignature)c.dateSignature=String(source.dateSignature).slice(0,7);
     });
   }catch(e){console.warn("Dates de signature Planning non récupérées :",e);}
