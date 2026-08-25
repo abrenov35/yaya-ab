@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yaya — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
 (async()=>{
-  const source=await fetch('index-legacy.html?v=marcheht-2',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
+  const source=await fetch('index-legacy.html?v=marcheht-3',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
   const patch=`<script>
 (function(){
   function ready(){
@@ -65,10 +65,70 @@
     if(!pane)return;
     pane.querySelectorAll('.controle-title,.controle-vide,.controle-card,.charge-attente-resume,.charge-auto-resume,.charge-auto').forEach(el=>el.remove());
   }
+  function installChantierCreation(){
+    openChantierModal=function(){
+      const root=document.getElementById('modalRoot');
+      if(!root)return;
+      root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()">'
+        +'<div class="modal" style="max-width:520px">'
+        +'<h5>Créer un chantier<button onclick="closeModal()" aria-label="Fermer">×</button></h5>'
+        +'<div style="display:grid;gap:12px;margin-top:16px">'
+        +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Nom du chantier<input class="inp" id="chNom" autocomplete="off" placeholder="Nom client / chantier"></label>'
+        +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Signé le <span style="font-size:11px;font-weight:400;opacity:.65">mois et année uniquement</span><input class="inp" id="chSignature" type="month"></label>'
+        +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Démarrage estimé <span style="font-size:11px;font-weight:400;opacity:.65">date complète — facultatif</span><input class="inp" id="chDemarrage" type="date"></label>'
+        +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Chiffre d’affaires HT <span style="font-size:11px;font-weight:400;opacity:.65">montant officiel du marché</span><input class="inp" id="chMarcheHT" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00 €"></label>'
+        +'</div>'
+        +'<div class="mfoot" style="justify-content:flex-end">'
+        +'<button class="btn2" type="button" onclick="closeModal()">Annuler</button>'
+        +'<button class="btnp go" type="button" id="chCreateBtn" onclick="addChantier()">Créer le chantier</button>'
+        +'</div></div></div>';
+      setTimeout(()=>{const el=document.getElementById('chNom');if(el)el.focus();},0);
+    };
+    addChantier=async function(){
+      const nomEl=document.getElementById('chNom');
+      const sigEl=document.getElementById('chSignature');
+      const demEl=document.getElementById('chDemarrage');
+      const mtEl=document.getElementById('chMarcheHT');
+      if(!nomEl||!sigEl||!demEl||!mtEl)return;
+      const nom=nomEl.value.trim();
+      const dateSignature=sigEl.value;
+      const dateDemarrageEstime=demEl.value;
+      const brut=String(mtEl.value||'').trim().replace(/\\s/g,'').replace(',','.');
+      if(!nom){toast('Indique le nom du chantier',true);nomEl.focus();return;}
+      if(!/^\\d{4}-\\d{2}$/.test(dateSignature)){toast('Indique le mois et l’année de signature',true);sigEl.focus();return;}
+      if(brut===''){toast('Indique le chiffre d’affaires HT',true);mtEl.focus();return;}
+      const montantMarcheHT=Number(brut);
+      if(!Number.isFinite(montantMarcheHT)||montantMarcheHT<0){toast('Chiffre d’affaires HT invalide',true);mtEl.focus();return;}
+      const btn=document.getElementById('chCreateBtn');if(btn)btn.disabled=true;
+      const chantier={
+        id:uid(),
+        nom,
+        numero:'',
+        montantDevisHT:0,
+        montantMarcheHT,
+        dateSignature,
+        dateDemarrageEstime:dateDemarrageEstime||'',
+        statut:'En cours',
+        notes:''
+      };
+      S.chantiers.push(chantier);
+      expChantiers.clear();
+      tab='chantiers';
+      closeModal();
+      render();decorateMarche();cleanAutomaticUploadUI();
+      const ok=await apiPost('setChantiers',S.chantiers);
+      if(ok)toast('Chantier créé ✓');
+      else{
+        S.chantiers=S.chantiers.filter(c=>String(c.id)!==String(chantier.id));
+        render();decorateMarche();cleanAutomaticUploadUI();
+      }
+    };
+  }
   function install(){
     if(!ready())return setTimeout(install,120);
     installReloadButton();
     disableAutomaticUploads();
+    installChantierCreation();
     S.chantiers.forEach(c=>{c.montantMarcheHT=Number(c.montantMarcheHT)||0;});
     totalDevis=function(c){return Number(c&&c.montantMarcheHT)||0;};
     window.editMontantMarche=async function(cid){
