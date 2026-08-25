@@ -8,11 +8,8 @@
     const canvas=root.querySelector('.piece-pdf-page canvas');
     if(!modal||!canvas)return;
 
-    const pageWidth=Math.ceil(canvas.getBoundingClientRect().width||0);
-    if(pageWidth<120)return;
-
-    const viewportMax=Math.max(280,window.innerWidth-12);
-    const wanted=Math.min(viewportMax,Math.max(pageWidth+58,610));
+    const viewportMax=Math.max(300,window.innerWidth-8);
+    const wanted=Math.min(viewportMax,760);
 
     let changed=false;
     const currentWidth=Math.round(modal.getBoundingClientRect().width||0);
@@ -20,15 +17,29 @@
       modal.style.setProperty('width',wanted+'px','important');
       changed=true;
     }
-    modal.style.setProperty('max-width','calc(100vw - 12px)','important');
-    modal.style.setProperty('height','min(94dvh,820px)','important');
-    modal.style.setProperty('max-height','calc(100dvh - 12px)','important');
 
-    if(changed && modal.dataset.yayaPreviewResize!=='1'){
-      modal.dataset.yayaPreviewResize='1';
+    modal.style.setProperty('max-width','calc(100vw - 8px)','important');
+    modal.style.setProperty('height','calc(98dvh - 4px)','important');
+    modal.style.setProperty('max-height','calc(100dvh - 4px)','important');
+    modal.style.setProperty('padding','5px','important');
+
+    const head=modal.querySelector('.piece-preview-head');
+    if(head){
+      head.style.setProperty('min-height','28px','important');
+      head.style.setProperty('margin','0 0 3px','important');
+      head.style.setProperty('padding-bottom','3px','important');
+    }
+
+    const stage=modal.querySelector('.piece-preview-stage');
+    if(stage){
+      stage.style.setProperty('border-radius','6px','important');
+    }
+
+    if(changed && modal.dataset.yayaPreviewResize!=='2'){
+      modal.dataset.yayaPreviewResize='2';
       setTimeout(function(){
         window.dispatchEvent(new Event('resize'));
-      },60);
+      },70);
     }
   }
 
