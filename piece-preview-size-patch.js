@@ -2,13 +2,17 @@
   'use strict';
 
   const ROOT_ID='modalRoot';
+  let pdfResizeTimer=0;
 
   function getRoot(){return document.getElementById(ROOT_ID);}
 
   function isFullscreen(modal){return modal&&modal.dataset.yayaPreviewFullscreen==='1';}
 
   function requestPdfResize(){
-    setTimeout(function(){window.dispatchEvent(new Event('resize'));},70);
+    clearTimeout(pdfResizeTimer);
+    pdfResizeTimer=setTimeout(function(){
+      window.dispatchEvent(new Event('resize'));
+    },180);
   }
 
   function fitPreviewModal(){
@@ -80,10 +84,18 @@
 
   function toggleFullscreen(modal,force){
     if(!modal)return;
+    if(modal.dataset.yayaPreviewTransition==='1')return;
+
     const next=typeof force==='boolean'?force:!isFullscreen(modal);
+    modal.dataset.yayaPreviewTransition='1';
     modal.dataset.yayaPreviewFullscreen=next?'1':'0';
+
     fitPreviewModal();
     requestPdfResize();
+
+    setTimeout(function(){
+      if(modal)modal.dataset.yayaPreviewTransition='0';
+    },420);
   }
 
   let wheelLock=false;
