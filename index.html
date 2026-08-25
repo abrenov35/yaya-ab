@@ -1,94 +1,101 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yaya — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
 (async()=>{
-  const source=await fetch('index-legacy.html?v=marcheht-5',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
-  const patch=String.raw`<script>
+  const source=await fetch('index-legacy.html?v=marcheht-4',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
+  const patch=`<script>
 (function(){
-  let planningCache=null,planningCacheAt=0,planningLoading=null;
   function ready(){
-    try{return typeof S!=='undefined'&&Array.isArray(S.chantiers)&&typeof render==='function'&&typeof apiPost==='function';}catch(e){return false;}
+    try{return typeof S!=='undefined' && Array.isArray(S.chantiers) && typeof render==='function' && typeof apiPost==='function';}catch(e){return false;}
   }
   function chantierIdFromCard(card){
     const el=card&&card.querySelector('[onclick*="editMontantDevis"]');
     const s=el&&el.getAttribute('onclick')||'';
-    const m=s.match(/editMontantDevis\(['\"]([^'\"]+)/);
+    const m=s.match(/editMontantDevis\\(['\"]([^'\"]+)/);
     return m?m[1]:null;
   }
   function decorateMarche(){
     document.querySelectorAll('.seclabel').forEach(bar=>{
-      const spans=bar.querySelectorAll('span');if(spans.length<2)return;
-      const lib=(spans[0].textContent||'').trim().toLowerCase();if(lib!=='marché'&&lib!=='marche')return;
-      const val=spans[1];if(val.dataset.marcheEditable==='1')return;
-      const card=bar.closest('.card'),cid=chantierIdFromCard(card);if(!cid)return;
-      val.dataset.marcheEditable='1';val.style.cursor='pointer';val.style.textDecoration='underline dotted';val.style.textUnderlineOffset='3px';
-      val.title='Modifier le montant officiel du marché HT';val.addEventListener('click',()=>window.editMontantMarche(cid));
+      const spans=bar.querySelectorAll('span');
+      if(spans.length<2)return;
+      const lib=(spans[0].textContent||'').trim().toLowerCase();
+      if(lib!=='marché'&&lib!=='marche')return;
+      const val=spans[1];
+      if(val.dataset.marcheEditable==='1')return;
+      const card=bar.closest('.card');
+      const cid=chantierIdFromCard(card);
+      if(!cid)return;
+      val.dataset.marcheEditable='1';
+      val.style.cursor='pointer';
+      val.style.textDecoration='underline dotted';
+      val.style.textUnderlineOffset='3px';
+      val.title='Modifier le montant officiel du marché HT';
+      val.addEventListener('click',()=>window.editMontantMarche(cid));
     });
   }
   function installReloadButton(){
     if(document.getElementById('yayaReloadBtn'))return;
-    const hdr=document.querySelector('.hdr'),tabs=hdr&&hdr.querySelector('.tabs');if(!hdr||!tabs)return;
-    const btn=document.createElement('button');btn.id='yayaReloadBtn';btn.type='button';btn.className='tab';btn.textContent='↻ Recharger';btn.title='Recharger la page (F5)';btn.setAttribute('aria-label','Recharger la page');btn.style.padding='5px 8px';btn.style.fontSize='11px';btn.style.opacity='.72';btn.style.flexShrink='0';btn.addEventListener('click',()=>window.location.reload());tabs.insertAdjacentElement('afterend',btn);
+    const hdr=document.querySelector('.hdr');
+    const tabs=hdr&&hdr.querySelector('.tabs');
+    if(!hdr||!tabs)return;
+    const btn=document.createElement('button');
+    btn.id='yayaReloadBtn';
+    btn.type='button';
+    btn.className='tab';
+    btn.textContent='↻ Recharger';
+    btn.title='Recharger la page (F5)';
+    btn.setAttribute('aria-label','Recharger la page');
+    btn.style.padding='5px 8px';
+    btn.style.fontSize='11px';
+    btn.style.opacity='.72';
+    btn.style.flexShrink='0';
+    btn.addEventListener('click',()=>window.location.reload());
+    tabs.insertAdjacentElement('afterend',btn);
   }
   function disableAutomaticUploads(){
-    window.ajouterChargeDetectee=async function(){throw new Error('Brique tampon supprimée : les pièces sont classées directement dans Documents ou Charges.');};
-    window.validerChargeAuto=async function(){return false;};window.classerChargeAuto=async function(){return false;};
-    try{chargeValidationHtml=function(){return '';};}catch(e){} try{resumeChargesAutoHtml=function(){return '';};}catch(e){}
+    window.ajouterChargeDetectee=async function(){
+      throw new Error('Brique tampon supprimée : les pièces sont classées directement dans Documents ou Charges.');
+    };
+    window.validerChargeAuto=async function(){return false;};
+    window.classerChargeAuto=async function(){return false;};
+    try{chargeValidationHtml=function(){return '';};}catch(e){}
+    try{resumeChargesAutoHtml=function(){return '';};}catch(e){}
   }
   function cleanAutomaticUploadUI(){
-    const pane=document.getElementById('pane-achats');if(!pane)return;
+    const pane=document.getElementById('pane-achats');
+    if(!pane)return;
     pane.querySelectorAll('.controle-title,.controle-vide,.controle-card,.charge-attente-resume,.charge-auto-resume,.charge-auto').forEach(el=>el.remove());
   }
   function ensureChantierCreateButton(){
-    const pane=document.getElementById('pane-chantiers');if(!pane)return;
-    let btn=document.getElementById('yayaCreateChantierBtn');if(btn){btn.style.display='inline-flex';return;}
-    const existants=[...pane.querySelectorAll('button')];btn=existants.find(b=>(b.getAttribute('onclick')||'').includes('openChantierModal'));
-    if(btn){btn.id='yayaCreateChantierBtn';btn.style.display='inline-flex';btn.style.alignItems='center';return;}
-    const wrap=document.createElement('div');wrap.id='yayaCreateChantierWrap';wrap.style.marginBottom='14px';
-    btn=document.createElement('button');btn.id='yayaCreateChantierBtn';btn.type='button';btn.className='btnp';btn.textContent='➕ Créer un chantier';btn.style.display='inline-flex';btn.style.alignItems='center';btn.addEventListener('click',()=>openChantierModal());wrap.appendChild(btn);pane.insertBefore(wrap,pane.firstChild);
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+    let btn=document.getElementById('yayaCreateChantierBtn');
+    if(btn){btn.style.display='inline-flex';return;}
+    const existants=[...pane.querySelectorAll('button')];
+    btn=existants.find(b=>(b.getAttribute('onclick')||'').includes('openChantierModal'));
+    if(btn){
+      btn.id='yayaCreateChantierBtn';
+      btn.style.display='inline-flex';
+      btn.style.alignItems='center';
+      return;
+    }
+    const wrap=document.createElement('div');
+    wrap.id='yayaCreateChantierWrap';
+    wrap.style.marginBottom='14px';
+    btn=document.createElement('button');
+    btn.id='yayaCreateChantierBtn';
+    btn.type='button';
+    btn.className='btnp';
+    btn.textContent='➕ Créer un chantier';
+    btn.style.display='inline-flex';
+    btn.style.alignItems='center';
+    btn.addEventListener('click',()=>openChantierModal());
+    wrap.appendChild(btn);
+    pane.insertBefore(wrap,pane.firstChild);
   }
-  function normaliserNomPlanning(s){
-    return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim().replace(/\s+/g,' ');
-  }
-  function trouverDoublonPlanning(liste,nom){
-    const k=normaliserNomPlanning(nom);if(!k)return null;
-    const exact=(liste||[]).find(p=>normaliserNomPlanning(p&&p.nom)===k);if(exact)return exact;
-    return (liste||[]).find(p=>{const q=normaliserNomPlanning(p&&p.nom);return q&&Math.min(q.length,k.length)>=5&&(q.includes(k)||k.includes(q));})||null;
-  }
-  async function listePlanning(force){
-    const maintenant=Date.now();
-    if(!force&&Array.isArray(planningCache)&&maintenant-planningCacheAt<60000)return planningCache;
-    if(planningLoading)return planningLoading;
-    planningLoading=(async()=>{const l=await getChantiersPlanning();planningCache=Array.isArray(l)?l:[];planningCacheAt=Date.now();return planningCache;})().finally(()=>{planningLoading=null;});
-    return planningLoading;
-  }
-  function planningJsonp(params){
-    return new Promise((resolve,reject)=>{
-      const callback='yayaPlanningWrite_'+Date.now()+'_'+Math.random().toString(36).slice(2),script=document.createElement('script');let fini=false;
-      const timer=setTimeout(()=>terminer(new Error('Planning indisponible')),15000);
-      function terminer(err,data){if(fini)return;fini=true;clearTimeout(timer);if(script.parentNode)script.parentNode.removeChild(script);try{delete window[callback];}catch(_){window[callback]=undefined;}err?reject(err):resolve(data);}
-      window[callback]=data=>terminer(null,data);script.onerror=()=>terminer(new Error('Impossible de joindre Planning'));
-      const q=new URLSearchParams(Object.assign({},params,{callback:callback,_ts:String(Date.now())}));script.src=PLANNING_API+'?'+q.toString();script.async=true;document.head.appendChild(script);
-    });
-  }
-  async function creerDansPlanning(c){
-    const date=c.dateDemarrageEstime||'';
-    const r=await planningJsonp({action:'createChantier',nom:c.nom,dateDebut:date,dateFin:date,description:'',couleur:'',dateSignature:c.dateSignature||'',typeChantier:'Rénovation'});
-    if(!r||!r.success)throw new Error(r&&r.error?r.error:'Création Planning impossible');
-    let pid=r.id||r.chantierId||(r.data&&r.data.id)||(r.chantier&&r.chantier.id)||'';
-    planningCache=null;planningCacheAt=0;
-    if(!pid){try{const l=await listePlanning(true),m=trouverDoublonPlanning(l,c.nom);if(m)pid=m.id||'';}catch(e){}}
-    c.planningPresent=true;c.sourcePlanningId=pid?String(pid):'';c.planningNom=c.nom;
-    return c.sourcePlanningId;
-  }
-  window.togglePlanningCreation=function(){
-    const b=document.getElementById('chPlanningToggle');if(!b)return;
-    const on=b.dataset.value!=='1';b.dataset.value=on?'1':'0';
-    b.textContent=on?'✓ Créer dans Planning':'Planning : Pas maintenant';
-    b.style.background=on?'#24436B':'#fff';b.style.color=on?'#fff':'var(--navy)';b.style.borderColor=on?'#24436B':'rgba(22,45,73,.3)';
-  };
   function installChantierCreation(){
     openChantierModal=function(){
-      const root=document.getElementById('modalRoot');if(!root)return;
+      const root=document.getElementById('modalRoot');
+      if(!root)return;
       root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()">'
         +'<div class="modal" style="max-width:520px">'
         +'<h5>Créer un chantier<button onclick="closeModal()" aria-label="Fermer">×</button></h5>'
@@ -97,48 +104,76 @@
         +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Signé le <span style="font-size:11px;font-weight:400;opacity:.65">mois et année uniquement</span><input class="inp" id="chSignature" type="month"></label>'
         +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Démarrage estimé <span style="font-size:11px;font-weight:400;opacity:.65">date complète — facultatif</span><input class="inp" id="chDemarrage" type="date"></label>'
         +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Chiffre d’affaires HT <span style="font-size:11px;font-weight:400;opacity:.65">montant officiel du marché</span><input class="inp" id="chMarcheHT" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00 €"></label>'
-        +'<div style="display:grid;gap:6px"><span style="font-size:12px;font-weight:700">Planning</span><button class="btn2" id="chPlanningToggle" type="button" data-value="0" onclick="togglePlanningCreation()" style="width:100%;padding:11px 12px;text-align:left;font-weight:700">Planning : Pas maintenant</button><span style="font-size:11px;opacity:.65">Tu pourras aussi envoyer ce chantier dans Planning plus tard.</span></div>'
         +'</div>'
-        +'<div class="mfoot" style="justify-content:flex-end"><button class="btn2" type="button" onclick="closeModal()">Annuler</button><button class="btnp go" type="button" id="chCreateBtn" onclick="addChantier()">Créer le chantier</button></div></div></div>';
-      listePlanning(false).catch(()=>{});setTimeout(()=>{const el=document.getElementById('chNom');if(el)el.focus();},0);
+        +'<div class="mfoot" style="justify-content:flex-end">'
+        +'<button class="btn2" type="button" onclick="closeModal()">Annuler</button>'
+        +'<button class="btnp go" type="button" id="chCreateBtn" onclick="addChantier()">Créer le chantier</button>'
+        +'</div></div></div>';
+      setTimeout(()=>{const el=document.getElementById('chNom');if(el)el.focus();},0);
     };
     addChantier=async function(){
-      const nomEl=document.getElementById('chNom'),sigEl=document.getElementById('chSignature'),demEl=document.getElementById('chDemarrage'),mtEl=document.getElementById('chMarcheHT'),planningEl=document.getElementById('chPlanningToggle');
+      const nomEl=document.getElementById('chNom');
+      const sigEl=document.getElementById('chSignature');
+      const demEl=document.getElementById('chDemarrage');
+      const mtEl=document.getElementById('chMarcheHT');
       if(!nomEl||!sigEl||!demEl||!mtEl)return;
-      const nom=nomEl.value.trim(),dateSignature=sigEl.value,dateDemarrageEstime=demEl.value,brut=String(mtEl.value||'').trim().replace(/\s/g,'').replace(',','.'),veutPlanning=!!(planningEl&&planningEl.dataset.value==='1');
+      const nom=nomEl.value.trim();
+      const dateSignature=sigEl.value;
+      const dateDemarrageEstime=demEl.value;
+      const brut=String(mtEl.value||'').trim().replace(/\\s/g,'').replace(',','.');
       if(!nom){toast('Indique le nom du chantier',true);nomEl.focus();return;}
-      if(!/^\d{4}-\d{2}$/.test(dateSignature)){toast('Indique le mois et l’année de signature',true);sigEl.focus();return;}
+      if(!/^\\d{4}-\\d{2}$/.test(dateSignature)){toast('Indique le mois et l’année de signature',true);sigEl.focus();return;}
       if(brut===''){toast('Indique le chiffre d’affaires HT',true);mtEl.focus();return;}
-      const montantMarcheHT=Number(brut);if(!Number.isFinite(montantMarcheHT)||montantMarcheHT<0){toast('Chiffre d’affaires HT invalide',true);mtEl.focus();return;}
-      const btn=document.getElementById('chCreateBtn');if(btn){btn.disabled=true;btn.textContent='Vérification…';}
-      let doublon=null;
-      try{doublon=trouverDoublonPlanning(await listePlanning(false),nom);}catch(e){console.warn('Vérification Planning impossible',e);}
-      if(doublon){
-        const ok=confirm('⚠ Probable doublon dans Planning : « '+(doublon.nom||nom)+' ».\n\nCréer la fiche dans Yaya et la rattacher à ce chantier Planning existant ?');
-        if(!ok){if(btn){btn.disabled=false;btn.textContent='Créer le chantier';}return;}
+      const montantMarcheHT=Number(brut);
+      if(!Number.isFinite(montantMarcheHT)||montantMarcheHT<0){toast('Chiffre d’affaires HT invalide',true);mtEl.focus();return;}
+      const btn=document.getElementById('chCreateBtn');if(btn)btn.disabled=true;
+      const chantier={
+        id:uid(),
+        nom,
+        numero:'',
+        montantDevisHT:0,
+        montantMarcheHT,
+        dateSignature,
+        dateDemarrageEstime:dateDemarrageEstime||'',
+        statut:'En cours',
+        notes:''
+      };
+      S.chantiers.push(chantier);
+      expChantiers.clear();
+      tab='chantiers';
+      closeModal();
+      render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
+      const ok=await apiPost('setChantiers',S.chantiers);
+      if(ok)toast('Chantier créé ✓');
+      else{
+        S.chantiers=S.chantiers.filter(c=>String(c.id)!==String(chantier.id));
+        render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
       }
-      const chantier={id:uid(),nom:nom,numero:'',montantDevisHT:0,montantMarcheHT:montantMarcheHT,dateSignature:dateSignature,dateDemarrageEstime:dateDemarrageEstime||'',statut:'En cours',notes:'',planningPresent:!!doublon,sourcePlanningId:doublon&&doublon.id?String(doublon.id):'',planningNom:doublon&&doublon.nom?String(doublon.nom):''};
-      S.chantiers.push(chantier);expChantiers.clear();tab='chantiers';closeModal();render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
-      const okYaya=await apiPost('setChantiers',S.chantiers);
-      if(!okYaya){S.chantiers=S.chantiers.filter(c=>String(c.id)!==String(chantier.id));render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();return;}
-      if(doublon){toast('Chantier créé dans Yaya et rattaché au Planning ✓');return;}
-      if(!veutPlanning){toast('Chantier créé dans Yaya ✓ — non présent dans Planning');return;}
-      try{
-        toast('Chantier Yaya créé — création dans Planning…');await creerDansPlanning(chantier);await apiPost('setChantiers',S.chantiers);toast('Chantier créé dans Yaya et Planning ✓');
-      }catch(e){chantier.planningPresent=false;chantier.sourcePlanningId='';await apiPost('setChantiers',S.chantiers);toast('Chantier créé dans Yaya, mais pas dans Planning : '+e.message,true);}
     };
   }
   function install(){
     if(!ready())return setTimeout(install,120);
-    installReloadButton();disableAutomaticUploads();installChantierCreation();
-    S.chantiers.forEach(c=>{c.montantMarcheHT=Number(c.montantMarcheHT)||0;});totalDevis=function(c){return Number(c&&c.montantMarcheHT)||0;};
+    installReloadButton();
+    disableAutomaticUploads();
+    installChantierCreation();
+    S.chantiers.forEach(c=>{c.montantMarcheHT=Number(c.montantMarcheHT)||0;});
+    totalDevis=function(c){return Number(c&&c.montantMarcheHT)||0;};
     window.editMontantMarche=async function(cid){
-      const c=chantierById(cid);if(!c)return;const v=prompt('Montant officiel du marché HT (en euros) :',Number(c.montantMarcheHT)||0);if(v===null)return;
-      const propre=String(v).trim().replace(/\s/g,'').replace(',','.');if(propre===''){toast('Indique un montant HT',true);return;}const montant=Number(propre);if(!Number.isFinite(montant)||montant<0){toast('Montant HT invalide',true);return;}
-      const avant=Number(c.montantMarcheHT)||0;c.montantMarcheHT=montant;render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
-      if(await apiPost('setChantiers',S.chantiers))toast('Montant du marché HT enregistré ✓');else{c.montantMarcheHT=avant;render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();}
+      const c=chantierById(cid);if(!c)return;
+      const v=prompt('Montant officiel du marché HT (en euros) :',Number(c.montantMarcheHT)||0);
+      if(v===null)return;
+      const propre=String(v).trim().replace(/\\s/g,'').replace(',','.');
+      if(propre===''){toast('Indique un montant HT',true);return;}
+      const montant=Number(propre);
+      if(!Number.isFinite(montant)||montant<0){toast('Montant HT invalide',true);return;}
+      const avant=Number(c.montantMarcheHT)||0;
+      c.montantMarcheHT=montant;
+      render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
+      if(await apiPost('setChantiers',S.chantiers))toast('Montant du marché HT enregistré ✓');
+      else{c.montantMarcheHT=avant;render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();}
     };
-    const obs=new MutationObserver(()=>{ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();});obs.observe(document.body,{childList:true,subtree:true});
+    const obs=new MutationObserver(()=>{ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();});
+    obs.observe(document.body,{childList:true,subtree:true});
     render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
   }
   install();
