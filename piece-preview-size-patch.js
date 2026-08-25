@@ -68,7 +68,7 @@
     const stage=modal.querySelector('.piece-preview-stage');
     if(stage){
       stage.style.setProperty('border-radius',full?'4px':'7px','important');
-      stage.style.setProperty('cursor','zoom-in','important');
+      stage.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     }
 
     root.querySelectorAll('.piece-pdf-page canvas').forEach(function(canvas){
@@ -90,6 +90,9 @@
   function handleWheel(e){
     const viewer=e.target&&e.target.closest?e.target.closest('.piece-pdf-pages'):null;
     if(!viewer||Math.abs(e.deltaY)<3)return;
+
+    const modal=viewer.closest('.piece-preview-modal');
+    if(modal&&isFullscreen(modal))return;
 
     e.preventDefault();
     e.stopImmediatePropagation();
