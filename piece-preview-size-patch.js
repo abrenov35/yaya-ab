@@ -15,20 +15,63 @@
     },Number(delay)||100);
   }
 
+  function visiblePieceRect(modal){
+    if(!modal)return null;
+    const canvas=modal.querySelector('.piece-pdf-page canvas');
+    if(canvas){
+      const r=canvas.getBoundingClientRect();
+      if(r.width>=120&&r.height>=120)return r;
+    }
+    const img=modal.querySelector('.piece-image-stage img');
+    if(img&&img.complete){
+      const r=img.getBoundingClientRect();
+      if(r.width>=120&&r.height>=120)return r;
+    }
+    return null;
+  }
+
+  function normalGeometry(modal,viewportW,viewportH){
+    let storedW=Number(modal.dataset.yayaNormalWidth)||0;
+    let storedH=Number(modal.dataset.yayaNormalHeight)||0;
+
+    if(!storedW||!storedH){
+      const piece=visiblePieceRect(modal);
+      if(piece){
+        const head=modal.querySelector('.piece-preview-head');
+        const headH=Math.max(28,Math.ceil(head&&head.getBoundingClientRect().height||31));
+
+        // La fenêtre épouse la pièce : seulement une petite respiration autour.
+        storedW=Math.ceil(piece.width+30);
+        storedH=Math.ceil(piece.height+headH+22);
+
+        storedW=Math.max(380,storedW);
+        storedH=Math.max(440,storedH);
+
+        modal.dataset.yayaNormalWidth=String(storedW);
+        modal.dataset.yayaNormalHeight=String(storedH);
+        modal.dataset.yayaPieceFitted='1';
+      }
+    }
+
+    if(!storedW)storedW=Math.min(Math.max(560,viewportW-24),700);
+    if(!storedH)storedH=Math.min(Math.max(520,Math.round(viewportH*0.84)),780);
+
+    return {
+      width:Math.min(Math.max(320,viewportW-16),storedW),
+      height:Math.min(Math.max(300,viewportH-12),storedH)
+    };
+  }
+
   function applyModalGeometry(modal){
     if(!modal)return false;
 
     const full=isFullscreen(modal);
     const viewportW=Math.max(320,window.innerWidth);
     const viewportH=Math.max(320,window.innerHeight);
+    const normal=normalGeometry(modal,viewportW,viewportH);
 
-    const wantedW=full
-      ? Math.max(320,viewportW-6)
-      : Math.min(Math.max(560,viewportW-24),700);
-
-    const wantedH=full
-      ? Math.max(300,viewportH-6)
-      : Math.min(Math.max(520,Math.round(viewportH*0.84)),780);
+    const wantedW=full?Math.max(320,viewportW-6):normal.width;
+    const wantedH=full?Math.max(300,viewportH-6):normal.height;
 
     const oldW=Math.round(modal.getBoundingClientRect().width||0);
     const oldH=Math.round(modal.getBoundingClientRect().height||0);
@@ -36,14 +79,14 @@
 
     modal.style.setProperty('width',wantedW+'px','important');
     modal.style.setProperty('height',wantedH+'px','important');
-    modal.style.setProperty('max-width',full?'calc(100vw - 6px)':'calc(100vw - 24px)','important');
-    modal.style.setProperty('max-height',full?'calc(100dvh - 6px)':'calc(100dvh - 20px)','important');
+    modal.style.setProperty('max-width',full?'calc(100vw - 6px)':'calc(100vw - 16px)','important');
+    modal.style.setProperty('max-height',full?'calc(100dvh - 6px)':'calc(100dvh - 12px)','important');
     modal.style.setProperty('padding',full?'3px':'7px','important');
     modal.style.setProperty('border-radius',full?'7px':'12px','important');
 
     const overlay=modal.closest('.piece-preview-overlay');
     if(overlay){
-      overlay.style.setProperty('padding',full?'3px':'10px','important');
+      overlay.style.setProperty('padding',full?'3px':'6px','important');
       overlay.style.setProperty('align-items','center','important');
       overlay.style.setProperty('justify-content','center','important');
     }
@@ -146,6 +189,12 @@
 
     root.addEventListener('wheel',handleWheel,{capture:true,passive:false});
 
+    root.addEventListener('load',function(e){
+      if(e.target&&e.target.matches&&e.target.matches('.piece-image-stage img')){
+        setTimeout(function(){fitCurrentModal(false);},30);
+      }
+    },true);
+
     window.addEventListener('keydown',function(e){
       if(e.key!=='Escape')return;
       const modal=root.querySelector('.piece-preview-modal');
@@ -160,9 +209,22 @@
     const root=getRoot();
     if(!root){setTimeout(observeModalRoot,250);return;}
 
+    let fitTimer=0;
     new MutationObserver(function(){
-      requestAnimationFrame(function(){fitCurrentModal(false);});
-    }).observe(root,{childList:true});
+      clearTimeout(fitTimer);
+      fitTimer=setTimeout(function(){
+        const modal=root.querySelector('.piece-preview-modal');
+        if(!modal)return;
+
+        // Géométrie de départ, puis un seul ajustement quand la pièce est réellement rendue.
+        if(!isFullscreen(modal)&&modal.dataset.yayaPieceFitted!=='1'&&visiblePieceRect(modal)){
+          fitCurrentModal(false);
+        }else if(!modal.dataset.yayaBaseGeometryApplied){
+          modal.dataset.yayaBaseGeometryApplied='1';
+          fitCurrentModal(false);
+        }
+      },45);
+    }).observe(root,{childList:true,subtree:true});
 
     let windowTimer=0;
     window.addEventListener('resize',function(){
