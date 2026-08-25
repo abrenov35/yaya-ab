@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-chantier-toolbar-style-v2';
+  const id='yaya-chantier-toolbar-style-v3';
   if(document.getElementById(id))return;
   const style=document.createElement('style');
   style.id=id;
@@ -34,13 +34,13 @@
     }
     #pane-chantiers .chantier-fin-toolbar > .btnp{
       order:1!important;
-      background:#3d6592!important;
-      border:1px solid #3d6592!important;
-      color:#fff!important;
+      background:#e8f0fa!important;
+      border:1px solid #bfd0e4!important;
+      color:#294f78!important;
     }
     #pane-chantiers .chantier-fin-toolbar > .btnp:hover{
-      background:#34587f!important;
-      border-color:#34587f!important;
+      background:#dce8f5!important;
+      border-color:#adc3dc!important;
     }
     #pane-chantiers .chantier-fin-toolbar > .btn2:not(.chantier-archive-btn):not(.yaya-edit-chantier-btn){
       order:2!important;
