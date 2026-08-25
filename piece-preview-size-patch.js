@@ -2,24 +2,21 @@
   'use strict';
 
   const ROOT_ID='modalRoot';
-  let pdfResizeTimer=0;
+  let redrawTimer=0;
 
   function getRoot(){return document.getElementById(ROOT_ID);}
-
   function isFullscreen(modal){return modal&&modal.dataset.yayaPreviewFullscreen==='1';}
 
-  function requestPdfResize(){
-    clearTimeout(pdfResizeTimer);
-    pdfResizeTimer=setTimeout(function(){
-      window.dispatchEvent(new Event('resize'));
-    },180);
+  function requestPdfRedraw(modal,delay){
+    if(!modal||typeof modal.__yayaRedrawPdf!=='function')return;
+    clearTimeout(redrawTimer);
+    redrawTimer=setTimeout(function(){
+      if(modal&&typeof modal.__yayaRedrawPdf==='function')modal.__yayaRedrawPdf(0);
+    },Number(delay)||100);
   }
 
-  function fitPreviewModal(){
-    const root=getRoot();
-    if(!root)return;
-    const modal=root.querySelector('.piece-preview-modal');
-    if(!modal)return;
+  function applyModalGeometry(modal){
+    if(!modal)return false;
 
     const full=isFullscreen(modal);
     const viewportW=Math.max(320,window.innerWidth);
@@ -75,27 +72,35 @@
       stage.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     }
 
-    root.querySelectorAll('.piece-pdf-page canvas').forEach(function(canvas){
+    modal.querySelectorAll('.piece-pdf-page canvas').forEach(function(canvas){
       canvas.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     });
 
-    if(changed)requestPdfResize();
+    return changed;
+  }
+
+  function fitCurrentModal(redrawIfChanged){
+    const root=getRoot();
+    if(!root)return;
+    const modal=root.querySelector('.piece-preview-modal');
+    if(!modal)return;
+    const changed=applyModalGeometry(modal);
+    if(changed&&redrawIfChanged)requestPdfRedraw(modal,120);
   }
 
   function toggleFullscreen(modal,force){
-    if(!modal)return;
-    if(modal.dataset.yayaPreviewTransition==='1')return;
+    if(!modal||modal.dataset.yayaPreviewTransition==='1')return;
 
     const next=typeof force==='boolean'?force:!isFullscreen(modal);
     modal.dataset.yayaPreviewTransition='1';
     modal.dataset.yayaPreviewFullscreen=next?'1':'0';
 
-    fitPreviewModal();
-    requestPdfResize();
+    applyModalGeometry(modal);
+    requestPdfRedraw(modal,120);
 
     setTimeout(function(){
       if(modal)modal.dataset.yayaPreviewTransition='0';
-    },420);
+    },360);
   }
 
   let wheelLock=false;
@@ -151,20 +156,23 @@
     });
   }
 
-  let timer=0;
-  function scheduleFit(){
-    clearTimeout(timer);
-    timer=setTimeout(function(){requestAnimationFrame(fitPreviewModal);},35);
-  }
-
-  function observe(){
+  function observeModalRoot(){
     const root=getRoot();
-    if(!root){setTimeout(observe,250);return;}
-    new MutationObserver(scheduleFit).observe(root,{childList:true,subtree:true});
-    window.addEventListener('resize',scheduleFit,{passive:true});
-    scheduleFit();
+    if(!root){setTimeout(observeModalRoot,250);return;}
+
+    new MutationObserver(function(){
+      requestAnimationFrame(function(){fitCurrentModal(false);});
+    }).observe(root,{childList:true});
+
+    let windowTimer=0;
+    window.addEventListener('resize',function(){
+      clearTimeout(windowTimer);
+      windowTimer=setTimeout(function(){fitCurrentModal(true);},220);
+    },{passive:true});
+
+    fitCurrentModal(false);
   }
 
   bindInteractions();
-  observe();
+  observeModalRoot();
 })();
