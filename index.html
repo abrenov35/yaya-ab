@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yaya — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
 (async()=>{
-  const source=await fetch('index-legacy.html?v=marcheht-1',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
+  const source=await fetch('index-legacy.html?v=marcheht-2',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
   const patch=`<script>
 (function(){
   function ready(){
@@ -53,8 +53,10 @@
   }
   function disableAutomaticUploads(){
     window.ajouterChargeDetectee=async function(){
-      throw new Error('Import automatique désactivé. Les pièces reçues par mail sont traitées dans AB DOCS puis classées manuellement vers Yaya.');
+      throw new Error('Brique tampon supprimée : les pièces sont classées directement dans Documents ou Charges.');
     };
+    window.validerChargeAuto=async function(){return false;};
+    window.classerChargeAuto=async function(){return false;};
     try{chargeValidationHtml=function(){return '';};}catch(e){}
     try{resumeChargesAutoHtml=function(){return '';};}catch(e){}
   }
