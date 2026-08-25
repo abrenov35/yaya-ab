@@ -39,14 +39,10 @@
       if(piece){
         const head=modal.querySelector('.piece-preview-head');
         const headH=Math.max(28,Math.ceil(head&&head.getBoundingClientRect().height||31));
-
-        // La fenêtre épouse la pièce : seulement une petite respiration autour.
         storedW=Math.ceil(piece.width+30);
         storedH=Math.ceil(piece.height+headH+22);
-
         storedW=Math.max(380,storedW);
         storedH=Math.max(440,storedH);
-
         modal.dataset.yayaNormalWidth=String(storedW);
         modal.dataset.yayaNormalHeight=String(storedH);
         modal.dataset.yayaPieceFitted='1';
@@ -62,6 +58,15 @@
     };
   }
 
+  function largeGeometry(viewportW,viewportH){
+    // Grand aperçu : assez large pour lire, mais la fenêtre reste autour du document
+    // au lieu de prendre toute la largeur de l'écran.
+    return {
+      width:Math.min(Math.max(620,viewportW-10),1160),
+      height:Math.min(Math.max(560,viewportH-8),920)
+    };
+  }
+
   function applyModalGeometry(modal){
     if(!modal)return false;
 
@@ -69,9 +74,10 @@
     const viewportW=Math.max(320,window.innerWidth);
     const viewportH=Math.max(320,window.innerHeight);
     const normal=normalGeometry(modal,viewportW,viewportH);
+    const large=largeGeometry(viewportW,viewportH);
 
-    const wantedW=full?Math.max(320,viewportW-6):normal.width;
-    const wantedH=full?Math.max(300,viewportH-6):normal.height;
+    const wantedW=full?large.width:normal.width;
+    const wantedH=full?large.height:normal.height;
 
     const oldW=Math.round(modal.getBoundingClientRect().width||0);
     const oldH=Math.round(modal.getBoundingClientRect().height||0);
@@ -79,39 +85,39 @@
 
     modal.style.setProperty('width',wantedW+'px','important');
     modal.style.setProperty('height',wantedH+'px','important');
-    modal.style.setProperty('max-width',full?'calc(100vw - 6px)':'calc(100vw - 16px)','important');
-    modal.style.setProperty('max-height',full?'calc(100dvh - 6px)':'calc(100dvh - 12px)','important');
-    modal.style.setProperty('padding',full?'3px':'7px','important');
-    modal.style.setProperty('border-radius',full?'7px':'12px','important');
+    modal.style.setProperty('max-width',full?'calc(100vw - 10px)':'calc(100vw - 16px)','important');
+    modal.style.setProperty('max-height',full?'calc(100dvh - 8px)':'calc(100dvh - 12px)','important');
+    modal.style.setProperty('padding',full?'4px':'7px','important');
+    modal.style.setProperty('border-radius',full?'9px':'12px','important');
 
     const overlay=modal.closest('.piece-preview-overlay');
     if(overlay){
-      overlay.style.setProperty('padding',full?'3px':'6px','important');
+      overlay.style.setProperty('padding',full?'4px':'6px','important');
       overlay.style.setProperty('align-items','center','important');
       overlay.style.setProperty('justify-content','center','important');
     }
 
     const head=modal.querySelector('.piece-preview-head');
     if(head){
-      head.style.setProperty('min-height',full?'22px':'31px','important');
-      head.style.setProperty('height',full?'22px':'31px','important');
-      head.style.setProperty('margin',full?'0 0 1px':'0 0 4px','important');
-      head.style.setProperty('padding',full?'0 2px 1px':'0 2px 4px','important');
-      head.style.setProperty('font-size',full?'13px':'15px','important');
-      head.style.setProperty('line-height',full?'20px':'26px','important');
+      head.style.setProperty('min-height',full?'25px':'31px','important');
+      head.style.setProperty('height',full?'25px':'31px','important');
+      head.style.setProperty('margin',full?'0 0 2px':'0 0 4px','important');
+      head.style.setProperty('padding',full?'0 3px 2px':'0 2px 4px','important');
+      head.style.setProperty('font-size',full?'14px':'15px','important');
+      head.style.setProperty('line-height',full?'22px':'26px','important');
     }
 
     const close=head&&head.querySelector('button');
     if(close){
-      close.style.setProperty('padding',full?'2px 8px':'4px 11px','important');
-      close.style.setProperty('min-height',full?'20px':'28px','important');
-      close.style.setProperty('height',full?'20px':'28px','important');
+      close.style.setProperty('padding',full?'3px 9px':'4px 11px','important');
+      close.style.setProperty('min-height',full?'23px':'28px','important');
+      close.style.setProperty('height',full?'23px':'28px','important');
       close.style.setProperty('font-size',full?'11px':'12px','important');
     }
 
     const stage=modal.querySelector('.piece-preview-stage');
     if(stage){
-      stage.style.setProperty('border-radius',full?'4px':'7px','important');
+      stage.style.setProperty('border-radius',full?'5px':'7px','important');
       stage.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     }
 
@@ -215,8 +221,6 @@
       fitTimer=setTimeout(function(){
         const modal=root.querySelector('.piece-preview-modal');
         if(!modal)return;
-
-        // Géométrie de départ, puis un seul ajustement quand la pièce est réellement rendue.
         if(!isFullscreen(modal)&&modal.dataset.yayaPieceFitted!=='1'&&visiblePieceRect(modal)){
           fitCurrentModal(false);
         }else if(!modal.dataset.yayaBaseGeometryApplied){
