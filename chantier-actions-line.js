@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v2';
+  const STYLE_ID='yaya-chantier-actions-line-v3';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -13,6 +13,16 @@
         gap:9px!important;
         overflow-x:auto!important;
         scrollbar-width:thin;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-expense-btn{
+        background:#fff8e1!important;
+        border:1px solid #e4cf8a!important;
+        color:#7a5a00!important;
+        font-weight:700!important;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-expense-btn:hover{
+        background:#fff2bf!important;
+        border-color:#d8bd62!important;
       }
       #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-close-btn{
         order:5!important;
@@ -56,12 +66,55 @@
     document.head.appendChild(style);
   }
 
+  window.openAchatForChantier=function(cid){
+    if(typeof window.openAchatModal!=='function')return;
+    window.openAchatModal();
+
+    const preselect=function(){
+      const sel=document.getElementById('acCh');
+      if(!sel)return false;
+      sel.value=String(cid||'');
+      sel.dispatchEvent(new Event('change',{bubbles:true}));
+      return true;
+    };
+
+    requestAnimationFrame(preselect);
+    setTimeout(preselect,40);
+    setTimeout(preselect,120);
+  };
+
+  function addExpenseButton(toolbar){
+    if(!toolbar||toolbar.querySelector('.chantier-expense-btn'))return;
+
+    const toolbarButtons=[...toolbar.querySelectorAll('button')];
+    const devisBtn=toolbarButtons.find(b=>String(b.getAttribute('onclick')||'').includes('openAvenant'));
+    if(!devisBtn)return;
+
+    const match=String(devisBtn.getAttribute('onclick')||'').match(/openAvenant\(['"]([^'"]+)['"]\)/);
+    if(!match||!match[1])return;
+
+    const cid=match[1];
+    const expense=document.createElement('button');
+    expense.type='button';
+    expense.className='btn2 chantier-expense-btn';
+    expense.textContent='＋ Dépense';
+    expense.title='Ajouter une dépense à ce chantier';
+    expense.onclick=function(){ window.openAchatForChantier(cid); };
+
+    const docBtn=toolbarButtons.find(b=>String(b.getAttribute('onclick')||'').includes('openDocumentModal'));
+    if(docBtn)toolbar.insertBefore(expense,docBtn);
+    else if(devisBtn.nextSibling)toolbar.insertBefore(expense,devisBtn.nextSibling);
+    else toolbar.appendChild(expense);
+  }
+
   function cleanCard(card){
     if(!card)return;
     const toolbar=card.querySelector('.chantier-fin-toolbar');
     if(!toolbar)return;
     const top=card.querySelector('.top');
     if(!top)return;
+
+    addExpenseButton(toolbar);
 
     top.querySelectorAll('select').forEach(sel=>{
       const onchange=String(sel.getAttribute('onchange')||'');
