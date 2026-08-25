@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yaya — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
 (async()=>{
-  const source=await fetch('index-legacy.html?v=marcheht-4',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
+  const source=await fetch('index-legacy.html?v=marcheht-6',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
   const patch=`<script>
 (function(){
   function ready(){
@@ -92,6 +92,58 @@
     wrap.appendChild(btn);
     pane.insertBefore(wrap,pane.firstChild);
   }
+  function normaliserNomPlanning(s){
+    return String(s||'').normalize('NFD').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  }
+  function trouverDoublonPlanning(liste,nom){
+    const cible=normaliserNomPlanning(nom);
+    if(!cible)return null;
+    let exact=(liste||[]).find(p=>normaliserNomPlanning(p&&p.nom)===cible);
+    if(exact)return exact;
+    return (liste||[]).find(p=>{
+      const k=normaliserNomPlanning(p&&p.nom);
+      return k && Math.min(k.length,cible.length)>=5 && (k.includes(cible)||cible.includes(k));
+    })||null;
+  }
+  function planningRequest(params){
+    return new Promise((resolve,reject)=>{
+      const callback='yayaPlanningWrite_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      const script=document.createElement('script');
+      let fini=false;
+      const timer=setTimeout(()=>terminer(new Error('Planning indisponible')),15000);
+      function terminer(err,data){
+        if(fini)return;
+        fini=true;
+        clearTimeout(timer);
+        if(script.parentNode)script.parentNode.removeChild(script);
+        try{delete window[callback];}catch(_){window[callback]=undefined;}
+        if(err)reject(err);else resolve(data);
+      }
+      window[callback]=data=>terminer(null,data);
+      script.onerror=()=>terminer(new Error('Impossible de joindre Planning'));
+      const q=new URLSearchParams(Object.assign({},params,{callback:callback,_ts:String(Date.now())}));
+      script.src=PLANNING_API+'?'+q.toString();
+      document.head.appendChild(script);
+    });
+  }
+  async function creerDansPlanning(c){
+    const d=c.dateDemarrageEstime||'';
+    const r=await planningRequest({action:'createChantier',nom:c.nom,dateDebut:d,dateFin:d,description:'',couleur:'',dateSignature:c.dateSignature||'',typeChantier:'Rénovation'});
+    if(!r||!r.success)throw new Error(r&&r.error?r.error:'Création Planning impossible');
+    c.planningPresent=true;
+    c.sourcePlanningId=String(r.id||r.chantierId||(r.data&&r.data.id)||(r.chantier&&r.chantier.id)||'');
+    return true;
+  }
+  window.togglePlanningCreation=function(){
+    const btn=document.getElementById('chPlanningToggle');
+    if(!btn)return;
+    const actif=btn.dataset.value!=='1';
+    btn.dataset.value=actif?'1':'0';
+    btn.textContent=actif?'✓ Créer aussi dans Planning':'Planning : Pas maintenant';
+    btn.style.background=actif?'#24436B':'#fff';
+    btn.style.color=actif?'#fff':'var(--navy)';
+    btn.style.borderColor=actif?'#24436B':'rgba(22,45,73,.3)';
+  };
   function installChantierCreation(){
     openChantierModal=function(){
       const root=document.getElementById('modalRoot');
@@ -104,6 +156,7 @@
         +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Signé le <span style="font-size:11px;font-weight:400;opacity:.65">mois et année uniquement</span><input class="inp" id="chSignature" type="month"></label>'
         +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Démarrage estimé <span style="font-size:11px;font-weight:400;opacity:.65">date complète — facultatif</span><input class="inp" id="chDemarrage" type="date"></label>'
         +'<label style="display:grid;gap:5px;font-size:12px;font-weight:700">Chiffre d’affaires HT <span style="font-size:11px;font-weight:400;opacity:.65">montant officiel du marché</span><input class="inp" id="chMarcheHT" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0,00 €"></label>'
+        +'<div style="display:grid;gap:5px"><span style="font-size:12px;font-weight:700">Planning</span><button class="btn2" id="chPlanningToggle" type="button" data-value="0" onclick="togglePlanningCreation()" style="width:100%;padding:11px 12px;text-align:left;font-weight:700">Planning : Pas maintenant</button><span style="font-size:11px;opacity:.65">Le chantier pourra être envoyé dans Planning plus tard.</span></div>'
         +'</div>'
         +'<div class="mfoot" style="justify-content:flex-end">'
         +'<button class="btn2" type="button" onclick="closeModal()">Annuler</button>'
@@ -116,17 +169,25 @@
       const sigEl=document.getElementById('chSignature');
       const demEl=document.getElementById('chDemarrage');
       const mtEl=document.getElementById('chMarcheHT');
+      const planningEl=document.getElementById('chPlanningToggle');
       if(!nomEl||!sigEl||!demEl||!mtEl)return;
       const nom=nomEl.value.trim();
       const dateSignature=sigEl.value;
       const dateDemarrageEstime=demEl.value;
+      const veutPlanning=!!(planningEl&&planningEl.dataset.value==='1');
       const brut=String(mtEl.value||'').trim().replace(/\\s/g,'').replace(',','.');
       if(!nom){toast('Indique le nom du chantier',true);nomEl.focus();return;}
       if(!/^\\d{4}-\\d{2}$/.test(dateSignature)){toast('Indique le mois et l’année de signature',true);sigEl.focus();return;}
       if(brut===''){toast('Indique le chiffre d’affaires HT',true);mtEl.focus();return;}
       const montantMarcheHT=Number(brut);
       if(!Number.isFinite(montantMarcheHT)||montantMarcheHT<0){toast('Chiffre d’affaires HT invalide',true);mtEl.focus();return;}
-      const btn=document.getElementById('chCreateBtn');if(btn)btn.disabled=true;
+      const btn=document.getElementById('chCreateBtn');if(btn){btn.disabled=true;btn.textContent='Vérification…';}
+      let doublon=null;
+      try{doublon=trouverDoublonPlanning(await getChantiersPlanning(),nom);}catch(e){console.warn('Planning non vérifié',e);}
+      if(doublon){
+        const confirmer=confirm('⚠ Probable doublon dans Planning : « '+(doublon.nom||nom)+' ».\\n\\nCréer le chantier dans Yaya et le rattacher à ce chantier Planning existant ?');
+        if(!confirmer){if(btn){btn.disabled=false;btn.textContent='Créer le chantier';}return;}
+      }
       const chantier={
         id:uid(),
         nom,
@@ -136,7 +197,9 @@
         dateSignature,
         dateDemarrageEstime:dateDemarrageEstime||'',
         statut:'En cours',
-        notes:''
+        notes:'',
+        planningPresent:!!doublon,
+        sourcePlanningId:doublon&&doublon.id?String(doublon.id):''
       };
       S.chantiers.push(chantier);
       expChantiers.clear();
@@ -144,10 +207,22 @@
       closeModal();
       render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
       const ok=await apiPost('setChantiers',S.chantiers);
-      if(ok)toast('Chantier créé ✓');
-      else{
+      if(!ok){
         S.chantiers=S.chantiers.filter(c=>String(c.id)!==String(chantier.id));
         render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
+        return;
+      }
+      if(doublon){toast('Chantier créé dans Yaya et rattaché au Planning ✓');return;}
+      if(!veutPlanning){toast('Chantier créé dans Yaya ✓ — pas encore dans Planning');return;}
+      try{
+        await creerDansPlanning(chantier);
+        await apiPost('setChantiers',S.chantiers);
+        toast('Chantier créé dans Yaya et Planning ✓');
+      }catch(e){
+        chantier.planningPresent=false;
+        chantier.sourcePlanningId='';
+        await apiPost('setChantiers',S.chantiers);
+        toast('Chantier créé dans Yaya, mais pas dans Planning : '+e.message,true);
       }
     };
   }
