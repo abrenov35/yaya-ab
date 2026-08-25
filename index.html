@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yaya — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
 (async()=>{
-  const source=await fetch('index-legacy.html?v=marcheht-3',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
+  const source=await fetch('index-legacy.html?v=marcheht-4',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
   const patch=`<script>
 (function(){
   function ready(){
@@ -65,6 +65,33 @@
     if(!pane)return;
     pane.querySelectorAll('.controle-title,.controle-vide,.controle-card,.charge-attente-resume,.charge-auto-resume,.charge-auto').forEach(el=>el.remove());
   }
+  function ensureChantierCreateButton(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+    let btn=document.getElementById('yayaCreateChantierBtn');
+    if(btn){btn.style.display='inline-flex';return;}
+    const existants=[...pane.querySelectorAll('button')];
+    btn=existants.find(b=>(b.getAttribute('onclick')||'').includes('openChantierModal'));
+    if(btn){
+      btn.id='yayaCreateChantierBtn';
+      btn.style.display='inline-flex';
+      btn.style.alignItems='center';
+      return;
+    }
+    const wrap=document.createElement('div');
+    wrap.id='yayaCreateChantierWrap';
+    wrap.style.marginBottom='14px';
+    btn=document.createElement('button');
+    btn.id='yayaCreateChantierBtn';
+    btn.type='button';
+    btn.className='btnp';
+    btn.textContent='➕ Créer un chantier';
+    btn.style.display='inline-flex';
+    btn.style.alignItems='center';
+    btn.addEventListener('click',()=>openChantierModal());
+    wrap.appendChild(btn);
+    pane.insertBefore(wrap,pane.firstChild);
+  }
   function installChantierCreation(){
     openChantierModal=function(){
       const root=document.getElementById('modalRoot');
@@ -115,12 +142,12 @@
       expChantiers.clear();
       tab='chantiers';
       closeModal();
-      render();decorateMarche();cleanAutomaticUploadUI();
+      render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
       const ok=await apiPost('setChantiers',S.chantiers);
       if(ok)toast('Chantier créé ✓');
       else{
         S.chantiers=S.chantiers.filter(c=>String(c.id)!==String(chantier.id));
-        render();decorateMarche();cleanAutomaticUploadUI();
+        render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
       }
     };
   }
@@ -141,13 +168,13 @@
       if(!Number.isFinite(montant)||montant<0){toast('Montant HT invalide',true);return;}
       const avant=Number(c.montantMarcheHT)||0;
       c.montantMarcheHT=montant;
-      render();decorateMarche();cleanAutomaticUploadUI();
+      render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
       if(await apiPost('setChantiers',S.chantiers))toast('Montant du marché HT enregistré ✓');
-      else{c.montantMarcheHT=avant;render();decorateMarche();cleanAutomaticUploadUI();}
+      else{c.montantMarcheHT=avant;render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();}
     };
-    const obs=new MutationObserver(()=>{decorateMarche();cleanAutomaticUploadUI();});
+    const obs=new MutationObserver(()=>{ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();});
     obs.observe(document.body,{childList:true,subtree:true});
-    render();decorateMarche();cleanAutomaticUploadUI();
+    render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
   }
   install();
 })();
