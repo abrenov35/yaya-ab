@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Yaya — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
 (async()=>{
-  let base=await fetch('index-production-base.html?v=piecefit-2',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
+  let base=await fetch('index-production-base.html?v=piecefit-3',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
   const marker="patch+'</body>'";
-  const replacement="patch+'<script src=\"piece-preview-patch.js?v=piecefit-2\"><\\/script><script src=\"chantier-edit-patch.js?v=chantieredit-2\"><\\/script></body>'";
+  const replacement="patch+'<script src=\"piece-preview-patch.js?v=piecefit-3\"><\\/script><script src=\"piece-drive-fit-patch.js?v=drivefit-1\"><\\/script><script src=\"chantier-edit-patch.js?v=chantieredit-2\"><\\/script></body>'";
   if(!base.includes(marker))throw new Error('Point insertion aperçu introuvable');
   base=base.replace(marker,replacement);
   document.open();document.write(base);document.close();
