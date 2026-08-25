@@ -51,9 +51,22 @@
     btn.addEventListener('click',()=>window.location.reload());
     tabs.insertAdjacentElement('afterend',btn);
   }
+  function disableAutomaticUploads(){
+    window.ajouterChargeDetectee=async function(){
+      throw new Error('Import automatique désactivé. Les pièces reçues par mail sont traitées dans AB DOCS puis classées manuellement vers Yaya.');
+    };
+    try{chargeValidationHtml=function(){return '';};}catch(e){}
+    try{resumeChargesAutoHtml=function(){return '';};}catch(e){}
+  }
+  function cleanAutomaticUploadUI(){
+    const pane=document.getElementById('pane-achats');
+    if(!pane)return;
+    pane.querySelectorAll('.controle-title,.controle-vide,.controle-card,.charge-attente-resume,.charge-auto-resume,.charge-auto').forEach(el=>el.remove());
+  }
   function install(){
     if(!ready())return setTimeout(install,120);
     installReloadButton();
+    disableAutomaticUploads();
     S.chantiers.forEach(c=>{c.montantMarcheHT=Number(c.montantMarcheHT)||0;});
     totalDevis=function(c){return Number(c&&c.montantMarcheHT)||0;};
     window.editMontantMarche=async function(cid){
@@ -66,13 +79,13 @@
       if(!Number.isFinite(montant)||montant<0){toast('Montant HT invalide',true);return;}
       const avant=Number(c.montantMarcheHT)||0;
       c.montantMarcheHT=montant;
-      render();decorateMarche();
+      render();decorateMarche();cleanAutomaticUploadUI();
       if(await apiPost('setChantiers',S.chantiers))toast('Montant du marché HT enregistré ✓');
-      else{c.montantMarcheHT=avant;render();decorateMarche();}
+      else{c.montantMarcheHT=avant;render();decorateMarche();cleanAutomaticUploadUI();}
     };
-    const obs=new MutationObserver(()=>decorateMarche());
+    const obs=new MutationObserver(()=>{decorateMarche();cleanAutomaticUploadUI();});
     obs.observe(document.body,{childList:true,subtree:true});
-    render();decorateMarche();
+    render();decorateMarche();cleanAutomaticUploadUI();
   }
   install();
 })();
