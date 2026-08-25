@@ -122,21 +122,26 @@
     ui.stage.replaceChildren(viewer);
 
     let pageHeight=0;
-    let resizeTimer=null;
     let rendering=false;
     let rerender=false;
+    let redrawTimer=0;
     let wheelLocked=false;
 
-    function currentPageIndex(){
+    function captureScrollAnchor(){
       const slots=Array.from(viewer.querySelectorAll('.piece-pdf-page'));
-      if(!slots.length)return 0;
+      if(!slots.length)return {page:0,ratio:0};
       const y=viewer.scrollTop;
-      let best=0,bestDist=Infinity;
-      slots.forEach((slot,i)=>{
-        const dist=Math.abs((slot.offsetTop||0)-y);
-        if(dist<bestDist){bestDist=dist;best=i;}
-      });
-      return Math.max(0,Math.min(pdf.numPages-1,best));
+      let chosen=slots[0];
+      let index=0;
+      for(let i=0;i<slots.length;i++){
+        const top=slots[i].offsetTop||0;
+        const bottom=top+(slots[i].offsetHeight||1);
+        if(y>=top&&y<bottom){chosen=slots[i];index=i;break;}
+        if(top<=y){chosen=slots[i];index=i;}
+      }
+      const h=Math.max(1,chosen.offsetHeight||1);
+      const ratio=Math.max(0,Math.min(1,(y-(chosen.offsetTop||0))/h));
+      return {page:index,ratio};
     }
 
     async function drawAll(){
@@ -144,15 +149,14 @@
       if(!root.contains(ui.modal))return;
       rendering=true;
       try{
-        const current=currentPageIndex();
+        const anchor=captureScrollAnchor();
         const width=Math.max(120,viewer.clientWidth);
         const height=Math.max(120,viewer.clientHeight);
         const full=ui.modal.dataset.yayaPreviewFullscreen==='1';
         pageHeight=height;
-        viewer.replaceChildren();
-        viewer.style.setProperty('scroll-snap-type',full?'none':'y mandatory','important');
-        viewer.style.setProperty('scroll-behavior',full?'auto':'smooth','important');
+
         const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+        const fragment=document.createDocumentFragment();
 
         for(let n=1;n<=pdf.numPages;n++){
           if(!root.contains(ui.modal))return;
@@ -180,18 +184,32 @@
           canvas.style.width=cssWidth+'px';
           canvas.style.height=cssHeight+'px';
           slot.appendChild(canvas);
-          viewer.appendChild(slot);
+          fragment.appendChild(slot);
 
           await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
         }
 
-        const target=viewer.children[current];
-        viewer.scrollTop=target?(target.offsetTop||0):0;
+        if(!root.contains(ui.modal))return;
+        viewer.style.setProperty('scroll-snap-type',full?'none':'y mandatory','important');
+        viewer.style.setProperty('scroll-behavior',full?'auto':'smooth','important');
+        viewer.replaceChildren(fragment);
+
+        const target=viewer.children[Math.max(0,Math.min(viewer.children.length-1,anchor.page))];
+        if(target){
+          const top=target.offsetTop||0;
+          const h=Math.max(1,target.offsetHeight||1);
+          viewer.scrollTop=full?top+(anchor.ratio*h):top;
+        }
       }finally{
         rendering=false;
         if(rerender){rerender=false;drawAll();}
       }
     }
+
+    ui.modal.__yayaRedrawPdf=function(delay){
+      clearTimeout(redrawTimer);
+      redrawTimer=setTimeout(drawAll,Number(delay)||80);
+    };
 
     viewer.addEventListener('wheel',e=>{
       if(ui.modal.dataset.yayaPreviewFullscreen==='1')return;
@@ -206,16 +224,20 @@
       setTimeout(()=>{wheelLocked=false;},320);
     },{passive:false});
 
-    const onResize=()=>{
-      clearTimeout(resizeTimer);
-      resizeTimer=setTimeout(drawAll,120);
+    let windowResizeTimer=0;
+    const onWindowResize=()=>{
+      clearTimeout(windowResizeTimer);
+      windowResizeTimer=setTimeout(()=>{
+        if(ui.modal&&typeof ui.modal.__yayaRedrawPdf==='function')ui.modal.__yayaRedrawPdf(0);
+      },240);
     };
-    window.addEventListener('resize',onResize,{passive:true});
+    window.addEventListener('resize',onWindowResize,{passive:true});
 
     const cleanup=new MutationObserver(()=>{
       if(!root.contains(ui.modal)){
-        clearTimeout(resizeTimer);
-        window.removeEventListener('resize',onResize);
+        clearTimeout(redrawTimer);
+        clearTimeout(windowResizeTimer);
+        window.removeEventListener('resize',onWindowResize);
         cleanup.disconnect();
         try{task.destroy();}catch(e){}
       }
