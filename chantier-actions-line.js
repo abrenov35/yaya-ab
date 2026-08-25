@@ -1,0 +1,93 @@
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-chantier-actions-line-v1';
+  if(!document.getElementById(STYLE_ID)){
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #pane-chantiers .chantier-fin-toolbar{
+        display:flex!important;
+        align-items:center!important;
+        flex-wrap:nowrap!important;
+        gap:9px!important;
+        overflow-x:auto!important;
+        scrollbar-width:thin;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn{
+        order:5!important;
+        margin-left:0!important;
+        background:#fff7f7!important;
+        border:1px solid #efcaca!important;
+        color:#b23b34!important;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .chantier-close-btn{
+        order:6!important;
+        margin-left:0!important;
+        background:#f8fafc!important;
+        border:1px solid #cfd8e3!important;
+        color:#334e6b!important;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn:hover{background:#fdeeee!important;}
+      #pane-chantiers .chantier-fin-toolbar > .chantier-close-btn:hover{background:#eef3f8!important;}
+      @media(max-width:640px){
+        #pane-chantiers .chantier-fin-toolbar{
+          display:flex!important;
+          grid-template-columns:none!important;
+          flex-wrap:nowrap!important;
+          overflow-x:auto!important;
+          gap:7px!important;
+          padding-bottom:6px!important;
+        }
+        #pane-chantiers .chantier-fin-toolbar > button{
+          width:auto!important;
+          flex:0 0 auto!important;
+          min-width:max-content!important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function cleanCard(card){
+    if(!card)return;
+    const toolbar=card.querySelector('.chantier-fin-toolbar');
+    if(!toolbar)return;
+    const top=card.querySelector('.top');
+    if(!top)return;
+
+    top.querySelectorAll('select').forEach(sel=>{
+      const onchange=String(sel.getAttribute('onchange')||'');
+      const txt=String(sel.textContent||'');
+      if(onchange.includes('setStatut')||(txt.includes('En cours')&&txt.includes('Terminé'))){
+        sel.remove();
+      }
+    });
+
+    const buttons=[...top.querySelectorAll('button')];
+    const del=buttons.find(b=>String(b.getAttribute('onclick')||'').includes('delChantier'));
+    const close=buttons.find(b=>String(b.getAttribute('onclick')||'').includes('toggleChantier')&&String(b.textContent||'').trim()==='Fermer');
+
+    if(del){
+      del.classList.add('chantier-delete-btn');
+      del.removeAttribute('style');
+      toolbar.appendChild(del);
+    }
+    if(close){
+      close.classList.add('chantier-close-btn');
+      close.removeAttribute('style');
+      toolbar.appendChild(close);
+    }
+  }
+
+  function apply(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+    pane.querySelectorAll('.card').forEach(cleanCard);
+  }
+
+  const obs=new MutationObserver(()=>apply());
+  obs.observe(document.documentElement,{childList:true,subtree:true});
+  setTimeout(apply,50);
+  setTimeout(apply,300);
+})();
