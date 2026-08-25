@@ -5,7 +5,7 @@
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
-    style.textContent='\n      .yaya-edit-chantier-btn{margin-left:auto!important;padding:5px 10px!important;font-size:11.5px!important;white-space:nowrap!important;}\n      .yaya-planning-box{display:grid;gap:6px;padding:10px;border:1px solid rgba(22,45,73,.14);border-radius:8px;background:#fafbfd;}\n      .yaya-planning-state{font-size:12px;font-weight:700;}\n      .yaya-planning-note{font-size:11px;opacity:.65;line-height:1.35;}\n      @media(max-width:640px){.yaya-edit-chantier-btn{margin-left:0!important}.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}}\n    ';
+    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      .yaya-edit-chantier-btn{margin-left:auto!important;padding:5px 10px!important;font-size:11.5px!important;white-space:nowrap!important;}\n      .yaya-planning-box{display:grid;gap:6px;padding:10px;border:1px solid rgba(22,45,73,.14);border-radius:8px;background:#fafbfd;}\n      .yaya-planning-state{font-size:12px;font-weight:700;}\n      .yaya-planning-note{font-size:11px;opacity:.65;line-height:1.35;}\n      @media(max-width:640px){.yaya-edit-chantier-btn{margin-left:0!important}.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}}\n    ';
     document.head.appendChild(style);
   }
 
