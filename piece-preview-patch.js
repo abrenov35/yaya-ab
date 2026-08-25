@@ -91,6 +91,12 @@
     return {overlay,modal,stage};
   }
 
+  function showLoading(root){
+    const ui=makeModal(root);
+    const loading=document.createElement('div');loading.className='piece-preview-loading';loading.textContent='Chargement de la pièce…';ui.stage.appendChild(loading);
+    return ui;
+  }
+
   function showImage(root,src){
     const ui=makeModal(root);
     ui.stage.classList.add('piece-image-stage');
@@ -196,8 +202,9 @@
     return ui;
   }
 
-  function showFallbackInsideCurrentModal(root,u){
-    if(typeof originalVoirPiece==='function')originalVoirPiece(u);
+  function fallbackAllowed(root){return !!root.querySelector('.piece-preview-modal');}
+  function showFallback(root,u){
+    if(fallbackAllowed(root)&&typeof originalVoirPiece==='function')originalVoirPiece(u);
   }
 
   window.voirPiece=async function(u){
@@ -216,20 +223,20 @@
     }
 
     if(driveId){
+      const pending=showLoading(root);
       const imageCandidate='https://drive.google.com/uc?export=view&id='+encodeURIComponent(driveId);
       try{
-        if(await canLoadImage(imageCandidate,1600)){
-          showImage(root,imageCandidate);
-          return;
-        }
-      }catch(e){}
+        const isImage=await canLoadImage(imageCandidate,1400);
+        if(!root.contains(pending.modal))return;
+        if(isImage){showImage(root,imageCandidate);return;}
+      }catch(e){if(!root.contains(pending.modal))return;}
       const pdfCandidate='https://drive.google.com/uc?export=download&id='+encodeURIComponent(driveId);
       try{
         await renderPdf(root,pdfCandidate);
         return;
       }catch(e){
         console.warn('Aperçu PDF page-par-page indisponible, retour lecteur Drive :',e);
-        showFallbackInsideCurrentModal(root,u);
+        showFallback(root,u);
         return;
       }
     }
@@ -240,8 +247,10 @@
         return;
       }catch(e){
         console.warn('Aperçu PDF page-par-page indisponible, retour lecteur actuel :',e);
+        showFallback(root,u);
+        return;
       }
     }
-    showFallbackInsideCurrentModal(root,u);
+    if(typeof originalVoirPiece==='function')originalVoirPiece(u);
   };
 })();
