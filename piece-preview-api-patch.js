@@ -127,43 +127,66 @@
     let rerender=false;
     let wheelLocked=false;
 
+    function currentPageIndex(){
+      const slots=Array.from(viewer.querySelectorAll('.piece-pdf-page'));
+      if(!slots.length)return 0;
+      const y=viewer.scrollTop;
+      let best=0,bestDist=Infinity;
+      slots.forEach((slot,i)=>{
+        const dist=Math.abs((slot.offsetTop||0)-y);
+        if(dist<bestDist){bestDist=dist;best=i;}
+      });
+      return Math.max(0,Math.min(pdf.numPages-1,best));
+    }
+
     async function drawAll(){
       if(rendering){rerender=true;return;}
       if(!root.contains(ui.modal))return;
       rendering=true;
       try{
-        const oldHeight=Math.max(1,pageHeight||viewer.clientHeight||1);
-        const current=Math.max(0,Math.min(pdf.numPages-1,Math.round(viewer.scrollTop/oldHeight)));
+        const current=currentPageIndex();
         const width=Math.max(120,viewer.clientWidth);
         const height=Math.max(120,viewer.clientHeight);
+        const full=ui.modal.dataset.yayaPreviewFullscreen==='1';
         pageHeight=height;
         viewer.replaceChildren();
+        viewer.style.setProperty('scroll-snap-type',full?'none':'y mandatory','important');
+        viewer.style.setProperty('scroll-behavior',full?'auto':'smooth','important');
         const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
 
         for(let n=1;n<=pdf.numPages;n++){
           if(!root.contains(ui.modal))return;
           const page=await pdf.getPage(n);
           const raw=page.getViewport({scale:1});
-          const scale=Math.min((width-10)/raw.width,(height-10)/raw.height);
-          const cssScale=Math.max(0.05,scale);
+          const fitPage=Math.min((width-10)/raw.width,(height-10)/raw.height);
+          const fullTargetWidth=Math.min(Math.max(700,width-70),1100);
+          const fitWidth=fullTargetWidth/raw.width;
+          const cssScale=Math.max(0.05,full?fitWidth:fitPage);
+          const cssWidth=Math.floor(raw.width*cssScale);
+          const cssHeight=Math.floor(raw.height*cssScale);
           const viewport=page.getViewport({scale:cssScale*dpr});
 
           const slot=document.createElement('div');
           slot.className='piece-pdf-page';
-          slot.style.height=height+'px';
-          slot.style.minHeight=height+'px';
+          const slotHeight=full?Math.max(height,cssHeight+20):height;
+          slot.style.setProperty('height',slotHeight+'px','important');
+          slot.style.setProperty('min-height',slotHeight+'px','important');
+          slot.style.setProperty('scroll-snap-align',full?'none':'start','important');
+          slot.style.setProperty('overflow','hidden','important');
 
           const canvas=document.createElement('canvas');
           canvas.width=Math.max(1,Math.floor(viewport.width));
           canvas.height=Math.max(1,Math.floor(viewport.height));
-          canvas.style.width=Math.floor(raw.width*cssScale)+'px';
-          canvas.style.height=Math.floor(raw.height*cssScale)+'px';
+          canvas.style.width=cssWidth+'px';
+          canvas.style.height=cssHeight+'px';
           slot.appendChild(canvas);
           viewer.appendChild(slot);
 
           await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
         }
-        viewer.scrollTop=current*height;
+
+        const target=viewer.children[current];
+        viewer.scrollTop=target?(target.offsetTop||0):0;
       }finally{
         rendering=false;
         if(rerender){rerender=false;drawAll();}
@@ -171,6 +194,7 @@
     }
 
     viewer.addEventListener('wheel',e=>{
+      if(ui.modal.dataset.yayaPreviewFullscreen==='1')return;
       if(Math.abs(e.deltaY)<4||pdf.numPages<2)return;
       e.preventDefault();
       if(wheelLocked)return;
@@ -184,7 +208,7 @@
 
     const onResize=()=>{
       clearTimeout(resizeTimer);
-      resizeTimer=setTimeout(drawAll,140);
+      resizeTimer=setTimeout(drawAll,120);
     };
     window.addEventListener('resize',onResize,{passive:true});
 
