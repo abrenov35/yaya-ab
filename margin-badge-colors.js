@@ -20,8 +20,8 @@
       const p=palette(pct);
       el.style.setProperty('background',p.bg,'important');
       el.style.setProperty('color',p.fg,'important');
-      el.style.setProperty('border','1px solid rgba(0,38,81,.28)','important');
-      el.style.setProperty('box-shadow','inset 0 0 0 .5px rgba(0,38,81,.08)','important');
+      el.style.removeProperty('border');
+      el.style.removeProperty('box-shadow');
     });
   }
 
