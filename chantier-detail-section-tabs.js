@@ -37,6 +37,8 @@
         font-weight:700!important;
         line-height:1.15!important;
         white-space:nowrap!important;
+        touch-action:manipulation!important;
+        -webkit-tap-highlight-color:transparent;
       }
       .yaya-detail-section-tab small{
         font-size:11px!important;
@@ -51,8 +53,15 @@
         color:#fff!important;
       }
       .yaya-detail-section-tab.on small{opacity:.9!important}
+
+      .card[data-yaya-detail-section="marche"] > .yaya-detail-section-node:not([data-section="marche"]),
+      .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-node:not([data-section="depenses"]),
+      .card[data-yaya-detail-section="documents"] > .yaya-detail-section-node:not([data-section="documents"]){
+        display:none!important;
+      }
+
       .yaya-detail-empty-pane{
-        display:none;
+        display:none!important;
         padding:20px 14px!important;
         margin:0 0 8px!important;
         border:1px dashed #cbd5e1!important;
@@ -62,6 +71,12 @@
         font-size:12.5px!important;
         text-align:center!important;
       }
+      .card[data-yaya-detail-section="marche"] > .yaya-detail-empty-pane[data-section="marche"][data-empty="1"],
+      .card[data-yaya-detail-section="depenses"] > .yaya-detail-empty-pane[data-section="depenses"][data-empty="1"],
+      .card[data-yaya-detail-section="documents"] > .yaya-detail-empty-pane[data-section="documents"][data-empty="1"]{
+        display:block!important;
+      }
+
       @media(max-width:640px){
         .yaya-detail-section-tabs{
           gap:6px!important;
@@ -135,7 +150,7 @@
         key:target.key,
         header:target.el,
         meta:metaForHeader(target.el,target.key),
-        nodes:children.slice(target.index+1,end).filter(n=>!n.classList?.contains('yaya-detail-empty-pane'))
+        nodes:children.slice(target.index+1,end).filter(n=>!n.classList?.contains('yaya-detail-empty-pane')&&!n.classList?.contains('yaya-detail-section-tabs'))
       };
     });
   }
@@ -167,32 +182,37 @@
     return pane;
   }
 
-  function applySection(card,key){
+  function applySectionFast(card,key){
     if(!ORDER.includes(key))key='marche';
-    const sections=sectionsFor(card);
-    const byKey=new Map(sections.map(s=>[s.key,s]));
-
-    sections.forEach(section=>{
-      section.header.style.display='none';
-      const show=section.key===key;
-      section.nodes.forEach(node=>{node.style.display=show?'':'none';});
-    });
+    if(card.dataset.yayaDetailSection!==key)card.dataset.yayaDetailSection=key;
 
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(tabs){
-      ORDER.forEach(k=>{
-        const empty=ensureEmptyPane(card,tabs,k);
-        empty.style.display=(k===key&&!byKey.has(k))?'block':'none';
-      });
       tabs.querySelectorAll('.yaya-detail-section-tab').forEach(btn=>{
         const on=btn.dataset.section===key;
-        btn.classList.toggle('on',on);
-        btn.setAttribute('aria-selected',on?'true':'false');
+        if(btn.classList.contains('on')!==on)btn.classList.toggle('on',on);
+        const wanted=on?'true':'false';
+        if(btn.getAttribute('aria-selected')!==wanted)btn.setAttribute('aria-selected',wanted);
       });
     }
 
-    card.dataset.yayaDetailSection=key;
-    saveActive(card,key);
+    setTimeout(function(){saveActive(card,key);},0);
+  }
+
+  function bindInstantButton(btn,card,key){
+    if(btn.dataset.instantBound==='1')return;
+    btn.dataset.instantBound='1';
+
+    btn.addEventListener('pointerdown',function(e){
+      if(e.button!=null&&e.button!==0)return;
+      e.preventDefault();
+      applySectionFast(card,key);
+    });
+
+    btn.addEventListener('click',function(e){
+      // Clavier / accessibilité. Les clics pointeur sont déjà traités au pointerdown.
+      if(e.detail===0)applySectionFast(card,key);
+    });
   }
 
   function ensureTabs(card){
@@ -203,7 +223,15 @@
     if(!sections.length)return;
 
     const byKey=new Map(sections.map(s=>[s.key,s]));
-    sections.forEach(s=>{s.header.style.display='none';});
+    sections.forEach(section=>{
+      section.header.style.display='none';
+      section.nodes.forEach(node=>{
+        node.classList.add('yaya-detail-section-node');
+        node.dataset.section=section.key;
+        // Nettoie les display inline posés par les anciennes versions du patch.
+        if(node.style.display==='none')node.style.removeProperty('display');
+      });
+    });
 
     let tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(!tabs){
@@ -224,23 +252,28 @@
         btn.className='yaya-detail-section-tab';
         btn.dataset.section=key;
         btn.setAttribute('role','tab');
-        btn.addEventListener('click',function(){applySection(card,key);});
+        btn.innerHTML='<strong></strong><small></small>';
         tabs.appendChild(btn);
       }
-      btn.replaceChildren();
-      const strong=document.createElement('strong');
-      strong.textContent=LABELS[key];
-      btn.appendChild(strong);
-      const small=document.createElement('small');
-      small.textContent=(section&&section.meta)?section.meta:EMPTY_META[key];
-      btn.appendChild(small);
-      ensureEmptyPane(card,tabs,key);
+
+      bindInstantButton(btn,card,key);
+
+      const strong=btn.querySelector('strong');
+      const small=btn.querySelector('small');
+      const label=LABELS[key];
+      const meta=(section&&section.meta)?section.meta:EMPTY_META[key];
+      if(strong&&strong.textContent!==label)strong.textContent=label;
+      if(small&&small.textContent!==meta)small.textContent=meta;
+
+      const empty=ensureEmptyPane(card,tabs,key);
+      empty.dataset.empty=section?'0':'1';
+      if(empty.textContent!==EMPTY_LABELS[key])empty.textContent=EMPTY_LABELS[key];
     });
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)
       ? card.dataset.yayaDetailSection
       : loadActive(card);
-    applySection(card,active);
+    applySectionFast(card,active);
   }
 
   let scheduled=false;
@@ -262,6 +295,10 @@
     const pane=document.getElementById('pane-chantiers');
     if(!pane){setTimeout(install,150);return;}
     decorate();
+
+    // Surveille uniquement les vrais ajouts/suppressions issus d'un rendu Yaya.
+    // Le patch lui-même ne remplace plus les enfants des boutons à chaque passe,
+    // ce qui évite la boucle MutationObserver de l'ancienne version.
     new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
     window.addEventListener('yaya:data-refreshed',schedule);
   }
