@@ -8,6 +8,18 @@
     return /editDocument|delDocument/i.test(onclick) || /^(✎|✏|✐|✕|×|❌)$/.test(txt);
   }
 
+  function removeAddDocumentButton(){
+    const pane=document.getElementById('pane-documents');
+    if(!pane)return;
+    pane.querySelectorAll('button').forEach(function(btn){
+      const txt=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      const onclick=String(btn.getAttribute('onclick')||'');
+      if(txt.includes('ajouter un document') || /openDocumentModal\(\)/i.test(onclick)){
+        btn.remove();
+      }
+    });
+  }
+
   function clean(root){
     if(!root)return;
     root.querySelectorAll('.achligne.ligD').forEach(function(row){
@@ -18,6 +30,7 @@
   }
 
   function apply(){
+    removeAddDocumentButton();
     clean(document.getElementById('pane-documents'));
     clean(document.getElementById('pane-chantiers'));
   }
