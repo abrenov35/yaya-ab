@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-create-chantier-search-line-main-v2';
+  const STYLE_ID='yaya-create-chantier-search-line-main-v3';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -12,37 +12,35 @@
         gap:10px!important;
         margin:10px 0 14px!important;
         width:100%!important;
+        max-width:100%!important;
+        overflow:visible!important;
       }
       #pane-chantiers .yaya-chantier-search-line[hidden]{display:none!important;}
       #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{
         position:relative!important;
-        flex:1 1 auto!important;
+        flex:1 1 0!important;
+        width:auto!important;
+        max-width:none!important;
         min-width:0!important;
         margin:0!important;
       }
       #pane-chantiers .yaya-chantier-search-line #filtreInput{
         display:block!important;
         width:100%!important;
+        max-width:none!important;
         height:40px!important;
         min-height:40px!important;
-        padding-left:34px!important;
-        padding-right:32px!important;
+        margin:0!important;
+        padding:0 14px!important;
         box-sizing:border-box!important;
       }
-      #pane-chantiers .yaya-search-icon{
-        position:absolute!important;
-        left:11px!important;
-        top:50%!important;
-        transform:translateY(-50%)!important;
-        pointer-events:none!important;
-        font-size:14px!important;
-        color:#8a9aab!important;
-      }
+      #pane-chantiers .yaya-search-icon{display:none!important;}
       #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{
         display:inline-flex!important;
         visibility:visible!important;
         opacity:1!important;
         flex:0 0 auto!important;
+        width:auto!important;
         height:40px!important;
         min-height:40px!important;
         margin:0!important;
@@ -80,6 +78,14 @@
       }
     }catch(e){}
     return true;
+  }
+
+  function removeOrphanSearchIcons(pane){
+    pane.querySelectorAll('.yaya-search-icon').forEach(el=>el.remove());
+    [...pane.querySelectorAll('span')].forEach(el=>{
+      const t=String(el.textContent||'').trim();
+      if(t==='🔍'||t==='🔎'||t==='⌕')el.remove();
+    });
   }
 
   function ensureButton(pane){
@@ -135,26 +141,30 @@
 
     let wrap=input.closest('.yaya-search-wrap');
     if(!wrap){
+      const previousParent=input.parentElement;
       wrap=document.createElement('div');
       wrap.className='yaya-search-wrap';
-      const parent=input.parentNode;
-      if(parent)parent.insertBefore(wrap,input);
+      if(previousParent)previousParent.insertBefore(wrap,input);
       wrap.appendChild(input);
+
+      if(previousParent&&previousParent!==pane){
+        [...previousParent.querySelectorAll(':scope > span')].forEach(el=>{
+          const t=String(el.textContent||'').trim();
+          if(t==='🔍'||t==='🔎'||t==='⌕')el.remove();
+        });
+        if(previousParent.children.length===0&&!String(previousParent.textContent||'').trim())previousParent.remove();
+      }
     }
 
-    let icon=wrap.querySelector('.yaya-search-icon');
-    if(!icon){
-      icon=document.createElement('span');
-      icon.className='yaya-search-icon';
-      icon.textContent='⌕';
-      wrap.appendChild(icon);
-    }
+    wrap.querySelectorAll('.yaya-search-icon').forEach(el=>el.remove());
     return wrap;
   }
 
   function syncMainLine(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
+
+    removeOrphanSearchIcons(pane);
 
     const rows=[...pane.querySelectorAll('.yaya-chantier-search-line')];
     rows.slice(1).forEach(el=>el.remove());
