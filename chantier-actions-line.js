@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v7';
+  const STYLE_ID='yaya-chantier-actions-line-v8';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -16,16 +16,6 @@
         gap:9px!important;
         overflow-x:auto!important;
         scrollbar-width:thin;
-      }
-      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-expense-btn{
-        background:#fff8e1!important;
-        border:1px solid #e4cf8a!important;
-        color:#7a5a00!important;
-        font-weight:700!important;
-      }
-      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-expense-btn:hover{
-        background:#fff2bf!important;
-        border-color:#d8bd62!important;
       }
       #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn{
         order:999!important;
@@ -94,6 +84,29 @@
     else toolbar.appendChild(expense);
   }
 
+  function styleLeftActionButtons(toolbar){
+    if(!toolbar)return;
+    [...toolbar.querySelectorAll('button')].forEach(function(btn){
+      const txt=String(btn.textContent||'')
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+        .replace(/[＋+📄🧾]/g,' ')
+        .replace(/\s+/g,' ')
+        .trim().toLowerCase();
+      const isTarget=txt.includes('ajouter un devis') || txt==='depense' || txt==='document';
+      if(!isTarget)return;
+      btn.style.setProperty('background','#fff','important');
+      btn.style.setProperty('color','#003D7A','important');
+      btn.style.setProperty('border','1px solid #003D7A','important');
+      btn.style.setProperty('border-radius','7px','important');
+      btn.style.setProperty('box-shadow','none','important');
+      btn.style.setProperty('min-height','38px','important');
+      btn.style.setProperty('height','38px','important');
+      btn.style.setProperty('padding','0 15px','important');
+      btn.style.setProperty('font-size','12px','important');
+      btn.style.setProperty('font-weight','700','important');
+    });
+  }
+
   function isDeleteButton(button){
     if(!button)return false;
     const onclick=String(button.getAttribute('onclick')||'');
@@ -115,6 +128,7 @@
     const top=card.querySelector('.top');
     if(!toolbar||!top)return;
     addExpenseButton(toolbar);
+    styleLeftActionButtons(toolbar);
     top.querySelectorAll('select').forEach(sel=>{
       const onchange=String(sel.getAttribute('onchange')||'');
       const txt=String(sel.textContent||'');
