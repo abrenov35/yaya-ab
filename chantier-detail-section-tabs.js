@@ -5,6 +5,8 @@
   const STORAGE_PREFIX='yaya.chantier.detail.section.';
   const ORDER=['marche','depenses','documents'];
   const LABELS={marche:'Marché',depenses:'Dépenses',documents:'Documents'};
+  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',documents:'Aucun document'};
+  const EMPTY_META={marche:'0 €',depenses:'0 €',documents:'0'};
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -49,6 +51,17 @@
         color:#fff!important;
       }
       .yaya-detail-section-tab.on small{opacity:.9!important}
+      .yaya-detail-empty-pane{
+        display:none;
+        padding:20px 14px!important;
+        margin:0 0 8px!important;
+        border:1px dashed #cbd5e1!important;
+        border-radius:8px!important;
+        background:#fafbfd!important;
+        color:#718096!important;
+        font-size:12.5px!important;
+        text-align:center!important;
+      }
       @media(max-width:640px){
         .yaya-detail-section-tabs{
           gap:6px!important;
@@ -90,8 +103,7 @@
     let text=String(el.textContent||'').replace(/\s+/g,' ').trim();
     const label=LABELS[key]||'';
     const re=new RegExp('^'+label.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'),'i');
-    text=text.replace(re,'').trim();
-    return text;
+    return text.replace(re,'').trim();
   }
 
   function cardId(card){
@@ -112,32 +124,29 @@
     const children=[...card.children];
     const headers=[];
     children.forEach((el,index)=>{
-      if(!(el.classList&& (el.classList.contains('seclabel')||el.classList.contains('section-header'))))return;
+      if(!(el.classList&&(el.classList.contains('seclabel')||el.classList.contains('section-header'))))return;
       const key=keyForHeader(el);
       headers.push({el,index,key});
     });
-
-    const targets=headers.filter(h=>ORDER.includes(h.key));
-    return targets.map(target=>{
+    return headers.filter(h=>ORDER.includes(h.key)).map(target=>{
       const next=headers.find(h=>h.index>target.index);
       const end=next?next.index:children.length;
       return {
         key:target.key,
         header:target.el,
         meta:metaForHeader(target.el,target.key),
-        nodes:children.slice(target.index+1,end)
+        nodes:children.slice(target.index+1,end).filter(n=>!n.classList?.contains('yaya-detail-empty-pane'))
       };
     });
   }
 
-  function loadActive(card,available){
+  function loadActive(card){
     const cid=cardId(card);
     let saved='';
     if(cid){
       try{saved=localStorage.getItem(STORAGE_PREFIX+cid)||'';}catch(e){}
     }
-    if(available.includes(saved))return saved;
-    return available.includes('marche')?'marche':available[0];
+    return ORDER.includes(saved)?saved:'marche';
   }
 
   function saveActive(card,key){
@@ -146,27 +155,42 @@
     try{localStorage.setItem(STORAGE_PREFIX+cid,key);}catch(e){}
   }
 
+  function ensureEmptyPane(card,tabs,key){
+    let pane=card.querySelector(':scope > .yaya-detail-empty-pane[data-section="'+key+'"]');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-empty-pane';
+      pane.dataset.section=key;
+      pane.textContent=EMPTY_LABELS[key];
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+    return pane;
+  }
+
   function applySection(card,key){
+    if(!ORDER.includes(key))key='marche';
     const sections=sectionsFor(card);
-    const available=sections.map(s=>s.key);
-    if(!available.includes(key))key=available[0];
-    if(!key)return;
+    const byKey=new Map(sections.map(s=>[s.key,s]));
 
     sections.forEach(section=>{
       section.header.style.display='none';
       const show=section.key===key;
-      section.nodes.forEach(node=>{
-        node.style.display=show?'':'none';
-      });
+      section.nodes.forEach(node=>{node.style.display=show?'':'none';});
     });
 
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(tabs){
+      ORDER.forEach(k=>{
+        const empty=ensureEmptyPane(card,tabs,k);
+        empty.style.display=(k===key&&!byKey.has(k))?'block':'none';
+      });
       tabs.querySelectorAll('.yaya-detail-section-tab').forEach(btn=>{
-        btn.classList.toggle('on',btn.dataset.section===key);
-        btn.setAttribute('aria-selected',btn.dataset.section===key?'true':'false');
+        const on=btn.dataset.section===key;
+        btn.classList.toggle('on',on);
+        btn.setAttribute('aria-selected',on?'true':'false');
       });
     }
+
     card.dataset.yayaDetailSection=key;
     saveActive(card,key);
   }
@@ -174,10 +198,11 @@
   function ensureTabs(card){
     if(!card||card.classList.contains('yaya-docs-only-card'))return;
     const sections=sectionsFor(card);
-    const byKey=new Map(sections.map(s=>[s.key,s]));
-    const available=ORDER.filter(k=>byKey.has(k));
-    if(available.length<2)return;
 
+    // Une carte repliée n'a aucune section de détail : ne pas lui ajouter les boutons.
+    if(!sections.length)return;
+
+    const byKey=new Map(sections.map(s=>[s.key,s]));
     sections.forEach(s=>{s.header.style.display='none';});
 
     let tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
@@ -190,7 +215,7 @@
       else card.appendChild(tabs);
     }
 
-    available.forEach(key=>{
+    ORDER.forEach(key=>{
       const section=byKey.get(key);
       let btn=tabs.querySelector('[data-section="'+key+'"]');
       if(!btn){
@@ -206,20 +231,15 @@
       const strong=document.createElement('strong');
       strong.textContent=LABELS[key];
       btn.appendChild(strong);
-      if(section.meta){
-        const small=document.createElement('small');
-        small.textContent=section.meta;
-        btn.appendChild(small);
-      }
+      const small=document.createElement('small');
+      small.textContent=(section&&section.meta)?section.meta:EMPTY_META[key];
+      btn.appendChild(small);
+      ensureEmptyPane(card,tabs,key);
     });
 
-    [...tabs.querySelectorAll('.yaya-detail-section-tab')].forEach(btn=>{
-      if(!available.includes(btn.dataset.section))btn.remove();
-    });
-
-    const active=available.includes(card.dataset.yayaDetailSection)
+    const active=ORDER.includes(card.dataset.yayaDetailSection)
       ? card.dataset.yayaDetailSection
-      : loadActive(card,available);
+      : loadActive(card);
     applySection(card,active);
   }
 
