@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const id='yaya-chantier-tabs-soft-theme-v3';
+  const id='yaya-chantier-tabs-soft-theme-v4';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -76,10 +76,8 @@
       color:#42627D!important;
     }
 
-    /* Les trois actions de gauche reprennent exactement le langage visuel des actions de droite. */
+    /* Ajouter un devis reste l'action bleue. */
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
-    #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"],
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp{
       background:#fff!important;
       color:#003D7A!important;
@@ -93,10 +91,28 @@
       font-weight:700!important;
     }
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"]:hover,
-    #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn:hover,
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]:hover,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp:hover{
       background:#E8F2F9!important;
+    }
+
+    /* Dépense et Document reviennent au style neutre. */
+    #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
+    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]{
+      background:#FBFAF7!important;
+      color:#294766!important;
+      border:1px solid #D8DDE4!important;
+      border-radius:7px!important;
+      box-shadow:none!important;
+      min-height:38px!important;
+      height:38px!important;
+      padding:0 15px!important;
+      font-size:12px!important;
+      font-weight:700!important;
+    }
+    #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn:hover,
+    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]:hover{
+      background:#F3F0E9!important;
+      border-color:#C6CED8!important;
     }
 
     @media(max-width:760px){
