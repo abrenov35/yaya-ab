@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-chantier-toolbar-style-v3';
+  const id='yaya-chantier-toolbar-style-v4';
   if(document.getElementById(id))return;
   const style=document.createElement('style');
   style.id=id;
@@ -42,13 +42,13 @@
       background:#dce8f5!important;
       border-color:#adc3dc!important;
     }
-    #pane-chantiers .chantier-fin-toolbar > .btn2:not(.chantier-archive-btn):not(.yaya-edit-chantier-btn){
+    #pane-chantiers .chantier-fin-toolbar > .btn2:not(.chantier-archive-btn):not(.yaya-edit-chantier-btn):not(.chantier-delete-btn){
       order:2!important;
       background:#fbfaf7!important;
       border:1px solid #d8dde4!important;
       color:#294766!important;
     }
-    #pane-chantiers .chantier-fin-toolbar > .btn2:not(.chantier-archive-btn):not(.yaya-edit-chantier-btn):hover{
+    #pane-chantiers .chantier-fin-toolbar > .btn2:not(.chantier-archive-btn):not(.yaya-edit-chantier-btn):not(.chantier-delete-btn):hover{
       background:#f3f0e9!important;
       border-color:#c6ced8!important;
     }
@@ -72,6 +72,14 @@
     #pane-chantiers .chantier-fin-toolbar > .chantier-archive-btn:hover{
       background:#faefec!important;
       border-color:#ddbdb5!important;
+    }
+    #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-delete-btn,
+    #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn{
+      order:999!important;
+      margin-left:0!important;
+      background:#fff!important;
+      border:1px solid #e6c4c1!important;
+      color:#a64b43!important;
     }
     #pane-chantiers .chantier-fin-toolbar > button:active{
       transform:translateY(1px)!important;
