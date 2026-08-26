@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v3';
+  const STYLE_ID='yaya-chantier-actions-line-v4';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -31,8 +31,8 @@
         border:1px solid #cfd8e3!important;
         color:#334e6b!important;
       }
-      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-delete-btn{
-        order:99!important;
+      #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn{
+        order:999!important;
         margin-left:0!important;
         background:#fff1f1!important;
         border:1px solid #e3b4b4!important;
@@ -42,7 +42,7 @@
       #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-close-btn:hover{
         background:#eef3f8!important;
       }
-      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-delete-btn:hover{
+      #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn:hover{
         background:#fde7e7!important;
         border-color:#d79a9a!important;
         color:#991b1b!important;
@@ -107,6 +107,13 @@
     else toolbar.appendChild(expense);
   }
 
+  function isDeleteButton(button){
+    if(!button)return false;
+    const onclick=String(button.getAttribute('onclick')||'');
+    const txt=String(button.textContent||'').trim().toLowerCase();
+    return onclick.includes('delChantier') || txt==='supprimer' || txt==='supprimer chantier';
+  }
+
   function cleanCard(card){
     if(!card)return;
     const toolbar=card.querySelector('.chantier-fin-toolbar');
@@ -124,19 +131,21 @@
       }
     });
 
-    const buttons=[...top.querySelectorAll('button')];
-    const del=buttons.find(b=>String(b.getAttribute('onclick')||'').includes('delChantier'));
-    const close=buttons.find(b=>String(b.getAttribute('onclick')||'').includes('toggleChantier')&&String(b.textContent||'').trim()==='Fermer');
+    const allButtons=[...card.querySelectorAll('button')];
+    const del=allButtons.find(isDeleteButton);
+    const close=allButtons.find(b=>String(b.getAttribute('onclick')||'').includes('toggleChantier')&&String(b.textContent||'').trim()==='Fermer');
 
-    if(close){
+    if(close && close.parentElement!==toolbar){
       close.classList.add('chantier-close-btn');
       close.removeAttribute('style');
       toolbar.appendChild(close);
     }
+
     if(del){
       del.classList.add('chantier-delete-btn');
       del.removeAttribute('style');
-      toolbar.appendChild(del);
+      // Supprimer doit toujours être le dernier bouton réel de la barre.
+      if(toolbar.lastElementChild!==del)toolbar.appendChild(del);
     }
   }
 
