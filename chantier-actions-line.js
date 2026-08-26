@@ -1,11 +1,14 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v6';
+  const STYLE_ID='yaya-chantier-actions-line-v7';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      #pane-chantiers button[onclick="fermerFocus()"]{
+        display:none!important;
+      }
       #pane-chantiers .chantier-fin-toolbar{
         display:flex!important;
         align-items:center!important;
