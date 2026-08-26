@@ -1,6 +1,8 @@
 (function(){
   'use strict';
 
+  let verifySeq=0;
+
   function normalizeName(value){
     return String(value||'')
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -22,7 +24,7 @@
     })||null;
   }
 
-  function getChantier(cid){
+  function getChantierById(cid){
     try{
       return Array.isArray(S.chantiers)
         ? S.chantiers.find(function(c){return String(c.id)===String(cid);})||null
@@ -30,11 +32,28 @@
     }catch(e){return null;}
   }
 
+  function getChantierByName(name){
+    const wanted=normalizeName(name);
+    if(!wanted)return null;
+    try{
+      return Array.isArray(S.chantiers)
+        ? S.chantiers.find(function(c){return normalizeName(c&&c.nom)===wanted;})||null
+        : null;
+    }catch(e){return null;}
+  }
+
+  function currentModalChantier(cid){
+    const byId=cid?getChantierById(cid):null;
+    if(byId)return byId;
+    const input=document.getElementById('editChNom');
+    return input?getChantierByName(input.value):null;
+  }
+
   function setPlanningBox(stateType,message){
     const state=document.getElementById('editPlanningState');
     const btn=document.getElementById('editPlanningBtn');
     const note=document.getElementById('editPlanningNote');
-    if(!state||!btn||!note)return;
+    if(!state||!btn||!note)return false;
 
     if(stateType==='checking'){
       state.textContent='Vérification du Planning…';
@@ -43,7 +62,7 @@
       btn.disabled=true;
       btn.style.opacity='.6';
       note.textContent='Yaya vérifie directement le Planning.';
-      return;
+      return true;
     }
 
     if(stateType==='present'){
@@ -53,7 +72,7 @@
       btn.disabled=true;
       btn.style.opacity='.6';
       note.textContent=message||'Chantier retrouvé dans Planning.';
-      return;
+      return true;
     }
 
     if(stateType==='error'){
@@ -63,7 +82,7 @@
       btn.disabled=false;
       btn.style.opacity='1';
       note.textContent=message||'Impossible de vérifier Planning pour le moment.';
-      return;
+      return true;
     }
 
     state.textContent='— Pas présent dans Planning';
@@ -72,32 +91,38 @@
     btn.disabled=false;
     btn.style.opacity='1';
     note.textContent=message||'Aucun chantier correspondant trouvé dans Planning.';
+    return true;
   }
 
   async function verifyPlanning(cid){
-    const chantier=getChantier(cid);
-    if(!chantier)return;
-    if(typeof getChantiersPlanning!=='function'){
-      setPlanningBox('error','API Planning indisponible.');
-      return;
-    }
+    const chantier=currentModalChantier(cid);
+    const nameInput=document.getElementById('editChNom');
+    const nom=String((nameInput&&nameInput.value)||(chantier&&chantier.nom)||'').trim();
+    if(!nom||!document.getElementById('editPlanningState'))return;
 
+    const seq=++verifySeq;
     setPlanningBox('checking');
+
     try{
+      if(typeof getChantiersPlanning!=='function')throw new Error('API Planning indisponible');
       const list=await getChantiersPlanning();
-      const match=findPlanningMatch(list,chantier.nom);
+      if(seq!==verifySeq||!document.getElementById('editPlanningState'))return;
+      const match=findPlanningMatch(list,nom);
       if(match){
-        chantier.planningPresent=true;
-        chantier.sourcePlanningId=match.id?String(match.id):chantier.sourcePlanningId||'';
-        chantier.planningNom=match.nom||chantier.nom;
-        setPlanningBox('present','Retrouvé dans Planning : '+(match.nom||chantier.nom)+'.');
-      }else if(chantier.planningPresent||chantier.sourcePlanningId){
+        if(chantier){
+          chantier.planningPresent=true;
+          chantier.sourcePlanningId=match.id?String(match.id):chantier.sourcePlanningId||'';
+          chantier.planningNom=match.nom||nom;
+        }
+        setPlanningBox('present','Retrouvé dans Planning : '+(match.nom||nom)+'.');
+      }else if(chantier&&(chantier.planningPresent||chantier.sourcePlanningId)){
         setPlanningBox('present','Déjà rattaché au Planning.');
       }else{
         setPlanningBox('absent');
       }
     }catch(err){
-      if(chantier.planningPresent||chantier.sourcePlanningId){
+      if(seq!==verifySeq||!document.getElementById('editPlanningState'))return;
+      if(chantier&&(chantier.planningPresent||chantier.sourcePlanningId)){
         setPlanningBox('present','Déjà rattaché au Planning.');
       }else{
         setPlanningBox('error','Vérification Planning impossible : '+(err&&err.message?err.message:'erreur réseau')+'.');
@@ -105,21 +130,38 @@
     }
   }
 
-  function install(){
-    if(typeof window.openExistingChantierModal!=='function'){
-      setTimeout(install,120);
-      return;
-    }
-    if(window.openExistingChantierModal.__planningStatusFixed)return;
-
+  function hookOpenFunction(){
+    if(typeof window.openExistingChantierModal!=='function')return;
+    if(window.openExistingChantierModal.__planningStatusFixedV2)return;
     const original=window.openExistingChantierModal;
     const wrapped=function(cid){
       const result=original.apply(this,arguments);
-      setTimeout(function(){verifyPlanning(cid);},20);
+      setTimeout(function(){verifyPlanning(cid);},0);
       return result;
     };
-    wrapped.__planningStatusFixed=true;
+    wrapped.__planningStatusFixedV2=true;
     window.openExistingChantierModal=wrapped;
+  }
+
+  let modalTimer=0;
+  function watchModal(){
+    const root=document.getElementById('modalRoot');
+    if(!root){setTimeout(watchModal,150);return;}
+    new MutationObserver(function(){
+      clearTimeout(modalTimer);
+      modalTimer=setTimeout(function(){
+        hookOpenFunction();
+        if(document.getElementById('editPlanningState')&&document.getElementById('editChNom')){
+          verifyPlanning('');
+        }
+      },10);
+    }).observe(root,{childList:true,subtree:true});
+  }
+
+  function install(){
+    hookOpenFunction();
+    watchModal();
+    setInterval(hookOpenFunction,1000);
   }
 
   install();
