@@ -4,6 +4,7 @@
   const FRAME_ID='yayaFicheInterFrame';
   const HOST_ID='yayaFicheInterHost';
   const STYLE_ID='yaya-fiche-inter-inline-style';
+  const INNER_STYLE_ID='yaya-fiche-inter-embedded-polish';
 
   function ensureStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -44,6 +45,96 @@
     document.head.appendChild(style);
   }
 
+  function polishEmbeddedFrame(frame){
+    try{
+      const doc=frame.contentDocument;
+      if(!doc||!doc.head)return;
+      let style=doc.getElementById(INNER_STYLE_ID);
+      if(style)return;
+      style=doc.createElement('style');
+      style.id=INNER_STYLE_ID;
+      style.textContent=`
+        .header{
+          background:#ffffff!important;
+          min-height:56px!important;
+          padding:0 18px!important;
+          border-bottom:1px solid #dce3ef!important;
+          box-shadow:0 2px 10px rgba(36,63,143,.05)!important;
+        }
+        .header-top{
+          min-height:56px!important;
+          max-width:1100px!important;
+          gap:18px!important;
+        }
+        .brand{color:#243f8f!important;}
+        .logo-text{
+          color:#243f8f!important;
+          font-size:12px!important;
+          letter-spacing:.15px!important;
+        }
+        .logo-text::after{
+          height:20px!important;
+          background:#d6deea!important;
+          margin:0 9px!important;
+        }
+        .logo-sub{
+          color:#8a6a11!important;
+          font-size:9px!important;
+          letter-spacing:.5px!important;
+        }
+        .toolbar-actions{gap:7px!important;}
+        .toolbar-btn,
+        .type-select{
+          height:36px!important;
+          border:1px solid #c8d3e1!important;
+          border-radius:8px!important;
+          background:#ffffff!important;
+          color:#294766!important;
+          box-shadow:none!important;
+          font-size:10.5px!important;
+          font-weight:700!important;
+        }
+        .toolbar-btn{padding:0 14px!important;}
+        .toolbar-btn:hover,
+        .type-select:hover{
+          background:#f5f8fc!important;
+          border-color:#aebfd2!important;
+        }
+        .toolbar-btn.active{
+          background:#edf3fa!important;
+          color:#24436b!important;
+          border-color:#b8c9dd!important;
+        }
+        .toolbar-btn.active::after{
+          height:2px!important;
+          left:10px!important;
+          right:10px!important;
+          bottom:-1px!important;
+          background:#d5a51f!important;
+          border-radius:2px!important;
+        }
+        .type-select{
+          width:150px!important;
+          padding:0 28px 0 12px!important;
+          outline:none!important;
+        }
+        .type-select option{background:#fff!important;color:#172b43!important;}
+        .main{padding-top:20px!important;}
+        @media(max-width:620px){
+          .header{min-height:46px!important;padding:0 8px!important;}
+          .header-top{min-height:46px!important;gap:6px!important;}
+          .toolbar-btn,.type-select{height:31px!important;font-size:9px!important;}
+          .toolbar-btn{padding:0 8px!important;}
+          .type-select{width:112px!important;}
+          .logo-text{font-size:10px!important;}
+        }
+      `;
+      doc.head.appendChild(style);
+    }catch(e){
+      console.warn('Style Fiche inter intégré non appliqué',e);
+    }
+  }
+
   function ensureHost(){
     let host=document.getElementById(HOST_ID);
     if(host)return host;
@@ -73,7 +164,10 @@
       frame.title='Fiche inter';
       frame.src=link.getAttribute('href')||'https://abrenov35.github.io/docs-chantier-ab/';
       frame.setAttribute('loading','eager');
+      frame.addEventListener('load',()=>polishEmbeddedFrame(frame));
       host.appendChild(frame);
+    }else{
+      polishEmbeddedFrame(frame);
     }
     host.classList.add('on');
     document.body.classList.add('yaya-fiche-inter-open');
