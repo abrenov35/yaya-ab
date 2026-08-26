@@ -11,17 +11,33 @@
   function applyMarginBadgeColors(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
-    pane.querySelectorAll('.card .top span').forEach(function(el){
-      const txt=String(el.textContent||'').trim();
-      const m=txt.match(/^(-?\d+(?:[.,]\d+)?)\s*%$/);
+    pane.querySelectorAll('.card .top').forEach(function(top){
+      const spans=[...top.querySelectorAll('span')];
+      const pctEl=spans.find(function(el){
+        return /^(-?\d+(?:[.,]\d+)?)\s*%$/.test(String(el.textContent||'').trim());
+      });
+      if(!pctEl)return;
+
+      const m=String(pctEl.textContent||'').trim().match(/^(-?\d+(?:[.,]\d+)?)\s*%$/);
       if(!m)return;
       const pct=parseFloat(m[1].replace(',','.'));
       if(!Number.isFinite(pct))return;
+
       const p=palette(pct);
-      el.style.setProperty('background',p.bg,'important');
-      el.style.setProperty('color',p.fg,'important');
-      el.style.removeProperty('border');
-      el.style.removeProperty('box-shadow');
+      pctEl.style.setProperty('background',p.bg,'important');
+      pctEl.style.setProperty('color',p.fg,'important');
+      pctEl.style.removeProperty('border');
+      pctEl.style.removeProperty('box-shadow');
+
+      const margeEl=spans.find(function(el){
+        return /^Marge\b/i.test(String(el.textContent||'').trim());
+      });
+      if(margeEl){
+        margeEl.style.setProperty('color',p.fg,'important');
+        margeEl.querySelectorAll('b').forEach(function(b){
+          b.style.setProperty('color',p.fg,'important');
+        });
+      }
     });
   }
 
