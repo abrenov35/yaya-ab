@@ -1,46 +1,18 @@
 (function(){
   'use strict';
 
-  function isEditOrDelete(btn){
-    if(!btn)return false;
-    const txt=String(btn.textContent||'').trim();
-    const onclick=String(btn.getAttribute('onclick')||'');
-    return /editDocument|delDocument/i.test(onclick) || /^(✎|✏|✐|✕|×|❌)$/.test(txt);
-  }
+  const STYLE_ID='yaya-documents-view-only-css-v1';
+  if(document.getElementById(STYLE_ID))return;
 
-  function removeAddDocumentButton(){
-    const pane=document.getElementById('pane-documents');
-    if(!pane)return;
-    pane.querySelectorAll('button').forEach(function(btn){
-      const txt=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-      const onclick=String(btn.getAttribute('onclick')||'');
-      if(txt.includes('ajouter un document') || /openDocumentModal\(\)/i.test(onclick)){
-        btn.remove();
-      }
-    });
-  }
-
-  function cleanDocumentsPage(){
-    const root=document.getElementById('pane-documents');
-    if(!root)return;
-    root.querySelectorAll('.achligne.ligD').forEach(function(row){
-      row.querySelectorAll('button').forEach(function(btn){
-        if(isEditOrDelete(btn))btn.remove();
-      });
-    });
-  }
-
-  function apply(){
-    removeAddDocumentButton();
-    cleanDocumentsPage();
-  }
-
-  const docPane=document.getElementById('pane-documents');
-  if(docPane){
-    new MutationObserver(apply).observe(docPane,{childList:true,subtree:true});
-  }
-
-  setTimeout(apply,0);
-  setTimeout(apply,100);
-  setTimeout(apply,500);
+  const style=document.createElement('style');
+  style.id=STYLE_ID;
+  style.textContent=`
+    /* Page Documents uniquement : lecture seule. */
+    #pane-documents button[onclick^="openDocumentModal("],
+    #pane-documents button[onclick^="editDocument("],
+    #pane-documents button[onclick^="delDocument("]{
+      display:none!important;
+    }
+  `;
+  document.head.appendChild(style);
 })();
