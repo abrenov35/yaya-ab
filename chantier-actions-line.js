@@ -144,6 +144,7 @@
     if(del){
       del.classList.add('chantier-delete-btn');
       del.removeAttribute('style');
+      // Supprimer doit toujours être le dernier bouton réel de la barre.
       if(toolbar.lastElementChild!==del)toolbar.appendChild(del);
     }
   }
