@@ -59,8 +59,6 @@
   }
 
   function largeGeometry(viewportW,viewportH){
-    // Grand aperçu : assez large pour lire, mais la fenêtre reste autour du document
-    // au lieu de prendre toute la largeur de l'écran.
     return {
       width:Math.min(Math.max(620,viewportW-10),1160),
       height:Math.min(Math.max(560,viewportH-8),920)
@@ -121,8 +119,8 @@
       stage.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     }
 
-    modal.querySelectorAll('.piece-pdf-page canvas').forEach(function(canvas){
-      canvas.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
+    modal.querySelectorAll('.piece-pdf-page,.piece-pdf-page canvas,.piece-image-stage img,.piece-drive-pages-stage img').forEach(function(el){
+      el.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     });
 
     return changed;
@@ -184,9 +182,9 @@
     root.dataset.yayaPreviewInteractions='1';
 
     root.addEventListener('click',function(e){
-      const canvas=e.target&&e.target.closest?e.target.closest('.piece-pdf-page canvas'):null;
-      if(!canvas)return;
-      const modal=canvas.closest('.piece-preview-modal');
+      const target=e.target&&e.target.closest?e.target.closest('.piece-pdf-page,.piece-image-stage img,.piece-drive-pages-stage img'):null;
+      if(!target)return;
+      const modal=target.closest('.piece-preview-modal');
       if(!modal)return;
       e.preventDefault();
       e.stopPropagation();
