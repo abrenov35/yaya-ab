@@ -1,95 +1,106 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-create-chantier-search-line-v2';
+  const STYLE_ID='yaya-create-chantier-search-line-main-v1';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
       #pane-chantiers .yaya-chantier-search-line{
-        display:flex!important;
-        align-items:center!important;
-        gap:10px!important;
-        margin:10px 0 14px!important;
-        width:100%!important;
+        display:flex;
+        align-items:center;
+        gap:10px;
+        margin:10px 0 14px;
+        width:100%;
       }
+      #pane-chantiers .yaya-chantier-search-line[hidden]{display:none!important;}
       #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{
-        position:relative!important;
-        flex:1 1 auto!important;
-        min-width:0!important;
-        margin:0!important;
+        position:relative;
+        flex:1 1 auto;
+        min-width:0;
+        margin:0;
       }
       #pane-chantiers .yaya-chantier-search-line #filtreInput{
-        width:100%!important;
-        height:40px!important;
-        min-height:40px!important;
-        padding-left:34px!important;
-        padding-right:32px!important;
-        box-sizing:border-box!important;
+        width:100%;
+        height:40px;
+        min-height:40px;
+        padding-left:34px;
+        padding-right:32px;
+        box-sizing:border-box;
       }
       #pane-chantiers .yaya-search-icon{
-        position:absolute!important;
-        left:11px!important;
-        top:50%!important;
-        transform:translateY(-50%)!important;
-        pointer-events:none!important;
-        font-size:14px!important;
-        color:#8a9aab!important;
+        position:absolute;
+        left:11px;
+        top:50%;
+        transform:translateY(-50%);
+        pointer-events:none;
+        font-size:14px;
+        color:#8a9aab;
       }
       #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{
-        flex:0 0 auto!important;
-        height:40px!important;
-        min-height:40px!important;
-        margin:0!important;
-        padding:0 15px!important;
-        display:inline-flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        white-space:nowrap!important;
-        border-radius:8px!important;
-        background:#24436B!important;
-        color:#fff!important;
-        border:1px solid #24436B!important;
-        font-size:13px!important;
-        font-weight:700!important;
+        flex:0 0 auto;
+        height:40px;
+        min-height:40px;
+        margin:0;
+        padding:0 15px;
+        display:inline-flex;
+        align-items:center;
+        justify-content:center;
+        white-space:nowrap;
+        border-radius:8px;
+        background:#24436B;
+        color:#fff;
+        border:1px solid #24436B;
+        font-size:13px;
+        font-weight:700;
       }
       #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn:hover{
-        background:#1c3657!important;
-        border-color:#1c3657!important;
+        background:#1c3657;
+        border-color:#1c3657;
       }
-      #pane-chantiers #yayaCreateChantierWrap:empty{display:none!important}
+      #pane-chantiers #yayaCreateChantierWrap:empty{display:none!important;}
       @media(max-width:640px){
-        #pane-chantiers .yaya-chantier-search-line{gap:7px!important}
+        #pane-chantiers .yaya-chantier-search-line{gap:7px;}
         #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{
-          padding:0 10px!important;
-          font-size:11.5px!important;
+          padding:0 10px;
+          font-size:11.5px;
         }
       }
     `;
     document.head.appendChild(style);
   }
 
+  function isMainChantiersPage(){
+    try{
+      if(typeof expChantiers!=='undefined' && expChantiers && typeof expChantiers.size==='number'){
+        return expChantiers.size===0;
+      }
+    }catch(e){}
+    return true;
+  }
+
   function ensureButton(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return null;
-    let btn=document.getElementById('yayaCreateChantierBtn');
+
+    const duplicates=[...pane.querySelectorAll('#yayaCreateChantierBtn')];
+    duplicates.slice(1).forEach(el=>el.remove());
+
+    let btn=duplicates[0]||null;
     if(!btn){
       btn=document.createElement('button');
       btn.id='yayaCreateChantierBtn';
       btn.type='button';
       btn.className='btnp';
-      btn.textContent='➕ Ajouter un chantier';
       btn.addEventListener('click',()=>{
         if(typeof window.openChantierModal==='function')window.openChantierModal();
       });
-    }else{
-      btn.textContent='➕ Ajouter un chantier';
-      btn.style.display='inline-flex';
     }
+    btn.textContent='➕ Ajouter un chantier';
     return btn;
   }
 
-  function createSearchWrap(pane){
+  function createSearchWrap(){
     const wrap=document.createElement('div');
     wrap.className='yaya-search-wrap';
     wrap.dataset.syntheticSearch='1';
@@ -117,52 +128,56 @@
     return wrap;
   }
 
-  function align(){
+  function syncMainLine(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
 
+    const rows=[...pane.querySelectorAll('.yaya-chantier-search-line')];
+    rows.slice(1).forEach(el=>el.remove());
+    let row=rows[0]||null;
+
     let input=pane.querySelector('#filtreInput');
-    let searchWrap=input&&input.parentElement;
-
-    if(!input){
-      searchWrap=createSearchWrap(pane);
+    let searchWrap=input&&input.closest('.yaya-search-wrap');
+    if(!searchWrap){
+      searchWrap=createSearchWrap();
       input=searchWrap.querySelector('#filtreInput');
-    }else if(searchWrap){
-      searchWrap.classList.add('yaya-search-wrap');
     }
-    if(!searchWrap)return;
 
-    let row=pane.querySelector('.yaya-chantier-search-line');
     if(!row){
       row=document.createElement('div');
       row.className='yaya-chantier-search-line';
-      if(searchWrap.parentNode&&searchWrap.parentNode!==pane){
-        searchWrap.parentNode.insertBefore(row,searchWrap);
-      }else{
-        const tabs=pane.querySelector('.yaya-suivi-tabs');
-        if(tabs&&tabs.parentNode===pane&&tabs.nextSibling)pane.insertBefore(row,tabs.nextSibling);
-        else pane.insertBefore(row,pane.firstChild);
-      }
+      pane.insertBefore(row,pane.firstChild);
     }
 
     if(searchWrap.parentNode!==row)row.appendChild(searchWrap);
-
     const btn=ensureButton();
     if(btn&&btn.parentNode!==row)row.appendChild(btn);
 
     const oldWrap=document.getElementById('yayaCreateChantierWrap');
-    if(oldWrap&&oldWrap!==row&&oldWrap.children.length===0)oldWrap.remove();
+    if(oldWrap&&oldWrap!==row)oldWrap.remove();
+
+    row.hidden=!isMainChantiersPage();
   }
 
-  let scheduled=false;
-  function schedule(){
-    if(scheduled)return;
-    scheduled=true;
-    requestAnimationFrame(()=>{scheduled=false;align();});
+  function wrapAfterRender(name){
+    const fn=window[name];
+    if(typeof fn!=='function'||fn.__yayaMainLineWrapped)return false;
+    const wrapped=function(){
+      const result=fn.apply(this,arguments);
+      setTimeout(syncMainLine,0);
+      return result;
+    };
+    wrapped.__yayaMainLineWrapped=true;
+    window[name]=wrapped;
+    return true;
   }
 
-  const obs=new MutationObserver(schedule);
-  obs.observe(document.documentElement,{childList:true,subtree:true});
-  setTimeout(align,50);
-  setTimeout(align,250);
+  function install(){
+    syncMainLine();
+    const r1=wrapAfterRender('renderChantiers');
+    const r2=wrapAfterRender('toggleChantier');
+    if(!r1||!r2)setTimeout(install,180);
+  }
+
+  install();
 })();
