@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v8';
+  const STYLE_ID='yaya-chantier-actions-line-v9';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -84,27 +84,26 @@
     else toolbar.appendChild(expense);
   }
 
+  function applyBlueActionStyle(el){
+    if(!el||!el.style)return;
+    el.style.setProperty('background','#fff','important');
+    el.style.setProperty('color','#003D7A','important');
+    el.style.setProperty('border','1px solid #003D7A','important');
+    el.style.setProperty('border-radius','7px','important');
+    el.style.setProperty('box-shadow','none','important');
+    el.style.setProperty('min-height','38px','important');
+    el.style.setProperty('height','38px','important');
+    el.style.setProperty('padding','0 15px','important');
+    el.style.setProperty('font-size','12px','important');
+    el.style.setProperty('font-weight','700','important');
+  }
+
   function styleLeftActionButtons(toolbar){
     if(!toolbar)return;
-    [...toolbar.querySelectorAll('button')].forEach(function(btn){
-      const txt=String(btn.textContent||'')
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
-        .replace(/[＋+📄🧾]/g,' ')
-        .replace(/\s+/g,' ')
-        .trim().toLowerCase();
-      const isTarget=txt.includes('ajouter un devis') || txt==='depense' || txt==='document';
-      if(!isTarget)return;
-      btn.style.setProperty('background','#fff','important');
-      btn.style.setProperty('color','#003D7A','important');
-      btn.style.setProperty('border','1px solid #003D7A','important');
-      btn.style.setProperty('border-radius','7px','important');
-      btn.style.setProperty('box-shadow','none','important');
-      btn.style.setProperty('min-height','38px','important');
-      btn.style.setProperty('height','38px','important');
-      btn.style.setProperty('padding','0 15px','important');
-      btn.style.setProperty('font-size','12px','important');
-      btn.style.setProperty('font-weight','700','important');
+    const controls=[...toolbar.children].filter(function(el){
+      return el && (el.tagName==='BUTTON' || el.tagName==='A');
     });
+    controls.slice(0,3).forEach(applyBlueActionStyle);
   }
 
   function isDeleteButton(button){
@@ -121,14 +120,19 @@
     });
   }
 
+  function cleanToolbar(toolbar){
+    if(!toolbar)return;
+    addExpenseButton(toolbar);
+    styleLeftActionButtons(toolbar);
+  }
+
   function cleanCard(card){
     if(!card)return;
     removeCloseButtons(card);
     const toolbar=card.querySelector('.chantier-fin-toolbar');
     const top=card.querySelector('.top');
-    if(!toolbar||!top)return;
-    addExpenseButton(toolbar);
-    styleLeftActionButtons(toolbar);
+    if(toolbar)cleanToolbar(toolbar);
+    if(!top)return;
     top.querySelectorAll('select').forEach(sel=>{
       const onchange=String(sel.getAttribute('onchange')||'');
       const txt=String(sel.textContent||'');
@@ -136,10 +140,11 @@
     });
     const allButtons=[...card.querySelectorAll('button')];
     const del=allButtons.find(isDeleteButton);
-    if(del){
+    if(del&&toolbar){
       del.classList.add('chantier-delete-btn');
       del.removeAttribute('style');
       if(toolbar.lastElementChild!==del)toolbar.appendChild(del);
+      styleLeftActionButtons(toolbar);
     }
   }
 
@@ -147,6 +152,7 @@
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
     removeCloseButtons(pane);
+    pane.querySelectorAll('.chantier-fin-toolbar').forEach(cleanToolbar);
     pane.querySelectorAll('.card').forEach(cleanCard);
   }
 
@@ -154,4 +160,5 @@
   obs.observe(document.documentElement,{childList:true,subtree:true});
   setTimeout(apply,50);
   setTimeout(apply,300);
+  setTimeout(apply,1000);
 })();
