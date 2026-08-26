@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v5';
+  const STYLE_ID='yaya-chantier-actions-line-v6';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -59,7 +59,6 @@
   window.openAchatForChantier=function(cid){
     if(typeof window.openAchatModal!=='function')return;
     window.openAchatModal();
-
     const preselect=function(){
       const sel=document.getElementById('acCh');
       if(!sel)return false;
@@ -67,7 +66,6 @@
       sel.dispatchEvent(new Event('change',{bubbles:true}));
       return true;
     };
-
     requestAnimationFrame(preselect);
     setTimeout(preselect,40);
     setTimeout(preselect,120);
@@ -75,14 +73,11 @@
 
   function addExpenseButton(toolbar){
     if(!toolbar||toolbar.querySelector('.chantier-expense-btn'))return;
-
     const toolbarButtons=[...toolbar.querySelectorAll('button')];
     const devisBtn=toolbarButtons.find(b=>String(b.getAttribute('onclick')||'').includes('openAvenant'));
     if(!devisBtn)return;
-
     const match=String(devisBtn.getAttribute('onclick')||'').match(/openAvenant\(['"]([^'"]+)['"]\)/);
     if(!match||!match[1])return;
-
     const cid=match[1];
     const expense=document.createElement('button');
     expense.type='button';
@@ -90,7 +85,6 @@
     expense.textContent='＋ Dépense';
     expense.title='Ajouter une dépense à ce chantier';
     expense.onclick=function(){ window.openAchatForChantier(cid); };
-
     const docBtn=toolbarButtons.find(b=>String(b.getAttribute('onclick')||'').includes('openDocumentModal'));
     if(docBtn)toolbar.insertBefore(expense,docBtn);
     else if(devisBtn.nextSibling)toolbar.insertBefore(expense,devisBtn.nextSibling);
@@ -104,29 +98,27 @@
     return onclick.includes('delChantier') || txt==='supprimer' || txt==='supprimer chantier';
   }
 
+  function removeCloseButtons(root){
+    if(!root)return;
+    root.querySelectorAll('button').forEach(function(btn){
+      if(String(btn.textContent||'').trim().toLowerCase()==='fermer')btn.remove();
+    });
+  }
+
   function cleanCard(card){
     if(!card)return;
+    removeCloseButtons(card);
     const toolbar=card.querySelector('.chantier-fin-toolbar');
-    if(!toolbar)return;
     const top=card.querySelector('.top');
-    if(!top)return;
-
+    if(!toolbar||!top)return;
     addExpenseButton(toolbar);
-
     top.querySelectorAll('select').forEach(sel=>{
       const onchange=String(sel.getAttribute('onchange')||'');
       const txt=String(sel.textContent||'');
-      if(onchange.includes('setStatut')||(txt.includes('En cours')&&txt.includes('Terminé'))){
-        sel.remove();
-      }
+      if(onchange.includes('setStatut')||(txt.includes('En cours')&&txt.includes('Terminé')))sel.remove();
     });
-
     const allButtons=[...card.querySelectorAll('button')];
     const del=allButtons.find(isDeleteButton);
-    const close=allButtons.find(b=>String(b.getAttribute('onclick')||'').includes('toggleChantier')&&String(b.textContent||'').trim()==='Fermer');
-
-    if(close)close.remove();
-
     if(del){
       del.classList.add('chantier-delete-btn');
       del.removeAttribute('style');
@@ -137,6 +129,7 @@
   function apply(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
+    removeCloseButtons(pane);
     pane.querySelectorAll('.card').forEach(cleanCard);
   }
 
