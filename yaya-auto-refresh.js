@@ -3,6 +3,8 @@
 
   const INTERVAL_MS=20000;
   const MIN_GAP_MS=4000;
+  const START_GRACE_MS=12000;
+  const installedAt=Date.now();
   let busy=false;
   let lastRun=0;
   let lastSnapshot='';
@@ -28,7 +30,18 @@
     return document.body.classList.contains('yaya-fiche-inter-open');
   }
 
+  function loaderVisible(){
+    const loader=document.getElementById('loader');
+    if(!loader)return false;
+    try{
+      const cs=getComputedStyle(loader);
+      return cs.display!=='none'&&cs.visibility!=='hidden'&&Number(cs.opacity||1)!==0;
+    }catch(e){return true;}
+  }
+
   function safeToRefresh(){
+    if(Date.now()-installedAt<START_GRACE_MS)return false;
+    if(loaderVisible())return false;
     if(document.hidden)return false;
     if(modalOpen())return false;
     if(editing())return false;
@@ -53,12 +66,10 @@
       S=fresh;
       lastSnapshot=nextSnapshot;
       render();
-
-      // Laisser les patches UI se réappliquer après le rendu principal.
       try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
     }catch(err){
       // Un échec d'actualisation silencieux ne doit jamais bloquer Yaya.
-      console.warn('Actualisation automatique Yaya ignorée :',err);
+      if(!(err&&err.name==='AbortError'))console.warn('Actualisation automatique Yaya ignorée :',err);
     }finally{
       busy=false;
     }
@@ -75,11 +86,11 @@
     setInterval(function(){refreshIfNeeded(false);},INTERVAL_MS);
 
     document.addEventListener('visibilitychange',function(){
-      if(!document.hidden)setTimeout(function(){refreshIfNeeded(true);},250);
+      if(!document.hidden)setTimeout(function(){refreshIfNeeded(true);},500);
     });
 
     window.addEventListener('focus',function(){
-      setTimeout(function(){refreshIfNeeded(true);},250);
+      setTimeout(function(){refreshIfNeeded(true);},500);
     });
   }
 
