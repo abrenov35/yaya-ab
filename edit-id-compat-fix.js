@@ -1,14 +1,16 @@
 (function(){
   'use strict';
 
-  function resolveId(collectionName,id){
+  function collection(collectionName){
     try{
-      const list=(window.S&&Array.isArray(S[collectionName]))?S[collectionName]:[];
-      const found=list.find(x=>String(x&&x.id)===String(id));
-      return found?found.id:id;
-    }catch(e){
-      return id;
-    }
+      if(typeof S!=='undefined' && S && Array.isArray(S[collectionName])) return S[collectionName];
+    }catch(e){}
+    return [];
+  }
+
+  function resolveId(collectionName,id){
+    const found=collection(collectionName).find(x=>String(x&&x.id)===String(id));
+    return found?found.id:id;
   }
 
   function wrap(name,collectionName){
@@ -27,16 +29,16 @@
   }
 
   function install(){
-    let count=0;
-    count+=wrap('editAchat','achats')?1:0;
-    count+=wrap('editMontantAchat','achats')?1:0;
-    count+=wrap('saveAchat','achats')?1:0;
-    count+=wrap('editAvenantComplet','avenants')?1:0;
-    count+=wrap('editMontantAvenant','avenants')?1:0;
-    count+=wrap('saveAvenantComplet','avenants')?1:0;
-    count+=wrap('editDocument','documents')?1:0;
-    count+=wrap('saveDocumentEdit','documents')?1:0;
-    return count;
+    wrap('editAchat','achats');
+    wrap('editMontantAchat','achats');
+    wrap('saveAchat','achats');
+    wrap('editAvenantComplet','avenants');
+    wrap('editMontantAvenant','avenants');
+    wrap('saveAvenantComplet','avenants');
+    wrap('delAvenant','avenants');
+    wrap('editDocument','documents');
+    wrap('saveDocumentEdit','documents');
+    wrap('delDocument','documents');
   }
 
   install();
