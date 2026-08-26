@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const id='yaya-chantier-detail-visual-polish-v3';
+  const id='yaya-chantier-detail-visual-polish-v4';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -78,8 +78,11 @@
       border-color:#e5c4bf!important;
     }
 
-    /* Actions : barre plus légère, boutons plus compacts */
+    /* Actions : boutons centrés dans le pavé */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar{
+      display:flex!important;
+      justify-content:center!important;
+      align-items:center!important;
       gap:7px!important;
       margin:0 0 13px!important;
       padding:8px!important;
@@ -112,7 +115,7 @@
       color:#294b6e!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn{
-      margin-left:auto!important;
+      margin-left:0!important;
       background:#eef3f8!important;
       border:1px solid #c6d4e2!important;
       color:#2d557d!important;
@@ -192,6 +195,7 @@
         grid-template-columns:repeat(2,minmax(0,1fr))!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar{
+        justify-content:flex-start!important;
         padding:7px!important;
         gap:6px!important;
       }
