@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v5';
+  const STYLE_ID='yaya-chantier-actions-line-v4';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -14,94 +14,40 @@
         overflow-x:auto!important;
         scrollbar-width:thin;
       }
-
-      /* En-tête : Nom | actions de gestion | Fermer */
-      #pane-chantiers .card > .top{
-        display:flex!important;
-        align-items:center!important;
-        gap:9px!important;
-        flex-wrap:nowrap!important;
-      }
-      #pane-chantiers .yaya-header-actions{
-        margin-left:auto!important;
-        display:flex!important;
-        align-items:center!important;
-        justify-content:flex-end!important;
-        gap:8px!important;
-        flex:0 0 auto!important;
-      }
-      #pane-chantiers .yaya-header-actions > button,
-      #pane-chantiers .card > .top > .chantier-close-btn{
-        min-height:30px!important;
-        height:30px!important;
-        padding:0 12px!important;
-        border-radius:7px!important;
-        font-size:11.5px!important;
-        font-weight:700!important;
-        white-space:nowrap!important;
-        box-shadow:none!important;
-      }
-      #pane-chantiers .yaya-header-actions > .yaya-edit-chantier-btn,
-      #pane-chantiers .yaya-header-actions > .chantier-archive-btn{
-        margin-left:0!important;
-        background:#fff!important;
-        border:1px solid #003D7A!important;
-        color:#003D7A!important;
-      }
-      #pane-chantiers .yaya-header-actions > .yaya-edit-chantier-btn:hover,
-      #pane-chantiers .yaya-header-actions > .chantier-archive-btn:hover{
-        background:#E8F2F9!important;
-      }
-      #pane-chantiers .yaya-header-actions > .chantier-delete-btn{
-        margin-left:0!important;
-        background:#fff!important;
-        border:1px solid #EF4444!important;
-        color:#EF4444!important;
-        font-weight:700!important;
-      }
-      #pane-chantiers .yaya-header-actions > .chantier-delete-btn:hover{
-        background:#FEE2E2!important;
-      }
-      #pane-chantiers .card > .top > .chantier-close-btn{
-        margin-left:4px!important;
-        background:#fff!important;
-        border:1px solid #003D7A!important;
-        color:#003D7A!important;
-        flex:0 0 auto!important;
-      }
-      #pane-chantiers .card > .top > .chantier-close-btn:hover{
-        background:#E8F2F9!important;
-      }
-
-      /* Les 3 actions de saisie restent ensemble en dessous */
       #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-expense-btn{
-        background:#fff!important;
-        border:1px solid #cfd8e3!important;
-        color:#003D7A!important;
+        background:#fff8e1!important;
+        border:1px solid #e4cf8a!important;
+        color:#7a5a00!important;
         font-weight:700!important;
       }
       #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-expense-btn:hover{
-        background:#f5f8fb!important;
-        border-color:#b9c8d8!important;
+        background:#fff2bf!important;
+        border-color:#d8bd62!important;
       }
-
-      @media(max-width:760px){
-        #pane-chantiers .card > .top{
-          flex-wrap:wrap!important;
-        }
-        #pane-chantiers .yaya-header-actions{
-          order:10!important;
-          margin-left:0!important;
-          width:100%!important;
-          justify-content:flex-start!important;
-          overflow-x:auto!important;
-          padding-top:4px!important;
-        }
-        #pane-chantiers .card > .top > .chantier-close-btn{
-          position:absolute!important;
-          right:12px!important;
-          top:12px!important;
-        }
+      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-close-btn{
+        order:5!important;
+        margin-left:0!important;
+        background:#f8fafc!important;
+        border:1px solid #cfd8e3!important;
+        color:#334e6b!important;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn{
+        order:999!important;
+        margin-left:0!important;
+        background:#fff1f1!important;
+        border:1px solid #e3b4b4!important;
+        color:#b42318!important;
+        font-weight:700!important;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .btn2.chantier-close-btn:hover{
+        background:#eef3f8!important;
+      }
+      #pane-chantiers .chantier-fin-toolbar > .chantier-delete-btn:hover{
+        background:#fde7e7!important;
+        border-color:#d79a9a!important;
+        color:#991b1b!important;
+      }
+      @media(max-width:640px){
         #pane-chantiers .chantier-fin-toolbar{
           display:flex!important;
           grid-template-columns:none!important;
@@ -168,19 +114,6 @@
     return onclick.includes('delChantier') || txt==='supprimer' || txt==='supprimer chantier';
   }
 
-  function isArchiveButton(button){
-    if(!button)return false;
-    const onclick=String(button.getAttribute('onclick')||'');
-    const txt=String(button.textContent||'').trim().toLowerCase();
-    return button.classList.contains('chantier-archive-btn') || onclick.includes('archiverChantier') || txt==='archiver chantier';
-  }
-
-  function isEditButton(button){
-    if(!button)return false;
-    const txt=String(button.textContent||'').trim().toLowerCase();
-    return button.classList.contains('yaya-edit-chantier-btn') || txt.includes('modifier chantier');
-  }
-
   function cleanCard(card){
     if(!card)return;
     const toolbar=card.querySelector('.chantier-fin-toolbar');
@@ -198,40 +131,20 @@
       }
     });
 
-    let headerActions=top.querySelector('.yaya-header-actions');
-    if(!headerActions){
-      headerActions=document.createElement('div');
-      headerActions.className='yaya-header-actions';
-      top.appendChild(headerActions);
-    }
-
     const allButtons=[...card.querySelectorAll('button')];
-    const edit=allButtons.find(isEditButton);
-    const archive=allButtons.find(isArchiveButton);
     const del=allButtons.find(isDeleteButton);
     const close=allButtons.find(b=>String(b.getAttribute('onclick')||'').includes('toggleChantier')&&String(b.textContent||'').trim()==='Fermer');
 
-    if(edit){
-      edit.classList.add('yaya-edit-chantier-btn');
-      edit.removeAttribute('style');
-      if(edit.parentElement!==headerActions)headerActions.appendChild(edit);
+    if(close && close.parentElement!==toolbar){
+      close.classList.add('chantier-close-btn');
+      close.removeAttribute('style');
+      toolbar.appendChild(close);
     }
-    if(archive){
-      archive.classList.add('chantier-archive-btn');
-      archive.removeAttribute('style');
-      if(archive.parentElement!==headerActions)headerActions.appendChild(archive);
-    }
+
     if(del){
       del.classList.add('chantier-delete-btn');
       del.removeAttribute('style');
-      if(del.parentElement!==headerActions)headerActions.appendChild(del);
-    }
-
-    if(close){
-      close.classList.add('chantier-close-btn');
-      close.removeAttribute('style');
-      if(close.parentElement!==top)top.appendChild(close);
-      else if(top.lastElementChild!==close)top.appendChild(close);
+      if(toolbar.lastElementChild!==del)toolbar.appendChild(del);
     }
   }
 
