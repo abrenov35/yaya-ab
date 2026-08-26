@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const id='yaya-chantier-detail-visual-polish-v1';
+  const id='yaya-chantier-detail-visual-polish-v2';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -9,7 +9,7 @@
   style.textContent=`
     /* Fiche chantier ouverte : hiérarchie générale */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs){
-      border:1px solid rgba(38,72,109,.10)!important;
+      border:1px solid #003D7A!important;
       border-radius:14px!important;
       padding:16px 17px 18px!important;
       box-shadow:0 3px 14px rgba(22,45,73,.07)!important;
