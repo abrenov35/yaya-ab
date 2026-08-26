@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const id='yaya-chantier-tabs-soft-theme-v2';
+  const id='yaya-chantier-tabs-soft-theme-v3';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -79,7 +79,8 @@
     /* Les trois actions de gauche reprennent exactement le langage visuel des actions de droite. */
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
     #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]{
+    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"],
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp{
       background:#fff!important;
       color:#003D7A!important;
       border:1px solid #003D7A!important;
@@ -93,7 +94,8 @@
     }
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"]:hover,
     #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn:hover,
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]:hover{
+    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]:hover,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp:hover{
       background:#E8F2F9!important;
     }
 
