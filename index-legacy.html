@@ -1853,8 +1853,20 @@ async function reload(){
 
 // ═════════ DONNÉES DÉRIVÉES ═════════
 const wk = () => isoDate(monday);
-function weekRows(){ return S.heures.filter(h=>h.semaine===wk()); }
-function cellEntries(sid,d){ return weekRows().filter(h=>String(h.salarieId)===String(sid)&&h.jour===d); }
+function normaliserSemaineHeure(v){
+  const s=String(v||'').trim();
+  if(!s)return '';
+  const fr=s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(fr)return fr[3]+'-'+fr[2].padStart(2,'0')+'-'+fr[1].padStart(2,'0');
+  if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;
+  const d=new Date(s);
+  return isNaN(d.getTime())?s.slice(0,10):isoDate(d);
+}
+function weekRows(){
+  const cible=wk();
+  return S.heures.filter(h=>normaliserSemaineHeure(h.semaine)===cible);
+}
+function cellEntries(sid,d){ return weekRows().filter(h=>String(h.salarieId)===String(sid)&&Number(h.jour)===Number(d)); }
 function totalSalarie(sid){ return weekRows().filter(h=>String(h.salarieId)===String(sid)).reduce((t,h)=>t+h.heures,0); }
 function isValidated(){ const v=S.validations.find(v=>v.semaine===wk()); return v && String(v.validee).toUpperCase()==="OUI"; }
 function chantierById(id){ return S.chantiers.find(c=>String(c.id)===String(id)); }
@@ -3337,7 +3349,7 @@ async function yayaSaveWeek(){
   }catch(e){ok=false}
   if(ok){
     if(remote&&Array.isArray(remote.heures)){
-      S.heures=remote.heures.map(h=>({...h,heures:Number(h.heures)||0,jour:Number(h.jour)||0,semaine:String(h.semaine||'').slice(0,10),taux:(h.taux===''||h.taux==null)?null:Number(h.taux)}));
+      S.heures=remote.heures.map(h=>({...h,heures:Number(h.heures)||0,jour:Number(h.jour)||0,semaine:normaliserSemaineHeure(h.semaine),taux:(h.taux===''||h.taux==null)?null:Number(h.taux)}));
     }
     yayaWeekSaving=false;
     closeModal();
