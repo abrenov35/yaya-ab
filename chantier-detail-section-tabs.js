@@ -3,10 +3,10 @@
 
   const STYLE_ID='yaya-chantier-detail-section-tabs-style';
   const STORAGE_PREFIX='yaya.chantier.detail.section.';
-  const ORDER=['marche','depenses','documents'];
-  const LABELS={marche:'Marché',depenses:'Dépenses',documents:'Documents'};
-  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',documents:'Aucun document'};
-  const EMPTY_META={marche:'0 €',depenses:'0 €',documents:'0'};
+  const ORDER=['marche','depenses','charges','documents'];
+  const LABELS={marche:'Marché',depenses:'Dépenses',charges:'Charges',documents:'Documents'};
+  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',charges:'Aucune heure saisie',documents:'Aucun document'};
+  const EMPTY_META={marche:'0 €',depenses:'0 €',charges:'0 €',documents:'0'};
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -60,6 +60,10 @@
         display:none!important;
       }
 
+      .card[data-yaya-detail-section="charges"] > .yaya-detail-section-node:not([data-section="charges"]){
+        display:none!important;
+      }
+
       .yaya-detail-empty-pane{
         display:none!important;
         padding:20px 14px!important;
@@ -73,9 +77,27 @@
       }
       .card[data-yaya-detail-section="marche"] > .yaya-detail-empty-pane[data-section="marche"][data-empty="1"],
       .card[data-yaya-detail-section="depenses"] > .yaya-detail-empty-pane[data-section="depenses"][data-empty="1"],
+      .card[data-yaya-detail-section="charges"] > .yaya-detail-empty-pane[data-section="charges"][data-empty="1"],
       .card[data-yaya-detail-section="documents"] > .yaya-detail-empty-pane[data-section="documents"][data-empty="1"]{
         display:block!important;
       }
+
+      .yaya-detail-charges-pane{display:none!important;margin:0 0 8px!important}
+      .card[data-yaya-detail-section="charges"] > .yaya-detail-charges-pane[data-empty="0"]{display:block!important}
+      .yaya-detail-charge-row{
+        display:grid!important;
+        grid-template-columns:minmax(120px,1fr) 90px 110px!important;
+        align-items:center!important;
+        gap:12px!important;
+        min-height:38px!important;
+        padding:7px 12px!important;
+        border-bottom:1px solid #e6ebf1!important;
+        font-size:13px!important;
+      }
+      .yaya-detail-charge-row:last-child{border-bottom:0!important}
+      .yaya-detail-charge-row strong{color:#1c2b48!important}
+      .yaya-detail-charge-hours{text-align:right!important;color:#596579!important}
+      .yaya-detail-charge-cost{text-align:right!important;color:#1c2b48!important;font-weight:700!important}
 
       @media(max-width:640px){
         .yaya-detail-section-tabs{
@@ -92,6 +114,7 @@
           font-size:11px!important;
         }
         .yaya-detail-section-tab small{font-size:10px!important}
+        .yaya-detail-charge-row{grid-template-columns:minmax(90px,1fr) 68px 88px!important;gap:8px!important;padding:7px 9px!important}
       }
     `;
     document.head.appendChild(style);
@@ -182,6 +205,60 @@
     return pane;
   }
 
+  function euro(value){
+    return Math.round(Number(value)||0).toLocaleString('fr-FR')+' €';
+  }
+
+  function escapeHtml(value){
+    const el=document.createElement('div');
+    el.textContent=String(value||'');
+    return el.innerHTML;
+  }
+
+  function chargesFor(card){
+    const cid=cardId(card);
+    if(!cid||typeof S==='undefined')return [];
+    const salaries=Array.isArray(S.salaries)?S.salaries:[];
+    const heures=Array.isArray(S.heures)?S.heures:[];
+    const groups=new Map();
+
+    heures.forEach(h=>{
+      if(h.type!=='chantier'||String(h.ref)!==cid)return;
+      const salarie=salaries.find(s=>String(s.id)===String(h.salarieId));
+      if(!salarie||salarie.type==='Sous-traitant')return;
+      const hours=Number(h.heures)||0;
+      if(hours<=0)return;
+      const rate=(h.taux!==''&&h.taux!=null)?Number(h.taux):(Number(salarie.tauxHoraire)||0);
+      const key=String(salarie.id);
+      const row=groups.get(key)||{nom:String(salarie.nom||'Ouvrier'),heures:0,cout:0};
+      row.heures+=hours;
+      row.cout+=hours*(Number(rate)||0);
+      groups.set(key,row);
+    });
+
+    return [...groups.values()].sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+  }
+
+  function ensureChargesPane(card,tabs,rows){
+    let pane=card.querySelector(':scope > .yaya-detail-charges-pane');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-section-node yaya-detail-charges-pane';
+      pane.dataset.section='charges';
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+    pane.dataset.empty=rows.length?'0':'1';
+    const html=rows.map(row=>
+      '<div class="yaya-detail-charge-row">'
+        +'<strong>'+escapeHtml(row.nom)+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+row.heures.toLocaleString('fr-FR')+' h</span>'
+        +'<span class="yaya-detail-charge-cost">'+euro(row.cout)+'</span>'
+      +'</div>'
+    ).join('');
+    if(pane.innerHTML!==html)pane.innerHTML=html;
+    return pane;
+  }
+
   function applySectionFast(card,key){
     if(!ORDER.includes(key))key='marche';
     if(card.dataset.yayaDetailSection!==key)card.dataset.yayaDetailSection=key;
@@ -223,6 +300,7 @@
     if(!sections.length)return;
 
     const byKey=new Map(sections.map(s=>[s.key,s]));
+    const chargeRows=chargesFor(card);
     sections.forEach(section=>{
       section.header.style.display='none';
       section.nodes.forEach(node=>{
@@ -261,14 +339,18 @@
       const strong=btn.querySelector('strong');
       const small=btn.querySelector('small');
       const label=LABELS[key];
-      const meta=(section&&section.meta)?section.meta:EMPTY_META[key];
+      const meta=key==='charges'
+        ? euro(chargeRows.reduce((total,row)=>total+row.cout,0))
+        : ((section&&section.meta)?section.meta:EMPTY_META[key]);
       if(strong&&strong.textContent!==label)strong.textContent=label;
       if(small&&small.textContent!==meta)small.textContent=meta;
 
       const empty=ensureEmptyPane(card,tabs,key);
-      empty.dataset.empty=section?'0':'1';
+      empty.dataset.empty=key==='charges'?(chargeRows.length?'0':'1'):(section?'0':'1');
       if(empty.textContent!==EMPTY_LABELS[key])empty.textContent=EMPTY_LABELS[key];
     });
+
+    ensureChargesPane(card,tabs,chargeRows);
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)
       ? card.dataset.yayaDetailSection
