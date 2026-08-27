@@ -3280,7 +3280,7 @@ function openYayaWeekHours(workerId,date){
    +'<div class="yaya-week-head"><h5>'+yayaEscape(yayaWorkerName(workerId))+' — Semaine du '+dates[0].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' au '+dates[4].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+'</h5><button class="yaya-week-close" onclick="closeModal()">Fermer</button></div>'
    +'<div class="yaya-week-table-wrap"><div class="yaya-week-grid"><div class="yaya-week-cell yaya-week-day">AFFECTATION</div>'+head+'<div id="yayaWeekRows" style="display:contents"></div><div class="yaya-week-cell yaya-week-total-label">TOTAL JOURNALIER</div>'+totals+'</div></div>'
    +'<button class="yaya-week-add" onclick="yayaAddWeekRow()">＋ Ajouter une affectation</button>'
-   +'<div class="yaya-week-foot"><button id="yayaWeekSaveBtn" class="yaya-week-save" onclick="yayaSaveWeek()">Enregistrer</button><button class="yaya-week-cancel" onclick="closeModal()">Annuler</button></div>'
+   +'<div class="yaya-week-foot"><button type="button" id="yayaWeekSaveBtn" class="yaya-week-save" onpointerdown="event.preventDefault();yayaSaveWeek()">Enregistrer</button><button class="yaya-week-cancel" onclick="closeModal()">Annuler</button></div>'
    +'</div></div>';
   yayaRenderWeekRows();
 }
