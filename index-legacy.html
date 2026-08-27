@@ -2000,7 +2000,6 @@ function renderDocuments(){
   let html='<div style="margin-bottom:14px"><button class="btnp" onclick="openDocumentModal()">➕ Ajouter un document</button></div>';
   const sorted=historiquePiecesYaya().filter(d=>String(d.origine||'document')!=='charge');
   if(sorted.length){
-    html+='<div class="note" style="margin:14px 0 7px;text-transform:uppercase;letter-spacing:.08em;font-size:11px">Historique des pièces déposées — '+sorted.length+' élément'+(sorted.length>1?'s':'')+'</div>';
     html+='<div class="card">';
     for(const d of sorted){
       const c=chantierById(d.chantierId);
