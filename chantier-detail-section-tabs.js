@@ -54,6 +54,46 @@
       }
       .yaya-detail-section-tab.on small{opacity:.9!important}
 
+      .yaya-detail-section-tab[data-section="marche"]{
+        background:#eef8f1!important;
+        border-color:#acd5b8!important;
+        color:#286b3e!important;
+      }
+      .yaya-detail-section-tab[data-section="marche"] small{background:#dcefe2!important}
+      .yaya-detail-section-tab[data-section="marche"].on{background:#dff2e5!important;border-color:#65a878!important}
+
+      .yaya-detail-section-tab[data-section="depenses"]{
+        background:#fff0f3!important;
+        border-color:#edb9c4!important;
+        color:#96384c!important;
+      }
+      .yaya-detail-section-tab[data-section="depenses"] small{background:#f8dce3!important}
+      .yaya-detail-section-tab[data-section="depenses"].on{background:#f9dfe6!important;border-color:#d6788c!important}
+
+      .yaya-detail-section-tab[data-section="charges"]{
+        background:#fff5e8!important;
+        border-color:#edc58f!important;
+        color:#935a08!important;
+      }
+      .yaya-detail-section-tab[data-section="charges"] small{background:#fde6c5!important}
+      .yaya-detail-section-tab[data-section="charges"].on{background:#fde8cb!important;border-color:#d6963d!important}
+
+      .yaya-detail-section-tab[data-section="documents"]{
+        background:#eef6ff!important;
+        border-color:#acc9eb!important;
+        color:#285f96!important;
+      }
+      .yaya-detail-section-tab[data-section="documents"] small{background:#dcecff!important}
+      .yaya-detail-section-tab[data-section="documents"].on{background:#deedff!important;border-color:#6e9fd6!important}
+
+      .yaya-detail-section-tab[data-section] small{
+        display:inline-flex!important;
+        align-items:center!important;
+        min-height:25px!important;
+        padding:2px 9px!important;
+        border-radius:999px!important;
+      }
+
       .card[data-yaya-detail-section="marche"] > .yaya-detail-section-node:not([data-section="marche"]),
       .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-node:not([data-section="depenses"]),
       .card[data-yaya-detail-section="documents"] > .yaya-detail-section-node:not([data-section="documents"]){
