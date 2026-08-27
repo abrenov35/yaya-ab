@@ -3322,6 +3322,9 @@ async function yayaSaveWeek(){
   if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
   const merged=keep.concat(fresh);
   if(typeof S!=='undefined')S.heures=merged;
+  closeModal();
+  if(typeof render==='function')render();
+  if(typeof toast==='function')toast('Enregistrement en arrière-plan…');
   let ok=false;
   try{
     const ctrl=new AbortController();
@@ -3350,13 +3353,11 @@ async function yayaSaveWeek(){
   }catch(e){ok=false}
   yayaWeekSaving=false;
   if(ok){
-    closeModal();
-    if(typeof render==='function')render();
     if(typeof toast==='function')toast('Semaine enregistrée ✓');
   }else{
     if(typeof S!=='undefined')S.heures=avant;
-    if(btn){btn.disabled=false;btn.textContent='Enregistrer';}
-    if(typeof toast==='function')toast('Sauvegarde impossible — réessaie',true);
+    if(typeof render==='function')render();
+    if(typeof toast==='function')toast('Sauvegarde impossible — les anciennes heures ont été restaurées',true);
   }
 }
 /* Intercepte la modale journalière existante sans modifier les données/pages voisines */
