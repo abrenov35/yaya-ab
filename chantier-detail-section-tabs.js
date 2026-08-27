@@ -317,6 +317,56 @@
     return mainOeuvre.concat(sousTraitance);
   }
 
+  function updateSummaryKpis(card,chargeRows,depenseRows){
+    const kpis=card.querySelector(':scope > .kpis');
+    if(!kpis)return;
+    const stats=[...kpis.querySelectorAll(':scope > .stat')];
+    const statByLabel=label=>stats.find(stat=>{
+      const small=stat.querySelector('small');
+      return normalise(small&&small.textContent)===normalise(label);
+    });
+    const marketStat=statByLabel('Marché HT');
+    const purchasesStat=statByLabel('Achats');
+    const chargesStat=statByLabel('Charges');
+    const marginStat=stats.find(stat=>{
+      const small=stat.querySelector('small');
+      return normalise(small&&small.textContent).startsWith('MARGE');
+    });
+    if(!marketStat||!purchasesStat||!chargesStat||!marginStat)return;
+
+    const cid=cardId(card);
+    let chantier=null;
+    try{chantier=S.chantiers.find(c=>String(c.id)===cid)||null;}catch(e){}
+    const market=Number(chantier&&chantier.montantMarcheHT)||0;
+    const purchases=depenseRows.reduce((total,a)=>
+      total+(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),0);
+    const charges=chargeRows.reduce((total,row)=>total+(Number(row.cout)||0),0);
+    const hours=chargeRows
+      .filter(row=>row.type==='main-oeuvre')
+      .reduce((total,row)=>total+(Number(row.heures)||0),0);
+    const margin=market-purchases-charges;
+    const percent=market?Math.round(margin/market*100):0;
+
+    const setValue=(stat,value)=>{
+      const node=stat.querySelector('b');
+      if(node&&node.textContent!==euro(value))node.textContent=euro(value);
+    };
+    const setSub=(stat,value)=>{
+      let node=stat.querySelector('.sub:not(.yaya-signed-quote-kpi)');
+      if(!node){node=document.createElement('span');node.className='sub';stat.appendChild(node);}
+      if(node.textContent!==value)node.textContent=value;
+    };
+
+    setValue(purchasesStat,purchases);
+    setSub(purchasesStat,depenseRows.length+' document'+(depenseRows.length>1?'s':''));
+    setValue(chargesStat,charges);
+    setSub(chargesStat,hours.toLocaleString('fr-FR')+' h saisies');
+    setValue(marginStat,margin);
+    setSub(marginStat,percent+' % du marché');
+    marginStat.classList.toggle('marge-pos',margin>=0);
+    marginStat.classList.toggle('marge-neg',margin<0);
+  }
+
   function ensureChargesPane(card,tabs,rows){
     let pane=card.querySelector(':scope > .yaya-detail-charges-pane');
     if(!pane){
@@ -446,6 +496,7 @@
     });
 
     ensureChargesPane(card,tabs,chargeRows);
+    updateSummaryKpis(card,chargeRows,depenseRows);
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)
       ? card.dataset.yayaDetailSection
