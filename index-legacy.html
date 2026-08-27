@@ -1732,7 +1732,7 @@ window.renderAchats=function(){
   }
 
   if(validees.length){
-    html+='<div class="section-title">DERNIÈRES CHARGES VALIDÉES</div><div class="card validees-card">';
+    html+='<div class="card validees-card">';
     [...validees].reverse().slice(0,5).forEach(a=>{
       const c=chantierById(a.chantierId);
       const voir=String(a.lien||"").startsWith("http")
