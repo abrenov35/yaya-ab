@@ -1,0 +1,163 @@
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- YAYA - Intégration sections avec titre noir + liseret vert     -->
+<!-- Snippets à copier dans index.html Yaya                         -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!-- 1️⃣ IMPORTER LE CSS (ajouter dans <head>) -->
+<link rel="stylesheet" href="path/to/yaya-sections-style.css">
+
+
+<!-- 2️⃣ ONGLET CHANTIERS -->
+<div id="chantiers-tab" style="display: none;">
+  <div class="section-header">
+    <h2>Chantiers actifs</h2>
+  </div>
+  
+  <button onclick="openChantierModal()" style="margin-bottom: 1rem;">
+    ➕ Créer un chantier
+  </button>
+  
+  <div id="chantiersContainer"></div>
+</div>
+
+
+<!-- 3️⃣ ONGLET ACHATS -->
+<div id="achats-tab" style="display: none;">
+  <div class="section-header">
+    <h2>Achats</h2>
+  </div>
+  
+  <button onclick="openAchatModal()" style="margin-bottom: 1rem;">
+    ➕ Ajouter un achat
+  </button>
+  
+  <table class="data-table" id="achatsTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Fournisseur</th>
+        <th>Chantier</th>
+        <th>Description</th>
+        <th>Montant</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="achatsList"></tbody>
+  </table>
+</div>
+
+
+<!-- 4️⃣ ONGLET DOCUMENTS -->
+<div id="documents-tab" style="display: none;">
+  <div class="section-header">
+    <h2>Historique des pièces déposées</h2>
+  </div>
+  
+  <button onclick="openDocumentModal()" style="margin-bottom: 1rem;">
+    ➕ Ajouter un document
+  </button>
+  
+  <table class="data-table" id="documentsTable">
+    <thead>
+      <tr>
+        <th>Type</th>
+        <th>Nom</th>
+        <th>Chantier</th>
+        <th>Info</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="documentsList"></tbody>
+  </table>
+</div>
+
+
+<!-- 5️⃣ ONGLET ÉQUIPE -->
+<div id="equipe-tab" style="display: none;">
+  <div class="section-header">
+    <h2>Équipe</h2>
+  </div>
+  
+  <button onclick="openSalarieModal()" style="margin-bottom: 1rem;">
+    ➕ Ajouter un salarié
+  </button>
+  
+  <div id="equipeContainer"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- RENDERING: Exemple de fonction renderDocuments() avec le style -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<script>
+function renderDocuments() {
+  const list = document.getElementById('documentsList');
+  if (!list) return;
+  
+  list.innerHTML = (S.documents || []).slice(-5).reverse().map(d => `
+    <tr>
+      <td>
+        <span class="badge-type document">${d.type || 'DOCUMENT'}</span>
+      </td>
+      <td><strong>${d.titre || 'Sans titre'}</strong></td>
+      <td>
+        <span class="badge-chantier">${getChantierId(d.chantierId)}</span>
+      </td>
+      <td class="text-secondary">${d.sujet || '—'}</td>
+      <td class="text-secondary">${new Date(d.date).toLocaleDateString('fr-FR')}</td>
+      <td>
+        <button onclick="editDocument(${d.id})" title="Éditer">✎</button>
+        <button onclick="deleteDocument(${d.id})" title="Supprimer">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderAchats() {
+  const list = document.getElementById('achatsList');
+  if (!list) return;
+  
+  list.innerHTML = (S.achats || []).map(a => `
+    <tr>
+      <td>
+        <span class="badge-type achat">ACHAT</span>
+      </td>
+      <td><strong>${a.fournisseur || 'Sans fournisseur'}</strong></td>
+      <td>
+        <span class="badge-chantier">${getChantierId(a.chantierId)}</span>
+      </td>
+      <td class="text-secondary">${a.description || '—'}</td>
+      <td style="font-weight: 600; color: #059669;">${a.montant ? a.montant.toFixed(2) + '€' : '—'}</td>
+      <td>
+        <button onclick="editAchat(${a.id})" title="Éditer">✎</button>
+        <button onclick="deleteAchat(${a.id})" title="Supprimer">✕</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+// Fonction helper pour obtenir le nom du chantier
+function getChantierId(id) {
+  const chantier = (S.chantiers || []).find(c => c.id === id);
+  return chantier ? chantier.nom : '—';
+}
+</script>
+
+
+<!-- ═══════════════════════════════════════════════════════════════ -->
+<!-- NOTES D'INTÉGRATION                                             -->
+<!-- ═══════════════════════════════════════════════════════════════ -->
+
+<!--
+1. Copier le fichier "yaya-sections-style.css" dans le même dossier que index.html
+2. Ajouter le <link> dans <head> de index.html
+3. Remplacer les sections HTML dans les onglets par les snippets ci-dessus
+4. Mettre à jour les fonctions render* pour utiliser les bonnes structures
+5. Tester sur GitHub Pages
+
+Alternative rapide:
+- Ajouter la balise <style>...</style> directement dans <head> si préféré
+- Copier le contenu de yaya-sections-style.css dans la balise <style>
+-->

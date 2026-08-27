@@ -1,0 +1,133 @@
+/* ═══════════════════════════════════════════════════════════════ */
+/* YAYA - Sections Styling: Titre noir + Liseret vert             */
+/* Style unifié pour toutes les sections                          */
+/* ═══════════════════════════════════════════════════════════════ */
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-left: 1rem;
+  border-left: 4px solid #10b981;
+}
+
+.section-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ─── Tableau/Liste de données ─── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.data-table thead {
+  background-color: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.data-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7280;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 0.5px solid #f3f4f6;
+  font-size: 13px;
+  color: #374151;
+}
+
+.data-table tbody tr:hover {
+  background-color: #fafafa;
+}
+
+/* ─── Badges de type ─── */
+.badge-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.badge-type.document {
+  background-color: #dbeafe;
+  color: #0c4a6e;
+}
+
+.badge-type.photo {
+  background-color: #dbeafe;
+  color: #0c4a6e;
+}
+
+.badge-type.achat {
+  background-color: #fce7f3;
+  color: #831843;
+}
+
+.badge-type.chantier {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+/* ─── Badges de chantier (nom) ─── */
+.badge-chantier {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #f3f4f6;
+  border: 0.5px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* ─── Sections avec contenu ─── */
+.section-content {
+  background-color: #ffffff;
+  border: 0.5px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+/* ─── Texte secondaire (description) ─── */
+.text-secondary {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 768px) {
+  .section-header {
+    margin-bottom: 1rem;
+    padding-left: 0.75rem;
+  }
+
+  .section-header h2 {
+    font-size: 16px;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: 0.5rem 0.75rem;
+    font-size: 12px;
+  }
+}
