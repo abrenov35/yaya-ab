@@ -3318,6 +3318,7 @@ async function yayaSaveWeek(){
   });
   const totalAttendu=fresh.reduce((t,h)=>t+Number(h.heures||0),0);
   yayaWeekSaving=true;
+  window.yayaHoursPending=true;
   const btn=document.getElementById('yayaWeekSaveBtn');
   if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
   const merged=keep.concat(fresh);
@@ -3351,7 +3352,6 @@ async function yayaSaveWeek(){
     })));
     ok=await apiPost('setSemaine',{semaine,lignes:lignesSemaine,validee:typeof isValidated==='function'?isValidated():false});
   }catch(e){ok=false}
-  yayaWeekSaving=false;
   if(ok){
     try{
       if(typeof reload==='function')await reload();
@@ -3359,10 +3359,14 @@ async function yayaSaveWeek(){
     }catch(e){
       if(typeof render==='function')render();
     }
+    yayaWeekSaving=false;
+    window.yayaHoursPending=false;
     if(typeof toast==='function')toast('Semaine enregistrée ✓');
   }else{
     if(typeof S!=='undefined')S.heures=avant;
     if(typeof render==='function')render();
+    yayaWeekSaving=false;
+    window.yayaHoursPending=false;
     if(typeof toast==='function')toast('Sauvegarde impossible — les anciennes heures ont été restaurées',true);
   }
 }
