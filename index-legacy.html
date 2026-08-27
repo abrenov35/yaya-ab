@@ -3353,14 +3353,9 @@ async function yayaSaveWeek(){
     ok=await apiPost('setSemaine',{semaine,lignes:lignesSemaine,validee:typeof isValidated==='function'?isValidated():false});
   }catch(e){ok=false}
   if(ok){
-    try{
-      if(typeof reload==='function')await reload();
-      else if(typeof render==='function')render();
-    }catch(e){
-      if(typeof render==='function')render();
-    }
     yayaWeekSaving=false;
     window.yayaHoursPending=false;
+    if(typeof render==='function')render();
     if(typeof toast==='function')toast('Semaine enregistrée ✓');
   }else{
     if(typeof S!=='undefined')S.heures=avant;
