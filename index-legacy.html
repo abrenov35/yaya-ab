@@ -3280,12 +3280,13 @@ function openYayaWeekHours(workerId,date){
    +'<div class="yaya-week-head"><h5>'+yayaEscape(yayaWorkerName(workerId))+' — Semaine du '+dates[0].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'})+' au '+dates[4].toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'numeric'})+'</h5><button class="yaya-week-close" onclick="closeModal()">Fermer</button></div>'
    +'<div class="yaya-week-table-wrap"><div class="yaya-week-grid"><div class="yaya-week-cell yaya-week-day">AFFECTATION</div>'+head+'<div id="yayaWeekRows" style="display:contents"></div><div class="yaya-week-cell yaya-week-total-label">TOTAL JOURNALIER</div>'+totals+'</div></div>'
    +'<button class="yaya-week-add" onclick="yayaAddWeekRow()">＋ Ajouter une affectation</button>'
-   +'<div class="yaya-week-foot"><button class="yaya-week-save" onclick="yayaSaveWeek()">Enregistrer</button><button class="yaya-week-cancel" onclick="closeModal()">Annuler</button></div>'
+   +'<div class="yaya-week-foot"><button id="yayaWeekSaveBtn" class="yaya-week-save" onclick="yayaSaveWeek()">Enregistrer</button><button class="yaya-week-cancel" onclick="closeModal()">Annuler</button></div>'
    +'</div></div>';
   yayaRenderWeekRows();
 }
+let yayaWeekSaving=false;
 async function yayaSaveWeek(){
-  if(!yayaWeekCtx)return;
+  if(!yayaWeekCtx||yayaWeekSaving)return;
   const ctx=yayaWeekCtx;
   const rows=[...document.querySelectorAll('#yayaWeekRows .yaya-week-select')].map((sel,r)=>({
     affectation:sel.value,
@@ -3300,7 +3301,7 @@ async function yayaSaveWeek(){
   const salarie=yayaGetWorkers().find(x=>String(x.id)===sid)||{};
   const taux=Number(salarie.tauxHoraire)||0;
   const avant=[...yayaHourStore()];
-  const keep=avant.filter(h=>!(String(h.semaine)===String(semaine)&&String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4));
+  const keep=avant.filter(h=>!(String(h.semaine).slice(0,10)===String(semaine)&&String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4));
   const fresh=[];
   rows.forEach(row=>{
     if(!row.affectation)return;
@@ -3311,21 +3312,49 @@ async function yayaSaveWeek(){
       fresh.push({semaine,salarieId:ctx.workerId,jour,type:motif?'np':'chantier',ref,heures:hours,taux});
     });
   });
+  const totalAttendu=fresh.reduce((t,h)=>t+Number(h.heures||0),0);
+  if(totalAttendu<=0){
+    if(typeof toast==='function')toast('Aucune heure à enregistrer',true);
+    return;
+  }
+  yayaWeekSaving=true;
+  const btn=document.getElementById('yayaWeekSaveBtn');
+  if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
   const merged=keep.concat(fresh);
   if(typeof S!=='undefined')S.heures=merged;
-  let ok=false;
+  const lignesSemaine=merged.filter(h=>String(h.semaine).slice(0,10)===String(semaine)).map(h=>({
+    semaine,salarieId:h.salarieId,jour:Number(h.jour),type:h.type,ref:h.ref,
+    heures:Number(h.heures)||0,taux:h.taux==null?'':h.taux
+  }));
+  let ok=false,remote=null;
   try{
-    ok=typeof saveSemaine==='function'
-      ? await saveSemaine()
-      : await apiPost('setSemaine',{semaine,lignes:merged.filter(h=>String(h.semaine)===String(semaine)),validee:false});
+    ok=await apiPost('setSemaine',{semaine,lignes:lignesSemaine,validee:typeof isValidated==='function'?isValidated():false});
+    if(ok&&typeof apiGet==='function'){
+      for(let tentative=0;tentative<3;tentative++){
+        if(tentative)await new Promise(resolve=>setTimeout(resolve,600));
+        remote=await apiGet();
+        const heures=Array.isArray(remote&&remote.heures)?remote.heures:[];
+        const totalRelu=heures.filter(h=>
+          String(h.semaine||'').slice(0,10)===String(semaine)&&
+          String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4
+        ).reduce((t,h)=>t+(Number(h.heures)||0),0);
+        if(Math.abs(totalRelu-totalAttendu)<0.001){ok=true;break}
+        ok=false;
+      }
+    }
   }catch(e){ok=false}
   if(ok){
+    if(remote&&Array.isArray(remote.heures)){
+      S.heures=remote.heures.map(h=>({...h,heures:Number(h.heures)||0,jour:Number(h.jour)||0,semaine:String(h.semaine||'').slice(0,10),taux:(h.taux===''||h.taux==null)?null:Number(h.taux)}));
+    }
     closeModal();
     if(typeof render==='function')render();
     if(typeof toast==='function')toast('Semaine enregistrée ✓');
   }else{
     if(typeof S!=='undefined')S.heures=avant;
-    if(typeof toast==='function')toast('Sauvegarde des heures impossible',true);
+    yayaWeekSaving=false;
+    if(btn){btn.disabled=false;btn.textContent='Enregistrer';}
+    if(typeof toast==='function')toast('Les heures n’ont pas été confirmées dans le Sheet — réessaie',true);
   }
 }
 /* Intercepte la modale journalière existante sans modifier les données/pages voisines */
