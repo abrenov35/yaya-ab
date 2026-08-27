@@ -126,7 +126,9 @@
 .b-photo{background:transparent;border:1px solid rgba(3,105,161,.3);color:#0369a1}.b-mail{background:transparent;border:1px solid rgba(146,64,14,.3);color:#92400e}.b-plan{background:transparent;border:1px solid rgba(91,33,182,.3);color:#5b21b6}.b-document{background:transparent;border:1px solid rgba(22,125,52,.3);color:#166534}.b-divers{background:transparent;border:1px solid rgba(71,85,105,.3);color:#475569}
 .section-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-left:1rem;border-left:4px solid #10b981;background:transparent}.section-header h2{margin:0;font-size:18px;font-weight:600;color:#1f2937;letter-spacing:-0.5px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:transparent}
 #pane-documents .doc-delete-btn,
-#pane-docs .doc-delete-btn{display:none !important}
+#pane-docs .doc-delete-btn,
+#pane-documents .doc-edit-btn,
+#pane-docs .doc-edit-btn{display:none !important}
 #pane-documents > .section-header,
 #pane-docs > .section-header,
 #pane-achats > .section-header,
@@ -3167,23 +3169,6 @@ function styliserDocuments(){
       }
       if(viewBtn && viewBtn.parentElement!==actions) actions.appendChild(viewBtn);
 
-      if(!actions.querySelector('.doc-edit-btn')){
-        const editBtn=document.createElement('button');
-        editBtn.type='button';
-        editBtn.className='doc-edit-btn';
-        editBtn.textContent='✎';
-        editBtn.title='Modifier';
-        editBtn.setAttribute('aria-label','Modifier');
-
-        const directEdit=buttons.find(b=>/MODIFIER|EDIT/i.test((b.textContent||'').trim()) && b!==viewBtn);
-        if(directEdit){
-          editBtn.onclick=()=>directEdit.click();
-          directEdit.style.display='none';
-        }else{
-          editBtn.onclick=()=>modifierDocumentDepuisLigne(editBtn);
-        }
-        actions.appendChild(editBtn);
-      }
     });
   });
 }
