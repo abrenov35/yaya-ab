@@ -2059,7 +2059,6 @@ function renderHeures(){
     html+='<td class="tot '+cls+'">'+t+' h<small>/ '+s.heuresContrat+'</small></td></tr>';
   };
   if(salH.length){
-    html+='<tr><td colspan="8" style="padding:14px 8px 4px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#1c2b48;border:none">Salariés ('+salH.length+')</td></tr>';
     for(const s of salH) ligneH(s);
   }
   html+='</table></div>';
