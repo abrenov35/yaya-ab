@@ -3305,7 +3305,7 @@ async function yayaSaveWeek(){
   const salarie=yayaGetWorkers().find(x=>String(x.id)===sid)||{};
   const taux=Number(salarie.tauxHoraire)||0;
   const avant=[...yayaHourStore()];
-  const keep=avant.filter(h=>!(String(h.semaine).slice(0,10)===String(semaine)&&String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4));
+  const keep=avant.filter(h=>!(normaliserSemaineHeure(h.semaine)===String(semaine)&&String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4));
   const fresh=[];
   rows.forEach(row=>{
     if(!row.affectation)return;
@@ -3322,12 +3322,30 @@ async function yayaSaveWeek(){
   if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
   const merged=keep.concat(fresh);
   if(typeof S!=='undefined')S.heures=merged;
-  const lignesSemaine=merged.filter(h=>String(h.semaine).slice(0,10)===String(semaine)).map(h=>({
-    semaine,salarieId:h.salarieId,jour:Number(h.jour),type:h.type,ref:h.ref,
-    heures:Number(h.heures)||0,taux:h.taux==null?'':h.taux
-  }));
   let ok=false;
   try{
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),10000);
+    let lecture;
+    try{
+      const sep=API.includes('?')?'&':'?';
+      const resp=await fetch(API+sep+'_preserve='+Date.now(),{method:'GET',cache:'no-store',signal:ctrl.signal});
+      const json=await resp.json();
+      if(!json.ok)throw new Error(json.error||'lecture impossible');
+      lecture=json.data||{};
+    }finally{clearTimeout(timer)}
+    const heuresDistantes=Array.isArray(lecture.heures)?lecture.heures:[];
+    const autresLignes=heuresDistantes.filter(h=>
+      normaliserSemaineHeure(h.semaine)===String(semaine)&&
+      !(String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4)
+    ).map(h=>({
+      semaine,salarieId:h.salarieId,jour:Number(h.jour),type:h.type,ref:h.ref,
+      heures:Number(h.heures)||0,taux:h.taux==null?'':h.taux
+    }));
+    const lignesSemaine=autresLignes.concat(fresh.map(h=>({
+      semaine,salarieId:h.salarieId,jour:Number(h.jour),type:h.type,ref:h.ref,
+      heures:Number(h.heures)||0,taux:h.taux==null?'':h.taux
+    })));
     ok=await apiPost('setSemaine',{semaine,lignes:lignesSemaine,validee:typeof isValidated==='function'?isValidated():false});
   }catch(e){ok=false}
   yayaWeekSaving=false;
