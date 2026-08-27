@@ -1659,9 +1659,10 @@ function signatureChantierHtml(c){const m=String(c&&c.dateSignature||"").match(/
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-ad","Stock":"b-doc","Facture sous-traitant":"b-fst","Avoir":"b-avoir"};
 const badgeDoc=t=>BADGE_DOC[t]||"b-doc";
+const libelleTypeDoc=t=>String(t||'').toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS').replace('FACTURE SOUS-TRAITANT','SOUS-TRAITANT');
 const badgeAchatHtml=a=>a.typeDoc==="Avoir"
   ?'<button class="badge b-avoir" ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer;border:none;font-family:inherit;font-size:inherit;font-weight:inherit;letter-spacing:inherit">AVOIR</button>'
-  :'<span class="badge '+badgeDoc(a.typeDoc)+'">'+(a.typeDoc.toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS').replace('FACTURE SOUS-TRAITANT','SOUS-TRAITANT'))+'</span>';
+  :'<span class="badge '+badgeDoc(a.typeDoc)+'">'+libelleTypeDoc(a.typeDoc)+'</span>';
 function chargeValidationHtml(a){
   if(!a||a.statutValidation!=="A_VALIDER")return "";
   return '<span class="charge-auto"><span class="charge-auto-badge">AUTO · À VALIDER</span><button class="charge-valid-btn" onclick="validerChargeAuto(\''+a.id+'\')">VALIDER</button></span>';
@@ -1718,7 +1719,7 @@ window.renderAchats=function(){
         ? '<button class="charge-open-btn" onclick="voirPiece(\''+esc(a.lien)+'\')">VOIR</button>'
         : "";
       html+='<div class="controle-ligne charge-row-standard">'
-        +'<span class="badge b-doc">'+esc(a.typeDoc||"PIÈCE").toUpperCase()+'</span>'
+        +'<span class="badge b-doc">'+esc(libelleTypeDoc(a.typeDoc||"PIÈCE"))+'</span>'
         +'<span class="charge-fournisseur">'+esc(a.fournisseur||"À vérifier")+'</span>'
         +'<span class="charge-chantier">'+(c?esc(c.nom):"CHANTIER À VÉRIFIER")+'</span>'
         +'<small class="charge-designation">'+esc(a.designation||"")+'</small>'
@@ -1741,7 +1742,7 @@ window.renderAchats=function(){
         ? '<button class="charge-open-btn" onclick="voirPiece(\''+esc(a.lien)+'\')">VOIR</button>'
         : "";
       html+='<div class="charge-validee-ligne charge-row-standard">'
-        +'<span class="badge b-doc">'+esc(a.typeDoc||"").toUpperCase()+'</span>'
+        +'<span class="badge b-doc">'+esc(libelleTypeDoc(a.typeDoc||""))+'</span>'
         +'<span class="charge-fournisseur">'+esc(a.fournisseur||"")+'</span>'
         +'<span class="charge-chantier">'+(c?esc(c.nom):"?")+'</span>'
         +'<small class="charge-designation">'+esc(a.designation||"")+'</small>'
@@ -2106,7 +2107,7 @@ function renderChantiers(){
       avs.forEach((v,i)=>{f+='<div class="achligne ligM"><span class="badge b-devis">DEVIS '+(i+2)+'</span><span>'+esc(v.libelle||('Devis '+(i+2)))+'</span><b class="editable" style="text-align:right" onclick="editMontantAvenant(\''+v.id+'\')">'+eur(v.montantHT)+' &euro;</b><span style="white-space:nowrap">'+lienIco(v.lien)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editMontantAvenant(\''+v.id+'\')">&#9998;</button><button class="x" onclick="delAvenant(\''+v.id+'\')">&#10005;</button></span></div>';});
       if(ach.length){
         f+='<div class="seclabel"><span>D&eacute;penses</span><span>'+eur(totAch)+' &euro;</span></div>';
-        for(const a of ach) f+='<div class="achligne ligD"><span class="badge '+badgeDoc(a.typeDoc)+'"'+(a.typeDoc==="Avoir"?' ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer"':'')+'>'+(esc(a.typeDoc).toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span></span><small class="des">'+esc(a.designation||'')+'</small><b class="editable" style="text-align:right" onclick="editMontantAchat(\''+a.id+'\')">'+(a.typeDoc==="Avoir"?'+':'-')+' '+eur(a.montantHT)+' &euro;</b><span style="white-space:nowrap">'+lienIco(a.lien)+chargeValidationHtml(a)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editAchat(\''+a.id+'\')">&#9998;</button><button class="x" onclick="delAchat(\''+a.id+'\')">&#10005;</button></span></div>';
+        for(const a of ach) f+='<div class="achligne ligD"><span class="badge '+badgeDoc(a.typeDoc)+'"'+(a.typeDoc==="Avoir"?' ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer"':'')+'>'+esc(libelleTypeDoc(a.typeDoc))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span></span><small class="des">'+esc(a.designation||'')+'</small><b class="editable" style="text-align:right" onclick="editMontantAchat(\''+a.id+'\')">'+(a.typeDoc==="Avoir"?'+':'-')+' '+eur(a.montantHT)+' &euro;</b><span style="white-space:nowrap">'+lienIco(a.lien)+chargeValidationHtml(a)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editAchat(\''+a.id+'\')">&#9998;</button><button class="x" onclick="delAchat(\''+a.id+'\')">&#10005;</button></span></div>';
       }
             // BLOC DOCUMENTS dans fiche chantier
       const docs=docsChantier(c.id);
@@ -2202,7 +2203,7 @@ function renderChantiers(){
     }
     if(ach.length){
       html+='<div class="seclabel"><span>Dépenses</span><span>'+eur(totAch)+' €</span></div>';
-      for(const a of ach) html+='<div class="achligne ligD"><span class="badge '+badgeDoc(a.typeDoc)+'"'+(a.typeDoc==="Avoir"?' ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer"':'')+'>'+(esc(a.typeDoc).toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span>'+'</span><small class="des">'+esc(a.designation||"")+'</small><b class="editable" style="text-align:right" title="Modifier le montant" onclick="editMontantAchat(\''+a.id+'\')">'+(a.typeDoc==="Avoir"?'+':'-')+' '+eur(a.montantHT)+' €</b><span style="white-space:nowrap">'+lienIco(a.lien)+chargeValidationHtml(a)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" title="Modifier" onclick="editAchat(\''+a.id+'\')">✎</button><button class="x" title="Supprimer" onclick="delAchat(\''+a.id+'\')">✕</button></span></div>';
+      for(const a of ach) html+='<div class="achligne ligD"><span class="badge '+badgeDoc(a.typeDoc)+'"'+(a.typeDoc==="Avoir"?' ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer"':'')+'>'+esc(libelleTypeDoc(a.typeDoc))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span>'+'</span><small class="des">'+esc(a.designation||"")+'</small><b class="editable" style="text-align:right" title="Modifier le montant" onclick="editMontantAchat(\''+a.id+'\')">'+(a.typeDoc==="Avoir"?'+':'-')+' '+eur(a.montantHT)+' €</b><span style="white-space:nowrap">'+lienIco(a.lien)+chargeValidationHtml(a)+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" title="Modifier" onclick="editAchat(\''+a.id+'\')">✎</button><button class="x" title="Supprimer" onclick="delAchat(\''+a.id+'\')">✕</button></span></div>';
     }
 
     html+='</div>';
@@ -2232,7 +2233,7 @@ function renderAchats(){
     for(const a of sorted){
       const c=chantierById(a.chantierId);
       const btnVoir=String(a.lien||"").startsWith("http")?'<button onclick="voirPiece(\''+esc(a.lien)+'\')" title="Voir la pièce" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer;vertical-align:middle;margin-right:4px">VOIR</button>':'';
-      html+='<div class="achligne ligR" style="padding:9px 0"><span class="badge b-doc">'+(esc(a.typeDoc).toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span></span>'
+      html+='<div class="achligne ligR" style="padding:9px 0"><span class="badge b-doc">'+esc(libelleTypeDoc(a.typeDoc))+'</span><span><span class="badge b-df" style="min-width:130px;padding:3px 10px;text-align:center">'+esc(a.fournisseur)+'</span></span>'
         +'<span><span class="badge b-bl" style="min-width:130px;padding:3px 10px;text-align:center">'+(c?esc(c.nom):'?')+'</span></span>'
         +'<small class="des">'+esc(a.designation||"")+'</small>'
         +'<b style="text-align:right">'+eur(a.montantHT)+' €</b>'
