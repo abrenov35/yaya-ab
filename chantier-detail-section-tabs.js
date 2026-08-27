@@ -5,7 +5,7 @@
   const STORAGE_PREFIX='yaya.chantier.detail.section.';
   const ORDER=['marche','depenses','charges','documents'];
   const LABELS={marche:'Marché',depenses:'Dépenses',charges:'Charges',documents:'Documents'};
-  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',charges:'Aucune heure saisie',documents:'Aucun document'};
+  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',charges:'Aucune charge',documents:'Aucun document'};
   const EMPTY_META={marche:'0 €',depenses:'0 €',charges:'0 €',documents:'0'};
 
   function installStyle(){
@@ -215,6 +215,36 @@
     return el.innerHTML;
   }
 
+  function isSubcontractInvoice(achat){
+    if(!achat)return false;
+    const type=normalise(achat.typeDoc);
+    return type==='FACTURE SOUS-TRAITANT'
+      || type==='FACTURE SOUS TRAITANT'
+      || String(achat.sousTraitant||'').trim()!=='';
+  }
+
+  function achatsFor(card){
+    const cid=cardId(card);
+    if(!cid||typeof S==='undefined'||!Array.isArray(S.achats))return [];
+    return S.achats.filter(a=>
+      String(a.chantierId)===cid
+      && a.statutValidation!=='A_VALIDER'
+      && a.statutValidation!=='REJETEE'
+      && a.statutValidation!=='DOUBLON'
+    );
+  }
+
+  function depensesFor(card){
+    return achatsFor(card).filter(a=>!isSubcontractInvoice(a));
+  }
+
+  function achatIdFromNode(node){
+    const action=node&&node.querySelector('[onclick*="editAchat"],[onclick*="editMontantAchat"],[onclick*="delAchat"]');
+    const raw=String(action&&action.getAttribute('onclick')||'');
+    const match=raw.match(/(?:editAchat|editMontantAchat|delAchat)\(['\"]([^'\"]+)/);
+    return match?String(match[1]):'';
+  }
+
   function chargesFor(card){
     const cid=cardId(card);
     if(!cid||typeof S==='undefined')return [];
@@ -230,13 +260,21 @@
       if(hours<=0)return;
       const rate=(h.taux!==''&&h.taux!=null)?Number(h.taux):(Number(salarie.tauxHoraire)||0);
       const key=String(salarie.id);
-      const row=groups.get(key)||{nom:String(salarie.nom||'Ouvrier'),heures:0,cout:0};
+      const row=groups.get(key)||{nom:String(salarie.nom||'Ouvrier'),heures:0,cout:0,type:'main-oeuvre'};
       row.heures+=hours;
       row.cout+=hours*(Number(rate)||0);
       groups.set(key,row);
     });
 
-    return [...groups.values()].sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+    const mainOeuvre=[...groups.values()].sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));
+    const sousTraitance=achatsFor(card).filter(isSubcontractInvoice).map(a=>({
+      nom:String(a.sousTraitant||a.fournisseur||'Sous-traitant'),
+      heures:null,
+      cout:(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),
+      type:'sous-traitance',
+      detail:String(a.designation||'Facture de sous-traitance')
+    }));
+    return mainOeuvre.concat(sousTraitance);
   }
 
   function ensureChargesPane(card,tabs,rows){
@@ -250,8 +288,8 @@
     pane.dataset.empty=rows.length?'0':'1';
     const html=rows.map(row=>
       '<div class="yaya-detail-charge-row">'
-        +'<strong>'+escapeHtml(row.nom)+'</strong>'
-        +'<span class="yaya-detail-charge-hours">'+row.heures.toLocaleString('fr-FR')+' h</span>'
+        +'<strong>'+escapeHtml(row.nom)+(row.type==='sous-traitance'&&row.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.detail)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+(row.type==='sous-traitance'?'Sous-traitance':row.heures.toLocaleString('fr-FR')+' h')+'</span>'
         +'<span class="yaya-detail-charge-cost">'+euro(row.cout)+'</span>'
       +'</div>'
     ).join('');
@@ -301,9 +339,20 @@
 
     const byKey=new Map(sections.map(s=>[s.key,s]));
     const chargeRows=chargesFor(card);
+    const depenseRows=depensesFor(card);
+    const achats=achatsFor(card);
     sections.forEach(section=>{
       section.header.style.display='none';
       section.nodes.forEach(node=>{
+        if(section.key==='depenses'){
+          const achatId=achatIdFromNode(node);
+          const achat=achats.find(a=>String(a.id)===achatId);
+          if(isSubcontractInvoice(achat)){
+            node.style.setProperty('display','none','important');
+            node.dataset.yayaSubcontractInvoice='1';
+            return;
+          }
+        }
         node.classList.add('yaya-detail-section-node');
         node.dataset.section=section.key;
         // Nettoie les display inline posés par les anciennes versions du patch.
@@ -341,12 +390,18 @@
       const label=LABELS[key];
       const meta=key==='charges'
         ? euro(chargeRows.reduce((total,row)=>total+row.cout,0))
-        : ((section&&section.meta)?section.meta:EMPTY_META[key]);
+        : key==='depenses'
+          ? euro(depenseRows.reduce((total,a)=>total+(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),0))
+          : ((section&&section.meta)?section.meta:EMPTY_META[key]);
       if(strong&&strong.textContent!==label)strong.textContent=label;
       if(small&&small.textContent!==meta)small.textContent=meta;
 
       const empty=ensureEmptyPane(card,tabs,key);
-      empty.dataset.empty=key==='charges'?(chargeRows.length?'0':'1'):(section?'0':'1');
+      empty.dataset.empty=key==='charges'
+        ? (chargeRows.length?'0':'1')
+        : key==='depenses'
+          ? (depenseRows.length?'0':'1')
+          : (section?'0':'1');
       if(empty.textContent!==EMPTY_LABELS[key])empty.textContent=EMPTY_LABELS[key];
     });
 
