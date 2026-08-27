@@ -3287,34 +3287,42 @@ async function yayaSaveWeek(){
     affectation:sel.value,
     hours:[0,1,2,3,4].map(d=>Number(document.querySelector('.yaya-week-hours[data-row="'+r+'"][data-day="'+d+'"]')?.value)||0)
   }));
-  const dates=ctx.dates.map(yayaIso),store=yayaHourStore();
-  const old=store.filter(h=>yayaHourWorkerId(h)===ctx.workerId&&dates.includes(yayaHourDate(h)));
-  const keep=store.filter(h=>!(yayaHourWorkerId(h)===ctx.workerId&&dates.includes(yayaHourDate(h))));
-  const sample=old[0]||{};
+  if(rows.some(row=>row.hours.some(h=>h>0)&&!row.affectation)){
+    if(typeof toast==='function')toast('Choisis le chantier ou le motif pour chaque ligne renseignée',true);
+    return;
+  }
+  const semaine=typeof wk==='function'?wk():yayaIso(yayaMonday(ctx.dates[0]));
+  const sid=String(ctx.workerId);
+  const salarie=yayaGetWorkers().find(x=>String(x.id)===sid)||{};
+  const taux=Number(salarie.tauxHoraire)||0;
+  const avant=[...yayaHourStore()];
+  const keep=avant.filter(h=>!(String(h.semaine)===String(semaine)&&String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4));
   const fresh=[];
   rows.forEach(row=>{
     if(!row.affectation)return;
-    row.hours.forEach((hours,d)=>{
+    const motif=row.affectation.startsWith('MOTIF:');
+    const ref=motif?row.affectation.slice(6):row.affectation;
+    row.hours.forEach((hours,jour)=>{
       if(hours<=0)return;
-      const h={...sample};
-      h.id=(typeof uid==='function'?uid():Date.now()+'_'+Math.random());
-      if('salarieId' in sample)h.salarieId=ctx.workerId; else if('equipeId' in sample)h.equipeId=ctx.workerId; else h.ouvrierId=ctx.workerId;
-      h.date=dates[d];h.jour=dates[d];h.heures=hours;h.nbHeures=hours;h.h=hours;
-      if(row.affectation.startsWith('MOTIF:')){h.chantierId='';h.motif=row.affectation.slice(6)}
-      else {h.chantierId=row.affectation;h.motif=''}
-      fresh.push(h);
+      fresh.push({semaine,salarieId:ctx.workerId,jour,type:motif?'np':'chantier',ref,heures:hours,taux});
     });
   });
   const merged=keep.concat(fresh);
   if(typeof S!=='undefined')S.heures=merged;
-  let ok=true;
+  let ok=false;
   try{
-    if(typeof apiPost==='function'){
-      ok=await apiPost('setHeures',merged);
-      if(ok===false&&typeof toast==='function')toast('Sauvegarde des heures impossible',true);
-    }
-  }catch(e){ok=false;if(typeof toast==='function')toast('Sauvegarde des heures impossible',true)}
-  if(ok!==false){closeModal();if(typeof render==='function')render();if(typeof toast==='function')toast('Semaine enregistrée ✓')}
+    ok=typeof saveSemaine==='function'
+      ? await saveSemaine()
+      : await apiPost('setSemaine',{semaine,lignes:merged.filter(h=>String(h.semaine)===String(semaine)),validee:false});
+  }catch(e){ok=false}
+  if(ok){
+    closeModal();
+    if(typeof render==='function')render();
+    if(typeof toast==='function')toast('Semaine enregistrée ✓');
+  }else{
+    if(typeof S!=='undefined')S.heures=avant;
+    if(typeof toast==='function')toast('Sauvegarde des heures impossible',true);
+  }
 }
 /* Intercepte la modale journalière existante sans modifier les données/pages voisines */
 function yayaUpgradeHoursModal(){
