@@ -3216,7 +3216,7 @@ function yayaHourStore(){
 }
 function yayaHourWorkerId(h){return String(h.ouvrierId??h.salarieId??h.equipeId??h.workerId??h.ouvrier??'')}
 function yayaHourDate(h){return String(h.date||h.jour||h.dateJour||'').slice(0,10)}
-function yayaHourProjectId(h){return String(h.chantierId??h.affectationId??h.motif??h.chantier??'')}
+function yayaHourProjectId(h){if(h.type==='np'&&h.ref)return 'MOTIF:'+String(h.ref);return String(h.ref??h.chantierId??h.affectationId??h.motif??h.chantier??'')}
 function yayaHourValue(h){return Number(h.heures??h.nbHeures??h.h??h.duree??0)||0}
 
 function yayaOptionHtml(){
@@ -3230,8 +3230,12 @@ function yayaBlankRow(){
 }
 function yayaExistingRows(workerId,dates){
   const map=new Map();
+  const semaine=yayaIso(yayaMonday(dates[0]));
   yayaHourStore().filter(h=>yayaHourWorkerId(h)===String(workerId)).forEach(h=>{
-    const di=dates.findIndex(d=>yayaIso(d)===yayaHourDate(h));if(di<0)return;
+    let di=-1;
+    if(h.semaine!=null&&h.jour!=null&&String(h.semaine).slice(0,10)===semaine)di=Number(h.jour);
+    else di=dates.findIndex(d=>yayaIso(d)===yayaHourDate(h));
+    if(di<0||di>4)return;
     const key=yayaHourProjectId(h);if(!key)return;
     if(!map.has(key))map.set(key,{affectation:key,hours:['','','','','']});
     map.get(key).hours[di]=yayaHourValue(h)||'';
@@ -3340,7 +3344,7 @@ function yayaUpgradeHoursModal(){
   }
   if(!workerId)return;
   const dm=title.match(/(d{1,2})s+(janv|févr|mars|avr|mai|juin|juil|août|sept|oct|nov|déc)/i);
-  openYayaWeekHours(workerId,new Date());
+  openYayaWeekHours(workerId,typeof monday!=='undefined'?monday:new Date());
 }
 
 function injectSectionHeaders(){/* Grands titres supprimés : les titres natifs des pages sont conservés. */}
