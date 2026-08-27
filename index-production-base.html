@@ -228,6 +228,8 @@
   }
   function install(){
     if(!ready())return setTimeout(install,120);
+    const version=document.getElementById('yayaVersion');
+    if(version)version.textContent='V195';
     installReloadButton();
     disableAutomaticUploads();
     installChantierCreation();
