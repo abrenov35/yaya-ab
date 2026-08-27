@@ -1661,7 +1661,7 @@ const BADGE_DOC={"BL":"b-bl","Facture":"b-fac","Devis":"b-df","Achat direct":"b-
 const badgeDoc=t=>BADGE_DOC[t]||"b-doc";
 const badgeAchatHtml=a=>a.typeDoc==="Avoir"
   ?'<button class="badge b-avoir" ontouchstart="showAvoirTooltip(this,event)" onclick="showAvoirTooltip(this,event)" style="cursor:pointer;border:none;font-family:inherit;font-size:inherit;font-weight:inherit;letter-spacing:inherit">AVOIR</button>'
-  :'<span class="badge '+badgeDoc(a.typeDoc)+'">'+(a.typeDoc.toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS'))+'</span>';
+  :'<span class="badge '+badgeDoc(a.typeDoc)+'">'+(a.typeDoc.toUpperCase().replace('DEVIS FOURNISSEUR','DEVIS').replace('FACTURE SOUS-TRAITANT','SOUS-TRAITANT'))+'</span>';
 function chargeValidationHtml(a){
   if(!a||a.statutValidation!=="A_VALIDER")return "";
   return '<span class="charge-auto"><span class="charge-auto-badge">AUTO · À VALIDER</span><button class="charge-valid-btn" onclick="validerChargeAuto(\''+a.id+'\')">VALIDER</button></span>';
