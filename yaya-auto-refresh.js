@@ -67,6 +67,7 @@
   }
 
   function safeToRefresh(){
+    if(window.yayaHoursPending)return false;
     if(Date.now()-installedAt<START_GRACE_MS)return false;
     if(loaderVisible())return false;
     if(document.hidden)return false;
