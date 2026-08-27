@@ -136,7 +136,7 @@
     /* Navigation interne : plus discrète que les actions */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
       display:flex!important;
-      justify-content:flex-start!important;
+      justify-content:center!important;
       align-items:center!important;
       gap:6px!important;
       margin:0 0 10px!important;
@@ -198,6 +198,9 @@
         justify-content:flex-start!important;
         padding:7px!important;
         gap:6px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
+        justify-content:flex-start!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > button{
         flex:0 0 auto!important;
