@@ -3237,7 +3237,7 @@ function yayaExistingRows(workerId,dates){
   const semaine=yayaIso(yayaMonday(dates[0]));
   yayaHourStore().filter(h=>yayaHourWorkerId(h)===String(workerId)).forEach(h=>{
     let di=-1;
-    if(h.semaine!=null&&h.jour!=null&&String(h.semaine).slice(0,10)===semaine)di=Number(h.jour);
+    if(h.semaine!=null&&h.jour!=null&&normaliserSemaineHeure(h.semaine)===semaine)di=Number(h.jour);
     else di=dates.findIndex(d=>yayaIso(d)===yayaHourDate(h));
     if(di<0||di>4)return;
     const key=yayaHourProjectId(h);if(!key)return;
