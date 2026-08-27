@@ -3339,7 +3339,7 @@ async function yayaSaveWeek(){
         remote=await apiGet();
         const heures=Array.isArray(remote&&remote.heures)?remote.heures:[];
         const totalRelu=heures.filter(h=>
-          String(h.semaine||'').slice(0,10)===String(semaine)&&
+          normaliserSemaineHeure(h.semaine)===String(semaine)&&
           String(h.salarieId)===sid&&Number(h.jour)>=0&&Number(h.jour)<=4
         ).reduce((t,h)=>t+(Number(h.heures)||0),0);
         if(Math.abs(totalRelu-totalAttendu)<0.001){ok=true;break}
