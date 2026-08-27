@@ -5,7 +5,7 @@
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
-    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      .yaya-edit-chantier-btn{margin-left:auto!important;padding:5px 10px!important;font-size:11.5px!important;white-space:nowrap!important;}\n      .yaya-planning-box{display:grid;gap:6px;padding:10px;border:1px solid rgba(22,45,73,.14);border-radius:8px;background:#fafbfd;}\n      .yaya-planning-state{font-size:12px;font-weight:700;}\n      .yaya-planning-note{font-size:11px;opacity:.65;line-height:1.35;}\n      @media(max-width:640px){.yaya-edit-chantier-btn{margin-left:0!important}.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}}\n    ';
+    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      #pane-chantiers button[onclick*="delChantier"],#pane-chantiers .chantier-delete-btn{display:none!important;}\n      .yaya-edit-chantier-btn{margin-left:auto!important;padding:5px 10px!important;font-size:11.5px!important;white-space:nowrap!important;}\n      .yaya-delete-chantier-modal-btn{margin-right:auto!important;background:#fff1f0!important;border:1px solid #e6a09a!important;color:#b42318!important;font-weight:750!important;}\n      .yaya-delete-chantier-modal-btn:hover{background:#fee4e2!important;border-color:#cf6d64!important;}\n      .yaya-planning-box{display:grid;gap:6px;padding:10px;border:1px solid rgba(22,45,73,.14);border-radius:8px;background:#fafbfd;}\n      .yaya-planning-state{font-size:12px;font-weight:700;}\n      .yaya-planning-note{font-size:11px;opacity:.65;line-height:1.35;}\n      @media(max-width:640px){.yaya-edit-chantier-btn{margin-left:0!important}.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}.yaya-delete-chantier-modal-btn{width:100%!important;margin:0 0 8px!important}.yaya-chantier-edit-modal .mfoot{flex-wrap:wrap!important}}\n    ';
     document.head.appendChild(style);
   }
 
@@ -141,6 +141,12 @@
     else if(btn){btn.disabled=false;btn.textContent='Enregistrer';}
   };
 
+  window.deleteExistingChantier=async function(cid){
+    const avant=S.chantiers.length;
+    await delChantier(cid);
+    if(S.chantiers.length<avant)closeModal();
+  };
+
   window.sendExistingChantierToPlanning=async function(cid){
     const c=getChantier(cid);if(!c||c.planningPresent||c.sourcePlanningId)return;
     if(!valuesToChantier(c).ok)return;
@@ -190,7 +196,7 @@
       +'<button class="btn2" id="editPlanningBtn" type="button" onclick="sendExistingChantierToPlanning(\''+escAttr(cid)+'\')">'+(present?'Présent dans Planning':'Créer / rattacher au Planning')+'</button>'
       +'<span class="yaya-planning-note" id="editPlanningNote">'+(present?'Le retrait se fait uniquement par archivage dans Planning.':'Yaya vérifiera d’abord les doublons avant toute création.')+'</span></div>'
       +'</div>'
-      +'<div class="mfoot" style="justify-content:flex-end"><button class="btn2" type="button" onclick="closeModal()">Annuler</button><button class="btnp go" id="editChSave" type="button" onclick="saveExistingChantier(\''+escAttr(cid)+'\')">Enregistrer</button></div>'
+      +'<div class="mfoot" style="justify-content:flex-end"><button class="btn2 yaya-delete-chantier-modal-btn" type="button" onclick="deleteExistingChantier(\''+escAttr(cid)+'\')">Supprimer le chantier</button><button class="btn2" type="button" onclick="closeModal()">Annuler</button><button class="btnp go" id="editChSave" type="button" onclick="saveExistingChantier(\''+escAttr(cid)+'\')">Enregistrer</button></div>'
       +'</div></div>';
     refreshPlanningBox(c);
   };
@@ -198,6 +204,7 @@
   function decorateCards(){
     if(!ready())return;
     const pane=document.getElementById('pane-chantiers');if(!pane)return;
+    pane.querySelectorAll('button[onclick*="delChantier"],.chantier-delete-btn').forEach(btn=>btn.remove());
     pane.querySelectorAll('.card').forEach(card=>{
       if(card.querySelector('.yaya-edit-chantier-btn'))return;
       const cid=cidFromCard(card);if(!cid)return;
