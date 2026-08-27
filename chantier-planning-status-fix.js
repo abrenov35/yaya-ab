@@ -105,7 +105,12 @@
 
     try{
       if(typeof getChantiersPlanning!=='function')throw new Error('API Planning indisponible');
-      const list=await getChantiersPlanning();
+      const list=await Promise.race([
+        getChantiersPlanning(),
+        new Promise(function(_,reject){
+          setTimeout(function(){reject(new Error('délai de réponse dépassé'));},18000);
+        })
+      ]);
       if(seq!==verifySeq||!document.getElementById('editPlanningState'))return;
       const match=findPlanningMatch(list,nom);
       if(match){
@@ -144,6 +149,7 @@
   }
 
   let modalTimer=0;
+  let observedPlanningState=null;
   function watchModal(){
     const root=document.getElementById('modalRoot');
     if(!root){setTimeout(watchModal,150);return;}
@@ -151,7 +157,15 @@
       clearTimeout(modalTimer);
       modalTimer=setTimeout(function(){
         hookOpenFunction();
-        if(document.getElementById('editPlanningState')&&document.getElementById('editChNom')){
+        const planningState=document.getElementById('editPlanningState');
+        if(!planningState){
+          observedPlanningState=null;
+          return;
+        }
+        // Vérifier une seule fois à l'ouverture de cette modale. Les changements
+        // de texte produits par setPlanningBox ne doivent pas relancer la requête.
+        if(planningState!==observedPlanningState&&document.getElementById('editChNom')){
+          observedPlanningState=planningState;
           verifyPlanning('');
         }
       },10);
