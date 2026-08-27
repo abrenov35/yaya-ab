@@ -8,6 +8,9 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      #pane-chantiers .card > .top > b + .num{
+        display:none!important;
+      }
       .yaya-signed-quote-summary{
         display:inline-block;
         width:145px;
