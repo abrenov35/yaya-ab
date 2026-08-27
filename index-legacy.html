@@ -125,7 +125,10 @@
 .b-photo{background:transparent;border:1px solid rgba(3,105,161,.3);color:#0369a1}.b-mail{background:transparent;border:1px solid rgba(146,64,14,.3);color:#92400e}.b-plan{background:transparent;border:1px solid rgba(91,33,182,.3);color:#5b21b6}.b-document{background:transparent;border:1px solid rgba(22,125,52,.3);color:#166534}.b-divers{background:transparent;border:1px solid rgba(71,85,105,.3);color:#475569}
 .section-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-left:1rem;border-left:4px solid #10b981;background:transparent}.section-header h2{margin:0;font-size:18px;font-weight:600;color:#1f2937;letter-spacing:-0.5px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:transparent}
 #pane-documents > .section-header,
-#pane-docs > .section-header{display:none !important}
+#pane-docs > .section-header,
+#pane-achats > .section-header,
+#pane-chantiers > .section-header,
+#pane-equipe > .section-header{display:none !important}
 .data-table{width:100%;border-collapse:collapse;margin-top:1rem}.data-table thead{background-color:#f9fafb;border-bottom:1px solid #e5e7eb}.data-table th{padding:0.5rem 1rem;text-align:left;font-size:12px;font-weight:600;color:#6b7280;letter-spacing:0.5px;text-transform:uppercase;height:40px;vertical-align:middle}.data-table td{padding:0.5rem 1rem;border-bottom:0.5px solid #f3f4f6;font-size:13px;color:#374151;height:44px;vertical-align:middle}.data-table tbody tr:hover{background-color:#fafafa}.badge-type{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.2px;white-space:nowrap}.badge-type.document{background-color:#dbeafe;color:#0c4a6e}.badge-type.photo{background-color:#dbeafe;color:#0c4a6e}.badge-type.achat{background-color:#fce7f3;color:#831843}.badge-chantier{display:inline-block;padding:3px 8px;background-color:#f3f4f6;border:0.5px solid #d1d5db;border-radius:3px;font-size:11px;color:#374151;font-weight:500;white-space:nowrap}.text-secondary{font-size:11px;color:#9ca3af;margin:0;line-height:1.3}
 </style>
 <style>
@@ -3332,7 +3335,7 @@ function yayaUpgradeHoursModal(){
   openYayaWeekHours(workerId,new Date());
 }
 
-function injectSectionHeaders(){const sections=[{id:'pane-achats',title:'Dernières charges validées'},{id:'pane-chantiers',title:'Chantiers actifs'},{id:'pane-equipe',title:'Équipe'}];sections.forEach(sec=>{const pane=document.getElementById(sec.id);if(!pane||pane.querySelector('.section-header'))return;const header=document.createElement('div');header.className='section-header';header.innerHTML='<h2>'+sec.title+'</h2>';pane.insertBefore(header,pane.firstChild);});}
+function injectSectionHeaders(){/* Grands titres supprimés : les titres natifs des pages sont conservés. */}
 function applyPatches(){alignChantierTools();yayaUpgradeHoursModal();iconiserActionsCharges();styliserDocuments();injectSectionHeaders();document.querySelectorAll('.stat small').forEach(el=>{const t=(el.textContent||'').toLowerCase();if(t.includes('main-d')&&(t.includes('oeuvre')||t.includes('œuvre')))el.textContent='CHARGES';});document.querySelectorAll('.modal').forEach(m=>{const h=m.querySelector('h5');if(!(h&&/^Modifier l[’']achat/i.test((h.textContent||'').trim())))return;m.classList.add('achat-edit-modal');m.querySelectorAll('#pj-zone button,.mfoot button').forEach(b=>{const t=(b.textContent||'').trim().toUpperCase();let ico='',label='',extra='';if(t.includes('VOIR')){ico='👁';label='Voir la pièce';}else if(t.includes('REMPLACER')){ico='🔄';label='Remplacer la pièce';}else if(t.includes('ENREGISTRER')){ico='✓';label='Enregistrer';extra=' achat-icon-save';}else if(t.includes('ANNULER')){ico='✕';label='Annuler';extra=' achat-icon-cancel';}if(ico){b.textContent=ico;b.title=label;b.setAttribute('aria-label',label);b.className+=' achat-icon-btn'+extra;}});});}
 let yayaPieceSession=0;
 window.voirPiece=function(u){
