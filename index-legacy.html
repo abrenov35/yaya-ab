@@ -3347,6 +3347,7 @@ async function yayaSaveWeek(){
     if(remote&&Array.isArray(remote.heures)){
       S.heures=remote.heures.map(h=>({...h,heures:Number(h.heures)||0,jour:Number(h.jour)||0,semaine:String(h.semaine||'').slice(0,10),taux:(h.taux===''||h.taux==null)?null:Number(h.taux)}));
     }
+    yayaWeekSaving=false;
     closeModal();
     if(typeof render==='function')render();
     if(typeof toast==='function')toast('Semaine enregistrée ✓');
