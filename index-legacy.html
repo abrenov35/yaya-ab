@@ -3317,10 +3317,6 @@ async function yayaSaveWeek(){
     });
   });
   const totalAttendu=fresh.reduce((t,h)=>t+Number(h.heures||0),0);
-  if(totalAttendu<=0){
-    if(typeof toast==='function')toast('Aucune heure à enregistrer',true);
-    return;
-  }
   yayaWeekSaving=true;
   const btn=document.getElementById('yayaWeekSaveBtn');
   if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
