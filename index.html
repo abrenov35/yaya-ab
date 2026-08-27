@@ -11,6 +11,7 @@
   if(!base.includes(marker))throw new Error('Point insertion aperçu introuvable');
   base=base.replace(marker,replacement);
   base=base.replace('detailtabs-4','detailtabs-5');
+  base=base.replace('detailtabs-5','detailtabs-6');
   document.open();document.write(base);document.close();
 })().catch(e=>{document.body.innerHTML='<pre style="padding:20px;color:#b42318">Erreur chargement Yaya : '+String(e)+'</pre>';});
 </script></body></html>
