@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-documents-view-only-css-v2';
+  const STYLE_ID='yaya-documents-view-only-css-v3';
   if(document.getElementById(STYLE_ID))return;
 
   const style=document.createElement('style');
@@ -50,14 +50,22 @@
       display:inline-flex!important;
       align-items:center!important;
       justify-content:center!important;
+      width:auto!important;
+      min-width:150px!important;
+      max-width:210px!important;
       min-height:42px!important;
-      padding:0 14px!important;
+      padding:7px 14px!important;
       background:#fff!important;
       color:#162D49!important;
       border:1px solid #C7D4E0!important;
       border-radius:9px!important;
       font-size:11px!important;
       font-weight:800!important;
+      line-height:1.15!important;
+      white-space:normal!important;
+      overflow-wrap:normal!important;
+      word-break:normal!important;
+      text-align:center!important;
       box-shadow:none!important;
     }
 
@@ -85,6 +93,15 @@
       font-weight:500!important;
       text-align:left!important;
       box-shadow:none!important;
+    }
+
+    @media(max-width:620px){
+      #pane-documents .achligne.ligR > .badge:nth-child(1){
+        min-width:118px!important;
+        max-width:145px!important;
+        font-size:10px!important;
+        padding:6px 8px!important;
+      }
     }
   `;
   document.head.appendChild(style);
