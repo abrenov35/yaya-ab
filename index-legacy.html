@@ -124,6 +124,8 @@
 .scan-zone{background:#f8faff;border:1.5px dashed #c9a24b;border-radius:10px;padding:12px 14px;margin-bottom:10px;font-size:13px}.scan-zone b{color:#1c2b48}.scan-zone.loading{opacity:.7;pointer-events:none}.scan-ok{background:#f0fdf4;border:1px solid #86efac;border-radius:10px;padding:10px 14px;margin-bottom:10px;font-size:13px;color:#166534;font-weight:600}
 .b-photo{background:transparent;border:1px solid rgba(3,105,161,.3);color:#0369a1}.b-mail{background:transparent;border:1px solid rgba(146,64,14,.3);color:#92400e}.b-plan{background:transparent;border:1px solid rgba(91,33,182,.3);color:#5b21b6}.b-document{background:transparent;border:1px solid rgba(22,125,52,.3);color:#166534}.b-divers{background:transparent;border:1px solid rgba(71,85,105,.3);color:#475569}
 .section-header{display:flex;align-items:center;gap:1rem;margin-bottom:1.5rem;padding-left:1rem;border-left:4px solid #10b981;background:transparent}.section-header h2{margin:0;font-size:18px;font-weight:600;color:#1f2937;letter-spacing:-0.5px;text-transform:uppercase;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:transparent}
+#pane-documents .doc-delete-btn,
+#pane-docs .doc-delete-btn{display:none !important}
 #pane-documents > .section-header,
 #pane-docs > .section-header,
 #pane-achats > .section-header,
@@ -3168,16 +3170,6 @@ function styliserDocuments(){
           editBtn.onclick=()=>modifierDocumentDepuisLigne(editBtn);
         }
         actions.appendChild(editBtn);
-      }
-      if(!actions.querySelector('.doc-delete-btn')){
-        const deleteBtn=document.createElement('button');
-        deleteBtn.type='button';
-        deleteBtn.className='doc-delete-btn';
-        deleteBtn.textContent='✕';
-        deleteBtn.title='Supprimer de Yaya';
-        deleteBtn.setAttribute('aria-label','Supprimer de Yaya');
-        deleteBtn.onclick=()=>supprimerDocumentDepuisLigne(deleteBtn);
-        actions.appendChild(deleteBtn);
       }
     });
   });
