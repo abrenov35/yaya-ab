@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const id='yaya-chantier-tabs-soft-theme-v5';
+  const id='yaya-chantier-tabs-soft-theme-v6';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -75,6 +75,30 @@
       background:#DDE8F0!important;
       color:#42627D!important;
     }
+
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="marche"]{
+      background:#eef8f1!important;border-color:#acd5b8!important;color:#286b3e!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="marche"] small{background:#dcefe2!important;color:#286b3e!important}
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="marche"].on{background:#dff2e5!important;border-color:#65a878!important;box-shadow:inset 0 -2px 0 #65a878!important}
+
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="depenses"]{
+      background:#fff0f3!important;border-color:#edb9c4!important;color:#96384c!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="depenses"] small{background:#f8dce3!important;color:#96384c!important}
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="depenses"].on{background:#f9dfe6!important;border-color:#d6788c!important;box-shadow:inset 0 -2px 0 #d6788c!important}
+
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"]{
+      background:#fff5e8!important;border-color:#edc58f!important;color:#935a08!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"] small{background:#fde6c5!important;color:#935a08!important}
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"].on{background:#fde8cb!important;border-color:#d6963d!important;box-shadow:inset 0 -2px 0 #d6963d!important}
+
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"]{
+      background:#eef6ff!important;border-color:#acc9eb!important;color:#285f96!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"] small{background:#dcecff!important;color:#285f96!important}
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"].on{background:#deedff!important;border-color:#6e9fd6!important;box-shadow:inset 0 -2px 0 #6e9fd6!important}
 
     /* Les trois actions de gauche ont exactement le même style. */
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
