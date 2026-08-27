@@ -13,6 +13,33 @@
     try{return JSON.stringify(data||{});}catch(e){return '';}
   }
 
+  function chantierKey(value){
+    return String(value||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+  }
+
+  function preservePlanningData(fresh){
+    if(!fresh||!Array.isArray(fresh.chantiers))return fresh;
+    let current=[];
+    try{current=Array.isArray(S.chantiers)?S.chantiers:[];}catch(e){}
+    const byId=new Map(current.map(c=>[String(c.id||''),c]));
+    const byName=new Map();
+    current.forEach(c=>{
+      const key=chantierKey(c&&c.nom);
+      if(key&&!byName.has(key))byName.set(key,c);
+    });
+    fresh.chantiers.forEach(c=>{
+      const previous=byId.get(String(c.id||''))||byName.get(chantierKey(c.nom));
+      if(!previous)return;
+      if(!c.dateSignature&&previous.dateSignature)c.dateSignature=previous.dateSignature;
+      if(!c.sourcePlanningId&&previous.sourcePlanningId)c.sourcePlanningId=previous.sourcePlanningId;
+      if(!c.planningNom&&previous.planningNom)c.planningNom=previous.planningNom;
+      if(c.planningPresent==null&&previous.planningPresent!=null)c.planningPresent=previous.planningPresent;
+    });
+    return fresh;
+  }
+
   function modalOpen(){
     const root=document.getElementById('modalRoot');
     if(root&&root.children&&root.children.length)return true;
@@ -59,7 +86,7 @@
     lastRun=now;
     try{
       if(!lastSnapshot&&typeof S!=='undefined')lastSnapshot=snapshot(S);
-      const fresh=await apiGet();
+      const fresh=preservePlanningData(await apiGet());
       const nextSnapshot=snapshot(fresh);
       if(!nextSnapshot||nextSnapshot===lastSnapshot)return;
 
