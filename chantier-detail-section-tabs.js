@@ -4,9 +4,9 @@
   const STYLE_ID='yaya-chantier-detail-section-tabs-style';
   const STORAGE_PREFIX='yaya.chantier.detail.section.';
   const ORDER=['marche','depenses','charges','documents'];
-  const LABELS={marche:'Marché',depenses:'Dépenses',charges:'Charges',documents:'Documents'};
-  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',charges:'Aucune charge',documents:'Aucun document'};
-  const EMPTY_META={marche:'0 €',depenses:'0 €',charges:'0 €',documents:'0'};
+  const LABELS={marche:'MarchÃ©',depenses:'DÃ©penses',charges:'Charges',documents:'Documents'};
+  const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dÃ©pense',charges:'Aucune charge',documents:'Aucun document'};
+  const EMPTY_META={marche:'0 â‚¬',depenses:'0 â‚¬',charges:'0 â‚¬',documents:'0'};
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -170,6 +170,7 @@
     const text=normalise(el&&el.textContent);
     if(text.startsWith('MARCHE'))return 'marche';
     if(text.startsWith('DEPENSES')||text.startsWith('DEPENSE'))return 'depenses';
+    if(text.startsWith('HISTORIQUE DES ECHANGES'))return 'documents';
     if(text.startsWith('DOCUMENTS')||text.startsWith('DOCUMENT'))return 'documents';
     return '';
   }
@@ -246,7 +247,7 @@
   }
 
   function euro(value){
-    return Math.round(Number(value)||0).toLocaleString('fr-FR')+' €';
+    return Math.round(Number(value)||0).toLocaleString('fr-FR')+' â‚¬';
   }
 
   function escapeHtml(value){
@@ -325,7 +326,7 @@
       const small=stat.querySelector('small');
       return normalise(small&&small.textContent)===normalise(label);
     });
-    const marketStat=statByLabel('Marché HT');
+    const marketStat=statByLabel('MarchÃ© HT');
     const purchasesStat=statByLabel('Achats');
     const chargesStat=statByLabel('Charges');
     const marginStat=stats.find(stat=>{
@@ -362,7 +363,7 @@
     setValue(chargesStat,charges);
     setSub(chargesStat,hours.toLocaleString('fr-FR')+' h saisies');
     setValue(marginStat,margin);
-    setSub(marginStat,percent+' % du marché');
+    setSub(marginStat,percent+' % du marchÃ©');
     marginStat.classList.toggle('marge-pos',margin>=0);
     marginStat.classList.toggle('marge-neg',margin<0);
   }
@@ -415,7 +416,7 @@
     });
 
     btn.addEventListener('click',function(e){
-      // Clavier / accessibilité. Les clics pointeur sont déjà traités au pointerdown.
+      // Clavier / accessibilitÃ©. Les clics pointeur sont dÃ©jÃ  traitÃ©s au pointerdown.
       if(e.detail===0)applySectionFast(card,key);
     });
   }
@@ -424,7 +425,7 @@
     if(!card||card.classList.contains('yaya-docs-only-card'))return;
     const sections=sectionsFor(card);
 
-    // Une carte repliée n'a aucune section de détail : ne pas lui ajouter les boutons.
+    // Une carte repliÃ©e n'a aucune section de dÃ©tail : ne pas lui ajouter les boutons.
     if(!sections.length)return;
 
     const byKey=new Map(sections.map(s=>[s.key,s]));
@@ -445,7 +446,7 @@
         }
         node.classList.add('yaya-detail-section-node');
         node.dataset.section=section.key;
-        // Nettoie les display inline posés par les anciennes versions du patch.
+        // Nettoie les display inline posÃ©s par les anciennes versions du patch.
         if(node.style.display==='none')node.style.removeProperty('display');
       });
     });
@@ -525,8 +526,8 @@
     decorate();
 
     // Surveille uniquement les vrais ajouts/suppressions issus d'un rendu Yaya.
-    // Le patch lui-même ne remplace plus les enfants des boutons à chaque passe,
-    // ce qui évite la boucle MutationObserver de l'ancienne version.
+    // Le patch lui-mÃªme ne remplace plus les enfants des boutons Ã  chaque passe,
+    // ce qui Ã©vite la boucle MutationObserver de l'ancienne version.
     new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
     window.addEventListener('yaya:data-refreshed',schedule);
   }
