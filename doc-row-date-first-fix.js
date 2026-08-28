@@ -61,25 +61,69 @@
     document.head.appendChild(style);
   }
 
+  function cleanSubject(value){
+    const t=String(value||'').replace(/\s+/g,' ').trim();
+    if(!t)return '';
+    if(t.length>180)return '';
+    if(/\b(Bonjour|Bonsoir|Cordialement|Bien à vous|Merci|a écrit|From\s*:|De\s*:|Envoyé\s*:|Sent\s*:|Téléphone|www\.)\b/i.test(t)&&t.length>90)return '';
+    return t.replace(/^objet\s*:\s*/i,'');
+  }
+
+  function documentForLine(line){
+    const action=[...line.querySelectorAll('[onclick]')].find(el=>/editDocument|delDocument|voirMessageYaya/i.test(String(el.getAttribute('onclick')||'')));
+    const raw=String(action&&action.getAttribute('onclick')||'');
+    const m=raw.match(/(?:editDocument|delDocument|voirMessageYaya)\(['\"]([^'\"]+)/);
+    if(!m)return null;
+    try{
+      if(typeof S!=='undefined'&&Array.isArray(S.documents))return S.documents.find(d=>String(d.id)===String(m[1]))||null;
+    }catch(e){}
+    return null;
+  }
+
+  function mailSubject(d){
+    if(!d)return 'Objet non renseigné';
+    const vals=[d.subject,d.objetMail,d.mailSubject,d.emailSubject,d.objet,d.intitule];
+    for(const v of vals){
+      const s=cleanSubject(v);
+      if(s)return s;
+    }
+    return 'Objet non renseigné';
+  }
+
   function decorateLine(line){
-    if(!line||line.dataset.yayaDateFirst==='1')return;
-    const children=[...line.children];
+    if(!line)return;
+    const already=line.dataset.yayaDateFirst==='1';
+    let children=[...line.children];
     if(children.length<5)return;
 
-    const type=children[0];
-    const subject=children[1];
-    const title=children[2];
-    const date=children[3];
-    const actions=children[4];
+    let type,subject,title,date,actions;
+    if(already){
+      date=line.querySelector('.yaya-doc-date-first');
+      subject=line.querySelector('.yaya-doc-subject-compact');
+      title=line.querySelector('.yaya-document-title');
+      actions=line.querySelector('.yaya-doc-actions-last');
+      type=line.querySelector('.yaya-doc-type-hidden');
+    }else{
+      type=children[0];
+      subject=children[1];
+      title=children[2];
+      date=children[3];
+      actions=children[4];
+      type.classList.add('yaya-doc-type-hidden');
+      subject.classList.add('yaya-doc-subject-compact');
+      title.classList.add('yaya-document-title');
+      date.classList.add('yaya-doc-date-first');
+      actions.classList.add('yaya-doc-actions-last');
+      line.insertBefore(date,line.firstChild);
+      line.dataset.yayaDateFirst='1';
+    }
 
-    type.classList.add('yaya-doc-type-hidden');
-    subject.classList.add('yaya-doc-subject-compact');
-    title.classList.add('yaya-document-title');
-    date.classList.add('yaya-doc-date-first');
-    actions.classList.add('yaya-doc-actions-last');
-
-    line.insertBefore(date,line.firstChild);
-    line.dataset.yayaDateFirst='1';
+    const d=documentForLine(line);
+    const isMail=(d&&String(d.type||'').toUpperCase()==='MAIL') || /\bMAIL\b/i.test(String(type&&type.textContent||''));
+    if(isMail&&title){
+      title.textContent=mailSubject(d);
+      title.title=title.textContent;
+    }
   }
 
   function decorate(){
@@ -91,7 +135,7 @@
     decorate();
     const pane=document.getElementById('pane-chantiers');
     if(!pane){setTimeout(install,150);return;}
-    new MutationObserver(decorate).observe(pane,{childList:true,subtree:true});
+    new MutationObserver(()=>requestAnimationFrame(decorate)).observe(pane,{childList:true,subtree:true});
     window.addEventListener('yaya:data-refreshed',decorate);
   }
 
