@@ -135,6 +135,7 @@
 #pane-chantiers > .section-header,
 #pane-equipe > .section-header{display:none !important}
 .data-table{width:100%;border-collapse:collapse;margin-top:1rem}.data-table thead{background-color:#f9fafb;border-bottom:1px solid #e5e7eb}.data-table th{padding:0.5rem 1rem;text-align:left;font-size:12px;font-weight:600;color:#6b7280;letter-spacing:0.5px;text-transform:uppercase;height:40px;vertical-align:middle}.data-table td{padding:0.5rem 1rem;border-bottom:0.5px solid #f3f4f6;font-size:13px;color:#374151;height:44px;vertical-align:middle}.data-table tbody tr:hover{background-color:#fafafa}.badge-type{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:600;letter-spacing:0.2px;white-space:nowrap}.badge-type.document{background-color:#dbeafe;color:#0c4a6e}.badge-type.photo{background-color:#dbeafe;color:#0c4a6e}.badge-type.achat{background-color:#fce7f3;color:#831843}.badge-chantier{display:inline-block;padding:3px 8px;background-color:#f3f4f6;border:0.5px solid #d1d5db;border-radius:3px;font-size:11px;color:#374151;font-weight:500;white-space:nowrap}.text-secondary{font-size:11px;color:#9ca3af;margin:0;line-height:1.3}
+@media(max-width:720px){.yaya-document-line{grid-template-columns:90px 100px minmax(180px,1fr) 72px auto!important;overflow-x:auto!important}.yaya-document-title{min-width:180px!important}}
 </style>
 <style>
 /* YAYA V145 — CHARGES : STYLE SOBRE / PRO */
@@ -2156,12 +2157,17 @@ function renderChantiers(){
         f+='<div class="seclabel"><span>Documents</span><span>'+pieces.length+' pièce'+(pieces.length>1?'s':'')+'</span></div>';
         for(const d of pieces){
           const voir2=d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'';
-          const sujetBadge=d.sujet?'<span class="badge b-df" style="width:auto;padding:3px 10px;max-width:180px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">'+esc(d.sujet)+'</span>':'';
-          f+='<div class="achligne ligD">'
+          const titreBrut=String(d.titre||'');
+          const partiesDocs=titreBrut.split('/').map(x=>x.trim()).filter(Boolean);
+          const vientDocsChantier=String(d.origine||'').toUpperCase()==='DOCS_CHANTIER'&&partiesDocs.length>=3;
+          const operateurDoc=vientDocsChantier?(partiesDocs[1]||d.sujet||'—'):(d.sujet||'—');
+          const titreDescription=vientDocsChantier?(partiesDocs.slice(3).join(' / ')||d.sujet||titreBrut):titreBrut;
+          const dateDoc=String(d.date||'').slice(0,10).split('-').reverse().join('/');
+          f+='<div class="achligne ligD yaya-document-line" style="grid-template-columns:110px 130px minmax(0,1fr) 82px auto;align-items:center;gap:10px">'
             +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
-            +sujetBadge
-            +'<span style="flex:1;font-size:13px;color:#555;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;min-width:0">'+esc((String(d.titre||'').split(' ').slice(0,3).join(' ')))+'…</span>'
-
+            +'<span class="badge b-df" style="width:auto;padding:3px 10px;overflow:visible;white-space:normal;text-overflow:clip">'+esc(operateurDoc)+'</span>'
+            +'<span class="yaya-document-title" style="font-size:13px;color:#374151;overflow:visible;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;min-width:0;line-height:1.35">'+esc(titreDescription||'—')+'</span>'
+            +'<small style="color:#6b7280;white-space:nowrap;text-align:center">'+esc(dateDoc||'—')+'</small>'
             +'<span style="white-space:nowrap;display:flex;gap:4px;align-items:center">'+voir2+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">✎</button>'+'<button class="x" onclick="delDocument(\''+d.id+'\')">✕</button>'+'</span>'
             +'</div>';
         }
