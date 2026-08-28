@@ -2157,7 +2157,7 @@ function renderChantiers(){
       }
             // BLOC DOCUMENTS dans fiche chantier
       const docs=docsChantier(c.id);
-      const messages=docs.filter(d=>String(d.type||'').toLowerCase()==='mail');
+      const messages=docs.filter(d=>String(d.type||'').toLowerCase()==='mail'&&d.publieDocument!==true);
       const pieces=docs.filter(d=>String(d.type||'').toLowerCase()!=='mail'||d.publieDocument===true);
       if(messages.length){
         f+='<div class="seclabel"><span>Historique des échanges</span><span>'+messages.length+' message'+(messages.length>1?'s':'')+'</span></div>';
