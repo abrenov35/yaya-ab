@@ -2146,7 +2146,7 @@ function renderChantiers(){
           const dateMsg=String(d.date||'').slice(0,10).split('-').reverse().join('/');
           f+='<div class="achligne ligD message-ligne">'
             +'<span class="badge b-mail">MAIL</span>'
-            +'<span class="badge b-df message-categorie">'+esc(d.sujet||'ÉCHANGE')+'</span>'
++'<span class="badge b-df message-categorie">'+esc(String(d.sujet||'ÉCHANGE').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,''))+'</span>'
             +'<span class="message-apercu">'+esc(d.titre||'Aucun extrait disponible')+'</span>'
             +'<small class="message-date">'+esc(dateMsg)+'</small>'
             +'<span class="message-actions"><button class="btn2 message-view-btn" title="Voir le message" aria-label="Voir le message" onclick="voirMessageYaya(\''+d.id+'\')">👁</button></span>'
