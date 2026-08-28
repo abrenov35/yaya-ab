@@ -2148,7 +2148,8 @@ function renderChantiers(){
 +'<span class="badge b-df message-categorie">'+esc(String(d.sujet||'ÉCHANGE').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,''))+'</span>'
 +'<span class="message-apercu">'+esc(d.objet||d.subject||'Objet non renseigné')+'</span>'
             +'<small class="message-date">'+esc(dateMsg)+'</small>'
-+'<span class="message-actions" style="gap:4px"><button class="btn2 message-view-btn" title="Voir le message" aria-label="Voir le message" onclick="voirMessageYaya(\''+d.id+'\')">👁</button><button class="x" title="Supprimer le mail" aria-label="Supprimer le mail" onclick="delDocument(\''+d.id+'\')">✕</button></span>'            +'</div>';
++'<span class="message-actions" style="gap:4px"><button class="btn2 message-view-btn" title="Voir le message" aria-label="Voir le message" onclick="voirMessageYaya(\''+d.id+'\')">👁</button>
+<button class="btn2" title="Modifier le mail" aria-label="Modifier le mail" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">✎</button>            </span>'            +'</div>';
         }
       }
       if(pieces.length){
