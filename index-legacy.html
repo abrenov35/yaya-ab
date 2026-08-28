@@ -2164,7 +2164,7 @@ function renderChantiers(){
           const titreDescription=vientDocsChantier?(partiesDocs.slice(3).join(' / ')||d.sujet||titreBrut):titreBrut;
           const dateDoc=String(d.date||'').slice(0,10).split('-').reverse().join('/');
           f+='<div class="achligne ligD yaya-document-line" style="grid-template-columns:110px 130px minmax(0,1fr) 82px auto;align-items:center;gap:10px">'
-            +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
++'<span class="badge '+badgeDoc2(d.type)+'" style="min-height:36px;padding:6px 8px;line-height:1.25;display:inline-flex;align-items:center;justify-content:center">'+esc(d.type).toUpperCase()+'</span>'
             +'<span class="badge b-df" style="width:auto;padding:3px 10px;overflow:visible;white-space:normal;text-overflow:clip">'+esc(operateurDoc)+'</span>'
             +'<span class="yaya-document-title" style="font-size:13px;color:#374151;overflow:visible;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;min-width:0;line-height:1.35">'+esc(titreDescription||'—')+'</span>'
             +'<small style="color:#6b7280;white-space:nowrap;text-align:center">'+esc(dateDoc||'—')+'</small>'
