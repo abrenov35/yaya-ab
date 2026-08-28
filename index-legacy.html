@@ -1965,6 +1965,25 @@ function voirMessageYaya(id){
     +'</div></div>';
 }
 
+async function publierMailDansDocuments(id){
+  const d=S.documents.find(x=>String(x.id)===String(id));
+  if(!d||String(d.type||'').toLowerCase()!=='mail') return;
+  if(d.publieDocument){toast('Ce mail est déjà publié dans Documents');return;}
+  d.publieDocument=true;
+  render();
+  if(await apiPost('setDocuments',S.documents)) toast('Mail publié dans Documents ✓');
+  else{d.publieDocument=false;render();}
+}
+async function retirerMailDesDocuments(id){
+  const d=S.documents.find(x=>String(x.id)===String(id));
+  if(!d)return;
+  if(!await confirmerActionCharge('Retirer ce mail ?','Le mail restera disponible dans l’historique des échanges.','RETIRER'))return;
+  d.publieDocument=false;
+  render();
+  if(await apiPost('setDocuments',S.documents))toast('Mail retiré de Documents');
+  else{d.publieDocument=true;render();}
+}
+
 let docLien="";
 function lireDocument(input){ const f=input.files[0]; input.value=""; if(f) traiterDocument(f); }
 async function traiterDocument(file){
@@ -2139,7 +2158,7 @@ function renderChantiers(){
             // BLOC DOCUMENTS dans fiche chantier
       const docs=docsChantier(c.id);
       const messages=docs.filter(d=>String(d.type||'').toLowerCase()==='mail');
-      const pieces=docs.filter(d=>String(d.type||'').toLowerCase()!=='mail');
+      const pieces=docs.filter(d=>String(d.type||'').toLowerCase()!=='mail'||d.publieDocument===true);
       if(messages.length){
         f+='<div class="seclabel"><span>Historique des échanges</span><span>'+messages.length+' message'+(messages.length>1?'s':'')+'</span></div>';
         for(const d of [...messages].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')))){
@@ -2149,28 +2168,35 @@ function renderChantiers(){
             +'<span class="badge b-df message-categorie">'+esc(d.sujet||'ÉCHANGE')+'</span>'
             +'<span class="message-apercu">'+esc(d.titre||'Aucun extrait disponible')+'</span>'
             +'<small class="message-date">'+esc(dateMsg)+'</small>'
-            +'<span class="message-actions"><button class="btn2 message-view-btn" title="Voir le message" aria-label="Voir le message" onclick="voirMessageYaya(\''+d.id+'\')">👁</button></span>'
+            +'<span class="message-actions" style="gap:5px"><button class="btn2 message-view-btn" title="Voir le message" aria-label="Voir le message" onclick="voirMessageYaya(\''+d.id+'\')">👁</button>'
+            +(d.publieDocument?'<span class="badge" style="background:#e8f5ec;color:#237a45;border:1px solid #b9dfc6;white-space:nowrap">✓ PUBLIÉ</span>':'<button class="btn2" title="Publier ce mail dans Documents" aria-label="Publier dans Documents" onclick="publierMailDansDocuments(\''+d.id+'\')">↓ DOCS</button>')+'</span>'
             +'</div>';
         }
       }
       if(pieces.length){
         f+='<div class="seclabel"><span>Documents</span><span>'+pieces.length+' pièce'+(pieces.length>1?'s':'')+'</span></div>';
+        f+='<div class="yaya-documents-scroll" style="overflow-x:auto;width:100%;padding-bottom:2px">';
         for(const d of pieces){
-          const voir2=d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'';
+          const estMailPublie=String(d.type||'').toLowerCase()==='mail';
+          const voir2=estMailPublie?'<button onclick="voirMessageYaya(\''+d.id+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':(d.lien&&String(d.lien).startsWith('http')?'<button onclick="voirPiece(\''+esc(d.lien)+'\')" style="font-size:10.5px;font-weight:700;padding:2px 9px;border-radius:12px;border:1px solid rgba(201,162,39,.55);background:rgba(201,162,39,.14);color:#7d630e;cursor:pointer">VOIR</button>':'');
           const titreBrut=String(d.titre||'');
           const partiesDocs=titreBrut.split('/').map(x=>x.trim()).filter(Boolean);
           const vientDocsChantier=String(d.origine||'').toUpperCase()==='DOCS_CHANTIER'&&partiesDocs.length>=3;
-          const operateurDoc=vientDocsChantier?(partiesDocs[1]||d.sujet||'—'):(d.sujet||'—');
-          const titreDescription=vientDocsChantier?(partiesDocs.slice(3).join(' / ')||d.sujet||titreBrut):titreBrut;
+          const operateurDoc=estMailPublie?(d.expediteur||d.from||d.auteur||d.sujet||'—'):(vientDocsChantier?(partiesDocs[1]||d.sujet||'—'):(d.sujet||'—'));
+          const titreDescription=estMailPublie?(d.objet||d.subject||d.titre||'—'):(vientDocsChantier?(partiesDocs.slice(3).join(' / ')||d.sujet||titreBrut):titreBrut);
           const dateDoc=String(d.date||'').slice(0,10).split('-').reverse().join('/');
-          f+='<div class="achligne ligD yaya-document-line" style="grid-template-columns:110px 130px minmax(0,1fr) 82px auto;align-items:center;gap:10px">'
-            +'<span class="badge '+badgeDoc2(d.type)+'">'+esc(d.type).toUpperCase()+'</span>'
-            +'<span class="badge b-df" style="width:auto;padding:3px 10px;overflow:visible;white-space:normal;text-overflow:clip">'+esc(operateurDoc)+'</span>'
-            +'<span class="yaya-document-title" style="font-size:13px;color:#374151;overflow:visible;white-space:normal;text-overflow:clip;overflow-wrap:anywhere;min-width:0;line-height:1.35">'+esc(titreDescription||'—')+'</span>'
+          const typeDocBrut=String(d.type||'');
+          const typeDocCle=typeDocBrut.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase();
+          const typeDocAffiche=(typeDocCle==='PVR'||(typeDocCle.includes('PROCES')&&typeDocCle.includes('RECEPTION'))) ? 'PV de réception' : typeDocBrut;
+          f+='<div class="achligne ligD yaya-document-line" style="grid-template-columns:120px 130px minmax(max-content,1fr) 82px auto;align-items:center;gap:16px;min-width:max-content;white-space:nowrap">'
+            +'<span class="badge '+badgeDoc2(d.type)+'" style="width:auto;min-width:0;max-width:none;padding:4px 9px;white-space:nowrap;text-align:center">'+esc(typeDocAffiche)+'</span>'
+            +'<span class="badge b-df" style="width:auto;padding:4px 10px;overflow:visible;white-space:nowrap;text-overflow:clip">'+esc(operateurDoc)+'</span>'
+            +'<span class="yaya-document-title" style="font-size:13px;color:#374151;overflow:visible;white-space:nowrap;text-overflow:clip;min-width:max-content;line-height:1.35">'+esc(titreDescription||'—')+'</span>'
             +'<small style="color:#6b7280;white-space:nowrap;text-align:center">'+esc(dateDoc||'—')+'</small>'
-            +'<span style="white-space:nowrap;display:flex;gap:4px;align-items:center">'+voir2+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">✎</button>'+'<button class="x" onclick="delDocument(\''+d.id+'\')">✕</button>'+'</span>'
+            +'<span style="white-space:nowrap;display:flex;gap:4px;align-items:center">'+voir2+'<button class="btn2" style="padding:1px 6px;font-size:11.5px" onclick="editDocument(\''+d.id+'\')">✎</button>'+(estMailPublie?'<button class="x" title="Retirer de Documents" onclick="retirerMailDesDocuments(\''+d.id+'\')">✕</button>':'<button class="x" onclick="delDocument(\''+d.id+'\')">✕</button>')+'</span>'
             +'</div>';
         }
+        f+='</div>';
       }
       f+='</div>';
       el.innerHTML=f; convertAvoirBadges(); return;
