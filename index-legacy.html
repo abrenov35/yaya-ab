@@ -1538,6 +1538,38 @@
 
 #pane-chantiers .yaya-document-line > span:last-child button:hover{
   background:#f1f5f9!important;
+  
+}
+  #pane-chantiers :is(.ligM,.ligD) > span:last-child button:is(
+  [onclick*="voirPiece"],
+  [onclick*="editMontant"],
+  [onclick*="editAchat"],
+  [onclick*="delAchat"],
+  [onclick*="delAvenant"]
+){
+  width:28px!important;
+  min-width:28px!important;
+  height:28px!important;
+  padding:2px!important;
+  margin:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:4px!important;
+  font-size:15px!important;
+}
+
+#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]{
+  font-size:0!important;
+}
+
+#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]::before{
+  content:"👁";
+  font-size:15px!important;
+}
+
+#pane-chantiers :is(.ligM,.ligD) > span:last-child button:hover{
+  background:#f1f5f9!important;
 }
 .message-modal{max-width:620px!important;padding:18px!important}
 .message-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px;color:#7b8795;font-size:12px}
