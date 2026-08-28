@@ -6,7 +6,7 @@
   const ORDER=['marche','depenses','charges','documents'];
   const LABELS={marche:'Marché',depenses:'Dépenses',charges:'Charges',documents:'Documents'};
   const EMPTY_LABELS={marche:'Aucun devis',depenses:'Aucune dépense',charges:'Aucune charge',documents:'Aucun document'};
-  const EMPTY_META={marche:'0 €',depenses:'0 €',charges:'0 €',documents:'0'};
+  const EMPTY_META={marche:'0 €',depenses:'0 €',charges:'0 €',documents:''};
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -83,7 +83,7 @@
         border-color:#acc9eb!important;
         color:#285f96!important;
       }
-      .yaya-detail-section-tab[data-section="documents"] small{background:#dcecff!important}
+      .yaya-detail-section-tab[data-section="documents"] small{display:none!important}
       .yaya-detail-section-tab[data-section="documents"].on{background:#deedff!important;border-color:#6e9fd6!important}
 
       .yaya-detail-section-tab[data-section] small{
@@ -93,6 +93,7 @@
         padding:2px 9px!important;
         border-radius:999px!important;
       }
+      .yaya-detail-section-tab[data-section="documents"] small{display:none!important}
 
       .card[data-yaya-detail-section="marche"] > .yaya-detail-section-node:not([data-section="marche"]),
       .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-node:not([data-section="depenses"]),
@@ -176,6 +177,7 @@
   }
 
   function metaForHeader(el,key){
+    if(key==='documents')return '';
     if(!el)return '';
     const children=[...el.children].map(x=>String(x.textContent||'').trim()).filter(Boolean);
     if(children.length>1)return children.slice(1).join(' ');
@@ -392,9 +394,6 @@
     if(!ORDER.includes(key))key='marche';
     if(card.dataset.yayaDetailSection!==key)card.dataset.yayaDetailSection=key;
 
-    // Applique aussi le masquage directement sur chaque ligne. Cette sécurité
-    // évite qu'une règle de l'ancienne mise en page rende une ligne (notamment
-    // un mail) visible sous Marché, Dépenses ou Charges.
     card.querySelectorAll(':scope > .yaya-detail-section-node').forEach(node=>{
       const visible=node.dataset.section===key;
       if(visible&&node.dataset.yayaSubcontractInvoice!=='1'){
@@ -428,7 +427,6 @@
     });
 
     btn.addEventListener('click',function(e){
-      // Clavier / accessibilité. Les clics pointeur sont déjà traités au pointerdown.
       if(e.detail===0)applySectionFast(card,key);
     });
   }
@@ -436,8 +434,6 @@
   function ensureTabs(card){
     if(!card||card.classList.contains('yaya-docs-only-card'))return;
     const sections=sectionsFor(card);
-
-    // Une carte repliée n'a aucune section de détail : ne pas lui ajouter les boutons.
     if(!sections.length)return;
 
     const byKey=new Map(sections.map(s=>[s.key,s]));
@@ -458,7 +454,6 @@
         }
         node.classList.add('yaya-detail-section-node');
         node.dataset.section=section.key;
-        // Nettoie les display inline posés par les anciennes versions du patch.
         if(node.style.display==='none')node.style.removeProperty('display');
       });
     });
@@ -491,13 +486,16 @@
       const strong=btn.querySelector('strong');
       const small=btn.querySelector('small');
       const label=LABELS[key];
-      const meta=key==='charges'
-        ? euro(chargeRows.reduce((total,row)=>total+row.cout,0))
-        : key==='depenses'
-          ? euro(depenseRows.reduce((total,a)=>total+(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),0))
-          : ((section&&section.meta)?section.meta:EMPTY_META[key]);
+      const meta=key==='documents'
+        ? ''
+        : key==='charges'
+          ? euro(chargeRows.reduce((total,row)=>total+row.cout,0))
+          : key==='depenses'
+            ? euro(depenseRows.reduce((total,a)=>total+(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),0))
+            : ((section&&section.meta)?section.meta:EMPTY_META[key]);
       if(strong&&strong.textContent!==label)strong.textContent=label;
       if(small&&small.textContent!==meta)small.textContent=meta;
+      if(small)small.style.display=key==='documents'?'none':'';
 
       const empty=ensureEmptyPane(card,tabs,key);
       empty.dataset.empty=key==='charges'
@@ -537,9 +535,6 @@
     if(!pane){setTimeout(install,150);return;}
     decorate();
 
-    // Surveille uniquement les vrais ajouts/suppressions issus d'un rendu Yaya.
-    // Le patch lui-même ne remplace plus les enfants des boutons à chaque passe,
-    // ce qui évite la boucle MutationObserver de l'ancienne version.
     new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
     window.addEventListener('yaya:data-refreshed',schedule);
   }
