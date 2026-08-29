@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v13';
+  const id='yaya-action-buttons-style-v14';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -46,30 +46,20 @@
   `;
   document.head.appendChild(style);
 
-  function achatById(id){
-    try{
-      if(typeof S!=='undefined'&&Array.isArray(S.achats))return S.achats.find(a=>String(a.id)===String(id))||null;
-    }catch(e){}
-    return null;
+  function extractAchatId(view){
+    const stored=String(view.dataset.achatId||'');
+    if(stored)return stored;
+    const raw=String(view.getAttribute('onclick')||'');
+    const match=raw.match(/openAchat\(['\"]([^'\"]+)/);
+    return match&&match[1]?String(match[1]):'';
   }
 
   function addChargeActionButtons(){
     document.querySelectorAll('#pane-chantiers .yaya-detail-charge-row').forEach(row=>{
       const view=row.querySelector('.yaya-detail-charge-view');
       if(!view)return;
-      const raw=String(view.getAttribute('onclick')||'');
-      const match=raw.match(/openAchat\(['\"]([^'\"]+)/);
-      const achatId=(match&&match[1])?String(match[1]):String(view.dataset.achatId||'');
-      if(!achatId)return;
-      view.dataset.achatId=achatId;
-
-      view.removeAttribute('onclick');
-      view.onclick=function(e){
-        e.preventDefault();e.stopPropagation();
-        const achat=achatById(achatId);
-        const lien=String(achat&&achat.lien||'');
-        if(lien&&typeof voirPiece==='function')voirPiece(lien);
-      };
+      const achatId=extractAchatId(view);
+      if(achatId)view.dataset.achatId=achatId;
 
       let edit=row.querySelector('.yaya-detail-charge-edit');
       if(!edit){edit=document.createElement('button');edit.type='button';edit.className='yaya-detail-charge-edit';edit.title='Modifier';edit.textContent='✏️';view.insertAdjacentElement('afterend',edit);}
@@ -77,6 +67,19 @@
       if(!del){del=document.createElement('button');del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.textContent='🗑️';row.appendChild(del);}
     });
   }
+
+  document.addEventListener('click',function(e){
+    const view=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-view'):null;
+    if(!view)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    const achatId=extractAchatId(view);
+    if(!achatId)return;
+    let achat=null;
+    try{achat=Array.isArray(S.achats)?S.achats.find(a=>String(a.id)===achatId)||null:null;}catch(err){}
+    const lien=String(achat&&achat.lien||'');
+    if(lien&&typeof voirPiece==='function')voirPiece(lien);
+  },true);
 
   let scheduled=false;
   function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;addChargeActionButtons();});}
