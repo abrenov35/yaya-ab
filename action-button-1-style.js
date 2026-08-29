@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v15';
+  const id='yaya-action-buttons-style-v16';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -66,6 +66,7 @@
       if(achatId)edit.dataset.achatId=achatId;
       let del=row.querySelector('.yaya-detail-charge-delete');
       if(!del){del=document.createElement('button');del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.textContent='🗑️';row.appendChild(del);}
+      if(achatId)del.dataset.achatId=achatId;
     });
   }
 
@@ -76,6 +77,16 @@
     e.stopPropagation();
     const achatId=String(edit.dataset.achatId||'');
     if(achatId&&typeof editAchat==='function')editAchat(achatId);
+  });
+
+  document.addEventListener('click',function(e){
+    const del=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-delete'):null;
+    if(!del)return;
+    e.preventDefault();
+    e.stopPropagation();
+    const achatId=String(del.dataset.achatId||'');
+    if(!achatId||typeof delAchat!=='function')return;
+    if(window.confirm('Supprimer cette charge ?'))delAchat(achatId);
   });
 
   let scheduled=false;
