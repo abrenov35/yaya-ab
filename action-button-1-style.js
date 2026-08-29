@@ -1,97 +1,36 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v16';
+  const id='yaya-action-buttons-style-v17';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
   style.id=id;
   style.textContent=`
-    #pane-chantiers .message-actions,
-    #pane-chantiers .yaya-document-line > span:last-child,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child{
-      display:grid!important;grid-template-columns:28px 28px 28px!important;column-gap:6px!important;align-items:center!important;justify-content:end!important;
-    }
-    #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"],
-    #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"],
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"],
-    #pane-achats button[onclick*="voir" i],#pane-achats button[onclick*="open" i]{
-      width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0 2px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;vertical-align:middle!important;
-    }
-    #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"]::before,
-    #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"]::before,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]::before,
-    #pane-achats button[onclick*="voir" i]::before,#pane-achats button[onclick*="open" i]::before{content:"👁"!important;font-size:15px!important;line-height:1!important;}
-    #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i]),
-    #pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]),
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]){
-      grid-column:2!important;width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a8d5b5!important;border-radius:7px!important;background:#f2faf4!important;color:#26703b!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;
-    }
-    #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i])::before,
-    #pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i])::before,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i])::before{content:"✏️"!important;font-size:14px!important;line-height:1!important;}
-    #pane-chantiers .message-actions button.x,#pane-chantiers .yaya-document-line > span:last-child button.x,#pane-chantiers :is(.ligM,.ligD) > span:last-child button.x,
-    #pane-chantiers .message-actions button[onclick*="supprim" i],#pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i],#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]{
-      grid-column:3!important;width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #e6a7a7!important;border-radius:7px!important;background:#fff3f3!important;color:#c83c3c!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;
-    }
-    #pane-chantiers .message-actions button.x::before,#pane-chantiers .yaya-document-line > span:last-child button.x::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button.x::before,
-    #pane-chantiers .message-actions button[onclick*="supprim" i]::before,#pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i]::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]::before{content:"❌"!important;font-size:13px!important;line-height:1!important;}
-
-    #pane-chantiers .yaya-detail-charge-row{grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px 28px!important;}
-    #pane-chantiers .yaya-detail-charge-edit,#pane-chantiers .yaya-detail-charge-delete{
-      width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:7px!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;line-height:1!important;cursor:pointer!important;
-    }
-    #pane-chantiers .yaya-detail-charge-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important;font-size:14px!important;}
-    #pane-chantiers .yaya-detail-charge-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important;font-size:14px!important;}
-    @media(max-width:640px){#pane-chantiers .yaya-detail-charge-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px 28px 28px!important;}}
+    #pane-chantiers .message-actions,#pane-chantiers .yaya-document-line > span:last-child,#pane-chantiers :is(.ligM,.ligD) > span:last-child{display:grid!important;grid-template-columns:28px 28px 28px!important;column-gap:6px!important;align-items:center!important;justify-content:end!important}
+    #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"],#pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"],#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"],#pane-achats button[onclick*="voir" i],#pane-achats button[onclick*="open" i]{width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0 2px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;vertical-align:middle!important}
+    #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"]::before,#pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"]::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]::before,#pane-achats button[onclick*="voir" i]::before,#pane-achats button[onclick*="open" i]::before{content:"👁"!important;font-size:15px!important;line-height:1!important}
+    #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i]),#pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]),#pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]){grid-column:2!important;width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a8d5b5!important;border-radius:7px!important;background:#f2faf4!important;color:#26703b!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important}
+    #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i])::before,#pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i])::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i])::before{content:"✏️"!important;font-size:14px!important;line-height:1!important}
+    #pane-chantiers .message-actions button.x,#pane-chantiers .yaya-document-line > span:last-child button.x,#pane-chantiers :is(.ligM,.ligD) > span:last-child button.x,#pane-chantiers .message-actions button[onclick*="supprim" i],#pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i],#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]{grid-column:3!important;width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #e6a7a7!important;border-radius:7px!important;background:#fff3f3!important;color:#c83c3c!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important}
+    #pane-chantiers .message-actions button.x::before,#pane-chantiers .yaya-document-line > span:last-child button.x::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button.x::before,#pane-chantiers .message-actions button[onclick*="supprim" i]::before,#pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i]::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]::before{content:"❌"!important;font-size:13px!important;line-height:1!important}
+    #pane-chantiers .yaya-detail-charge-row{grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px 28px!important}
+    #pane-chantiers .yaya-detail-charge-edit,#pane-chantiers .yaya-detail-charge-delete{width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:7px!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;line-height:1!important;cursor:pointer!important}
+    #pane-chantiers .yaya-detail-charge-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important;font-size:14px!important}
+    #pane-chantiers .yaya-detail-charge-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important;font-size:14px!important}
+    .yaya-charge-delete-overlay{position:fixed;inset:0;z-index:100000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(22,45,73,.48)}
+    .yaya-charge-delete-modal{width:min(430px,calc(100vw - 32px));background:#fff;border-radius:16px;box-shadow:0 18px 55px rgba(0,0,0,.28);padding:26px;text-align:center;color:#162d49}
+    .yaya-charge-delete-icon{width:58px;height:58px;margin:0 auto 14px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff0f0;font-size:28px}
+    .yaya-charge-delete-modal h3{margin:0 0 8px;font-size:21px}.yaya-charge-delete-modal p{margin:0 0 22px;font-size:13px;opacity:.72}
+    .yaya-charge-delete-actions{display:flex;gap:12px}.yaya-charge-delete-actions button{flex:1;height:42px;border-radius:9px;font-size:14px;font-weight:700}
+    .yaya-charge-delete-cancel{background:#fff;border:1px solid #cbd5e1;color:#162d49}.yaya-charge-delete-ok{background:#d93636;border:1px solid #d93636;color:#fff}
+    @media(max-width:640px){#pane-chantiers .yaya-detail-charge-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px 28px 28px!important}}
   `;
   document.head.appendChild(style);
 
-  function extractAchatId(view){
-    const stored=String(view.dataset.achatId||'');
-    if(stored)return stored;
-    const raw=String(view.getAttribute('onclick')||'');
-    const match=raw.match(/openAchat\(['\"]([^'\"]+)/);
-    return match&&match[1]?String(match[1]):'';
-  }
-
-  function addChargeActionButtons(){
-    document.querySelectorAll('#pane-chantiers .yaya-detail-charge-row').forEach(row=>{
-      const view=row.querySelector('.yaya-detail-charge-view');
-      if(!view)return;
-      const achatId=extractAchatId(view);
-      if(achatId)view.dataset.achatId=achatId;
-
-      let edit=row.querySelector('.yaya-detail-charge-edit');
-      if(!edit){edit=document.createElement('button');edit.type='button';edit.className='yaya-detail-charge-edit';edit.title='Modifier';edit.textContent='✏️';view.insertAdjacentElement('afterend',edit);}
-      if(achatId)edit.dataset.achatId=achatId;
-      let del=row.querySelector('.yaya-detail-charge-delete');
-      if(!del){del=document.createElement('button');del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.textContent='🗑️';row.appendChild(del);}
-      if(achatId)del.dataset.achatId=achatId;
-    });
-  }
-
-  document.addEventListener('click',function(e){
-    const edit=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-edit'):null;
-    if(!edit)return;
-    e.preventDefault();
-    e.stopPropagation();
-    const achatId=String(edit.dataset.achatId||'');
-    if(achatId&&typeof editAchat==='function')editAchat(achatId);
-  });
-
-  document.addEventListener('click',function(e){
-    const del=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-delete'):null;
-    if(!del)return;
-    e.preventDefault();
-    e.stopPropagation();
-    const achatId=String(del.dataset.achatId||'');
-    if(!achatId||typeof delAchat!=='function')return;
-    if(window.confirm('Supprimer cette charge ?'))delAchat(achatId);
-  });
-
-  let scheduled=false;
-  function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;addChargeActionButtons();});}
-  addChargeActionButtons();
-  const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',schedule);
+  function extractAchatId(view){const stored=String(view.dataset.achatId||'');if(stored)return stored;const raw=String(view.getAttribute('onclick')||'');const match=raw.match(/openAchat\(['\"]([^'\"]+)/);return match&&match[1]?String(match[1]):'';}
+  function addChargeActionButtons(){document.querySelectorAll('#pane-chantiers .yaya-detail-charge-row').forEach(row=>{const view=row.querySelector('.yaya-detail-charge-view');if(!view)return;const achatId=extractAchatId(view);if(achatId)view.dataset.achatId=achatId;let edit=row.querySelector('.yaya-detail-charge-edit');if(!edit){edit=document.createElement('button');edit.type='button';edit.className='yaya-detail-charge-edit';edit.title='Modifier';edit.textContent='✏️';view.insertAdjacentElement('afterend',edit)}if(achatId)edit.dataset.achatId=achatId;let del=row.querySelector('.yaya-detail-charge-delete');if(!del){del=document.createElement('button');del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.textContent='🗑️';row.appendChild(del)}if(achatId)del.dataset.achatId=achatId;});}
+  function confirmDelete(achatId){document.querySelector('.yaya-charge-delete-overlay')?.remove();const overlay=document.createElement('div');overlay.className='yaya-charge-delete-overlay';overlay.innerHTML='<div class="yaya-charge-delete-modal" role="dialog" aria-modal="true"><div class="yaya-charge-delete-icon">🗑️</div><h3>Supprimer cette charge ?</h3><p>Cette action est irréversible.</p><div class="yaya-charge-delete-actions"><button type="button" class="yaya-charge-delete-cancel">Annuler</button><button type="button" class="yaya-charge-delete-ok">Supprimer</button></div></div>';document.body.appendChild(overlay);const close=()=>overlay.remove();overlay.querySelector('.yaya-charge-delete-cancel').onclick=close;overlay.addEventListener('click',e=>{if(e.target===overlay)close()});overlay.querySelector('.yaya-charge-delete-ok').onclick=()=>{close();if(typeof delAchat==='function')delAchat(achatId)};}
+  document.addEventListener('click',function(e){const edit=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-edit'):null;if(!edit)return;e.preventDefault();e.stopPropagation();const achatId=String(edit.dataset.achatId||'');if(achatId&&typeof editAchat==='function')editAchat(achatId);});
+  document.addEventListener('click',function(e){const del=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-delete'):null;if(!del)return;e.preventDefault();e.stopPropagation();const achatId=String(del.dataset.achatId||'');if(!achatId||typeof delAchat!=='function')return;confirmDelete(achatId);});
+  let scheduled=false;function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;addChargeActionButtons()})}addChargeActionButtons();const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',schedule);
 })();
