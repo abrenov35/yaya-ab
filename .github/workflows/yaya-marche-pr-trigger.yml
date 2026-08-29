@@ -49,21 +49,22 @@ jobs:
           if 'async function editMontantMarche(cid)' not in s:
             anchor='function demanderMontant(actuel){'
             fn='''async function editMontantMarche(cid){
-  const c=chantierById(cid); if(!c) return;
-  const v=prompt("Montant officiel du marché HT (en euros) :", Number(c.montantMarcheHT)||0);
-  if(v===null) return;
-  const propre=String(v).trim().replace(/\\s/g,"").replace(",",".");
-  if(propre===""){ toast("Indique un montant HT",true); return; }
-  const montant=Number(propre);
-  if(!Number.isFinite(montant)||montant<0){ toast("Montant HT invalide",true); return; }
-  const avant=Number(c.montantMarcheHT)||0;
-  c.montantMarcheHT=montant;
-  render();
-  if(await apiPost("setChantiers",S.chantiers)) toast("Montant du marché HT enregistré ✓");
-  else { c.montantMarcheHT=avant; render(); }
-}
+            const c=chantierById(cid); if(!c) return;
+            const v=prompt("Montant officiel du marché HT (en euros) :", Number(c.montantMarcheHT)||0);
+            if(v===null) return;
+            const propre=String(v).trim().replace(/\\s/g,"").replace(",",".");
+            if(propre===""){ toast("Indique un montant HT",true); return; }
+            const montant=Number(propre);
+            if(!Number.isFinite(montant)||montant<0){ toast("Montant HT invalide",true); return; }
+            const avant=Number(c.montantMarcheHT)||0;
+            c.montantMarcheHT=montant;
+            render();
+            if(await apiPost("setChantiers",S.chantiers)) toast("Montant du marché HT enregistré ✓");
+            else { c.montantMarcheHT=avant; render(); }
+          }
 
-'''
+          '''
+            fn='\n'.join(line[12:] if line.startswith('            ') else line for line in fn.splitlines())
             if anchor in s:
               s=s.replace(anchor,fn+anchor,1)
 
