@@ -1,37 +1,41 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v7';
+  const id='yaya-action-buttons-style-v8';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
   style.id=id;
   style.textContent=`
-    /* Alignement : les 3 actions occupent toujours les mêmes colonnes.
-       S'il manque l'oeil, crayon et croix restent en colonnes 2 et 3. */
+    /* Alignement fiche chantier */
     #pane-chantiers .message-actions,
     #pane-chantiers .yaya-document-line > span:last-child,
     #pane-chantiers :is(.ligM,.ligD) > span:last-child{
-      display:grid!important;
-      grid-template-columns:28px 28px 28px!important;
-      column-gap:6px!important;
-      align-items:center!important;
-      justify-content:end!important;
+      display:grid!important;grid-template-columns:28px 28px 28px!important;column-gap:6px!important;align-items:center!important;justify-content:end!important;
     }
 
-    /* BOUTON 1 — VOIR */
+    /* BOUTON 1 — VOIR : fiche chantier + page Charges */
     #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"],
     #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"],
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]{
-      grid-column:1!important;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"],
+    #pane-achats button[onclick*="voir" i],
+    #pane-achats button[onclick*="open" i]{
+      width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0 2px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;vertical-align:middle!important;
     }
+    #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"],
+    #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"],
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]{grid-column:1!important;margin:0!important;}
     #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"]::before,
     #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"]::before,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]::before{content:"👁"!important;font-size:15px!important;line-height:1!important;}
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]::before,
+    #pane-achats button[onclick*="voir" i]::before,
+    #pane-achats button[onclick*="open" i]::before{content:"👁"!important;font-size:15px!important;line-height:1!important;}
     #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"]:hover,
     #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"]:hover,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]:hover{background:#e9f3fc!important;border-color:#83b2df!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]:hover,
+    #pane-achats button[onclick*="voir" i]:hover,
+    #pane-achats button[onclick*="open" i]:hover{background:#e9f3fc!important;border-color:#83b2df!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
 
-    /* BOUTON 2 — MODIFIER */
+    /* BOUTON 2 — MODIFIER fiche chantier */
     #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i]),
     #pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]),
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]){
@@ -40,11 +44,8 @@
     #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i])::before,
     #pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i])::before,
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i])::before{content:"✏️"!important;font-size:14px!important;line-height:1!important;}
-    #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i]):hover,
-    #pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]):hover,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]):hover{background:#e7f6eb!important;border-color:#82c696!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
 
-    /* BOUTON 3 — SUPPRIMER */
+    /* BOUTON 3 — SUPPRIMER fiche chantier */
     #pane-chantiers .message-actions button.x,
     #pane-chantiers .yaya-document-line > span:last-child button.x,
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x,
@@ -59,10 +60,6 @@
     #pane-chantiers .message-actions button[onclick*="supprim" i]::before,
     #pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i]::before,
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]::before{content:"❌"!important;display:block!important;font-size:13px!important;font-weight:700!important;line-height:1!important;}
-    #pane-chantiers .message-actions button.x:hover,
-    #pane-chantiers .yaya-document-line > span:last-child button.x:hover,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x:hover,
-    #pane-chantiers button[onclick*="supprim" i]:hover{background:#fde7e7!important;border-color:#dc8585!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
   `;
   document.head.appendChild(style);
 })();
