@@ -80,6 +80,35 @@
     return s||'—';
   }
 
+  function clean(v){return String(v||'').replace(/\s+/g,' ').trim();}
+
+  function realDocumentType(d){
+    if(!d)return 'Document';
+    const candidates=[
+      d.typeDocument,
+      d.typeDoc,
+      d.documentType,
+      d.categorie,
+      d.nature,
+      d.type
+    ];
+    for(const v of candidates){
+      const t=clean(v);
+      if(t && !/^DOCUMENT$/i.test(t))return t;
+    }
+
+    const source=clean([d.titre,d.sujet,d.intitule].filter(Boolean).join(' | '));
+    const known=[
+      ['Fiche chantier',/\bfiche\s+chantier\b/i],
+      ['Compte rendu chantier',/\bcompte\s+rendu\s+chantier\b/i],
+      ['PV de réception',/\bpv\s+(?:de\s+)?r[eé]ception\b/i]
+    ];
+    for(const item of known){if(item[1].test(source))return item[0];}
+
+    const generic=clean(d.type);
+    return generic||'Document';
+  }
+
   function compact(){
     const rows=[...document.querySelectorAll('#pane-documents .card .achligne.ligR')];
     rows.forEach((row,index)=>{
@@ -89,9 +118,9 @@
         const d=docByRow(row);
         const first=cells[0];
         const dateCell=cells[4];
-        const typeText=String((d&&d.type)||'Document').trim()||'Document';
+        const typeText=realDocumentType(d);
         const dateText=formatDate(d&&d.date);
-        first.textContent=typeText.toUpperCase();
+        first.textContent=typeText;
         first.title=typeText;
         dateCell.textContent=dateText;
         dateCell.title=dateText;
