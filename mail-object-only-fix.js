@@ -12,10 +12,24 @@ function fix(){
       subject.style.overflow='hidden';
       subject.style.textOverflow='ellipsis';
     }
-    row.style.setProperty('grid-template-columns','100px minmax(0,1fr) 90px 42px','important');
+    row.style.setProperty('grid-template-columns','100px minmax(0,1fr) 90px minmax(126px,auto)','important');
     row.style.setProperty('height','46px','important');
     row.style.setProperty('min-height','46px','important');
     row.style.setProperty('max-height','46px','important');
+    row.style.setProperty('align-items','center','important');
+    row.style.setProperty('overflow','hidden','important');
+    var actions=row.lastElementChild;
+    if(actions){
+      actions.style.setProperty('display','flex','important');
+      actions.style.setProperty('flex-direction','row','important');
+      actions.style.setProperty('align-items','center','important');
+      actions.style.setProperty('justify-content','flex-end','important');
+      actions.style.setProperty('gap','4px','important');
+      actions.style.setProperty('white-space','nowrap','important');
+      actions.style.setProperty('min-width','126px','important');
+      actions.style.setProperty('height','42px','important');
+      actions.style.setProperty('overflow','hidden','important');
+    }
   });
 }
 fix();
