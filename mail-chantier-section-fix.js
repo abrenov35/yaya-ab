@@ -1,14 +1,15 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-mail-chantier-section-fix-v5';
+  const STYLE_ID='yaya-mail-chantier-section-fix-v6';
 
   function installStyle(){
+    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
     let s=document.getElementById(STYLE_ID);
     if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
     s.textContent=`
-      #pane-chantiers .message-ligne{grid-template-columns:90px auto minmax(0,1fr) 82px 104px!important;align-items:center!important;column-gap:10px!important;width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;padding:5px 8px!important;overflow:hidden!important;box-sizing:border-box!important}
+      #pane-chantiers .message-ligne{grid-template-columns:90px max-content minmax(0,1fr) 82px 104px!important;align-items:center!important;column-gap:10px!important;width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;padding:5px 8px!important;overflow:hidden!important;box-sizing:border-box!important}
       #pane-chantiers .message-ligne>.b-mail{width:90px!important;height:26px!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 8px!important;margin:0!important;border:1px solid #e6bfae!important;border-radius:7px!important;background:#fff!important;color:#8a3b12!important;font-size:10.5px!important;font-weight:800!important;white-space:nowrap!important}
-      #pane-chantiers .message-ligne>.message-categorie{display:inline-flex!important;width:fit-content!important;min-width:0!important;max-width:180px!important;justify-self:start!important;align-self:center!important;height:26px!important;align-items:center!important;justify-content:flex-start!important;padding:0 8px!important;margin:0!important;border:0!important;border-radius:6px!important;background:#f4edf9!important;color:#5f397f!important;font-size:11.5px!important;font-weight:700!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-shadow:none!important}
+      #pane-chantiers .message-ligne>.message-categorie{display:inline-flex!important;width:max-content!important;min-width:0!important;max-width:180px!important;justify-self:start!important;align-self:center!important;height:26px!important;align-items:center!important;justify-content:flex-start!important;padding:0 8px!important;margin:0!important;border:0!important;border-radius:6px!important;background:#f4edf9!important;color:#5f397f!important;font-size:11.5px!important;font-weight:700!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-shadow:none!important}
       #pane-chantiers .message-ligne>.message-apercu{display:block!important;min-width:0!important;width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       #pane-chantiers .message-ligne>.message-date{display:flex!important;align-items:center!important;justify-content:center!important;height:28px!important;margin:0!important;color:#66758a!important;font-size:10px!important;white-space:nowrap!important}
       #pane-chantiers .message-ligne>.message-actions{display:grid!important;grid-template-columns:28px 28px 28px!important;gap:6px!important;align-items:center!important;justify-content:end!important;width:96px!important;min-width:96px!important;height:32px!important;margin:0!important;overflow:visible!important}
@@ -23,24 +24,17 @@
   }
 
   function mailId(row){const raw=[...row.querySelectorAll('[onclick]')].map(x=>x.getAttribute('onclick')||'').join(' ');const m=raw.match(/(?:voirMessageYaya|editDocument|delDocument)\(['\"]([^'\"]+)/);return m&&m[1]?String(m[1]):'';}
-  function rebuildActions(row){
-    const actions=row.querySelector('.message-actions');if(!actions)return;const id=mailId(row);if(!id)return;
-    actions.innerHTML='';
-    const make=(cls,title,code)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('onclick',code);return b;};
-    actions.append(
-      make('btn2 message-view-btn yaya-mail-view','Voir le message','voirMessageYaya('+JSON.stringify(id)+')'),
-      make('btn2 yaya-mail-edit','Modifier le mail','editDocument('+JSON.stringify(id)+')'),
-      make('x yaya-mail-delete','Supprimer le mail','delDocument('+JSON.stringify(id)+')')
-    );
-  }
+  function mailData(id){try{return typeof S!=='undefined'&&S&&Array.isArray(S.documents)?S.documents.find(d=>String(d.id)===String(id)):null;}catch(e){return null;}}
+  function rebuildActions(row,id){const actions=row.querySelector('.message-actions');if(!actions||!id)return;actions.innerHTML='';const make=(cls,title,code)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('onclick',code);return b;};actions.append(make('btn2 message-view-btn yaya-mail-view','Voir le message','voirMessageYaya('+JSON.stringify(id)+')'),make('btn2 yaya-mail-edit','Modifier le mail','editDocument('+JSON.stringify(id)+')'),make('x yaya-mail-delete','Supprimer le mail','delDocument('+JSON.stringify(id)+')'));}
   function activeSection(card){return String(card&&card.dataset&&card.dataset.yayaDetailSection||'');}
   function normalize(){
     document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
       const card=row.closest('.card');if(!card)return;
       row.classList.add('yaya-detail-section-node');row.dataset.section='documents';
       row.style.setProperty('display',activeSection(card)==='documents'?'grid':'none','important');
-      rebuildActions(row);
-      row.dataset.yayaMailActionsFixed='1';
+      const id=mailId(row);const d=mailData(id);const apercu=row.querySelector('.message-apercu');
+      if(apercu&&d&&String(d.titre||'').trim()){apercu.textContent=String(d.titre).trim();apercu.title=apercu.textContent;}
+      rebuildActions(row,id);row.dataset.yayaMailActionsFixed='1';
     });
   }
   function schedule(){normalize();setTimeout(normalize,20);setTimeout(normalize,80);setTimeout(normalize,180);}
