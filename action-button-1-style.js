@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v14';
+  const id='yaya-action-buttons-style-v15';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -63,23 +63,20 @@
 
       let edit=row.querySelector('.yaya-detail-charge-edit');
       if(!edit){edit=document.createElement('button');edit.type='button';edit.className='yaya-detail-charge-edit';edit.title='Modifier';edit.textContent='✏️';view.insertAdjacentElement('afterend',edit);}
+      if(achatId)edit.dataset.achatId=achatId;
       let del=row.querySelector('.yaya-detail-charge-delete');
       if(!del){del=document.createElement('button');del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.textContent='🗑️';row.appendChild(del);}
     });
   }
 
   document.addEventListener('click',function(e){
-    const view=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-view'):null;
-    if(!view)return;
+    const edit=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-charge-edit'):null;
+    if(!edit)return;
     e.preventDefault();
-    e.stopImmediatePropagation();
-    const achatId=extractAchatId(view);
-    if(!achatId)return;
-    let achat=null;
-    try{achat=Array.isArray(S.achats)?S.achats.find(a=>String(a.id)===achatId)||null:null;}catch(err){}
-    const lien=String(achat&&achat.lien||'');
-    if(lien&&typeof voirPiece==='function')voirPiece(lien);
-  },true);
+    e.stopPropagation();
+    const achatId=String(edit.dataset.achatId||'');
+    if(achatId&&typeof editAchat==='function')editAchat(achatId);
+  });
 
   let scheduled=false;
   function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;addChargeActionButtons();});}
