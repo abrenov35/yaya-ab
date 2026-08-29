@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v12';
+  const id='yaya-action-buttons-style-v13';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -46,41 +46,11 @@
   `;
   document.head.appendChild(style);
 
-  function nativeAction(achatId, action){
-    const id=String(achatId||'');
-    if(!id)return false;
-
-    if(action==='edit'&&typeof editAchat==='function'){
-      editAchat(id);
-      return true;
-    }
-
-    if(action==='delete'&&typeof delAchat==='function'){
-      delAchat(id);
-      return true;
-    }
-
-    if(action==='view'){
-      let achat=null;
-      try{
-        if(typeof S!=='undefined'&&Array.isArray(S.achats)){
-          achat=S.achats.find(a=>String(a.id)===id)||null;
-        }
-      }catch(e){}
-
-      const lien=String(achat&&achat.lien||'');
-      if(lien.startsWith('http')&&typeof voirPiece==='function'){
-        voirPiece(lien);
-        return true;
-      }
-
-      if(typeof editAchat==='function'){
-        editAchat(id);
-        return true;
-      }
-    }
-
-    return false;
+  function achatById(id){
+    try{
+      if(typeof S!=='undefined'&&Array.isArray(S.achats))return S.achats.find(a=>String(a.id)===String(id))||null;
+    }catch(e){}
+    return null;
   }
 
   function addChargeActionButtons(){
@@ -96,30 +66,15 @@
       view.removeAttribute('onclick');
       view.onclick=function(e){
         e.preventDefault();e.stopPropagation();
-        if(!nativeAction(achatId,'view'))console.warn('Action VOIR introuvable pour achat',achatId);
+        const achat=achatById(achatId);
+        const lien=String(achat&&achat.lien||'');
+        if(lien&&typeof voirPiece==='function')voirPiece(lien);
       };
 
       let edit=row.querySelector('.yaya-detail-charge-edit');
-      if(!edit){
-        edit=document.createElement('button');
-        edit.type='button';edit.className='yaya-detail-charge-edit';edit.title='Modifier';edit.setAttribute('aria-label','Modifier');edit.textContent='✏️';
-        view.insertAdjacentElement('afterend',edit);
-      }
-      edit.onclick=function(e){
-        e.preventDefault();e.stopPropagation();
-        if(!nativeAction(achatId,'edit'))console.warn('Action MODIFIER introuvable pour achat',achatId);
-      };
-
+      if(!edit){edit=document.createElement('button');edit.type='button';edit.className='yaya-detail-charge-edit';edit.title='Modifier';edit.textContent='✏️';view.insertAdjacentElement('afterend',edit);}
       let del=row.querySelector('.yaya-detail-charge-delete');
-      if(!del){
-        del=document.createElement('button');
-        del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.setAttribute('aria-label','Supprimer');del.textContent='🗑️';
-        row.appendChild(del);
-      }
-      del.onclick=function(e){
-        e.preventDefault();e.stopPropagation();
-        if(!nativeAction(achatId,'delete'))console.warn('Action SUPPRIMER introuvable pour achat',achatId);
-      };
+      if(!del){del=document.createElement('button');del.type='button';del.className='yaya-detail-charge-delete';del.title='Supprimer';del.textContent='🗑️';row.appendChild(del);}
     });
   }
 
