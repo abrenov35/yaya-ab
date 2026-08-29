@@ -11,7 +11,7 @@
       #pane-documents .card{overflow:hidden!important}
       #pane-documents .achligne.ligR{
         display:grid!important;
-        grid-template-columns:110px 140px 150px minmax(0,1fr) 80px 44px!important;
+        grid-template-columns:110px 140px 150px minmax(0,1fr) 90px 44px!important;
         gap:8px!important;
         align-items:center!important;
         width:100%!important;
@@ -65,6 +65,22 @@
     const rows=[...document.querySelectorAll('#pane-documents .card .achligne.ligR')];
     rows.forEach((row,index)=>{
       row.style.display=index<10?'grid':'none';
+
+      const cells=[...row.children];
+      if(cells.length>=6){
+        const first=cells[0];
+        const typeCell=cells[4];
+        if(!row.dataset.yayaTypeFirst){
+          const dateText=String(first.textContent||'').trim();
+          const typeText=String(typeCell.textContent||'Document').trim()||'Document';
+          first.textContent=typeText.toUpperCase();
+          first.title=typeText;
+          typeCell.textContent=dateText;
+          typeCell.title=dateText;
+          row.dataset.yayaTypeFirst='1';
+        }
+      }
+
       const title=row.querySelector('.des');
       if(title){
         const full=String(title.textContent||'').replace(/\s+/g,' ').trim();
