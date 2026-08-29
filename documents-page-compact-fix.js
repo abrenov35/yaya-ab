@@ -69,7 +69,9 @@
   function docByRow(row){
     const id=String(row.dataset.id||'');
     try{
-      if(window.S&&Array.isArray(S.documents))return S.documents.find(d=>String(d.id)===id)||null;
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
+        return S.documents.find(d=>String(d.id)===id)||null;
+      }
     }catch(e){}
     return null;
   }
@@ -84,19 +86,11 @@
 
   function realDocumentType(d){
     if(!d)return 'Document';
-    const candidates=[
-      d.typeDocument,
-      d.typeDoc,
-      d.documentType,
-      d.categorie,
-      d.nature,
-      d.type
-    ];
+    const candidates=[d.typeDocument,d.typeDoc,d.documentType,d.categorie,d.nature,d.type];
     for(const v of candidates){
       const t=clean(v);
-      if(t && !/^DOCUMENT$/i.test(t))return t;
+      if(t&&!/^DOCUMENT$/i.test(t))return t;
     }
-
     const source=clean([d.titre,d.sujet,d.intitule].filter(Boolean).join(' | '));
     const known=[
       ['Fiche chantier',/\bfiche\s+chantier\b/i],
@@ -104,9 +98,7 @@
       ['PV de réception',/\bpv\s+(?:de\s+)?r[eé]ception\b/i]
     ];
     for(const item of known){if(item[1].test(source))return item[0];}
-
-    const generic=clean(d.type);
-    return generic||'Document';
+    return clean(d.type)||'Document';
   }
 
   function compact(){
