@@ -127,7 +127,7 @@
       .card[data-yaya-detail-section="charges"] > .yaya-detail-charges-pane[data-empty="0"]{display:block!important}
       .yaya-detail-charge-row{
         display:grid!important;
-        grid-template-columns:minmax(120px,1fr) 90px 110px!important;
+        grid-template-columns:minmax(120px,1fr) 90px 110px 28px!important;
         align-items:center!important;
         gap:12px!important;
         min-height:38px!important;
@@ -139,6 +139,14 @@
       .yaya-detail-charge-row strong{color:#1c2b48!important}
       .yaya-detail-charge-hours{text-align:right!important;color:#596579!important}
       .yaya-detail-charge-cost{text-align:right!important;color:#1c2b48!important;font-weight:700!important}
+      .yaya-detail-charge-view{
+        width:28px!important;height:28px!important;padding:0!important;
+        display:inline-flex!important;align-items:center!important;justify-content:center!important;
+        border:1px solid #a9c8e8!important;border-radius:7px!important;
+        background:#f3f8fd!important;color:#174d7d!important;
+        box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
+        font-size:15px!important;line-height:1!important;cursor:pointer!important;
+      }
 
       @media(max-width:640px){
         .yaya-detail-section-tabs{
@@ -155,7 +163,7 @@
           font-size:11px!important;
         }
         .yaya-detail-section-tab small{font-size:10px!important}
-        .yaya-detail-charge-row{grid-template-columns:minmax(90px,1fr) 68px 88px!important;gap:8px!important;padding:7px 9px!important}
+        .yaya-detail-charge-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px!important;gap:8px!important;padding:7px 9px!important}
       }
     `;
     document.head.appendChild(style);
@@ -315,6 +323,7 @@
       heures:null,
       cout:(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),
       type:'sous-traitance',
+      achatId:String(a.id||''),
       detail:String(a.designation||'Facture de sous-traitance')
     }));
     return mainOeuvre.concat(sousTraitance);
@@ -384,6 +393,7 @@
         +'<strong>'+escapeHtml(row.nom)+(row.type==='sous-traitance'&&row.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.detail)+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+(row.type==='sous-traitance'?'Sous-traitance':row.heures.toLocaleString('fr-FR')+' h')+'</span>'
         +'<span class="yaya-detail-charge-cost">'+euro(row.cout)+'</span>'
+        +(row.type==='sous-traitance'&&row.achatId?'<button type="button" class="yaya-detail-charge-view" title="Voir" aria-label="Voir" onclick="openAchat(\''+escapeHtml(row.achatId)+'\')">👁</button>':'<span></span>')
       +'</div>'
     ).join('');
     if(pane.innerHTML!==html)pane.innerHTML=html;
