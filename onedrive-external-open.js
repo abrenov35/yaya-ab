@@ -22,6 +22,10 @@
     }
   }
 
+  function viewerUrl(url){
+    return 'https://docs.google.com/gview?embedded=1&url='+encodeURIComponent(withDownload(url));
+  }
+
   function openExternal(url){
     const a=document.createElement('a');
     a.href=url;
@@ -87,7 +91,7 @@
     stage.className='yaya-od-stage';
     const frame=document.createElement('iframe');
     frame.className='yaya-od-frame';
-    frame.src=withDownload(url);
+    frame.src=viewerUrl(url);
     frame.setAttribute('title','Pièce jointe OneDrive');
     frame.setAttribute('loading','eager');
     const hit=document.createElement('div');
