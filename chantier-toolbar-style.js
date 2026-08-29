@@ -103,4 +103,12 @@
     }
   `;
   document.head.appendChild(style);
+
+  if(!document.querySelector('script[data-yaya-global-button-theme]')){
+    const theme=document.createElement('script');
+    theme.src='global-button-soft-theme.js?v=1';
+    theme.async=false;
+    theme.dataset.yayaGlobalButtonTheme='1';
+    document.head.appendChild(theme);
+  }
 })();
