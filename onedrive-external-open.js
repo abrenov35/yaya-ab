@@ -12,20 +12,6 @@
     }
   }
 
-  function withDownload(url){
-    try{
-      const u=new URL(url);
-      u.searchParams.set('download','1');
-      return u.toString();
-    }catch(e){
-      return url+(String(url).includes('?')?'&':'?')+'download=1';
-    }
-  }
-
-  function viewerUrl(url){
-    return 'https://docs.google.com/gview?embedded=1&url='+encodeURIComponent(withDownload(url));
-  }
-
   function openExternal(url){
     const a=document.createElement('a');
     a.href=url;
@@ -46,18 +32,16 @@
       st.id='yaya-onedrive-modal-style';
       st.textContent=`
         .yaya-od-overlay{position:fixed;inset:0;z-index:10000;background:rgba(22,45,73,.48);display:flex;align-items:center;justify-content:center;padding:18px;}
-        .yaya-od-modal{width:min(760px,88vw);height:min(72vh,720px);background:#fff;border-radius:14px;box-shadow:0 18px 55px rgba(0,0,0,.30);display:flex;flex-direction:column;overflow:hidden;transition:width .15s ease,height .15s ease,border-radius .15s ease;}
-        .yaya-od-modal.full{width:calc(100vw - 12px);height:calc(100dvh - 12px);border-radius:8px;}
-        .yaya-od-head{height:46px;flex:0 0 46px;display:flex;align-items:center;gap:8px;padding:0 10px 0 14px;border-bottom:1px solid rgba(22,45,73,.12);color:#162D49;font:600 13px system-ui,-apple-system,sans-serif;}
+        .yaya-od-modal{width:min(560px,92vw);background:#fff;border-radius:14px;box-shadow:0 18px 55px rgba(0,0,0,.30);overflow:hidden;}
+        .yaya-od-head{height:48px;display:flex;align-items:center;gap:8px;padding:0 10px 0 14px;border-bottom:1px solid rgba(22,45,73,.12);color:#162D49;font:600 13px system-ui,-apple-system,sans-serif;}
         .yaya-od-head b{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-        .yaya-od-btn{border:1px solid rgba(22,45,73,.22);background:#fff;color:#162D49;border-radius:8px;padding:6px 10px;font:600 12px system-ui,-apple-system,sans-serif;cursor:pointer;}
-        .yaya-od-stage{position:relative;flex:1;min-height:0;background:#eef1f5;}
-        .yaya-od-frame{display:block;width:100%;height:100%;border:0;background:#fff;}
-        .yaya-od-expand-hit{position:absolute;inset:0;z-index:2;cursor:zoom-in;background:transparent;}
-        .yaya-od-modal.full .yaya-od-expand-hit{display:none;}
-        .yaya-od-hint{position:absolute;left:50%;bottom:12px;z-index:3;transform:translateX(-50%);padding:6px 10px;border-radius:16px;background:rgba(22,45,73,.82);color:#fff;font:600 11px system-ui,-apple-system,sans-serif;pointer-events:none;}
-        .yaya-od-modal.full .yaya-od-hint{display:none;}
-        @media(max-width:640px){.yaya-od-overlay{padding:8px}.yaya-od-modal{width:94vw;height:68dvh}.yaya-od-head{height:42px;flex-basis:42px;padding-left:10px}.yaya-od-btn{padding:5px 8px}.yaya-od-modal.full{width:calc(100vw - 6px);height:calc(100dvh - 6px)}}
+        .yaya-od-btn{border:1px solid rgba(22,45,73,.22);background:#fff;color:#162D49;border-radius:8px;padding:7px 11px;font:600 12px system-ui,-apple-system,sans-serif;cursor:pointer;}
+        .yaya-od-stage{min-height:220px;padding:28px;display:flex;align-items:center;justify-content:center;background:#f6f8fb;text-align:center;}
+        .yaya-od-card{display:flex;flex-direction:column;align-items:center;gap:14px;max-width:360px;color:#162D49;font:500 14px system-ui,-apple-system,sans-serif;line-height:1.4;}
+        .yaya-od-icon{font-size:42px;line-height:1;}
+        .yaya-od-open{border:0;background:#174f86;color:#fff;border-radius:10px;padding:11px 18px;font:700 14px system-ui,-apple-system,sans-serif;cursor:pointer;box-shadow:0 4px 12px rgba(23,79,134,.20);}
+        .yaya-od-note{font-size:12px;color:#60758b;}
+        @media(max-width:640px){.yaya-od-overlay{padding:10px}.yaya-od-modal{width:calc(100vw - 20px)}.yaya-od-stage{min-height:180px;padding:24px 18px}.yaya-od-head{height:44px;padding-left:10px}.yaya-od-btn{padding:6px 9px}}
       `;
       document.head.appendChild(st);
     }
@@ -71,47 +55,36 @@
     head.className='yaya-od-head';
     const title=document.createElement('b');
     title.textContent='Pièce jointe OneDrive';
-    const external=document.createElement('button');
-    external.className='yaya-od-btn';
-    external.type='button';
-    external.textContent='Ouvrir OneDrive';
-    external.onclick=function(e){e.stopPropagation();openExternal(url);};
-    const expand=document.createElement('button');
-    expand.className='yaya-od-btn';
-    expand.type='button';
-    expand.textContent='⛶ Agrandir';
     const close=document.createElement('button');
     close.className='yaya-od-btn';
     close.type='button';
     close.textContent='Fermer';
     close.onclick=function(e){e.stopPropagation();root.replaceChildren();};
-    head.append(title,external,expand,close);
+    head.append(title,close);
 
     const stage=document.createElement('div');
     stage.className='yaya-od-stage';
-    const frame=document.createElement('iframe');
-    frame.className='yaya-od-frame';
-    frame.src=viewerUrl(url);
-    frame.setAttribute('title','Pièce jointe OneDrive');
-    frame.setAttribute('loading','eager');
-    const hit=document.createElement('div');
-    hit.className='yaya-od-expand-hit';
-    hit.title='Cliquer pour agrandir';
-    const hint=document.createElement('div');
-    hint.className='yaya-od-hint';
-    hint.textContent='Cliquer pour agrandir';
-    stage.append(frame,hit,hint);
+    const card=document.createElement('div');
+    card.className='yaya-od-card';
+    const icon=document.createElement('div');
+    icon.className='yaya-od-icon';
+    icon.textContent='☁️';
+    const text=document.createElement('div');
+    text.textContent='L’aperçu OneDrive intégré peut être bloqué par le navigateur. Ouvrez directement le document.';
+    const open=document.createElement('button');
+    open.className='yaya-od-open';
+    open.type='button';
+    open.textContent='Ouvrir le document';
+    open.onclick=function(e){e.stopPropagation();openExternal(url);};
+    const note=document.createElement('div');
+    note.className='yaya-od-note';
+    note.textContent='Fonctionne sur iPhone, iPad et PC.';
+    card.append(icon,text,open,note);
+    stage.appendChild(card);
     modal.append(head,stage);
     overlay.appendChild(modal);
     root.appendChild(overlay);
 
-    function toggleFull(force){
-      const full=typeof force==='boolean'?force:!modal.classList.contains('full');
-      modal.classList.toggle('full',full);
-      expand.textContent=full?'↙ Réduire':'⛶ Agrandir';
-    }
-    hit.onclick=function(){toggleFull(true);};
-    expand.onclick=function(e){e.stopPropagation();toggleFull();};
     overlay.onclick=function(e){if(e.target===overlay)root.replaceChildren();};
   }
 
