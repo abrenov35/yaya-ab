@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v8';
+  const id='yaya-action-buttons-style-v9';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -60,6 +60,62 @@
     #pane-chantiers .message-actions button[onclick*="supprim" i]::before,
     #pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i]::before,
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]::before{content:"❌"!important;display:block!important;font-size:13px!important;font-weight:700!important;line-height:1!important;}
+
+    /* CHARGES DANS LA FICHE CHANTIER — VOIR + MODIFIER */
+    #pane-chantiers .yaya-detail-charge-row{
+      grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px!important;
+    }
+    #pane-chantiers .yaya-detail-charge-edit{
+      width:28px!important;height:28px!important;padding:0!important;margin:0!important;
+      display:inline-flex!important;align-items:center!important;justify-content:center!important;
+      border:1px solid #a8d5b5!important;border-radius:7px!important;
+      background:#f2faf4!important;color:#26703b!important;
+      box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
+      font-size:14px!important;line-height:1!important;cursor:pointer!important;
+    }
+    #pane-chantiers .yaya-detail-charge-edit:hover{
+      background:#e8f6ec!important;border-color:#84c596!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;
+    }
+    @media(max-width:640px){
+      #pane-chantiers .yaya-detail-charge-row{
+        grid-template-columns:minmax(90px,1fr) 68px 88px 28px 28px!important;
+      }
+    }
   `;
   document.head.appendChild(style);
+
+  function addChargeEditButtons(){
+    document.querySelectorAll('#pane-chantiers .yaya-detail-charge-row').forEach(row=>{
+      if(row.querySelector('.yaya-detail-charge-edit'))return;
+      const view=row.querySelector('.yaya-detail-charge-view');
+      if(!view)return;
+      const raw=String(view.getAttribute('onclick')||'');
+      const match=raw.match(/openAchat\(['\"]([^'\"]+)/);
+      if(!match||!match[1])return;
+      const achatId=match[1];
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='yaya-detail-charge-edit';
+      btn.title='Modifier';
+      btn.setAttribute('aria-label','Modifier');
+      btn.textContent='✏️';
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        if(typeof window.editAchat==='function')window.editAchat(achatId);
+      });
+      view.insertAdjacentElement('afterend',btn);
+    });
+  }
+
+  let scheduled=false;
+  function scheduleChargeButtons(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(function(){scheduled=false;addChargeEditButtons();});
+  }
+  addChargeEditButtons();
+  const pane=document.getElementById('pane-chantiers');
+  if(pane)new MutationObserver(scheduleChargeButtons).observe(pane,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',scheduleChargeButtons);
 })();
