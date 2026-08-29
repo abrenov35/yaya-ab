@@ -1,12 +1,12 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v5';
+  const id='yaya-action-buttons-style-v6';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
   style.id=id;
   style.textContent=`
-    /* BOUTON 1 — VOIR dans la fiche chantier */
+    /* BOUTON 1 — VOIR */
     #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"],
     #pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"],
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]{
@@ -32,18 +32,27 @@
     #pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):hover,
     #pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):hover{background:#e7f6eb!important;border-color:#82c696!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
 
-    /* BOUTON 3 — SUPPRIMER : pastel rouge avec contour */
+    /* BOUTON 3 — SUPPRIMER : cible tous les boutons suppression de la fiche chantier */
     #pane-chantiers .message-actions button.x,
     #pane-chantiers .yaya-document-line > span:last-child button.x,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x{
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x,
+    #pane-chantiers .message-actions button[onclick*="supprim" i],
+    #pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i],
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]{
       width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0 2px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #e6a7a7!important;border-radius:7px!important;background:#fff3f3!important;color:#c83c3c!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;vertical-align:middle!important;
     }
     #pane-chantiers .message-actions button.x::before,
     #pane-chantiers .yaya-document-line > span:last-child button.x::before,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x::before{content:"✕"!important;font-size:15px!important;font-weight:700!important;line-height:1!important;}
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x::before,
+    #pane-chantiers .message-actions button[onclick*="supprim" i]::before,
+    #pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i]::before,
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]::before{
+      content:"❌"!important;display:block!important;color:#c83c3c!important;font-size:13px!important;font-weight:700!important;line-height:1!important;
+    }
     #pane-chantiers .message-actions button.x:hover,
     #pane-chantiers .yaya-document-line > span:last-child button.x:hover,
-    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x:hover{background:#fde7e7!important;border-color:#dc8585!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
+    #pane-chantiers :is(.ligM,.ligD) > span:last-child button.x:hover,
+    #pane-chantiers button[onclick*="supprim" i]:hover{background:#fde7e7!important;border-color:#dc8585!important;box-shadow:0 2px 5px rgba(22,45,73,.17)!important;}
   `;
   document.head.appendChild(style);
 })();
