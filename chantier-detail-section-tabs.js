@@ -324,6 +324,7 @@
       cout:(a.typeDoc==='Avoir'?-1:1)*(Number(a.montantHT)||0),
       type:'sous-traitance',
       achatId:String(a.id||''),
+      lien:String(a.lien||''),
       detail:String(a.designation||'Facture de sous-traitance')
     }));
     return mainOeuvre.concat(sousTraitance);
@@ -393,10 +394,24 @@
         +'<strong>'+escapeHtml(row.nom)+(row.type==='sous-traitance'&&row.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.detail)+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+(row.type==='sous-traitance'?'Sous-traitance':row.heures.toLocaleString('fr-FR')+' h')+'</span>'
         +'<span class="yaya-detail-charge-cost">'+euro(row.cout)+'</span>'
-        +(row.type==='sous-traitance'&&row.achatId?'<button type="button" class="yaya-detail-charge-view" title="Voir" aria-label="Voir" onclick="openAchat(\''+escapeHtml(row.achatId)+'\')">👁</button>':'<span></span>')
+        +(row.type==='sous-traitance'&&row.achatId?'<button type="button" class="yaya-detail-charge-view" title="Voir" aria-label="Voir" data-achat-id="'+escapeHtml(row.achatId)+'" data-lien="'+escapeHtml(row.lien)+'">👁</button>':'<span></span>')
       +'</div>'
     ).join('');
-    if(pane.innerHTML!==html)pane.innerHTML=html;
+    const signature=JSON.stringify(rows.map(row=>[row.nom,row.heures,row.cout,row.type,row.achatId||'',row.lien||'',row.detail||'']));
+    if(pane._yayaRowsSignature!==signature){
+      pane.innerHTML=html;
+      pane._yayaRowsSignature=signature;
+    }
+    pane.querySelectorAll('.yaya-detail-charge-view').forEach(btn=>{
+      if(btn._yayaViewBound)return;
+      btn._yayaViewBound=true;
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        const lien=String(btn.dataset.lien||'');
+        if(lien&&typeof voirPiece==='function')voirPiece(lien);
+      });
+    });
     return pane;
   }
 
