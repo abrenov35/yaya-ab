@@ -47,21 +47,39 @@
   document.head.appendChild(style);
 
   function nativeAction(achatId, action){
-    const pane=document.getElementById('pane-chantiers');
-    if(!pane)return false;
-    const safe=String(achatId).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    const editSel='[onclick*="editAchat(\\\''+safe+'\\\')"]';
-    const delSel='[onclick*="delAchat(\\\''+safe+'\\\')"]';
-    const edit=pane.querySelector(editSel);
-    const del=pane.querySelector(delSel);
-    const sourceRow=(edit||del)?.closest('.ligD,.achligne');
-    if(action==='edit'&&edit){edit.click();return true;}
-    if(action==='delete'&&del){del.click();return true;}
-    if(action==='view'&&sourceRow){
-      const view=sourceRow.querySelector('[onclick*="voirPiece"],a[href^="http"]');
-      if(view){view.click();return true;}
-      if(edit){edit.click();return true;}
+    const id=String(achatId||'');
+    if(!id)return false;
+
+    if(action==='edit'&&typeof editAchat==='function'){
+      editAchat(id);
+      return true;
     }
+
+    if(action==='delete'&&typeof delAchat==='function'){
+      delAchat(id);
+      return true;
+    }
+
+    if(action==='view'){
+      let achat=null;
+      try{
+        if(typeof S!=='undefined'&&Array.isArray(S.achats)){
+          achat=S.achats.find(a=>String(a.id)===id)||null;
+        }
+      }catch(e){}
+
+      const lien=String(achat&&achat.lien||'');
+      if(lien.startsWith('http')&&typeof voirPiece==='function'){
+        voirPiece(lien);
+        return true;
+      }
+
+      if(typeof editAchat==='function'){
+        editAchat(id);
+        return true;
+      }
+    }
+
     return false;
   }
 
