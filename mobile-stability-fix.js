@@ -35,6 +35,7 @@
       #toast{bottom:calc(10px + var(--yaya-safe-bottom))!important;width:calc(100% - 20px)!important;max-width:none!important;text-align:center!important}
     }
     @media(max-width:390px){#pane-chantiers .kpis{grid-template-columns:1fr!important}.hdr .tab,.hdr .fiche-inter-tab{padding:0 9px!important;font-size:11.5px!important}.modal{padding-left:10px!important;padding-right:10px!important}}
+    @media(max-width:760px) and (orientation:portrait){.hdr{position:static!important;top:auto!important}}
   `;
   document.head.appendChild(style);
   function recadrer(){if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches&&window.scrollX)window.scrollTo({left:0,top:window.scrollY,behavior:'auto'});}
