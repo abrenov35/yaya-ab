@@ -3103,8 +3103,65 @@ function editDocument(id){
     +'<div class="mfoot"><button class="btnp go" onclick="saveDocumentEdit(\''+id+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
     +'</div></div>';
 }
-async function saveDocumentEdit(id){
-  const d=S.documents.find(x=>x.id===id); if(!d) return;
+function fermerConfirmationDocument(){
+  const overlay=document.getElementById('yaya-confirm-document-change');
+  if(overlay)overlay.remove();
+}
+function nomChantierDocument(id){
+  const c=(S.chantiers||[]).find(x=>String(x.id)===String(id));
+  return c?String(c.nom||c.numero||'Chantier'):'Chantier inconnu';
+}
+function changementsDocument(id){
+  const d=S.documents.find(x=>String(x.id)===String(id));
+  if(!d)return null;
+  const chantierEl=document.getElementById('edDocCh');
+  const typeEl=document.getElementById('edDocType');
+  const sujetEl=document.getElementById('edDocSujet');
+  const titreEl=document.getElementById('edDocTitre');
+  if(!chantierEl||!typeEl||!sujetEl||!titreEl)return null;
+  const ancienSujet=documentIssuMailYaya(d)?nomMailYaya(d):String(d.sujet||'');
+  const ancienTitre=documentIssuMailYaya(d)?objetMailYaya(d):String(d.titre||'');
+  const nouveau={chantierId:chantierEl.value,type:typeEl.value,sujet:sujetEl.value.trim(),titre:titreEl.value.trim()};
+  const messages=[];
+  if(String(nouveau.chantierId)!==String(d.chantierId)){
+    messages.push('Attention : vous changez ce document de chantier : « '+nomChantierDocument(d.chantierId)+' » vers « '+nomChantierDocument(nouveau.chantierId)+' ».');
+  }
+  if(String(nouveau.type)!==String(d.type||'')){
+    if(/^mail$/i.test(nouveau.type))messages.push('Attention : vous allez déposer ce document dans Mail.');
+    else if(/^d[eé]penses?$/i.test(nouveau.type))messages.push('Attention : vous allez passer ce document dans Dépenses.');
+    else messages.push('Attention : vous changez le classement de « '+String(d.type||'Document')+' » vers « '+nouveau.type+' ».');
+  }
+  if(nouveau.sujet!==ancienSujet||nouveau.titre!==ancienTitre){
+    messages.push('Le nom ou l’objet du document sera également modifié.');
+  }
+  return {d,nouveau,messages};
+}
+function saveDocumentEdit(id){
+  const changement=changementsDocument(id);
+  if(!changement)return;
+  if(!changement.messages.length){toast('Aucune modification à enregistrer');return;}
+  fermerConfirmationDocument();
+  const overlay=document.createElement('div');
+  overlay.id='yaya-confirm-document-change';
+  overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(15,30,50,.48);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
+  overlay.innerHTML='<div role="dialog" aria-modal="true" aria-labelledby="yaya-confirm-document-title" style="width:min(430px,100%);background:#fff;border-radius:14px;box-shadow:0 18px 55px rgba(15,30,50,.28);padding:22px">'
+    +'<div style="font-size:28px;line-height:1;text-align:center;margin-bottom:9px">⚠️</div>'
+    +'<h3 id="yaya-confirm-document-title" style="margin:0 0 13px;text-align:center;color:#162d49;font-size:18px">Confirmer la modification ?</h3>'
+    +'<div style="display:grid;gap:9px;color:#4a5568;font-size:13px;line-height:1.45">'+changement.messages.map(m=>'<div style="padding:10px 12px;border-radius:9px;background:#fff7e8;border:1px solid #efcc91">'+esc(m)+'</div>').join('')+'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:18px"><button type="button" id="yaya-confirm-document-cancel" style="flex:1;padding:10px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;color:#405169;font-weight:700;cursor:pointer">Revenir</button><button type="button" id="yaya-confirm-document-ok" style="flex:1;padding:10px;border-radius:9px;border:0;background:#c56a16;color:#fff;font-weight:800;cursor:pointer">Confirmer</button></div>'
+    +'</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)fermerConfirmationDocument();});
+  overlay.querySelector('#yaya-confirm-document-cancel').onclick=fermerConfirmationDocument;
+  overlay.querySelector('#yaya-confirm-document-ok').onclick=async function(){
+    this.disabled=true;this.textContent='Enregistrement…';
+    fermerConfirmationDocument();
+    await appliquerModificationDocument(id);
+  };
+}
+async function appliquerModificationDocument(id){
+  const d=S.documents.find(x=>String(x.id)===String(id)); if(!d) return;
+  const avant={...d};
   const ancienType=String(d.type||'');
   const etaitLieAuMail=documentIssuMailYaya(d);
   const contenuComplet=contenuMailYaya(d);
@@ -3120,6 +3177,10 @@ async function saveDocumentEdit(id){
   }
   closeModal(); render();
   if(await apiPost('setDocuments',S.documents)) toast('Document modifié ✓');
+  else{
+    Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,avant);
+    render();toast('La modification du document a échoué',true);
+  }
 }
 async function delDocument(id){
   const overlay=document.createElement('div');
