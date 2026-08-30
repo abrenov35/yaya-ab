@@ -85,7 +85,7 @@
       const nom=String(a.sousTraitant||a.fournisseur||'Sous-traitant');
       const type=String(a.typeDoc||'Facture').replace(/facture\s*/i,'').trim()||'FACTURE';
       const lien=String(a.lien||'');
-      const voir=lien.startsWith('http')?'<button class="st-open" title="Voir la pièce" onclick="voirPiece(\''+escHtml(lien)+'\')">👁</button>':'';
+      const voir=lien.startsWith('http')?'<button class="st-open" title="Voir la pièce" onclick="voirPiece(\''+escHtml(lien)+'\')">👁️</button>':'';
       html+='<div class="st-row">'
         +'<span class="st-type">'+escHtml(type)+'</span>'
         +'<span class="st-four">'+escHtml(nom)+'</span>'
