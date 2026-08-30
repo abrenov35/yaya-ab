@@ -86,11 +86,17 @@
 
   function applyBlueActionStyle(el){
     if(!el||!el.style)return;
-    el.style.setProperty('background','#fff','important');
-    el.style.setProperty('color','#003D7A','important');
-    el.style.setProperty('border','1px solid #003D7A','important');
+    const onclick=String(el.getAttribute('onclick')||'');
+    const palette=el.classList.contains('chantier-expense-btn')
+      ? {background:'#fff0f3',color:'#8f3548',border:'#e5aebb'}
+      : onclick.includes('openDocumentModal')
+        ? {background:'#eef6ff',color:'#285f96',border:'#9fc1e8'}
+        : {background:'#eef8f1',color:'#286b3e',border:'#8fc8a1'};
+    el.style.setProperty('background',palette.background,'important');
+    el.style.setProperty('color',palette.color,'important');
+    el.style.setProperty('border','1px solid '+palette.border,'important');
     el.style.setProperty('border-radius','7px','important');
-    el.style.setProperty('box-shadow','none','important');
+    el.style.setProperty('box-shadow','0 1px 2px rgba(22,45,73,.08)','important');
     el.style.setProperty('min-height','38px','important');
     el.style.setProperty('height','38px','important');
     el.style.setProperty('padding','0 15px','important');

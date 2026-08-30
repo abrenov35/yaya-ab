@@ -138,6 +138,29 @@
       color:#003D7A!important;
     }
 
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn{
+      background:#fff7e8!important;
+      border-color:#e3bd7c!important;
+      color:#85550d!important;
+      box-shadow:0 1px 2px rgba(22,45,73,.08)!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn:hover{
+      background:#fcebcf!important;
+      border-color:#d6a552!important;
+      color:#734708!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn{
+      background:#f5ebe4!important;
+      border-color:#d6b59f!important;
+      color:#7a4d35!important;
+      box-shadow:0 1px 2px rgba(22,45,73,.08)!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn:hover{
+      background:#ead8cd!important;
+      border-color:#bd9074!important;
+      color:#68402d!important;
+    }
+
     @media(max-width:760px){
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
         gap:6px!important;
