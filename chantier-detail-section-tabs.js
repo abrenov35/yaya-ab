@@ -129,6 +129,10 @@
       .card[data-yaya-detail-section="depenses"] > .yaya-detail-expenses-pane[data-empty="0"]{display:block!important}
       .yaya-detail-documents-pane{display:none!important;margin:0 0 8px!important}
       .card[data-yaya-detail-section="documents"] > .yaya-detail-documents-pane[data-empty="0"]{display:block!important}
+      .yaya-detail-markets-pane{display:none!important;margin:0 0 8px!important}
+      .card[data-yaya-detail-section="marche"] > .yaya-detail-markets-pane[data-empty="0"]{display:block!important}
+      .yaya-detail-mails-pane{display:none!important;margin:0 0 8px!important}
+      .card[data-yaya-detail-section="mail"] > .yaya-detail-mails-pane[data-empty="0"]{display:block!important}
       .yaya-detail-charge-row,
       .yaya-detail-document-row{
         display:grid!important;
@@ -317,6 +321,43 @@
       String(d.chantierId)===cid
       && normalise(d.type)!=='MAIL'
     );
+  }
+
+  function mailsFor(card){
+    const cid=cardId(card);
+    if(!cid||typeof S==='undefined'||!Array.isArray(S.documents))return [];
+    return S.documents.filter(d=>
+      String(d.chantierId)===cid
+      && normalise(d.type)==='MAIL'
+    ).sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  }
+
+  function marketRowsFor(card){
+    const cid=cardId(card);
+    if(!cid||typeof S==='undefined')return [];
+    const chantiers=Array.isArray(S.chantiers)?S.chantiers:[];
+    const chantier=chantiers.find(c=>String(c.id)===cid);
+    if(!chantier)return [];
+    const rows=[{
+      id:cid,
+      kind:'main',
+      type:'DEVIS 1',
+      title:'Devis principal',
+      detail:chantier.numero?('N° '+String(chantier.numero)):'',
+      amount:Number(chantier.montantDevisHT)||0,
+      lien:String(chantier.notes||'')
+    }];
+    const avenants=Array.isArray(S.avenants)?S.avenants.filter(v=>String(v.chantierId)===cid):[];
+    avenants.forEach((v,index)=>rows.push({
+      id:String(v.id||''),
+      kind:'avenant',
+      type:'DEVIS '+(index+2),
+      title:String(v.libelle||('Devis '+(index+2))),
+      detail:String(v.date||'').slice(0,10).split('-').reverse().join('/'),
+      amount:Number(v.montantHT)||0,
+      lien:String(v.lien||'')
+    }));
+    return rows;
   }
 
   function achatIdFromNode(node){
@@ -531,13 +572,102 @@
     return pane;
   }
 
+  function ensureMarketPane(card,tabs,rows){
+    let pane=card.querySelector(':scope > .yaya-detail-markets-pane');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-section-node yaya-detail-markets-pane';
+      pane.dataset.section='marche';
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+    pane.dataset.empty=rows.length?'0':'1';
+    const displayRows=rows.map(row=>({
+      ...row,
+      detail:normalise(row.detail)===normalise(row.title)?'':row.detail
+    }));
+    const html=displayRows.map(item=>
+      '<div class="yaya-detail-document-row yaya-detail-market-row">'
+        +'<strong>'+escapeHtml(item.title)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+escapeHtml(item.type)+'</span>'
+        +'<span class="yaya-detail-charge-cost">'+euro(item.amount)+'</span>'
+        +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-lien="'+escapeHtml(item.lien)+'"'+(item.lien.startsWith('http')?'':' disabled')+'>👁</button>'
+        +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-kind="'+item.kind+'" data-row-id="'+escapeHtml(item.id)+'">✏️</button>'
+        +(item.kind==='avenant'?'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-row-id="'+escapeHtml(item.id)+'">🗑️</button>':'<span></span>')
+      +'</div>'
+    ).join('');
+    const signature=JSON.stringify(displayRows.map(item=>[item.id,item.kind,item.type,item.title,item.detail,item.amount,item.lien]));
+    if(pane._yayaRowsSignature!==signature){
+      pane.innerHTML=html;
+      pane._yayaRowsSignature=signature;
+    }
+    pane.querySelectorAll('.yaya-detail-document-view:not(:disabled)').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const lien=String(btn.dataset.lien||'');if(lien&&typeof voirPiece==='function')voirPiece(lien);});
+    });
+    pane.querySelectorAll('.yaya-detail-document-edit').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.rowId||'');if(btn.dataset.kind==='main'&&typeof editMontantDevis==='function')editMontantDevis(id);else if(id&&typeof editMontantAvenant==='function')editMontantAvenant(id);});
+    });
+    pane.querySelectorAll('.yaya-detail-document-delete').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.rowId||'');if(id&&typeof delAvenant==='function')delAvenant(id);});
+    });
+    return pane;
+  }
+
+  function ensureMailPane(card,tabs,rows){
+    let pane=card.querySelector(':scope > .yaya-detail-mails-pane');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-section-node yaya-detail-mails-pane';
+      pane.dataset.section='mail';
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+    pane.dataset.empty=rows.length?'0':'1';
+    const displayRows=rows.map(row=>{
+      const title=String(row.sujet||'Échange').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,'')||'Échange';
+      const detailBrut=String(row.objet||row.subject||row.titre||'');
+      const detail=normalise(detailBrut)===normalise(title)?'':detailBrut;
+      const date=String(row.date||'').slice(0,10).split('-').reverse().join('/');
+      return {row,title,detail,date};
+    });
+    const html=displayRows.map(item=>
+      '<div class="yaya-detail-document-row yaya-detail-mail-row">'
+        +'<strong>'+escapeHtml(item.title)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">MAIL</span>'
+        +'<span class="yaya-detail-charge-cost">'+escapeHtml(item.date||'—')+'</span>'
+        +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-mail-id="'+escapeHtml(item.row.id||'')+'">👁</button>'
+        +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-mail-id="'+escapeHtml(item.row.id||'')+'">✏️</button>'
+        +'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-mail-id="'+escapeHtml(item.row.id||'')+'">🗑️</button>'
+      +'</div>'
+    ).join('');
+    const signature=JSON.stringify(displayRows.map(item=>[item.row.id||'',item.title,item.detail,item.date]));
+    if(pane._yayaRowsSignature!==signature){
+      pane.innerHTML=html;
+      pane._yayaRowsSignature=signature;
+    }
+    pane.querySelectorAll('.yaya-detail-document-view').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.mailId||'');if(id&&typeof voirMessageYaya==='function')voirMessageYaya(id);});
+    });
+    pane.querySelectorAll('.yaya-detail-document-edit').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.mailId||'');if(id&&typeof editDocument==='function')editDocument(id);});
+    });
+    pane.querySelectorAll('.yaya-detail-document-delete').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.mailId||'');if(id&&typeof delDocument==='function')delDocument(id);});
+    });
+    return pane;
+  }
+
   function applySectionFast(card,key){
     if(!ORDER.includes(key))key='marche';
     if(card.dataset.yayaDetailSection!==key)card.dataset.yayaDetailSection=key;
 
     card.querySelectorAll(':scope > .yaya-detail-section-node').forEach(node=>{
       const visible=node.dataset.section===key;
-      if(visible&&node.dataset.yayaSubcontractInvoice!=='1'&&node.dataset.yayaExpenseSource!=='1'&&node.dataset.yayaDocumentSource!=='1'){
+      if(visible&&node.dataset.yayaSubcontractInvoice!=='1'&&node.dataset.yayaExpenseSource!=='1'&&node.dataset.yayaDocumentSource!=='1'&&node.dataset.yayaMarketSource!=='1'&&node.dataset.yayaMailSource!=='1'){
         node.style.removeProperty('display');
       }else{
         node.style.setProperty('display','none','important');
@@ -575,6 +705,8 @@
     const chargeRows=chargesFor(card);
     const depenseRows=depensesFor(card);
     const documentRows=documentsFor(card);
+    const marketRows=marketRowsFor(card);
+    const mailRows=mailsFor(card);
     const achats=achatsFor(card);
     sections.forEach(section=>{
       section.header.style.display='none';
@@ -592,6 +724,10 @@
         }
         if(section.key==='documents'){
           node.dataset.yayaDocumentSource='1';
+          node.style.setProperty('display','none','important');
+        }
+        if(section.key==='marche'){
+          node.dataset.yayaMarketSource='1';
           node.style.setProperty('display','none','important');
         }
         node.classList.add('yaya-detail-section-node');
@@ -653,6 +789,8 @@
     ensureChargesPane(card,tabs,chargeRows);
     ensureExpensesPane(card,tabs,depenseRows);
     ensureDocumentsPane(card,tabs,documentRows);
+    ensureMarketPane(card,tabs,marketRows);
+    ensureMailPane(card,tabs,mailRows);
     updateSummaryKpis(card,chargeRows,depenseRows);
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)
