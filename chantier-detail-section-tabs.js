@@ -127,7 +127,10 @@
       .card[data-yaya-detail-section="charges"] > .yaya-detail-charges-pane[data-empty="0"]{display:block!important}
       .yaya-detail-expenses-pane{display:none!important;margin:0 0 8px!important}
       .card[data-yaya-detail-section="depenses"] > .yaya-detail-expenses-pane[data-empty="0"]{display:block!important}
-      .yaya-detail-charge-row{
+      .yaya-detail-documents-pane{display:none!important;margin:0 0 8px!important}
+      .card[data-yaya-detail-section="documents"] > .yaya-detail-documents-pane[data-empty="0"]{display:block!important}
+      .yaya-detail-charge-row,
+      .yaya-detail-document-row{
         display:grid!important;
         grid-template-columns:minmax(120px,1fr) 90px 110px 28px!important;
         align-items:center!important;
@@ -137,8 +140,10 @@
         border-bottom:1px solid #e6ebf1!important;
         font-size:13px!important;
       }
-      .yaya-detail-charge-row:last-child{border-bottom:0!important}
-      .yaya-detail-charge-row strong{color:#1c2b48!important}
+      .yaya-detail-charge-row:last-child,
+      .yaya-detail-document-row:last-child{border-bottom:0!important}
+      .yaya-detail-charge-row strong,
+      .yaya-detail-document-row strong{color:#1c2b48!important}
       .yaya-detail-charge-hours{text-align:right!important;color:#596579!important}
       .yaya-detail-charge-cost{text-align:right!important;color:#1c2b48!important;font-weight:700!important}
       .yaya-detail-charge-view{
@@ -150,6 +155,18 @@
         font-size:15px!important;line-height:1!important;cursor:pointer!important;
       }
       .yaya-detail-charge-view:disabled{opacity:.38!important;cursor:default!important}
+      .yaya-detail-document-view,
+      .yaya-detail-document-edit,
+      .yaya-detail-document-delete{
+        width:28px!important;height:28px!important;padding:0!important;margin:0!important;
+        display:inline-flex!important;align-items:center!important;justify-content:center!important;
+        border-radius:7px!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
+        font-size:14px!important;line-height:1!important;cursor:pointer!important;
+      }
+      .yaya-detail-document-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important}
+      .yaya-detail-document-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
+      .yaya-detail-document-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
+      .yaya-detail-document-view:disabled{opacity:.38!important;cursor:default!important}
 
       @media(max-width:640px){
         .yaya-detail-section-tabs{
@@ -166,7 +183,8 @@
           font-size:11px!important;
         }
         .yaya-detail-section-tab small{font-size:10px!important}
-        .yaya-detail-charge-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px!important;gap:8px!important;padding:7px 9px!important}
+        .yaya-detail-charge-row,
+        .yaya-detail-document-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px!important;gap:8px!important;padding:7px 9px!important}
       }
     `;
     document.head.appendChild(style);
@@ -290,6 +308,15 @@
 
   function depensesFor(card){
     return achatsFor(card).filter(a=>!isSubcontractInvoice(a));
+  }
+
+  function documentsFor(card){
+    const cid=cardId(card);
+    if(!cid||typeof S==='undefined'||!Array.isArray(S.documents))return [];
+    return S.documents.filter(d=>
+      String(d.chantierId)===cid
+      && normalise(d.type)!=='MAIL'
+    );
   }
 
   function achatIdFromNode(node){
@@ -455,13 +482,61 @@
     return pane;
   }
 
+  function ensureDocumentsPane(card,tabs,rows){
+    let pane=card.querySelector(':scope > .yaya-detail-documents-pane');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-section-node yaya-detail-documents-pane';
+      pane.dataset.section='documents';
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+    pane.dataset.empty=rows.length?'0':'1';
+    const displayRows=rows.map(row=>{
+      const titreBrut=String(row.titre||'');
+      const parties=titreBrut.split('/').map(x=>x.trim()).filter(Boolean);
+      const vientDocsChantier=normalise(row.origine)==='DOCS_CHANTIER'&&parties.length>=3;
+      const operateur=vientDocsChantier?(parties[1]||row.sujet||'Document'):(row.sujet||'Document');
+      const detail=vientDocsChantier?(parties.slice(3).join(' / ')||row.sujet||titreBrut):titreBrut;
+      const date=String(row.date||'').slice(0,10).split('-').reverse().join('/');
+      return {row,operateur,detail,date,lien:String(row.lien||'')};
+    });
+    const html=displayRows.map(item=>
+      '<div class="yaya-detail-document-row">'
+        +'<strong>'+escapeHtml(item.operateur)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+escapeHtml(item.row.type||'Document')+'</span>'
+        +'<span class="yaya-detail-charge-cost">'+escapeHtml(item.date||'—')+'</span>'
+        +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-doc-id="'+escapeHtml(item.row.id||'')+'" data-lien="'+escapeHtml(item.lien)+'"'+(item.lien.startsWith('http')?'':' disabled')+'>👁</button>'
+        +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-doc-id="'+escapeHtml(item.row.id||'')+'">✏️</button>'
+        +'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-doc-id="'+escapeHtml(item.row.id||'')+'">🗑️</button>'
+      +'</div>'
+    ).join('');
+    const signature=JSON.stringify(displayRows.map(item=>[item.row.id||'',item.operateur,item.detail,item.row.type||'',item.date,item.lien]));
+    if(pane._yayaRowsSignature!==signature){
+      pane.innerHTML=html;
+      pane._yayaRowsSignature=signature;
+    }
+    pane.querySelectorAll('.yaya-detail-document-view:not(:disabled)').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const lien=String(btn.dataset.lien||'');if(lien&&typeof voirPiece==='function')voirPiece(lien);});
+    });
+    pane.querySelectorAll('.yaya-detail-document-edit').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.docId||'');if(id&&typeof editDocument==='function')editDocument(id);});
+    });
+    pane.querySelectorAll('.yaya-detail-document-delete').forEach(btn=>{
+      if(btn._yayaBound)return;btn._yayaBound=true;
+      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.docId||'');if(id&&typeof delDocument==='function')delDocument(id);});
+    });
+    return pane;
+  }
+
   function applySectionFast(card,key){
     if(!ORDER.includes(key))key='marche';
     if(card.dataset.yayaDetailSection!==key)card.dataset.yayaDetailSection=key;
 
     card.querySelectorAll(':scope > .yaya-detail-section-node').forEach(node=>{
       const visible=node.dataset.section===key;
-      if(visible&&node.dataset.yayaSubcontractInvoice!=='1'&&node.dataset.yayaExpenseSource!=='1'){
+      if(visible&&node.dataset.yayaSubcontractInvoice!=='1'&&node.dataset.yayaExpenseSource!=='1'&&node.dataset.yayaDocumentSource!=='1'){
         node.style.removeProperty('display');
       }else{
         node.style.setProperty('display','none','important');
@@ -498,6 +573,7 @@
     const byKey=new Map(sections.map(s=>[s.key,s]));
     const chargeRows=chargesFor(card);
     const depenseRows=depensesFor(card);
+    const documentRows=documentsFor(card);
     const achats=achatsFor(card);
     sections.forEach(section=>{
       section.header.style.display='none';
@@ -511,6 +587,10 @@
             return;
           }
           node.dataset.yayaExpenseSource='1';
+          node.style.setProperty('display','none','important');
+        }
+        if(section.key==='documents'){
+          node.dataset.yayaDocumentSource='1';
           node.style.setProperty('display','none','important');
         }
         node.classList.add('yaya-detail-section-node');
@@ -563,12 +643,15 @@
         ? (chargeRows.length?'0':'1')
         : key==='depenses'
           ? (depenseRows.length?'0':'1')
-          : (section?'0':'1');
+          : key==='documents'
+            ? (documentRows.length?'0':'1')
+            : (section?'0':'1');
       if(empty.textContent!==EMPTY_LABELS[key])empty.textContent=EMPTY_LABELS[key];
     });
 
     ensureChargesPane(card,tabs,chargeRows);
     ensureExpensesPane(card,tabs,depenseRows);
+    ensureDocumentsPane(card,tabs,documentRows);
     updateSummaryKpis(card,chargeRows,depenseRows);
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)

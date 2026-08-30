@@ -1,6 +1,6 @@
 (async function(){
 'use strict';
-const raw=await fetch('chantier-detail-section-tabs.js?v=detailtabs-15',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('detailtabs '+r.status);return r.text();});
+const raw=await fetch('chantier-detail-section-tabs.js?v=detailtabs-16',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('detailtabs '+r.status);return r.text();});
 let src=raw;
 function rep(a,b){if(!src.includes(a))throw new Error('Mail natif: point introuvable');src=src.replace(a,b);}
 rep("const ORDER=['marche','depenses','charges','documents'];","const ORDER=['marche','depenses','charges','documents','mail'];");
@@ -15,6 +15,6 @@ rep("    if(key==='documents')return '';","    if(key==='documents'||key==='mail
 rep("      section.nodes.forEach(node=>{\n        if(section.key==='depenses'){","      section.nodes.forEach(node=>{\n        if(node.classList?.contains('message-ligne')||node.querySelector?.('.b-mail')){\n          node.classList.add('yaya-detail-section-node');\n          node.dataset.section='mail';\n          if(node.style.display==='none')node.style.removeProperty('display');\n          return;\n        }\n        if(section.key==='depenses'){");
 rep("      const meta=key==='documents'\n        ? ''","      const meta=(key==='documents'||key==='mail')\n        ? ''");
 rep("      if(small)small.style.display=key==='documents'?'none':'';","      if(small)small.style.display=(key==='documents'||key==='mail')?'none':'';");
-rep("      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : (section?'0':'1');","      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='mail'\n            ? (card.querySelectorAll('.message-ligne').length?'0':'1')\n            : (section?'0':'1');");
+rep("      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : (section?'0':'1');","      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : key==='mail'\n              ? (card.querySelectorAll('.message-ligne').length?'0':'1')\n              : (section?'0':'1');");
 (0,eval)(src+'\n//# sourceURL=chantier-detail-section-tabs-native-mail.js');
 })().catch(err=>console.error(err));
