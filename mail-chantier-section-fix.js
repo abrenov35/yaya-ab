@@ -25,7 +25,7 @@
 
   function mailId(row){const raw=[...row.querySelectorAll('[onclick]')].map(x=>x.getAttribute('onclick')||'').join(' ');const m=raw.match(/(?:voirMessageYaya|editDocument|delDocument)\(['\"]([^'\"]+)/);return m&&m[1]?String(m[1]):'';}
   function mailData(id){try{return typeof S!=='undefined'&&S&&Array.isArray(S.documents)?S.documents.find(d=>String(d.id)===String(id)):null;}catch(e){return null;}}
-  function rebuildActions(row,id){const actions=row.querySelector('.message-actions');if(!actions||!id)return;actions.innerHTML='';const make=(cls,title,code)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('onclick',code);return b;};actions.append(make('btn2 message-view-btn yaya-mail-view','Voir le message','voirMessageYaya('+JSON.stringify(id)+')'),make('btn2 yaya-mail-edit','Modifier le mail','editDocument('+JSON.stringify(id)+')'),make('x yaya-mail-delete','Supprimer le mail','delDocument('+JSON.stringify(id)+')'));}
+  function rebuildActions(row,id){const actions=row.querySelector('.message-actions');if(!actions||!id)return;if(row.dataset.yayaMailActionsFixed==='1'&&actions.children.length===3)return;actions.innerHTML='';const make=(cls,title,code)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('onclick',code);return b;};actions.append(make('btn2 message-view-btn yaya-mail-view','Voir le message','voirMessageYaya('+JSON.stringify(id)+')'),make('btn2 yaya-mail-edit','Modifier le mail','editDocument('+JSON.stringify(id)+')'),make('x yaya-mail-delete','Supprimer le mail','delDocument('+JSON.stringify(id)+')'));}
   function activeSection(card){return String(card&&card.dataset&&card.dataset.yayaDetailSection||'');}
   function normalize(){
     document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
@@ -38,7 +38,8 @@
       rebuildActions(row,id);row.dataset.yayaMailActionsFixed='1';
     });
   }
-  function schedule(){normalize();setTimeout(normalize,20);setTimeout(normalize,80);setTimeout(normalize,180);}
+  let scheduled=false;
+  function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;normalize();});}
   function run(){installStyle();schedule();}
   run();setTimeout(run,300);setTimeout(run,1000);
   document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab'))setTimeout(schedule,0);},false);
