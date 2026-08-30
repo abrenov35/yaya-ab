@@ -1,12 +1,12 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v17';
+  const id='yaya-action-buttons-style-v18';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
   style.id=id;
   style.textContent=`
-    #pane-chantiers .message-actions,#pane-chantiers .yaya-document-line > span:last-child,#pane-chantiers :is(.ligM,.ligD) > span:last-child{display:grid!important;grid-template-columns:28px 28px 28px!important;column-gap:6px!important;align-items:center!important;justify-content:end!important}
+    #pane-chantiers .yaya-document-line > span:last-child,#pane-chantiers :is(.ligM,.ligD) > span:last-child{display:grid!important;grid-template-columns:28px 28px 28px!important;column-gap:6px!important;align-items:center!important;justify-content:end!important}
     #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"],#pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"],#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"],#pane-achats button[onclick*="voir" i],#pane-achats button[onclick*="open" i]{width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;padding:0!important;margin:0 2px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important;vertical-align:middle!important}
     #pane-chantiers .message-actions button.message-view-btn[onclick*="voirMessageYaya"]::before,#pane-chantiers .yaya-document-line > span:last-child button[onclick*="voirPiece"]::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="voirPiece"]::before,#pane-achats button[onclick*="voir" i]::before,#pane-achats button[onclick*="open" i]::before{content:"👁"!important;font-size:15px!important;line-height:1!important}
     #pane-chantiers .message-actions button:not([onclick*="voirMessageYaya"]):not(.x):not([onclick*="supprim" i]),#pane-chantiers .yaya-document-line > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]),#pane-chantiers :is(.ligM,.ligD) > span:last-child button:not([onclick*="voirPiece"]):not(.x):not([onclick*="supprim" i]){grid-column:2!important;width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a8d5b5!important;border-radius:7px!important;background:#f2faf4!important;color:#26703b!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:0!important;line-height:1!important;cursor:pointer!important}
