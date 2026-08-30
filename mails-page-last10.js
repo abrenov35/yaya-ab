@@ -3,160 +3,27 @@
 
   const TAB_ID='yayaMailsTab';
   const PANE_ID='pane-mails';
-  const STYLE_ID='yaya-mails-page-style-v1';
+  const STYLE_ID='yaya-mails-page-style-v2';
   let active=false;
 
-  function esc(v){
-    return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
+  function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
-    const s=document.createElement('style');
-    s.id=STYLE_ID;
-    s.textContent=`
-      #${PANE_ID}{display:none}
-      #${PANE_ID} .mails-page-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
-      #${PANE_ID} .mails-page-head h3{margin:0;font-size:16px;color:var(--navy)}
-      #${PANE_ID} .mails-page-note{font-size:11.5px;color:#718096;margin-bottom:10px}
-      #${PANE_ID} .mails-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(22,45,73,.10);overflow:hidden}
-      #${PANE_ID} .mail-last-row{display:grid;grid-template-columns:82px 150px 155px minmax(0,1fr) 74px 42px;gap:9px;align-items:center;min-height:46px;padding:6px 10px;border-top:1px solid rgba(22,45,73,.08);font-size:12px}
-      #${PANE_ID} .mail-last-row:first-child{border-top:0}
-      #${PANE_ID} .mail-last-date{font-size:10.5px;color:#6b7280;white-space:nowrap}
-      #${PANE_ID} .mail-last-cat{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 8px;border-radius:6px;background:#f4edf9;color:#5f397f;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      #${PANE_ID} .mail-last-chantier{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 8px;border-radius:6px;background:#eef6f2;color:#245b45;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      #${PANE_ID} .mail-last-subject{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#334155}
-      #${PANE_ID} .mail-last-source{font-size:10px;color:#7a8798;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      #${PANE_ID} .mail-last-view{width:32px;height:30px;padding:0;border:1px solid #a9c8e8;border-radius:7px;background:#f3f8fd;color:#174d7d;display:inline-flex;align-items:center;justify-content:center;font-size:14px}
-      #${PANE_ID} .mails-empty{padding:18px;color:#718096;font-size:12px}
-      @media(max-width:760px){
-        #${PANE_ID} .mail-last-row{grid-template-columns:70px minmax(0,1fr) 38px;gap:7px;padding:8px}
-        #${PANE_ID} .mail-last-cat{grid-column:1/2}
-        #${PANE_ID} .mail-last-chantier{grid-column:2/3;justify-content:flex-start}
-        #${PANE_ID} .mail-last-subject{grid-column:1/3;grid-row:2}
-        #${PANE_ID} .mail-last-date{grid-column:1/2;grid-row:3}
-        #${PANE_ID} .mail-last-source{grid-column:2/3;grid-row:3;text-align:left}
-        #${PANE_ID} .mail-last-view{grid-column:3/4;grid-row:1/4;align-self:center}
-      }
-    `;
+    const s=document.createElement('style');s.id=STYLE_ID;
+    s.textContent=`#${PANE_ID}{display:none} #${PANE_ID} .mails-page-head{display:flex;align-items:center;gap:10px;margin-bottom:12px} #${PANE_ID} .mails-page-head h3{margin:0;font-size:16px;color:var(--navy)} #${PANE_ID} .mails-page-note{font-size:11.5px;color:#718096;margin-bottom:10px} #${PANE_ID} .mails-card{background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(22,45,73,.10);overflow:hidden} #${PANE_ID} .mail-last-row{display:grid;grid-template-columns:82px 150px 155px minmax(0,1fr) 74px 42px;gap:9px;align-items:center;min-height:46px;padding:6px 10px;border-top:1px solid rgba(22,45,73,.08);font-size:12px} #${PANE_ID} .mail-last-row:first-child{border-top:0} #${PANE_ID} .mail-last-date{font-size:10.5px;color:#6b7280;white-space:nowrap} #${PANE_ID} .mail-last-cat{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 8px;border-radius:6px;background:#f4edf9;color:#5f397f;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} #${PANE_ID} .mail-last-chantier{display:inline-flex;align-items:center;justify-content:center;height:26px;padding:0 8px;border-radius:6px;background:#eef6f2;color:#245b45;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} #${PANE_ID} .mail-last-subject{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#334155} #${PANE_ID} .mail-last-source{font-size:10px;color:#7a8798;text-align:center;white-space:nowrap} #${PANE_ID} .mail-last-view{width:32px;height:30px;padding:0;border:1px solid #a9c8e8;border-radius:7px;background:#f3f8fd;color:#174d7d;display:inline-flex;align-items:center;justify-content:center;font-size:14px} #${PANE_ID} .mails-empty{padding:18px;color:#718096;font-size:12px} @media(max-width:760px){#${PANE_ID} .mail-last-row{grid-template-columns:70px minmax(0,1fr) 38px;gap:7px;padding:8px} #${PANE_ID} .mail-last-cat{grid-column:1/2} #${PANE_ID} .mail-last-chantier{grid-column:2/3;justify-content:flex-start} #${PANE_ID} .mail-last-subject{grid-column:1/3;grid-row:2} #${PANE_ID} .mail-last-date{grid-column:1/2;grid-row:3} #${PANE_ID} .mail-last-source{grid-column:2/3;grid-row:3;text-align:left} #${PANE_ID} .mail-last-view{grid-column:3/4;grid-row:1/4;align-self:center}}`;
     document.head.appendChild(s);
   }
-
-  function chantierNom(id){
-    try{
-      const c=(S.chantiers||[]).find(x=>String(x.id)===String(id));
-      return c?(c.nom||c.numero||'Chantier'):'—';
-    }catch(e){return '—';}
-  }
-
-  function dateAffiche(v){
-    const s=String(v||'').trim();
-    if(!s)return '—';
-    const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(iso)return iso[3]+'/'+iso[2]+'/'+iso[1];
-    const d=new Date(s);
-    return isNaN(d.getTime())?s.slice(0,10):d.toLocaleDateString('fr-FR');
-  }
-
-  function ordreMail(d,i){
-    const brut=d.horodatage||d.createdAt||d.dateCreation||d.date||'';
-    const t=Date.parse(brut);
-    return Number.isFinite(t)?t:i;
-  }
-
-  function getMails(){
-    try{
-      return (S.documents||[])
-        .map((d,i)=>({d,i}))
-        .filter(x=>String(x.d.type||'').toLowerCase()==='mail')
-        .sort((a,b)=>ordreMail(b.d,b.i)-ordreMail(a.d,a.i)||b.i-a.i)
-        .slice(0,10)
-        .map(x=>x.d);
-    }catch(e){return [];}
-  }
-
-  function renderMails(){
-    const pane=document.getElementById(PANE_ID);if(!pane)return;
-    const mails=getMails();
-    let html='<div class="mails-page-head"><h3>10 derniers mails reçus dans Yaya</h3></div>'
-      +'<div class="mails-page-note">Mails déposés depuis Gmail / Yaya Mail et rattachés aux chantiers.</div>';
-    if(!mails.length){
-      html+='<div class="mails-card"><div class="mails-empty">Aucun mail enregistré dans Yaya.</div></div>';
-      pane.innerHTML=html;return;
-    }
-    html+='<div class="mails-card">';
-    mails.forEach(d=>{
-      const cat=String(d.sujet||d.categorie||'MAIL').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,'')||'MAIL';
-      const titre=String(d.objet||d.subject||d.titre||'Mail').trim()||'Mail';
-      const source=String(d.origine||'Yaya Mail').replace(/_/g,' ');
-      html+='<div class="mail-last-row">'
-        +'<span class="mail-last-date">'+esc(dateAffiche(d.date||d.horodatage||d.createdAt))+'</span>'
-        +'<span class="mail-last-cat" title="'+esc(cat)+'">'+esc(cat)+'</span>'
-        +'<span class="mail-last-chantier" title="'+esc(chantierNom(d.chantierId))+'">'+esc(chantierNom(d.chantierId))+'</span>'
-        +'<span class="mail-last-subject" title="'+esc(titre)+'">'+esc(titre)+'</span>'
-        +'<span class="mail-last-source" title="'+esc(source)+'">'+esc(source)+'</span>'
-        +'<button type="button" class="mail-last-view" title="Voir le mail" aria-label="Voir le mail" data-mail-id="'+esc(d.id)+'">👁️</button>'
-        +'</div>';
-    });
-    html+='</div>';
-    pane.innerHTML=html;
-    pane.querySelectorAll('[data-mail-id]').forEach(btn=>btn.addEventListener('click',function(){
-      const id=this.getAttribute('data-mail-id');
-      if(typeof window.voirMessageYaya==='function')window.voirMessageYaya(id);
-    }));
-  }
-
-  function ensurePane(){
-    let pane=document.getElementById(PANE_ID);
-    if(pane)return pane;
-    const body=document.querySelector('.body');if(!body)return null;
-    pane=document.createElement('div');pane.id=PANE_ID;pane.style.display='none';body.appendChild(pane);return pane;
-  }
-
-  function setExistingPanesVisible(show){
-    ['heures','chantiers','achats','documents','equipe','evolution'].forEach(p=>{
-      const el=document.getElementById('pane-'+p);if(el&&show===false)el.style.display='none';
-    });
-  }
-
-  function openMails(){
-    active=true;
-    ensurePane();
-    renderMails();
-    setExistingPanesVisible(false);
-    const pane=document.getElementById(PANE_ID);if(pane)pane.style.display='block';
-    document.querySelectorAll('.hdr .tab').forEach(b=>b.classList.remove('on'));
-    const tab=document.getElementById(TAB_ID);if(tab)tab.classList.add('on');
-    try{history.replaceState(null,'','#mails');}catch(e){}
-  }
-
-  function closeMails(){
-    if(!active)return;
-    active=false;
-    const pane=document.getElementById(PANE_ID);if(pane)pane.style.display='none';
-  }
-
-  function ensureTab(){
-    if(document.getElementById(TAB_ID))return;
-    const tabs=document.querySelector('.hdr .tabs');if(!tabs)return;
-    const btn=document.createElement('button');
-    btn.id=TAB_ID;btn.type='button';btn.className='tab';btn.textContent='Mails';btn.title='Voir les 10 derniers mails reçus';
-    const docs=[...tabs.querySelectorAll('.tab')].find(b=>String(b.textContent||'').trim().toLowerCase()==='documents');
-    if(docs&&docs.nextSibling)tabs.insertBefore(btn,docs.nextSibling);else tabs.appendChild(btn);
-    btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openMails();});
-    tabs.addEventListener('click',function(e){
-      const t=e.target&&e.target.closest&&e.target.closest('.tab');
-      if(t&&t.id!==TAB_ID)closeMails();
-    },true);
-  }
-
-  function refresh(){installStyle();ensurePane();ensureTab();if(active)renderMails();}
-  function install(){
-    try{if(typeof S==='undefined'||!S)return setTimeout(install,150);}catch(e){return setTimeout(install,150);}
-    refresh();
-    if(location.hash==='#mails')openMails();
-    window.addEventListener('yaya:data-refreshed',function(){if(active)renderMails();});
-    new MutationObserver(function(){requestAnimationFrame(refresh);}).observe(document.body,{childList:true,subtree:true});
-  }
+  function chantierNom(id){try{const c=(S.chantiers||[]).find(x=>String(x.id)===String(id));return c?(c.nom||c.numero||'Chantier'):'—';}catch(e){return '—';}}
+  function dateAffiche(v){const s=String(v||'').trim();if(!s)return '—';const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);if(iso)return iso[3]+'/'+iso[2]+'/'+iso[1];const d=new Date(s);return isNaN(d.getTime())?s.slice(0,10):d.toLocaleDateString('fr-FR');}
+  function ordreMail(d,i){const t=Date.parse(d.horodatage||d.createdAt||d.dateCreation||d.date||'');return Number.isFinite(t)?t:i;}
+  function getMails(){try{return (S.documents||[]).map((d,i)=>({d,i})).filter(x=>String(x.d.type||'').toLowerCase()==='mail').sort((a,b)=>ordreMail(b.d,b.i)-ordreMail(a.d,a.i)||b.i-a.i).slice(0,10).map(x=>x.d);}catch(e){return [];}}
+  function renderMails(){const pane=document.getElementById(PANE_ID);if(!pane)return;const mails=getMails();let html='<div class="mails-page-head"><h3>10 derniers mails reçus dans Yaya</h3></div><div class="mails-page-note">Mails déposés depuis Gmail / Yaya Mail et rattachés aux chantiers.</div>';if(!mails.length){pane.innerHTML=html+'<div class="mails-card"><div class="mails-empty">Aucun mail enregistré dans Yaya.</div></div>';return;}html+='<div class="mails-card">';mails.forEach(d=>{const cat=String(d.sujet||d.categorie||'MAIL').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,'')||'MAIL';const titre=String(d.objet||d.subject||d.titre||'Mail').trim()||'Mail';const source=String(d.origine||'Yaya Mail').replace(/_/g,' ');html+='<div class="mail-last-row"><span class="mail-last-date">'+esc(dateAffiche(d.date||d.horodatage||d.createdAt))+'</span><span class="mail-last-cat">'+esc(cat)+'</span><span class="mail-last-chantier">'+esc(chantierNom(d.chantierId))+'</span><span class="mail-last-subject" title="'+esc(titre)+'">'+esc(titre)+'</span><span class="mail-last-source">'+esc(source)+'</span><button type="button" class="mail-last-view" data-mail-id="'+esc(d.id)+'">👁️</button></div>';});pane.innerHTML=html+'</div>';pane.querySelectorAll('[data-mail-id]').forEach(btn=>btn.addEventListener('click',function(){if(typeof window.voirMessageYaya==='function')window.voirMessageYaya(this.getAttribute('data-mail-id'));}));}
+  function ensurePane(){let pane=document.getElementById(PANE_ID);if(pane)return pane;const body=document.querySelector('.body');if(!body)return null;pane=document.createElement('div');pane.id=PANE_ID;pane.style.display='none';body.appendChild(pane);return pane;}
+  function hideAllOtherContent(){document.querySelectorAll('.body > [id^="pane-"]').forEach(el=>{if(el.id!==PANE_ID)el.style.setProperty('display','none','important');});}
+  function openMails(){active=true;ensurePane();renderMails();hideAllOtherContent();const pane=document.getElementById(PANE_ID);if(pane)pane.style.setProperty('display','block','important');document.querySelectorAll('.hdr .tab').forEach(b=>b.classList.remove('on'));const tab=document.getElementById(TAB_ID);if(tab)tab.classList.add('on');try{history.replaceState(null,'','#mails');}catch(e){}}
+  function closeMails(){if(!active)return;active=false;const pane=document.getElementById(PANE_ID);if(pane)pane.style.setProperty('display','none','important');}
+  function ensureTab(){if(document.getElementById(TAB_ID))return;const tabs=document.querySelector('.hdr .tabs');if(!tabs)return;const btn=document.createElement('button');btn.id=TAB_ID;btn.type='button';btn.className='tab';btn.textContent='Mails';btn.title='Voir les 10 derniers mails reçus';const docs=[...tabs.querySelectorAll('.tab')].find(b=>String(b.textContent||'').trim().toLowerCase()==='documents');if(docs&&docs.nextSibling)tabs.insertBefore(btn,docs.nextSibling);else tabs.appendChild(btn);btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();openMails();});tabs.addEventListener('click',function(e){const t=e.target&&e.target.closest&&e.target.closest('.tab');if(t&&t.id!==TAB_ID)closeMails();},true);}
+  function refresh(){installStyle();ensurePane();ensureTab();if(active){hideAllOtherContent();renderMails();}}
+  function install(){try{if(typeof S==='undefined'||!S)return setTimeout(install,150);}catch(e){return setTimeout(install,150);}refresh();if(location.hash==='#mails')openMails();window.addEventListener('yaya:data-refreshed',function(){if(active){hideAllOtherContent();renderMails();}});new MutationObserver(function(){requestAnimationFrame(refresh);}).observe(document.body,{childList:true,subtree:true});}
   install();
 })();
