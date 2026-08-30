@@ -1,6 +1,6 @@
 (async function(){
 'use strict';
-const raw=await fetch('chantier-detail-section-tabs.js?v=detailtabs-20',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('detailtabs '+r.status);return r.text();});
+const raw=await fetch('chantier-detail-section-tabs.js?v=detailtabs-21',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('detailtabs '+r.status);return r.text();});
 let src=raw;
 function rep(a,b){if(!src.includes(a))throw new Error('Mail natif: point introuvable');src=src.replace(a,b);}
 rep("const ORDER=['marche','depenses','charges','documents'];","const ORDER=['marche','depenses','charges','documents','mail'];");

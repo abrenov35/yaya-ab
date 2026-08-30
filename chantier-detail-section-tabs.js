@@ -168,6 +168,8 @@
         font-size:14px!important;line-height:1!important;cursor:pointer!important;
       }
       .yaya-detail-document-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important}
+      .yaya-detail-document-view{font-size:0!important}
+      .yaya-detail-document-view::before{content:"👁︎"!important;font-family:"Segoe UI Symbol","Arial Unicode MS",sans-serif!important;font-size:15px!important;line-height:1!important;color:#174d7d!important}
       .yaya-detail-document-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
       .yaya-detail-document-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
       .yaya-detail-document-view:disabled{opacity:.38!important;cursor:default!important}
