@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-mail-chantier-section-fix-v11';
+  const STYLE_ID='yaya-mail-chantier-section-fix-v12';
 
   function installStyle(){
-    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9','yaya-mail-chantier-section-fix-v10'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9','yaya-mail-chantier-section-fix-v10','yaya-mail-chantier-section-fix-v11'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
     let s=document.getElementById(STYLE_ID);
     if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
     s.textContent=`
@@ -26,12 +26,12 @@
   function mailId(row){const raw=[...row.querySelectorAll('[onclick]')].map(x=>x.getAttribute('onclick')||'').join(' ');const m=raw.match(/(?:voirMessageYaya|editDocument|delDocument)\(['\"]([^'\"]+)/);return m&&m[1]?String(m[1]):'';}
   function mailData(id){try{return typeof S!=='undefined'&&S&&Array.isArray(S.documents)?S.documents.find(d=>String(d.id)===String(id)):null;}catch(e){return null;}}
   function rebuildActions(row,id){const actions=row.querySelector('.message-actions');if(!actions||!id)return;if(row.dataset.yayaMailActionsFixed==='1'&&actions.children.length===3)return;actions.innerHTML='';const make=(cls,title,code)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('onclick',code);return b;};actions.append(make('btn2 message-view-btn yaya-mail-view','Voir le message','voirMessageYaya('+JSON.stringify(id)+')'),make('btn2 yaya-mail-edit','Modifier le mail','editDocument('+JSON.stringify(id)+')'),make('x yaya-mail-delete','Supprimer le mail','delDocument('+JSON.stringify(id)+')'));}
-  function activeSection(card){return String(card&&card.dataset&&card.dataset.yayaDetailSection||'');}
   function normalize(){
     document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
       const card=row.closest('.card');if(!card)return;
-      row.classList.add('yaya-detail-section-node');row.dataset.section='mail';
-      row.style.setProperty('display',activeSection(card)==='mail'?'grid':'none','important');
+      row.classList.add('yaya-detail-section-node');
+      row.dataset.section='mail';
+      row.style.removeProperty('display');
       row.style.setProperty('overflow','visible','important');
       const id=mailId(row);const d=mailData(id);const apercu=row.querySelector('.message-apercu');
       if(apercu&&d&&String(d.titre||'').trim()){apercu.textContent=String(d.titre).trim();apercu.title=apercu.textContent;}
@@ -43,6 +43,6 @@
   function run(){installStyle();schedule();}
   run();setTimeout(run,300);setTimeout(run,1000);
   document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab'))setTimeout(schedule,0);},false);
-  new MutationObserver(()=>requestAnimationFrame(schedule)).observe(document.body||document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section']});
+  new MutationObserver(schedule).observe(document.body||document.documentElement,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();
