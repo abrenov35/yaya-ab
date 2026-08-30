@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-mail-chantier-section-fix-v10';
+  const STYLE_ID='yaya-mail-chantier-section-fix-v11';
 
   function installStyle(){
-    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9','yaya-mail-chantier-section-fix-v10'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
     let s=document.getElementById(STYLE_ID);
     if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
     s.textContent=`
@@ -30,8 +30,8 @@
   function normalize(){
     document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
       const card=row.closest('.card');if(!card)return;
-      row.classList.add('yaya-detail-section-node');row.dataset.section='documents';
-      row.style.setProperty('display',activeSection(card)==='documents'?'grid':'none','important');
+      row.classList.add('yaya-detail-section-node');row.dataset.section='mail';
+      row.style.setProperty('display',activeSection(card)==='mail'?'grid':'none','important');
       row.style.setProperty('overflow','visible','important');
       const id=mailId(row);const d=mailData(id);const apercu=row.querySelector('.message-apercu');
       if(apercu&&d&&String(d.titre||'').trim()){apercu.textContent=String(d.titre).trim();apercu.title=apercu.textContent;}
