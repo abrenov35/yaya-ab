@@ -6,7 +6,7 @@
     if(!style){style=document.createElement('style');style.id=STYLE_ID;document.head.appendChild(style);}
     style.textContent=`
       #pane-documents .card{overflow:hidden!important;padding:0 16px!important}
-      #pane-documents .achligne.ligR{display:grid!important;grid-template-columns:170px 170px minmax(300px,1fr) 100px 42px!important;column-gap:16px!important;align-items:center!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;padding:0!important;overflow:hidden!important;box-sizing:border-box!important;border-bottom:1px solid #d9e2ec!important}
+      #pane-documents .achligne.ligR{display:grid!important;grid-template-columns:170px 170px minmax(300px,1fr) 100px 42px!important;column-gap:16px!important;align-items:center!important;width:100%!important;height:auto!important;min-height:0!important;max-height:none!important;padding:4px 0!important;overflow:hidden!important;box-sizing:border-box!important;border-bottom:1px solid #d9e2ec!important}
       #pane-documents .achligne.ligR>*{min-width:0!important;max-width:100%!important;box-sizing:border-box!important;margin:0!important}
       #pane-documents .achligne.ligR>span:first-child{height:34px!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 10px!important;border:1px solid #c9d8e8!important;border-radius:8px!important;background:#fff!important;font-weight:700!important;font-size:11px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       #pane-documents .achligne.ligR>span:nth-child(2){display:flex!important;align-items:center!important;height:34px!important;padding:0!important;background:transparent!important;border:0!important;font-weight:700!important;font-size:12px!important;color:#071b38!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
@@ -41,7 +41,7 @@
   function compact(){
     [...document.querySelectorAll('#pane-documents .card .achligne.ligR')].forEach((row,index)=>{
       row.style.display=index<10?'grid':'none';
-      row.style.setProperty('padding','0','important');
+      row.style.setProperty('padding','4px 0','important');
       row.style.setProperty('min-height','0','important');
       if(row.dataset.yayaCompact==='1')return;
       row.dataset.yayaCompact='1';
