@@ -148,6 +148,14 @@
       .yaya-detail-document-row:last-child{border-bottom:0!important}
       .yaya-detail-charge-row strong,
       .yaya-detail-document-row strong{color:#1c2b48!important}
+      .yaya-detail-document-row strong{min-width:0!important;overflow:hidden!important}
+      .yaya-detail-document-row strong small{
+        display:block!important;
+        max-width:100%!important;
+        white-space:nowrap!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+      }
       .yaya-detail-charge-hours{text-align:right!important;color:#596579!important}
       .yaya-detail-charge-cost{text-align:right!important;color:#1c2b48!important;font-weight:700!important}
       .yaya-detail-charge-view{
@@ -536,34 +544,67 @@
       tabs.insertAdjacentElement('afterend',pane);
     }
     pane.dataset.empty=rows.length?'0':'1';
+    const compactMailText=(value,max=120)=>{
+      let text=String(value||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+      if(text.length>max)text=text.slice(0,max-3).trimEnd()+'…';
+      return text;
+    };
+    const isMailMovedToDocuments=row=>{
+      if(!row)return false;
+      if(normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;
+      if(row.expediteur||row.from||row.subject||row.objetMail||row.mailSubject||row.emailSubject)return true;
+      const source=String(row.titre||row.objet||'');
+      return /\b(?:envoy[eé]|sent|from|objet)\s*:/i.test(source)
+        || (/\b(?:bonjour|bonsoir|cordialement)\b/i.test(source)&&source.length>120);
+    };
+    const mailName=row=>compactMailText(row.nomMail||row.expediteur||row.from||row.sujet||'',80)||'Expéditeur non renseigné';
+    const mailObject=row=>{
+      let objet=compactMailText(row.objetMail||row.mailSubject||row.emailSubject||row.subject||row.objet||'',120);
+      if(!objet){
+        const source=String(row.contenuMail||row.corpsMail||row.contenu||row.titre||'');
+        const match=source.match(/(?:\*{0,2})objet\s*:\s*(?:\*{0,2})(.*?)(?=#YB|https?:\/\/|\r?\n|$)/i);
+        if(match)objet=compactMailText(match[1],120);
+      }
+      return objet.replace(/^objet\s*:\s*/i,'').replace(/[#*]+$/,'').trim()||'Objet non renseigné';
+    };
     const displayRows=rows.map(row=>{
       const titreBrut=String(row.titre||'');
       const parties=titreBrut.split('/').map(x=>x.trim()).filter(Boolean);
       const vientDocsChantier=normalise(row.origine)==='DOCS_CHANTIER'&&parties.length>=3;
-      const operateur=vientDocsChantier?(parties[1]||row.sujet||'Document'):(row.sujet||'Document');
-      const detailBrut=vientDocsChantier?(parties.slice(3).join(' / ')||row.sujet||titreBrut):titreBrut;
+      const vientMail=isMailMovedToDocuments(row);
+      const operateur=vientMail
+        ? mailName(row)
+        : (vientDocsChantier?(parties[1]||row.sujet||'Document'):(row.sujet||'Document'));
+      const detailBrut=vientMail
+        ? mailObject(row)
+        : (vientDocsChantier?(parties.slice(3).join(' / ')||row.sujet||titreBrut):titreBrut);
       const detail=normalise(detailBrut)===normalise(operateur)?'':detailBrut;
       const date=String(row.date||'').slice(0,10).split('-').reverse().join('/');
-      return {row,operateur,detail,date,lien:String(row.lien||'')};
+      return {row,operateur,detail,date,lien:String(row.lien||''),vientMail};
     });
     const html=displayRows.map(item=>
       '<div class="yaya-detail-document-row">'
         +'<strong>'+escapeHtml(item.operateur)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+escapeHtml(item.row.type||'Document')+'</span>'
         +'<span class="yaya-detail-charge-cost">'+escapeHtml(item.date||'—')+'</span>'
-        +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-doc-id="'+escapeHtml(item.row.id||'')+'" data-lien="'+escapeHtml(item.lien)+'"'+(item.lien.startsWith('http')?'':' disabled')+'>👁</button>'
+        +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-doc-id="'+escapeHtml(item.row.id||'')+'" data-lien="'+escapeHtml(item.lien)+'" data-mail-linked="'+(item.vientMail?'1':'0')+'"'+(item.vientMail||item.lien.startsWith('http')?'':' disabled')+'>👁</button>'
         +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-doc-id="'+escapeHtml(item.row.id||'')+'">✏️</button>'
         +'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-doc-id="'+escapeHtml(item.row.id||'')+'">🗑️</button>'
       +'</div>'
     ).join('');
-    const signature=JSON.stringify(displayRows.map(item=>[item.row.id||'',item.operateur,item.detail,item.row.type||'',item.date,item.lien]));
+    const signature=JSON.stringify(displayRows.map(item=>[item.row.id||'',item.operateur,item.detail,item.row.type||'',item.date,item.lien,item.vientMail]));
     if(pane._yayaRowsSignature!==signature){
       pane.innerHTML=html;
       pane._yayaRowsSignature=signature;
     }
     pane.querySelectorAll('.yaya-detail-document-view:not(:disabled)').forEach(btn=>{
       if(btn._yayaBound)return;btn._yayaBound=true;
-      btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const lien=String(btn.dataset.lien||'');if(lien&&typeof voirPiece==='function')voirPiece(lien);});
+      btn.addEventListener('click',e=>{
+        e.preventDefault();e.stopPropagation();
+        const id=String(btn.dataset.docId||'');
+        if(btn.dataset.mailLinked==='1'&&id&&typeof voirMessageYaya==='function'){voirMessageYaya(id);return;}
+        const lien=String(btn.dataset.lien||'');if(lien&&typeof voirPiece==='function')voirPiece(lien);
+      });
     });
     pane.querySelectorAll('.yaya-detail-document-edit').forEach(btn=>{
       if(btn._yayaBound)return;btn._yayaBound=true;

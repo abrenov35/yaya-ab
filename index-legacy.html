@@ -2020,16 +2020,48 @@ const BADGE_DOC2 = {"Photo":"b-photo","Mail":"b-mail","Plan":"b-plan","Document"
 function badgeDoc2(t){ return BADGE_DOC2[t]||"b-divers"; }
 function docsChantier(cid){ return S.documents.filter(d=>String(d.chantierId)===String(cid)); }
 
+function texteMailYaya(v){
+  return String(v||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
+}
+function documentIssuMailYaya(d){
+  if(!d) return false;
+  if(String(d.type||'').toUpperCase()==='MAIL'||String(d.origineMail||d.origine||'').toUpperCase()==='MAIL') return true;
+  if(d.contenuMail||d.corpsMail||d.expediteur||d.from||d.objetMail||d.mailSubject||d.emailSubject) return true;
+  const source=String(d.titre||d.objet||'');
+  return /\b(?:envoy[eé]|sent|from|objet)\s*:/i.test(source)
+    || (/\b(?:bonjour|bonsoir|cordialement)\b/i.test(source)&&source.length>120);
+}
+function contenuMailYaya(d){
+  return String((d&&(d.contenuMail||d.corpsMail||d.contenu||d.titre))||'');
+}
+function nomMailYaya(d){
+  return texteMailYaya(d&&(d.nomMail||d.expediteur||d.from||d.sujet))||'Expéditeur non renseigné';
+}
+function objetMailYaya(d){
+  if(!d) return 'Objet non renseigné';
+  const directs=[d.objetMail,d.mailSubject,d.emailSubject,d.subject,d.objet];
+  let objet='';
+  for(const v of directs){objet=texteMailYaya(v);if(objet)break;}
+  if(!objet){
+    const source=contenuMailYaya(d);
+    const match=source.match(/(?:\*{0,2})objet\s*:\s*(?:\*{0,2})(.*?)(?=#YB|https?:\/\/|\r?\n|$)/i);
+    if(match)objet=texteMailYaya(match[1]);
+  }
+  objet=objet.replace(/^objet\s*:\s*/i,'').replace(/[#*]+$/,'').trim();
+  if(objet.length>120)objet=objet.slice(0,117).trimEnd()+'…';
+  return objet||'Objet non renseigné';
+}
+
 function voirMessageYaya(id){
   const d=S.documents.find(x=>String(x.id)===String(id));
   if(!d) return;
   const lien=String(d.lien||'');
-  if(lien.startsWith('http')&&!/mail\.google\.com/i.test(lien)){
+  if(!documentIssuMailYaya(d)&&lien.startsWith('http')&&!/mail\.google\.com/i.test(lien)){
     voirPiece(lien);
     return;
   }
   const date=String(d.date||'').slice(0,10).split('-').reverse().join('/');
-  const contenu=esc(d.titre||'Aucun contenu disponible.')
+  const contenu=esc(contenuMailYaya(d)||'Aucun contenu disponible.')
     .replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener">$1</a>')
     .replace(/\n/g,'<br>');
   const root=document.getElementById('modalRoot');
@@ -2037,8 +2069,9 @@ function voirMessageYaya(id){
     +'<div class="modal message-modal">'
     +'<h5><span>Échange chantier</span><button class="btn2" onclick="closeModal()">Fermer</button></h5>'
     +'<div class="message-meta"><span class="badge b-mail">MAIL</span>'
-    +(d.sujet?'<span class="badge b-df">'+esc(d.sujet)+'</span>':'')
+    +'<span class="badge b-df">'+esc(nomMailYaya(d))+'</span>'
     +(date?'<span>'+esc(date)+'</span>':'')+'</div>'
+    +'<div style="font-weight:700;margin:8px 0">'+esc(objetMailYaya(d))+'</div>'
     +'<div class="message-extrait">'+contenu+'</div>'
     +'</div></div>';
 }
@@ -3058,21 +3091,33 @@ function editDocument(id){
   const d=S.documents.find(x=>x.id===id); if(!d) return;
   const root=document.getElementById("modalRoot");
   const chOpts=S.chantiers.map(c=>'<option value="'+c.id+'"'+(String(c.id)===String(d.chantierId)?' selected':'')+'>'+esc(c.nom)+'</option>').join('');
+  const lieAuMail=documentIssuMailYaya(d);
+  const sujetAffiche=lieAuMail?nomMailYaya(d):String(d.sujet||'');
+  const titreAffiche=lieAuMail?objetMailYaya(d):String(d.titre||'');
   root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'
     +'<h5>Modifier le document<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
     +'<div class="mrow"><select class="msel" id="edDocCh">'+chOpts+'</select></div>'
     +'<div class="mrow"><select class="msel" id="edDocType">'+TYPES_DOC2.map(t=>'<option'+(d.type===t?' selected':'')+'>'+t+'</option>').join('')+'</select></div>'
-    +'<div class="mrow"><input class="msel" id="edDocSujet" value="'+esc(d.sujet||'')+'" placeholder="Sujet"></div>'
-    +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+esc(d.titre||'')+'" placeholder="Titre"></div>'
+    +'<div class="mrow"><input class="msel" id="edDocSujet" value="'+esc(sujetAffiche)+'" placeholder="Nom"></div>'
+    +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+esc(titreAffiche)+'" placeholder="Objet du mail"></div>'
     +'<div class="mfoot"><button class="btnp go" onclick="saveDocumentEdit(\''+id+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
     +'</div></div>';
 }
 async function saveDocumentEdit(id){
   const d=S.documents.find(x=>x.id===id); if(!d) return;
+  const ancienType=String(d.type||'');
+  const etaitLieAuMail=documentIssuMailYaya(d);
+  const contenuComplet=contenuMailYaya(d);
   d.chantierId=document.getElementById('edDocCh').value;
   d.type=document.getElementById('edDocType').value;
   d.titre=document.getElementById('edDocTitre').value.trim();
   d.sujet=document.getElementById('edDocSujet').value.trim();
+  if(String(d.type||'').toUpperCase()!=='MAIL'&&(ancienType.toUpperCase()==='MAIL'||etaitLieAuMail)){
+    d.origineMail='MAIL';
+    d.contenuMail=contenuComplet;
+    d.nomMail=d.sujet;
+    d.objetMail=d.titre;
+  }
   closeModal(); render();
   if(await apiPost('setDocuments',S.documents)) toast('Document modifié ✓');
 }
