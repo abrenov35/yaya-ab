@@ -496,7 +496,8 @@
       const parties=titreBrut.split('/').map(x=>x.trim()).filter(Boolean);
       const vientDocsChantier=normalise(row.origine)==='DOCS_CHANTIER'&&parties.length>=3;
       const operateur=vientDocsChantier?(parties[1]||row.sujet||'Document'):(row.sujet||'Document');
-      const detail=vientDocsChantier?(parties.slice(3).join(' / ')||row.sujet||titreBrut):titreBrut;
+      const detailBrut=vientDocsChantier?(parties.slice(3).join(' / ')||row.sujet||titreBrut):titreBrut;
+      const detail=normalise(detailBrut)===normalise(operateur)?'':detailBrut;
       const date=String(row.date||'').slice(0,10).split('-').reverse().join('/');
       return {row,operateur,detail,date,lien:String(row.lien||'')};
     });
