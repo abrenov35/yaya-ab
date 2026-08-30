@@ -41,10 +41,11 @@
   function compact(){
     let visibleIndex=0;
     [...document.querySelectorAll('#pane-documents .card .achligne.ligR')].forEach(row=>{
+      const id=String(row.dataset.id||'');
       const d=docByRow(row);
       const rowType=clean((d&&d.type)||(row.children[0]&&row.children[0].textContent));
-      if(/^mail$/i.test(rowType)){
-        row.style.display='none';
+      if(/^mail$/i.test(rowType)||/^MAIL_/i.test(id)){
+        row.remove();
         return;
       }
       row.style.display=visibleIndex<10?'grid':'none';
