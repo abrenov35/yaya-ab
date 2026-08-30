@@ -156,6 +156,7 @@
         overflow:hidden!important;
         text-overflow:ellipsis!important;
       }
+      .yaya-history-date{display:block!important;margin-top:2px!important;color:#7a8798!important;font-size:10.5px!important;font-weight:600!important;white-space:nowrap!important}
       .yaya-detail-charge-hours{text-align:right!important;color:#596579!important}
       .yaya-detail-charge-cost{text-align:right!important;color:#1c2b48!important;font-weight:700!important}
       .yaya-detail-charge-view{
@@ -297,6 +298,22 @@
     return Math.round(Number(value)||0).toLocaleString('fr-FR')+' €';
   }
 
+  function dateFr(value){
+    const raw=String(value||'').trim();
+    let match=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(match)return match[3]+'/'+match[2]+'/'+match[1];
+    match=raw.match(/^(\d{4})-(\d{2})/);
+    if(match)return match[2]+'/'+match[1];
+    return '';
+  }
+
+  function dateHeureIso(heure){
+    const match=String(heure&&heure.semaine||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!match)return '';
+    const date=new Date(Date.UTC(Number(match[1]),Number(match[2])-1,Number(match[3])+(Number(heure.jour)||0)));
+    return Number.isNaN(date.getTime())?'':date.toISOString().slice(0,10);
+  }
+
   function escapeHtml(value){
     const el=document.createElement('div');
     el.textContent=String(value||'');
@@ -356,6 +373,7 @@
       type:'DEVIS 1',
       title:'Devis principal',
       detail:chantier.numero?('N° '+String(chantier.numero)):'',
+      date:String(chantier.dateSignature||''),
       amount:Number(chantier.montantDevisHT)||0,
       lien:String(chantier.notes||'')
     }];
@@ -365,7 +383,8 @@
       kind:'avenant',
       type:'DEVIS '+(index+2),
       title:String(v.libelle||('Devis '+(index+2))),
-      detail:String(v.date||'').slice(0,10).split('-').reverse().join('/'),
+      detail:'',
+      date:String(v.date||''),
       amount:Number(v.montantHT)||0,
       lien:String(v.lien||'')
     }));
@@ -394,9 +413,14 @@
       if(hours<=0)return;
       const rate=(h.taux!==''&&h.taux!=null)?Number(h.taux):(Number(salarie.tauxHoraire)||0);
       const key=String(salarie.id);
-      const row=groups.get(key)||{nom:String(salarie.nom||'Ouvrier'),heures:0,cout:0,type:'main-oeuvre'};
+      const row=groups.get(key)||{nom:String(salarie.nom||'Ouvrier'),heures:0,cout:0,type:'main-oeuvre',dateDebut:'',dateFin:''};
       row.heures+=hours;
       row.cout+=hours*(Number(rate)||0);
+      const dateHeure=dateHeureIso(h);
+      if(dateHeure){
+        if(!row.dateDebut||dateHeure<row.dateDebut)row.dateDebut=dateHeure;
+        if(!row.dateFin||dateHeure>row.dateFin)row.dateFin=dateHeure;
+      }
       groups.set(key,row);
     });
 
@@ -408,7 +432,8 @@
       type:'sous-traitance',
       achatId:String(a.id||''),
       lien:String(a.lien||''),
-      detail:String(a.designation||'Facture de sous-traitance')
+      detail:String(a.designation||'Facture de sous-traitance'),
+      date:String(a.date||'')
     }));
     return mainOeuvre.concat(sousTraitance);
   }
@@ -472,15 +497,20 @@
       tabs.insertAdjacentElement('afterend',pane);
     }
     pane.dataset.empty=rows.length?'0':'1';
+    const dateCharge=row=>row.type==='sous-traitance'
+      ? dateFr(row.date)
+      : (row.dateDebut&&row.dateFin
+          ? (row.dateDebut===row.dateFin?dateFr(row.dateDebut):dateFr(row.dateDebut)+' → '+dateFr(row.dateFin))
+          : '');
     const html=rows.map(row=>
       '<div class="yaya-detail-charge-row">'
-        +'<strong>'+escapeHtml(row.nom)+(row.type==='sous-traitance'&&row.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.detail)+'</small>':'')+'</strong>'
+        +'<strong>'+escapeHtml(row.nom)+(row.type==='sous-traitance'&&row.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.detail)+'</small>':'')+(dateCharge(row)?'<small class="yaya-history-date">'+escapeHtml(dateCharge(row))+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+(row.type==='sous-traitance'?'Sous-traitance':row.heures.toLocaleString('fr-FR')+' h')+'</span>'
         +'<span class="yaya-detail-charge-cost">'+euro(row.cout)+'</span>'
         +(row.type==='sous-traitance'&&row.achatId?'<button type="button" class="yaya-detail-charge-view" title="Voir" aria-label="Voir" data-achat-id="'+escapeHtml(row.achatId)+'" data-lien="'+escapeHtml(row.lien)+'">👁</button>':'<span></span>')
       +'</div>'
     ).join('');
-    const signature=JSON.stringify(rows.map(row=>[row.nom,row.heures,row.cout,row.type,row.achatId||'',row.lien||'',row.detail||'']));
+    const signature=JSON.stringify(rows.map(row=>[row.nom,row.heures,row.cout,row.type,row.achatId||'',row.lien||'',row.detail||'',row.date||'',row.dateDebut||'',row.dateFin||'']));
     if(pane._yayaRowsSignature!==signature){
       pane.innerHTML=html;
       pane._yayaRowsSignature=signature;
@@ -511,13 +541,13 @@
       const lien=String(row.lien||'');
       const montant=(row.typeDoc==='Avoir'?'+ ':'- ')+euro(Number(row.montantHT)||0);
       return '<div class="yaya-detail-charge-row yaya-detail-expense-row">'
-        +'<strong>'+escapeHtml(row.fournisseur||'Fournisseur')+(row.designation?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.designation)+'</small>':'')+'</strong>'
+        +'<strong>'+escapeHtml(row.fournisseur||'Fournisseur')+(row.designation?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.designation)+'</small>':'')+(dateFr(row.date)?'<small class="yaya-history-date">'+escapeHtml(dateFr(row.date))+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+escapeHtml(row.typeDoc||'Dépense')+'</span>'
         +'<span class="yaya-detail-charge-cost">'+montant+'</span>'
         +'<button type="button" class="yaya-detail-charge-view" title="Voir" aria-label="Voir" data-achat-id="'+escapeHtml(row.id||'')+'" data-lien="'+escapeHtml(lien)+'"'+(lien.startsWith('http')?'':' disabled')+'>👁</button>'
       +'</div>';
     }).join('');
-    const signature=JSON.stringify(rows.map(row=>[row.id||'',row.fournisseur||'',row.designation||'',row.typeDoc||'',row.montantHT||0,row.lien||'']));
+    const signature=JSON.stringify(rows.map(row=>[row.id||'',row.fournisseur||'',row.designation||'',row.typeDoc||'',row.montantHT||0,row.lien||'',row.date||'']));
     if(pane._yayaRowsSignature!==signature){
       pane.innerHTML=html;
       pane._yayaRowsSignature=signature;
@@ -632,7 +662,7 @@
     }));
     const html=displayRows.map(item=>
       '<div class="yaya-detail-document-row yaya-detail-market-row">'
-        +'<strong>'+escapeHtml(item.title)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
+        +'<strong>'+escapeHtml(item.title)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+(dateFr(item.date)?'<small class="yaya-history-date">'+escapeHtml(dateFr(item.date))+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+escapeHtml(item.type)+'</span>'
         +'<span class="yaya-detail-charge-cost">'+euro(item.amount)+'</span>'
         +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-lien="'+escapeHtml(item.lien)+'"'+(item.lien.startsWith('http')?'':' disabled')+'>👁</button>'
@@ -640,7 +670,7 @@
         +(item.kind==='avenant'?'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-row-id="'+escapeHtml(item.id)+'">🗑️</button>':'<span></span>')
       +'</div>'
     ).join('');
-    const signature=JSON.stringify(displayRows.map(item=>[item.id,item.kind,item.type,item.title,item.detail,item.amount,item.lien]));
+    const signature=JSON.stringify(displayRows.map(item=>[item.id,item.kind,item.type,item.title,item.detail,item.date||'',item.amount,item.lien]));
     if(pane._yayaRowsSignature!==signature){
       pane.innerHTML=html;
       pane._yayaRowsSignature=signature;
