@@ -12,7 +12,7 @@
       :root{--yaya-safe-bottom:env(safe-area-inset-bottom,0px)}
       html,body{width:100%!important;max-width:100%!important;overflow-x:clip!important}
       body{padding-bottom:calc(20px + var(--yaya-safe-bottom))!important}button{cursor:default}
-      .hdr{position:sticky!important;top:0!important;z-index:40!important;display:block!important;width:100%!important;max-width:100%!important;padding:calc(7px + env(safe-area-inset-top,0px)) 8px 7px!important;overflow:visible!important}
+      .hdr{position:sticky!important;top:0!important;z-index:40!important;display:block!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;padding:calc(7px + env(safe-area-inset-top,0px)) 8px 7px!important;overflow:visible!important}
       .hdr .brand{display:flex!important;min-width:0!important;margin:0 2px 6px!important}.hdr .brand b{font-size:17px!important;line-height:1.1!important;white-space:nowrap!important}
       .hdr .brand span,.hdr .sync,.hdr>#yayaReloadBtn{display:none!important}
       .hdr .tabs{display:flex!important;justify-content:flex-start!important;flex-wrap:nowrap!important;width:100%!important;max-width:100%!important;gap:6px!important;padding:1px 0 2px!important;overflow-x:auto!important;overflow-y:hidden!important;overscroll-behavior-x:contain!important;-webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;scroll-snap-type:x proximity!important}
