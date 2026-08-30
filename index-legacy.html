@@ -3062,8 +3062,8 @@ function editDocument(id){
     +'<h5>Modifier le document<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
     +'<div class="mrow"><select class="msel" id="edDocCh">'+chOpts+'</select></div>'
     +'<div class="mrow"><select class="msel" id="edDocType">'+TYPES_DOC2.map(t=>'<option'+(d.type===t?' selected':'')+'>'+t+'</option>').join('')+'</select></div>'
-    +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+esc(d.titre||'')+'" placeholder="Titre"></div>'
     +'<div class="mrow"><input class="msel" id="edDocSujet" value="'+esc(d.sujet||'')+'" placeholder="Sujet"></div>'
+    +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+esc(d.titre||'')+'" placeholder="Titre"></div>'
     +'<div class="mfoot"><button class="btnp go" onclick="saveDocumentEdit(\''+id+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
     +'</div></div>';
 }
