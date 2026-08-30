@@ -12,7 +12,7 @@
     #pane-documents button[onclick^="delDocument("]{display:none!important}
 
     #pane-documents > .note{margin:8px 0 6px!important;color:#162D49!important;opacity:1!important;font-size:11px!important;font-weight:800!important;letter-spacing:0!important}
-    #pane-documents > .card{margin:0!important;padding:0!important;background:#fff!important;border:0!important;border-left:3px solid #10B981!important;border-radius:0!important;box-shadow:none!important}
+    #pane-documents > .card{margin:0!important;padding:0!important;background:#fff!important;border:0!important;border-left:0!important;border-radius:0!important;box-shadow:none!important}
     #pane-documents > .card > .achligne.ligR{min-height:70px!important;padding:13px 18px!important;border-top:1px solid #DDE3EA!important;color:#162D49!important;background:#fff!important}
     #pane-documents > .card > .achligne.ligR:last-child{border-bottom:1px solid #DDE3EA!important}
 
@@ -20,23 +20,23 @@
     #pane-documents .achligne.ligR > .badge:nth-child(1){
       display:inline-flex!important;
       align-items:center!important;
-      justify-content:center!important;
+      justify-content:flex-start!important;
       width:auto!important;
-      min-width:max-content!important;
-      max-width:none!important;
-      min-height:34px!important;
-      padding:6px 12px!important;
-      background:#fff!important;
+      min-width:0!important;
+      max-width:100%!important;
+      min-height:0!important;
+      padding:0!important;
+      background:transparent!important;
       color:#162D49!important;
-      border:1px solid #C7D4E0!important;
-      border-radius:7px!important;
+      border:0!important;
+      border-radius:0!important;
       font-size:10px!important;
       font-weight:800!important;
       line-height:1!important;
       white-space:nowrap!important;
       overflow:visible!important;
       word-break:keep-all!important;
-      text-align:center!important;
+      text-align:left!important;
       box-shadow:none!important;
       flex-shrink:0!important;
     }
@@ -46,7 +46,7 @@
 
     @media(max-width:620px){
       #pane-documents > .card > .achligne.ligR{overflow:visible!important}
-      #pane-documents .achligne.ligR > .badge:nth-child(1){font-size:9px!important;padding:6px 8px!important;white-space:nowrap!important}
+      #pane-documents .achligne.ligR > .badge:nth-child(1){font-size:9px!important;padding:0!important;white-space:nowrap!important}
     }
   `;
   document.head.appendChild(style);
