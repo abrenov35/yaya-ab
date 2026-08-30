@@ -32,10 +32,10 @@
     const s=document.createElement('style');
     s.id='yaya-st-page-style-v1';
     s.textContent=`
-      #pane-${TAB} .st-list{border-left:2px solid #21b66f;background:#fff;border-radius:0 9px 9px 0;box-shadow:0 1px 4px rgba(22,45,73,.10);overflow:hidden}
+      #pane-${TAB} .st-list{border:0;background:#fff;border-radius:0;box-shadow:none;overflow:hidden}
       #pane-${TAB} .st-row{display:grid;grid-template-columns:120px 140px 130px minmax(220px,1fr) 110px 42px;gap:16px;align-items:center;padding:12px 10px;border-top:1px solid #dce6ef;font-size:12.5px}
       #pane-${TAB} .st-row:first-child{border-top:0}
-      #pane-${TAB} .st-type{display:inline-flex;align-items:center;justify-content:center;height:34px;border:1px solid #b9cad9;border-radius:7px;background:#fff;font-size:11px;font-weight:800;text-transform:uppercase}
+      #pane-${TAB} .st-type{display:inline-flex;align-items:center;justify-content:flex-start;height:auto;padding:0;border:0;border-radius:0;background:transparent;color:#102a46;font-size:10px;font-weight:800;text-align:left;text-transform:uppercase}
       #pane-${TAB} .st-four{font-weight:800;color:#0e2a49;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       #pane-${TAB} .st-chantier{color:#0e2a49;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
       #pane-${TAB} .st-des{color:#536a82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
