@@ -100,6 +100,19 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"] small{background:#dcecff!important;color:#285f96!important}
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"].on{background:#deedff!important;border-color:#6e9fd6!important;box-shadow:inset 0 -2px 0 #6e9fd6!important}
 
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="mail"]{
+      background:#f5ebe4!important;border-color:#d6b59f!important;color:#7a4d35!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="mail"] small{
+      background:#ead8cd!important;color:#7a4d35!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="mail"].on{
+      background:#ead3c4!important;border-color:#b27e5e!important;color:#68402d!important;box-shadow:inset 0 -2px 0 #b27e5e!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="mail"].on small{
+      background:#ddc0ae!important;color:#68402d!important;
+    }
+
     /* Les trois actions de gauche ont exactement le même style. */
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
     #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
