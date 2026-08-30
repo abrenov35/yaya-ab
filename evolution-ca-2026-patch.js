@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const ID='__CA_SIGNE_2026__';
-  const MOIS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet'];
+  const MOIS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août'];
 
   function lireBrut(){
     try{
@@ -14,10 +14,10 @@
 
   window.montantsCaManuel2026=function(){
     const v=lireBrut();
-    for(let i=0;i<7;i++){
+    for(let i=0;i<8;i++){
       if(v[i]===null)v[i]=0;
     }
-    for(let i=7;i<12;i++)v[i]=null;
+    for(let i=8;i<12;i++)v[i]=null;
     return v;
   };
 
@@ -26,14 +26,14 @@
     const root=document.getElementById('modalRoot');
     if(!root)return;
     root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal" style="max-width:430px"><h5>Historique CA signé 2026<button onclick="closeModal()" style="margin-left:8px;padding:6px 14px;border-radius:8px;border:1px solid #ddd;background:#fff">Fermer</button></h5>'
-      +'<div class="note" style="margin:10px 0">Janvier à juillet 2026 sont saisis manuellement. Les chantiers signés sur cette période ne sont pas ajoutés automatiquement.</div>'
+      +'<div class="note" style="margin:10px 0">Janvier à août 2026 sont saisis manuellement. Les chantiers signés sur cette période ne sont pas ajoutés automatiquement.</div>'
       +MOIS.map((m,i)=>'<div class="mrow" style="display:grid;grid-template-columns:105px 1fr;align-items:center"><label style="font-size:12px;font-weight:700">'+m+'</label><input class="mnum" id="ca2026_'+i+'" type="number" min="0" step="0.01" placeholder="Total HT €" value="'+(valeurs[i]===null?'':valeurs[i])+'"></div>').join('')
       +'<div class="mfoot"><button class="btnp go" onclick="saveCaManuel2026()">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div></div></div>';
   };
 
   window.saveCaManuel2026=async function(){
     const valeurs=[];
-    for(let i=0;i<7;i++){
+    for(let i=0;i<8;i++){
       const el=document.getElementById('ca2026_'+i);
       const brut=el?el.value.trim():'';
       if(brut===''){valeurs.push(null);continue;}
