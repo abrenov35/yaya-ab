@@ -171,6 +171,8 @@
       .yaya-detail-document-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
       .yaya-detail-document-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
       .yaya-detail-document-view:disabled{opacity:.38!important;cursor:default!important}
+      .yaya-detail-mail-row strong{min-width:0!important;overflow:hidden!important}
+      .yaya-detail-mail-row strong small{display:block!important;max-width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
 
       @media(max-width:640px){
         .yaya-detail-section-tabs{
@@ -626,7 +628,11 @@
     pane.dataset.empty=rows.length?'0':'1';
     const displayRows=rows.map(row=>{
       const title=String(row.sujet||'Échange').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,'')||'Échange';
-      const detailBrut=String(row.objet||row.subject||row.titre||'');
+      const detailSource=String(row.objet||row.subject||row.titre||'')
+        .replace(/<[^>]*>/g,' ')
+        .replace(/\s+/g,' ')
+        .trim();
+      const detailBrut=detailSource.length>180?detailSource.slice(0,177)+'…':detailSource;
       const detail=normalise(detailBrut)===normalise(title)?'':detailBrut;
       const date=String(row.date||'').slice(0,10).split('-').reverse().join('/');
       return {row,title,detail,date};

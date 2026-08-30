@@ -7,6 +7,7 @@
     let s=document.getElementById(STYLE_ID);
     if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
     s.textContent=`
+      #pane-chantiers .message-ligne[data-yaya-mail-source="1"]{display:none!important}
       #pane-chantiers .message-ligne{grid-template-columns:90px max-content minmax(0,1fr) 82px 112px!important;align-items:center!important;column-gap:10px!important;width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;padding:5px 8px!important;overflow:visible!important;box-sizing:border-box!important}
       #pane-chantiers .message-ligne>.b-mail{width:90px!important;height:26px!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 8px!important;margin:0!important;border:1px solid #e6bfae!important;border-radius:7px!important;background:#fff!important;color:#8a3b12!important;font-size:10.5px!important;font-weight:800!important;white-space:nowrap!important}
       #pane-chantiers .message-ligne>.message-categorie{display:inline-flex!important;width:max-content!important;min-width:0!important;max-width:180px!important;justify-self:start!important;align-self:center!important;height:26px!important;align-items:center!important;justify-content:flex-start!important;padding:0 8px!important;margin:0!important;border:0!important;border-radius:6px!important;background:#f4edf9!important;color:#5f397f!important;font-size:11.5px!important;font-weight:700!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-shadow:none!important}
@@ -29,6 +30,10 @@
   function normalize(){
     document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
       const card=row.closest('.card');if(!card)return;
+      if(row.dataset.yayaMailSource==='1'){
+        row.style.setProperty('display','none','important');
+        return;
+      }
       row.classList.add('yaya-detail-section-node');
       row.dataset.section='mail';
       row.style.removeProperty('display');
