@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-mail-chantier-section-fix-v8';
+  const STYLE_ID='yaya-mail-chantier-section-fix-v9';
 
   function installStyle(){
-    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
     let s=document.getElementById(STYLE_ID);
     if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
     s.textContent=`
@@ -12,8 +12,8 @@
       #pane-chantiers .message-ligne>.message-categorie{display:inline-flex!important;width:max-content!important;min-width:0!important;max-width:180px!important;justify-self:start!important;align-self:center!important;height:26px!important;align-items:center!important;justify-content:flex-start!important;padding:0 8px!important;margin:0!important;border:0!important;border-radius:6px!important;background:#f4edf9!important;color:#5f397f!important;font-size:11.5px!important;font-weight:700!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-shadow:none!important}
       #pane-chantiers .message-ligne>.message-apercu{display:block!important;min-width:0!important;width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       #pane-chantiers .message-ligne>.message-date{display:flex!important;align-items:center!important;justify-content:center!important;height:28px!important;margin:0!important;color:#66758a!important;font-size:10px!important;white-space:nowrap!important}
-      #pane-chantiers .message-ligne>.message-actions{display:flex!important;flex-wrap:nowrap!important;gap:6px!important;align-items:center!important;justify-content:flex-start!important;width:112px!important;min-width:112px!important;height:32px!important;margin:0!important;overflow:visible!important}
-      #pane-chantiers .message-ligne>.message-actions button{position:static!important;visibility:visible!important;opacity:1!important;flex:0 0 28px!important;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;max-height:28px!important;padding:0!important;margin:0!important;border-radius:7px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;transform:none!important;font-size:0!important;line-height:1!important}
+      #pane-chantiers .message-ligne>.message-actions{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:6px!important;align-items:center!important;justify-content:flex-start!important;width:112px!important;min-width:112px!important;height:32px!important;margin:0!important;overflow:visible!important}
+      #pane-chantiers .message-ligne>.message-actions button{position:static!important;visibility:visible!important;opacity:1!important;grid-column:auto!important;grid-row:auto!important;flex:0 0 28px!important;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;max-height:28px!important;padding:0!important;margin:0!important;border-radius:7px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;transform:none!important;font-size:0!important;line-height:1!important}
       #pane-chantiers .message-ligne>.message-actions .yaya-mail-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important}
       #pane-chantiers .message-ligne>.message-actions .yaya-mail-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
       #pane-chantiers .message-ligne>.message-actions .yaya-mail-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
