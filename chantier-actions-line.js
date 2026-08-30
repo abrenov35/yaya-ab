@@ -86,12 +86,7 @@
 
   function applyBlueActionStyle(el){
     if(!el||!el.style)return;
-    const onclick=String(el.getAttribute('onclick')||'');
-    const palette=el.classList.contains('chantier-expense-btn')
-      ? {background:'#fff0f3',color:'#8f3548',border:'#e5aebb'}
-      : onclick.includes('openDocumentModal')
-        ? {background:'#eef6ff',color:'#285f96',border:'#9fc1e8'}
-        : {background:'#eef8f1',color:'#286b3e',border:'#8fc8a1'};
+    const palette={background:'#f1ecf8',color:'#5f4778',border:'#b9a7d1'};
     el.style.setProperty('background',palette.background,'important');
     el.style.setProperty('color',palette.color,'important');
     el.style.setProperty('border','1px solid '+palette.border,'important');
