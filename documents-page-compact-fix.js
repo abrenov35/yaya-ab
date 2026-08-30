@@ -41,6 +41,8 @@
   function compact(){
     [...document.querySelectorAll('#pane-documents .card .achligne.ligR')].forEach((row,index)=>{
       row.style.display=index<10?'grid':'none';
+      if(row.dataset.yayaCompact==='1')return;
+      row.dataset.yayaCompact='1';
       const d=docByRow(row);let cells=[...row.children];if(cells.length<5)return;
       const action=cells[cells.length-1];
       const first=cells[0];first.textContent=typeOf(d);first.title=first.textContent;
