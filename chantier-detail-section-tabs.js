@@ -629,26 +629,27 @@
     }
     pane.dataset.empty=rows.length?'0':'1';
     const displayRows=rows.map(row=>{
-      const title=String(row.sujet||'Échange').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,'')||'Échange';
-      const detailSource=String(row.objet||row.subject||row.titre||'')
+      const category=String(row.sujet||row.categorie||'Échange').replace(/<.*$/,'').trim().replace(/^["']+|["']+$/g,'')||'Échange';
+      const titleSource=String(row.objet||row.subject||row.titre||'')
         .replace(/<[^>]*>/g,' ')
         .replace(/\s+/g,' ')
         .trim();
-      const detailBrut=detailSource.length>180?detailSource.slice(0,177)+'…':detailSource;
-      const detail=normalise(detailBrut)===normalise(title)?'':detailBrut;
+      const title=(titleSource.length>180?titleSource.slice(0,177)+'…':titleSource)||category;
+      const detail=normalise(title)===normalise(category)?'':String(row.expediteur||row.from||'').trim();
       const date=String(row.date||'').slice(0,10).split('-').reverse().join('/');
-      return {row,title,detail,date};
+      return {row,title,detail,category,date};
     });
     const html=displayRows.map(item=>
       '<div class="yaya-detail-document-row yaya-detail-mail-row">'
         +'<strong>'+escapeHtml(item.title)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+escapeHtml(item.category)+'</span>'
         +'<span class="yaya-detail-charge-cost">'+escapeHtml(item.date||'—')+'</span>'
         +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-mail-id="'+escapeHtml(item.row.id||'')+'">👁</button>'
         +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-mail-id="'+escapeHtml(item.row.id||'')+'">✏️</button>'
         +'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-mail-id="'+escapeHtml(item.row.id||'')+'">🗑️</button>'
       +'</div>'
     ).join('');
-    const signature=JSON.stringify(displayRows.map(item=>[item.row.id||'',item.title,item.detail,item.date]));
+    const signature=JSON.stringify(displayRows.map(item=>[item.row.id||'',item.title,item.detail,item.category,item.date]));
     if(pane._yayaRowsSignature!==signature){
       pane.innerHTML=html;
       pane._yayaRowsSignature=signature;
