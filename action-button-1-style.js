@@ -17,6 +17,7 @@
     #pane-chantiers .message-actions button.x::before,#pane-chantiers .yaya-document-line > span:last-child button.x::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button.x::before,#pane-chantiers .message-actions button[onclick*="supprim" i]::before,#pane-chantiers .yaya-document-line > span:last-child button[onclick*="supprim" i]::before,#pane-chantiers :is(.ligM,.ligD) > span:last-child button[onclick*="supprim" i]::before{content:"❌"!important;font-size:13px!important;line-height:1!important}
     #pane-chantiers .yaya-detail-charge-row{grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px 28px!important}
     #pane-chantiers .yaya-detail-document-row{grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px 28px!important}
+    #pane-chantiers .yaya-detail-document-row.yaya-detail-mail-row{grid-template-columns:minmax(120px,1fr) 110px 28px 28px 28px!important}
     #pane-chantiers .yaya-detail-charge-edit,#pane-chantiers .yaya-detail-charge-delete{width:28px!important;height:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border-radius:7px!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;line-height:1!important;cursor:pointer!important}
     #pane-chantiers .yaya-detail-charge-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important;font-size:14px!important}
     #pane-chantiers .yaya-detail-charge-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important;font-size:14px!important}
@@ -26,7 +27,7 @@
     .yaya-charge-delete-modal h3{margin:0 0 8px;font-size:21px}.yaya-charge-delete-modal p{margin:0 0 22px;font-size:13px;opacity:.72}
     .yaya-charge-delete-actions{display:flex;gap:12px}.yaya-charge-delete-actions button{flex:1;height:42px;border-radius:9px;font-size:14px;font-weight:700}
     .yaya-charge-delete-cancel{background:#fff;border:1px solid #cbd5e1;color:#162d49}.yaya-charge-delete-ok{background:#d93636;border:1px solid #d93636;color:#fff}
-    @media(max-width:640px){#pane-chantiers .yaya-detail-charge-row,#pane-chantiers .yaya-detail-document-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px 28px 28px!important}}
+    @media(max-width:640px){#pane-chantiers .yaya-detail-charge-row,#pane-chantiers .yaya-detail-document-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px 28px 28px!important}#pane-chantiers .yaya-detail-document-row.yaya-detail-mail-row{grid-template-columns:minmax(90px,1fr) 78px 28px 28px 28px!important}}
   `;
   document.head.appendChild(style);
 

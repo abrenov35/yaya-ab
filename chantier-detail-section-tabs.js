@@ -640,7 +640,6 @@
     const html=displayRows.map(item=>
       '<div class="yaya-detail-document-row yaya-detail-mail-row">'
         +'<strong>'+escapeHtml(item.title)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
-        +'<span class="yaya-detail-charge-hours">MAIL</span>'
         +'<span class="yaya-detail-charge-cost">'+escapeHtml(item.date||'—')+'</span>'
         +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-mail-id="'+escapeHtml(item.row.id||'')+'">👁</button>'
         +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-mail-id="'+escapeHtml(item.row.id||'')+'">✏️</button>'
