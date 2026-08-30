@@ -24,10 +24,10 @@
       #pane-chantiers #yayaCreateChantierWrap:empty{display:none!important;}
       #pane-chantiers .card .top button[onclick*="toggleChantier"].yaya-chantier-view-eye{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:14px!important;line-height:1!important;}
       @media(max-width:640px){
-        #pane-chantiers .yaya-chantier-search-line{gap:7px!important;flex-wrap:wrap!important;}
-        #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{flex:1 1 100%!important;}
+        #pane-chantiers .yaya-chantier-search-line{gap:7px!important;flex-wrap:nowrap!important;}
+        #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{flex:1 1 105px!important;width:105px!important;min-width:72px!important;max-width:none!important;}
         #pane-chantiers .yaya-chantier-search-line #yayaHeuresChantierBtn,
-        #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{padding:0 10px!important;font-size:11.5px!important;}
+        #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{padding:0 8px!important;font-size:11px!important;}
       }
     `;
     document.head.appendChild(style);
