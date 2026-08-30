@@ -1,13 +1,19 @@
 (function(){
   'use strict';
 
-  const INTERVAL_MS=20000;
+  const MOBILE=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
+  const INTERVAL_MS=MOBILE?60000:20000;
   const MIN_GAP_MS=4000;
   const START_GRACE_MS=12000;
   const installedAt=Date.now();
   let busy=false;
   let lastRun=0;
   let lastSnapshot='';
+  let lastInteraction=0;
+
+  ['pointerdown','touchstart','keydown','scroll'].forEach(function(type){
+    window.addEventListener(type,function(){lastInteraction=Date.now();},{passive:true,capture:true});
+  });
 
   function snapshot(data){
     try{return JSON.stringify(data||{});}catch(e){return '';}
@@ -67,6 +73,7 @@
   }
 
   function safeToRefresh(){
+    if(Date.now()-lastInteraction<3000)return false;
     if(window.yayaHoursPending)return false;
     if(Date.now()-installedAt<START_GRACE_MS)return false;
     if(loaderVisible())return false;

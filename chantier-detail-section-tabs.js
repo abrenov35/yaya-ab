@@ -447,7 +447,6 @@
 
     btn.addEventListener('pointerdown',function(e){
       if(e.button!=null&&e.button!==0)return;
-      e.preventDefault();
       applySectionFast(card,key);
     });
 
