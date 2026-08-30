@@ -17,9 +17,9 @@
       .yaya-document-line > .yaya-doc-date-first{
         grid-column:1!important;
         grid-row:1!important;
-        font-size:12px!important;
-        font-weight:700!important;
-        color:#285f96!important;
+        font-size:10px!important;
+        font-weight:400!important;
+        color:#7b8794!important;
         text-align:left!important;
         white-space:nowrap!important;
       }
