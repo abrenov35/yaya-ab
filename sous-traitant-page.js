@@ -13,10 +13,10 @@
   }
   function chantierName(id){
     try{
-      if(typeof window.chantierById==='function'){
-        const c=window.chantierById(id);return c?c.nom:'?';
+      if(typeof chantierById==='function'){
+        const c=chantierById(id);return c?c.nom:'?';
       }
-      const c=(window.S&&Array.isArray(S.chantiers))?S.chantiers.find(x=>String(x.id)===String(id)):null;
+      const c=(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))?S.chantiers.find(x=>String(x.id)===String(id)):null;
       return c?c.nom:'?';
     }catch(e){return '?';}
   }
@@ -76,7 +76,8 @@
 
   function renderSousTraitant(){
     const pane=ensureUi();if(!pane)return;
-    const data=(window.S&&Array.isArray(S.achats)?S.achats:[]).filter(isSousTraitant)
+    const achats=(typeof S!=='undefined'&&S&&Array.isArray(S.achats))?S.achats:[];
+    const data=achats.filter(isSousTraitant)
       .map((a,i)=>({a,i})).sort((x,y)=>sortKey(y.a).localeCompare(sortKey(x.a))||y.i-x.i).slice(0,10).map(x=>x.a);
     if(!data.length){pane.innerHTML='<div class="st-empty">Aucune facture de sous-traitant enregistrée.</div>';return;}
     let html='<div class="st-list">';
