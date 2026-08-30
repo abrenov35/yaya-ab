@@ -13,7 +13,7 @@
       #pane-documents .achligne.ligR .des{display:flex!important;align-items:center!important;height:34px!important;width:100%!important;font-size:11.5px!important;color:#7a8798!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.25!important}
       #pane-documents .achligne.ligR>small:nth-child(4){display:flex!important;align-items:center!important;justify-content:center!important;height:34px!important;font-size:10.5px!important;font-weight:600!important;color:#52657a!important;white-space:nowrap!important}
       #pane-documents .achligne.ligR>span:last-child{height:34px!important;display:flex!important;justify-content:center!important;align-items:center!important;overflow:visible!important;max-height:none!important}
-      #pane-documents .achligne.ligR>span:last-child button{width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important}
+      #pane-documents .achligne.ligR>span:last-child button{width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:14px!important}
       @media(max-width:760px){
         #pane-documents{overflow-x:hidden!important}
         #pane-documents .card{width:100%!important;min-width:0!important;padding:0 8px!important}
@@ -52,6 +52,7 @@
       visibleIndex++;
       row.style.setProperty('padding','4px 0','important');
       row.style.setProperty('min-height','0','important');
+      row.querySelectorAll('button').forEach(btn=>{btn.textContent='👁️';btn.style.fontSize='14px';});
       if(row.dataset.yayaCompact==='1')return;
       row.dataset.yayaCompact='1';
       let cells=[...row.children];if(cells.length<5)return;
