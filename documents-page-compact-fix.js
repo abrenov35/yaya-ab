@@ -14,7 +14,22 @@
       #pane-documents .achligne.ligR>small:nth-child(4){display:flex!important;align-items:center!important;justify-content:center!important;height:34px!important;font-size:10.5px!important;font-weight:600!important;color:#52657a!important;white-space:nowrap!important}
       #pane-documents .achligne.ligR>span:last-child{height:34px!important;display:flex!important;justify-content:center!important;align-items:center!important;overflow:visible!important;max-height:none!important}
       #pane-documents .achligne.ligR>span:last-child button{width:32px!important;height:32px!important;min-width:32px!important;padding:0!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important}
-      @media(max-width:760px){#pane-documents{overflow-x:auto!important}#pane-documents .card{min-width:820px!important}}
+      @media(max-width:760px){
+        #pane-documents{overflow-x:hidden!important}
+        #pane-documents .card{width:100%!important;min-width:0!important;padding:0 8px!important}
+        #pane-documents .achligne.ligR{
+          grid-template-columns:minmax(0,1fr) auto!important;
+          grid-template-areas:"type date" "chantier actions" "objet objet"!important;
+          column-gap:8px!important;row-gap:5px!important;
+          height:auto!important;min-height:104px!important;max-height:none!important;
+          padding:9px 4px!important;overflow:visible!important;
+        }
+        #pane-documents .achligne.ligR>span:first-child{grid-area:type!important;justify-self:start!important;width:auto!important;max-width:100%!important}
+        #pane-documents .achligne.ligR>span:nth-child(2){grid-area:chantier!important}
+        #pane-documents .achligne.ligR>.des{grid-area:objet!important;height:auto!important;min-height:22px!important}
+        #pane-documents .achligne.ligR>small:nth-child(4){grid-area:date!important;justify-content:flex-end!important}
+        #pane-documents .achligne.ligR>span:last-child{grid-area:actions!important;justify-content:flex-end!important}
+      }
     `;
   }
   function docByRow(row){const id=String(row.dataset.id||'');try{if(typeof S!=='undefined'&&S&&Array.isArray(S.documents))return S.documents.find(d=>String(d.id)===id)||null;}catch(e){}return null;}

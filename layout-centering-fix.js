@@ -54,6 +54,7 @@
   }
 
   function install(){
+    if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)return;
     installStyle();
     requestAnimationFrame(resetPageHorizontalScroll);
     window.addEventListener('resize',resetPageHorizontalScroll,{passive:true});

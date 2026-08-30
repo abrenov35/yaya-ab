@@ -45,7 +45,7 @@
     #pane-documents .achligne.ligR > .badge:nth-child(3){min-width:0!important;padding:0!important;background:transparent!important;color:#162D49!important;border:0!important;border-radius:0!important;font-size:11px!important;font-weight:500!important;text-align:left!important;box-shadow:none!important}
 
     @media(max-width:620px){
-      #pane-documents > .card > .achligne.ligR{overflow-x:auto!important;-webkit-overflow-scrolling:touch!important}
+      #pane-documents > .card > .achligne.ligR{overflow:visible!important}
       #pane-documents .achligne.ligR > .badge:nth-child(1){font-size:9px!important;padding:6px 8px!important;white-space:nowrap!important}
     }
   `;

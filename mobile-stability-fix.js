@@ -21,17 +21,17 @@
 
       .hdr{
         position:sticky!important;top:0!important;z-index:40!important;
-        display:grid!important;grid-template-columns:1fr auto!important;
-        gap:7px 10px!important;width:100%!important;max-width:100%!important;
+        display:flex!important;flex-direction:column!important;align-items:stretch!important;
+        gap:7px!important;width:100%!important;max-width:100%!important;
         padding:calc(8px + env(safe-area-inset-top)) 10px 8px!important;
         overflow:hidden!important;
       }
       .hdr .brand{min-width:0!important;gap:7px!important;}
       .hdr .brand b{font-size:17px!important;white-space:nowrap!important;}
       .hdr .brand span{display:none!important;}
-      .hdr .sync{grid-column:2!important;grid-row:1!important;margin:0!important;padding:0!important;font-size:10px!important;}
+      .hdr .sync,.hdr>#yayaReloadBtn{display:none!important;}
       .hdr .tabs{
-        grid-column:1/-1!important;grid-row:2!important;display:flex!important;
+        display:flex!important;
         justify-content:flex-start!important;flex-wrap:nowrap!important;gap:6px!important;
         width:100%!important;overflow-x:auto!important;overscroll-behavior-x:contain!important;
         -webkit-overflow-scrolling:touch!important;scrollbar-width:none!important;padding:1px 0 3px!important;
@@ -41,14 +41,15 @@
         flex:0 0 auto!important;min-width:auto!important;min-height:42px!important;height:42px!important;
         padding:0 12px!important;font-size:12px!important;white-space:nowrap!important;
       }
-      .hdr>#yayaReloadBtn{position:absolute!important;right:8px!important;top:calc(5px + env(safe-area-inset-top))!important;width:40px!important;padding:0!important;font-size:0!important;}
-      .hdr>#yayaReloadBtn::before{content:'↻';font-size:20px!important;}
-
       body>.body{width:100%!important;max-width:100%!important;margin:0!important;padding:10px 8px 20px!important;}
       #pane-chantiers,#pane-chantiers>.card{width:100%!important;max-width:100%!important;min-width:0!important;}
       #pane-chantiers .card{padding-left:10px!important;padding-right:10px!important;}
       #pane-chantiers .top{align-items:center!important;}
       #pane-chantiers .top>b{max-width:100%!important;overflow-wrap:anywhere!important;}
+      #pane-chantiers .top>.spacer{display:none!important;}
+      #pane-chantiers .top>span[style*="width:150px"]{width:auto!important;flex:1 1 44%!important;text-align:left!important;}
+      #pane-chantiers .top>span[style*="width:56px"]{width:auto!important;margin-right:0!important;}
+      #pane-chantiers .top>button{min-height:44px!important;}
       #pane-chantiers .kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important;}
       #pane-chantiers .stat{min-width:0!important;padding:9px!important;}
       #pane-chantiers .stat b{font-size:15px!important;overflow-wrap:anywhere!important;}

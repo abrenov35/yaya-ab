@@ -445,13 +445,8 @@
     if(btn.dataset.instantBound==='1')return;
     btn.dataset.instantBound='1';
 
-    btn.addEventListener('pointerdown',function(e){
-      if(e.button!=null&&e.button!==0)return;
-      applySectionFast(card,key);
-    });
-
     btn.addEventListener('click',function(e){
-      if(e.detail===0)applySectionFast(card,key);
+      applySectionFast(card,key);
     });
   }
 
