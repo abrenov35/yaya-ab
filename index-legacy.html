@@ -2478,11 +2478,36 @@ function navWeek(n){ monday=addDays(monday,7*n); render(); }
 function toggleChantier(id){ id=String(id); if(focusChantier===id){ fermerFocus(); } else { focusChantier=id; expChantiers.clear(); expChantiers.add(id); render(); window.scrollTo(0,0); } }
 function fermerFocus(){ focusChantier=null; expChantiers.clear(); render(); window.scrollTo(0,0); }
 function toggleArchives(){ showArchives=!showArchives; render(); }
-async function archiverChantier(id){
+function fermerAvertissementArchivage(){
+  const overlay=document.getElementById('yaya-archive-warning');
+  if(overlay)overlay.remove();
+}
+function archiverChantier(id){
   const c=chantierById(id); if(!c) return;
-  if(!confirm("Archiver « "+c.nom+" » ? Il sortira de la liste (retrouvable via le bouton Chantiers archivés).")) return;
-  c.statut="Archivé"; expChantiers.delete(String(id)); render();
-  if(await apiPost("setChantiers",S.chantiers)) toast("Chantier archivé");
+  fermerAvertissementArchivage();
+  const overlay=document.createElement('div');
+  overlay.id='yaya-archive-warning';
+  overlay.style.cssText='position:fixed;inset:0;z-index:12000;background:rgba(15,30,50,.48);display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box';
+  overlay.innerHTML='<div role="dialog" aria-modal="true" aria-labelledby="yaya-archive-warning-title" style="width:min(430px,100%);max-height:calc(100vh - 36px);overflow:auto;background:#fff;border-radius:14px;box-shadow:0 18px 55px rgba(15,30,50,.30);padding:22px;box-sizing:border-box">'
+    +'<div style="font-size:30px;line-height:1;text-align:center;margin-bottom:10px">⚠️</div>'
+    +'<h3 id="yaya-archive-warning-title" style="margin:0 0 12px;text-align:center;color:#162d49;font-size:18px">Archiver ce chantier ?</h3>'
+    +'<div style="text-align:center;font-weight:800;color:#7a4d35;margin-bottom:12px">'+esc(c.nom||'Chantier')+'</div>'
+    +'<div style="padding:12px;border-radius:10px;background:#fff7e8;border:1px solid #efcc91;color:#5f4a2b;font-size:13px;line-height:1.5">'
+    +'<strong>Attention :</strong> ce chantier quittera la liste active.<br>Vous pourrez le retrouver avec le bouton <strong>Chantiers archivés</strong>.<br>Ses documents, dépenses, charges et heures resteront conservés.'
+    +'</div>'
+    +'<div style="display:flex;gap:10px;margin-top:18px"><button type="button" id="yaya-archive-cancel" style="flex:1;padding:10px;border-radius:9px;border:1px solid #cbd5e1;background:#fff;color:#405169;font-weight:700;cursor:pointer">Annuler</button><button type="button" id="yaya-archive-ok" style="flex:1;padding:10px;border-radius:9px;border:0;background:#c56a16;color:#fff;font-weight:800;cursor:pointer">Archiver le chantier</button></div>'
+    +'</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)fermerAvertissementArchivage();});
+  overlay.querySelector('#yaya-archive-cancel').onclick=fermerAvertissementArchivage;
+  overlay.querySelector('#yaya-archive-ok').onclick=async function(){
+    this.disabled=true;this.textContent='Archivage…';
+    const ancienStatut=c.statut;
+    fermerAvertissementArchivage();
+    c.statut='Archivé';expChantiers.delete(String(id));render();
+    if(await apiPost('setChantiers',S.chantiers))toast('Chantier archivé ✓');
+    else{c.statut=ancienStatut;render();toast('L’archivage du chantier a échoué',true);}
+  };
 }
 async function restaurerChantier(id){
   const c=chantierById(id); if(!c) return;
