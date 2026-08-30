@@ -22,6 +22,7 @@
       #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{background:#24436B!important;color:#fff!important;border:1px solid #24436B!important;}
       #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn:hover{background:#1c3657!important;border-color:#1c3657!important;}
       #pane-chantiers #yayaCreateChantierWrap:empty{display:none!important;}
+      #pane-chantiers .card .top button[onclick*="toggleChantier"].yaya-chantier-view-eye{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:14px!important;line-height:1!important;}
       @media(max-width:640px){
         #pane-chantiers .yaya-chantier-search-line{gap:7px!important;flex-wrap:wrap!important;}
         #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{flex:1 1 100%!important;}
@@ -54,6 +55,16 @@
     return btn;
   }
 
+  function normalizeChantierViewButtons(pane){
+    pane.querySelectorAll('.card .top button[onclick*="toggleChantier"]').forEach(btn=>{
+      if(String(btn.textContent||'').trim()!=='Voir')return;
+      btn.textContent='👁️';
+      btn.title='Voir le chantier';
+      btn.setAttribute('aria-label','Voir le chantier');
+      btn.classList.add('yaya-chantier-view-eye');
+    });
+  }
+
   function bindSyntheticSearch(input){if(!input||input.dataset.yayaSearchBound==='1')return;input.dataset.yayaSearchBound='1';input.addEventListener('input',()=>{try{filtreChantier=input.value;}catch(e){}try{if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.clear==='function')expChantiers.clear();}catch(e){}if(typeof window.renderChantiers==='function')window.renderChantiers();});}
   function ensureSingleSearch(pane){
     const inputs=[...pane.querySelectorAll('#filtreInput')];let input=inputs[0]||null;inputs.slice(1).forEach(el=>{const parent=el.parentElement;el.remove();if(parent&&parent.classList&&parent.classList.contains('yaya-search-wrap')&&!parent.querySelector('#filtreInput'))parent.remove();});
@@ -69,6 +80,7 @@
     const hours=ensureHoursButton(pane);if(hours.parentNode!==row)row.appendChild(hours);
     const create=ensureCreateButton(pane);if(create.parentNode!==row)row.appendChild(create);
     const oldWrap=document.getElementById('yayaCreateChantierWrap');if(oldWrap&&oldWrap!==row)oldWrap.remove();row.hidden=!isMainChantiersPage();
+    normalizeChantierViewButtons(pane);
   }
 
   function wrapAfterRender(name){const fn=window[name];if(typeof fn!=='function'||fn.__yayaMainLineWrapped)return true;const wrapped=function(){const result=fn.apply(this,arguments);setTimeout(syncMainLine,0);return result;};wrapped.__yayaMainLineWrapped=true;window[name]=wrapped;return true;}
