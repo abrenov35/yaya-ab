@@ -125,6 +125,8 @@
 
       .yaya-detail-charges-pane{display:none!important;margin:0 0 8px!important}
       .card[data-yaya-detail-section="charges"] > .yaya-detail-charges-pane[data-empty="0"]{display:block!important}
+      .yaya-detail-expenses-pane{display:none!important;margin:0 0 8px!important}
+      .card[data-yaya-detail-section="depenses"] > .yaya-detail-expenses-pane[data-empty="0"]{display:block!important}
       .yaya-detail-charge-row{
         display:grid!important;
         grid-template-columns:minmax(120px,1fr) 90px 110px 28px!important;
@@ -147,6 +149,7 @@
         box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
         font-size:15px!important;line-height:1!important;cursor:pointer!important;
       }
+      .yaya-detail-charge-view:disabled{opacity:.38!important;cursor:default!important}
 
       @media(max-width:640px){
         .yaya-detail-section-tabs{
@@ -415,13 +418,50 @@
     return pane;
   }
 
+  function ensureExpensesPane(card,tabs,rows){
+    let pane=card.querySelector(':scope > .yaya-detail-expenses-pane');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-section-node yaya-detail-expenses-pane';
+      pane.dataset.section='depenses';
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+    pane.dataset.empty=rows.length?'0':'1';
+    const html=rows.map(row=>{
+      const lien=String(row.lien||'');
+      const montant=(row.typeDoc==='Avoir'?'+ ':'- ')+euro(Number(row.montantHT)||0);
+      return '<div class="yaya-detail-charge-row yaya-detail-expense-row">'
+        +'<strong>'+escapeHtml(row.fournisseur||'Fournisseur')+(row.designation?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(row.designation)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+escapeHtml(row.typeDoc||'Dépense')+'</span>'
+        +'<span class="yaya-detail-charge-cost">'+montant+'</span>'
+        +'<button type="button" class="yaya-detail-charge-view" title="Voir" aria-label="Voir" data-achat-id="'+escapeHtml(row.id||'')+'" data-lien="'+escapeHtml(lien)+'"'+(lien.startsWith('http')?'':' disabled')+'>👁</button>'
+      +'</div>';
+    }).join('');
+    const signature=JSON.stringify(rows.map(row=>[row.id||'',row.fournisseur||'',row.designation||'',row.typeDoc||'',row.montantHT||0,row.lien||'']));
+    if(pane._yayaRowsSignature!==signature){
+      pane.innerHTML=html;
+      pane._yayaRowsSignature=signature;
+    }
+    pane.querySelectorAll('.yaya-detail-charge-view:not(:disabled)').forEach(btn=>{
+      if(btn._yayaViewBound)return;
+      btn._yayaViewBound=true;
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        const lien=String(btn.dataset.lien||'');
+        if(lien&&typeof voirPiece==='function')voirPiece(lien);
+      });
+    });
+    return pane;
+  }
+
   function applySectionFast(card,key){
     if(!ORDER.includes(key))key='marche';
     if(card.dataset.yayaDetailSection!==key)card.dataset.yayaDetailSection=key;
 
     card.querySelectorAll(':scope > .yaya-detail-section-node').forEach(node=>{
       const visible=node.dataset.section===key;
-      if(visible&&node.dataset.yayaSubcontractInvoice!=='1'){
+      if(visible&&node.dataset.yayaSubcontractInvoice!=='1'&&node.dataset.yayaExpenseSource!=='1'){
         node.style.removeProperty('display');
       }else{
         node.style.setProperty('display','none','important');
@@ -470,6 +510,8 @@
             node.dataset.yayaSubcontractInvoice='1';
             return;
           }
+          node.dataset.yayaExpenseSource='1';
+          node.style.setProperty('display','none','important');
         }
         node.classList.add('yaya-detail-section-node');
         node.dataset.section=section.key;
@@ -526,6 +568,7 @@
     });
 
     ensureChargesPane(card,tabs,chargeRows);
+    ensureExpensesPane(card,tabs,depenseRows);
     updateSummaryKpis(card,chargeRows,depenseRows);
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)
