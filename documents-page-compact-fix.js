@@ -39,13 +39,21 @@
   function chantierOf(d){try{if(d&&typeof chantierById==='function'){const c=chantierById(d.chantierId);if(c)return clean(c.nom);}}catch(e){}return clean(d&&d.chantier)||'?';}
   function objetOf(d){if(!d)return '';return clean(d.sujet||d.titre||d.intitule||d.nomFichier||d.fichier||'');}
   function compact(){
-    [...document.querySelectorAll('#pane-documents .card .achligne.ligR')].forEach((row,index)=>{
-      row.style.display=index<10?'grid':'none';
+    let visibleIndex=0;
+    [...document.querySelectorAll('#pane-documents .card .achligne.ligR')].forEach(row=>{
+      const d=docByRow(row);
+      const rowType=clean((d&&d.type)||(row.children[0]&&row.children[0].textContent));
+      if(/^mail$/i.test(rowType)){
+        row.style.display='none';
+        return;
+      }
+      row.style.display=visibleIndex<10?'grid':'none';
+      visibleIndex++;
       row.style.setProperty('padding','4px 0','important');
       row.style.setProperty('min-height','0','important');
       if(row.dataset.yayaCompact==='1')return;
       row.dataset.yayaCompact='1';
-      const d=docByRow(row);let cells=[...row.children];if(cells.length<5)return;
+      let cells=[...row.children];if(cells.length<5)return;
       const action=cells[cells.length-1];
       const first=cells[0];first.textContent=typeOf(d);first.title=first.textContent;
       while(row.children.length>1)row.removeChild(row.children[1]);
