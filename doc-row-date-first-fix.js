@@ -61,6 +61,46 @@
     document.head.appendChild(style);
   }
 
+  function dateDepot(item){
+    if(!item)return '';
+    const vals=[
+      item.dateDepot,item.date_depot,item.horodatageDepot,item.horodatage_depot,
+      item.deposeLe,item.depose_le,item.uploadedAt,item.uploaded_at,
+      item.createdAt,item.created_at,item.dateCreation,item.date_creation,item.horodatage
+    ];
+    for(const v of vals){
+      const s=String(v||'').trim();
+      if(!s)continue;
+      const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if(iso)return iso[1]+'-'+iso[2]+'-'+iso[3];
+      const d=new Date(s);
+      if(!isNaN(d.getTime())){
+        const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),j=String(d.getDate()).padStart(2,'0');
+        return y+'-'+m+'-'+j;
+      }
+    }
+    return '';
+  }
+
+  function normaliserDatesDepot(){
+    let changed=false;
+    try{
+      if(typeof S==='undefined'||!S)return false;
+      const groupes=[S.documents,S.achats,S.avenants];
+      groupes.forEach(liste=>{
+        if(!Array.isArray(liste))return;
+        liste.forEach(item=>{
+          const depot=dateDepot(item);
+          if(depot&&String(item.date||'').slice(0,10)!==depot){
+            item.date=depot;
+            changed=true;
+          }
+        });
+      });
+    }catch(e){}
+    return changed;
+  }
+
   function cleanSubject(value){
     const t=String(value||'').replace(/\s+/g,' ').trim();
     if(!t)return '';
@@ -125,6 +165,13 @@
     }
 
     const d=documentForLine(line);
+    if(d&&date){
+      const depot=dateDepot(d)||String(d.date||'').slice(0,10);
+      if(depot){
+        const iso=depot.match(/^(\d{4})-(\d{2})-(\d{2})/);
+        date.textContent=iso?iso[3]+'/'+iso[2]+'/'+iso[1]:depot;
+      }
+    }
     const isMail=(d&&String(d.type||'').toUpperCase()==='MAIL') || /\bMAIL\b/i.test(String(type&&type.textContent||''));
     if(isMail&&title){
       title.textContent=mailSubject(d);
@@ -136,13 +183,21 @@
     document.querySelectorAll('#pane-chantiers .yaya-document-line').forEach(decorateLine);
   }
 
+  function appliquerPuisRendre(){
+    const changed=normaliserDatesDepot();
+    if(changed){
+      try{if(typeof render==='function')render();}catch(e){}
+    }
+    decorate();
+  }
+
   function install(){
     installStyle();
-    decorate();
+    appliquerPuisRendre();
     const pane=document.getElementById('pane-chantiers');
     if(!pane){setTimeout(install,150);return;}
     new MutationObserver(()=>requestAnimationFrame(decorate)).observe(pane,{childList:true,subtree:true});
-    window.addEventListener('yaya:data-refreshed',decorate);
+    window.addEventListener('yaya:data-refreshed',()=>requestAnimationFrame(appliquerPuisRendre));
   }
 
   install();
