@@ -110,3 +110,12 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
 })();
+
+(function(){
+  if(document.querySelector('script[data-yaya-achat-st-modal-fix]'))return;
+  const s=document.createElement('script');
+  s.src='achat-soustraitant-modal-fix.js?v=stmodal-1';
+  s.async=false;
+  s.setAttribute('data-yaya-achat-st-modal-fix','1');
+  document.head.appendChild(s);
+})();
