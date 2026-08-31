@@ -11,25 +11,12 @@
       #pane-chantiers .card > .top > b + .num{
         display:none!important;
       }
-      .yaya-signed-quote-summary{
-        display:inline-block;
-        width:145px;
-        text-align:right;
-        white-space:nowrap;
-        font-size:12.5px;
-        font-variant-numeric:tabular-nums;
-        color:#315779;
-      }
-      .yaya-signed-quote-summary b{color:#173f68}
       .yaya-signed-quote-kpi{
         display:block;
         margin-top:3px;
         color:#315779!important;
         font-size:11px!important;
         font-weight:650!important;
-      }
-      @media(max-width:760px){
-        .yaya-signed-quote-summary{width:auto;min-width:125px}
       }
     `;
     document.head.appendChild(style);
@@ -72,22 +59,6 @@
     const chantier=chantierByCard(card);
     if(!chantier)return;
     const total=euro(signedQuoteTotal(chantier));
-    const top=card.querySelector(':scope > .top');
-
-    if(top){
-      const market=[...top.querySelectorAll('span')].find(el=>/^Marché\s/i.test(String(el.textContent||'').trim()));
-      if(market){
-        let summary=top.querySelector(':scope > .yaya-signed-quote-summary');
-        if(!summary){
-          summary=document.createElement('span');
-          summary.className='yaya-signed-quote-summary';
-          market.insertAdjacentElement('afterend',summary);
-        }
-        const wanted='Devis signé '+total;
-        if(summary.textContent!==wanted)summary.innerHTML='Devis signé <b>'+total+'</b>';
-      }
-    }
-
     const kpis=card.querySelector(':scope > .kpis');
     if(kpis){
       const marketStat=[...kpis.querySelectorAll(':scope > .stat')].find(stat=>{
