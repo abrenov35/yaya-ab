@@ -5,7 +5,7 @@
 
   function escHtml(v){
     if(typeof window.esc==='function')return window.esc(v==null?'':String(v));
-    return String(v==null?'':v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    return String(v==null?'':v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
   function euro(v){
     if(typeof window.eur==='function')return window.eur(Number(v)||0);
@@ -53,16 +53,12 @@
     document.head.appendChild(s);
   }
 
+  function removeHeaderTabs(){
+    document.querySelectorAll('.hdr .tabs .tab[data-tab="achats"], .hdr .tabs .tab[data-tab="sous-traitant"], .hdr .tabs .tab[data-tab="documents"]').forEach(b=>b.remove());
+  }
+
   function ensureUi(){
-    const tabs=document.querySelector('.hdr .tabs');
-    const charges=tabs&&tabs.querySelector('.tab[data-tab="achats"]');
-    const docs=tabs&&tabs.querySelector('.tab[data-tab="documents"]');
-    if(tabs&&!tabs.querySelector('.tab[data-tab="'+TAB+'"]')){
-      const b=document.createElement('button');
-      b.className='tab';b.type='button';b.dataset.tab=TAB;b.textContent='👷 Sous traitant';
-      b.onclick=function(ev){ev.preventDefault();ev.stopPropagation();try{tab=TAB;}catch(e){window.tab=TAB;}location.hash=TAB;if(typeof window.render==='function')window.render();else sync();};
-      if(docs)tabs.insertBefore(b,docs);else if(charges&&charges.nextSibling)tabs.insertBefore(b,charges.nextSibling);else tabs.appendChild(b);
-    }
+    removeHeaderTabs();
 
     let pane=document.getElementById('pane-'+TAB);
     if(!pane){
@@ -104,6 +100,7 @@
     document.querySelectorAll('.hdr .tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===TAB&&active||b.dataset.tab!==TAB&&b.classList.contains('on')&&!active));
     if(pane)pane.style.display=active?'':'none';
     if(active)renderSousTraitant();
+    removeHeaderTabs();
   }
 
   function install(){
@@ -114,6 +111,12 @@
       wrapped.__yayaSousTraitantWrapped=true;window.render=wrapped;
     }
     sync();
+    const tabs=document.querySelector('.hdr .tabs');
+    if(tabs&&!tabs.__yayaHiddenTabsObserver){
+      const observer=new MutationObserver(removeHeaderTabs);
+      observer.observe(tabs,{childList:true,subtree:false});
+      tabs.__yayaHiddenTabsObserver=observer;
+    }
   }
 
   setTimeout(install,0);
