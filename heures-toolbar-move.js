@@ -18,6 +18,11 @@
     return txt==='HEURES' || txt.endsWith(' HEURES') || txt.includes('HEURES');
   }
 
+  function removeMailTab(tabs){
+    if(!tabs)return;
+    tabs.querySelectorAll('.tab[data-tab="mails"], .tab[data-tab="mail"]').forEach(b=>b.remove());
+  }
+
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
     const s=document.createElement('style');
@@ -61,6 +66,8 @@
       const tabs=document.querySelector('.hdr .tabs');
       if(!tabs)return;
 
+      removeMailTab(tabs);
+
       const buttons=[...document.querySelectorAll('button')].filter(isHoursButton);
       if(!buttons.length)return;
 
@@ -71,10 +78,7 @@
         toolbarBtn=outside.shift();
         toolbarBtn.classList.add('tab','yaya-hours-toolbar-btn');
         toolbarBtn.setAttribute('data-yaya-hours-toolbar','1');
-
-        const mails=tabs.querySelector('.tab[data-tab="mails"], .tab[data-tab="mail"]');
-        if(mails)tabs.insertBefore(toolbarBtn,mails);
-        else tabs.appendChild(toolbarBtn);
+        tabs.appendChild(toolbarBtn);
       }
 
       if(toolbarBtn){
@@ -82,9 +86,8 @@
         toolbarBtn.setAttribute('data-yaya-hours-toolbar','1');
       }
 
-      // Si un rerender recrée le bouton Heures dans la zone recherche,
-      // on conserve uniquement celui déjà déplacé dans la toolbar.
       outside.forEach(b=>b.remove());
+      removeMailTab(tabs);
     }finally{
       syncing=false;
     }
