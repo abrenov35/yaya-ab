@@ -121,4 +121,12 @@
 
   setTimeout(install,0);
   setTimeout(install,180);
+
+  if(!document.querySelector('script[data-yaya-hours-toolbar-loader]')){
+    const h=document.createElement('script');
+    h.src='heures-toolbar-move.js?v=hours-toolbar-1';
+    h.async=false;
+    h.setAttribute('data-yaya-hours-toolbar-loader','1');
+    document.head.appendChild(h);
+  }
 })();
