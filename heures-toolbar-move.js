@@ -1,0 +1,109 @@
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-hours-toolbar-move-style';
+  let syncing=false;
+
+  function norm(v){
+    return String(v||'')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .replace(/\s+/g,' ')
+      .trim()
+      .toUpperCase();
+  }
+
+  function isHoursButton(el){
+    if(!(el instanceof HTMLButtonElement))return false;
+    const txt=norm(el.textContent);
+    return txt==='HEURES' || txt.endsWith(' HEURES') || txt.includes('HEURES');
+  }
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const s=document.createElement('style');
+    s.id=STYLE_ID;
+    s.textContent=`
+      .hdr .tabs .yaya-hours-toolbar-btn{
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:6px!important;
+        min-height:38px!important;
+        padding:7px 13px!important;
+        border:1px solid rgba(255,255,255,.35)!important;
+        border-radius:7px!important;
+        background:#294796!important;
+        color:#fff!important;
+        font-size:13px!important;
+        font-weight:700!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+        box-shadow:none!important;
+      }
+      .hdr .tabs .yaya-hours-toolbar-btn:hover{
+        background:#3453a2!important;
+      }
+      @media(max-width:760px){
+        .hdr .tabs .yaya-hours-toolbar-btn{
+          min-height:36px!important;
+          padding:6px 10px!important;
+          font-size:12px!important;
+        }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function moveHours(){
+    if(syncing)return;
+    syncing=true;
+    try{
+      const tabs=document.querySelector('.hdr .tabs');
+      if(!tabs)return;
+
+      const buttons=[...document.querySelectorAll('button')].filter(isHoursButton);
+      if(!buttons.length)return;
+
+      let toolbarBtn=buttons.find(b=>tabs.contains(b));
+      const outside=buttons.filter(b=>!tabs.contains(b));
+
+      if(!toolbarBtn && outside.length){
+        toolbarBtn=outside.shift();
+        toolbarBtn.classList.add('tab','yaya-hours-toolbar-btn');
+        toolbarBtn.setAttribute('data-yaya-hours-toolbar','1');
+
+        const mails=tabs.querySelector('.tab[data-tab="mails"], .tab[data-tab="mail"]');
+        if(mails)tabs.insertBefore(toolbarBtn,mails);
+        else tabs.appendChild(toolbarBtn);
+      }
+
+      if(toolbarBtn){
+        toolbarBtn.classList.add('tab','yaya-hours-toolbar-btn');
+        toolbarBtn.setAttribute('data-yaya-hours-toolbar','1');
+      }
+
+      // Si un rerender recrée le bouton Heures dans la zone recherche,
+      // on conserve uniquement celui déjà déplacé dans la toolbar.
+      outside.forEach(b=>b.remove());
+    }finally{
+      syncing=false;
+    }
+  }
+
+  function install(){
+    installStyle();
+    moveHours();
+
+    const obs=new MutationObserver(()=>{
+      clearTimeout(window.__yayaHoursToolbarTimer);
+      window.__yayaHoursToolbarTimer=setTimeout(moveHours,0);
+    });
+    obs.observe(document.documentElement,{childList:true,subtree:true});
+
+    setTimeout(moveHours,120);
+    setTimeout(moveHours,500);
+  }
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
