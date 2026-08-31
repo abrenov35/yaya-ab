@@ -2039,15 +2039,28 @@ function nomMailYaya(d){
 }
 function objetMailYaya(d){
   if(!d) return 'Objet non renseigné';
-  const directs=[d.objetMail,d.mailSubject,d.emailSubject,d.subject,d.objet];
+  const expediteur=texteMailYaya(d.nomMail||d.expediteur||d.from||d.sujet);
+  const nettoyerObjet=v=>{
+    let texte=texteMailYaya(v).replace(/^(?:objet|subject)\s*[:\-]\s*/i,'').replace(/[#*]+$/,'').trim();
+    if(!texte||texte===expediteur)return '';
+    if(texte.length>180)return '';
+    if(/\b(?:bonjour|bonsoir|cordialement|bien à vous|a écrit|envoy[eé]\s*:|sent\s*:|from\s*:|téléphone|https?:\/\/|www\.)\b/i.test(texte)&&texte.length>90)return '';
+    return texte;
+  };
+  const directs=[d.objetMail,d.mailSubject,d.emailSubject,d.subject,d.objet,d.messageSubject,d.gmailSubject,d.subjectMail,d.titreMail,d.intitule];
   let objet='';
-  for(const v of directs){objet=texteMailYaya(v);if(objet)break;}
+  for(const v of directs){objet=nettoyerObjet(v);if(objet)break;}
   if(!objet){
-    const source=contenuMailYaya(d);
-    const match=source.match(/(?:\*{0,2})objet\s*:\s*(?:\*{0,2})(.*?)(?=#YB|https?:\/\/|\r?\n|$)/i);
-    if(match)objet=texteMailYaya(match[1]);
+    const sources=[d.contenuMail,d.corpsMail,d.contenu,d.body,d.mailBody,d.emailBody,d.messageBody,d.texte,d.description,d.titre];
+    for(const brut of sources){
+      const source=String(brut||'').replace(/<br\s*\/?\s*>/gi,'\n');
+      const match=source.match(/(?:\*{0,2})(?:objet|subject)\s*:\s*(?:\*{0,2})(.*?)(?=#YB|https?:\/\/|\r?\n|$)/i);
+      if(match)objet=nettoyerObjet(match[1]);
+      if(objet)break;
+    }
   }
-  objet=objet.replace(/^objet\s*:\s*/i,'').replace(/[#*]+$/,'').trim();
+  const corpsSepare=[d.contenuMail,d.corpsMail,d.contenu,d.body,d.mailBody,d.emailBody,d.messageBody,d.texte,d.description].some(v=>String(v||'').trim());
+  if(!objet&&corpsSepare)objet=nettoyerObjet(d.titre);
   if(objet.length>120)objet=objet.slice(0,117).trimEnd()+'…';
   return objet||'Objet non renseigné';
 }

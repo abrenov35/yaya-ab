@@ -82,6 +82,12 @@
 
   function mailSubject(d){
     if(!d)return 'Objet non renseigné';
+    try{
+      if(typeof objetMailYaya==='function'){
+        const globalSubject=objetMailYaya(d);
+        if(globalSubject&&globalSubject!=='Objet non renseigné')return globalSubject;
+      }
+    }catch(e){}
     const vals=[d.subject,d.objetMail,d.mailSubject,d.emailSubject,d.objet,d.intitule];
     for(const v of vals){
       const s=cleanSubject(v);
