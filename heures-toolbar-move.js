@@ -20,7 +20,7 @@
 
   function removeMailTab(tabs){
     if(!tabs)return;
-    tabs.querySelectorAll('.tab[data-tab="mails"], .tab[data-tab="mail"]').forEach(b=>b.remove());
+    tabs.querySelectorAll('#yayaMailsTab, .tab[data-tab="mails"], .tab[data-tab="mail"]').forEach(b=>b.remove());
   }
 
   function installStyle(){
