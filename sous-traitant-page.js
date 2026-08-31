@@ -54,7 +54,7 @@
   }
 
   function removeHeaderTabs(){
-    document.querySelectorAll('.hdr .tabs .tab[data-tab="achats"], .hdr .tabs .tab[data-tab="sous-traitant"], .hdr .tabs .tab[data-tab="documents"]').forEach(b=>b.remove());
+    document.querySelectorAll('.hdr .tabs .tab[data-tab="achats"], .hdr .tabs .tab[data-tab="sous-traitant"], .hdr .tabs .tab[data-tab="documents"], .hdr .tabs .tab[data-tab="mails"], .hdr .tabs .tab[data-tab="mail"]').forEach(b=>b.remove());
   }
 
   function ensureUi(){
