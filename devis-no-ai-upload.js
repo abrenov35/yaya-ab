@@ -2,6 +2,7 @@
   'use strict';
 
   let noAiBackendReady=false;
+  let probePromise=null;
   const nativeFetch=window.fetch.bind(window);
   const originalRemplacer=typeof window.remplacerPJ==='function'?window.remplacerPJ:null;
 
@@ -54,8 +55,12 @@
       if(originalRemplacer)return originalRemplacer(type,id);
       return;
     }
+
+    if(!noAiBackendReady&&probePromise){
+      try{await probePromise;}catch(e){}
+    }
     if(!noAiBackendReady){
-      toastSafe('Archivage devis sans IA non activé côté serveur',true);
+      toastSafe('Ajout du document sans IA indisponible côté serveur',true);
       return;
     }
 
@@ -134,7 +139,7 @@
 
   async function probe(){
     const api=apiUrl();
-    if(!api)return;
+    if(!api)return false;
     try{
       const resp=await nativeFetch(api,{
         method:'POST',
@@ -146,16 +151,19 @@
     }catch(e){
       noAiBackendReady=false;
     }
-    if(noAiBackendReady){
-      installReplace();
-      cleanAiLabels(document);
-    }
+    if(noAiBackendReady)cleanAiLabels(document);
+    return noAiBackendReady;
   }
 
   installFetchRewrite();
-  probe();
+  installReplace();
+  probePromise=probe();
   new MutationObserver(function(){
-    if(noAiBackendReady){installReplace();cleanAiLabels(document);}
+    installReplace();
+    if(noAiBackendReady)cleanAiLabels(document);
   }).observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',function(){if(noAiBackendReady)installReplace();});
+  window.addEventListener('yaya:data-refreshed',function(){
+    installReplace();
+    if(noAiBackendReady)cleanAiLabels(document);
+  });
 })();
