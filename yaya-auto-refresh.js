@@ -2,14 +2,15 @@
   'use strict';
 
   const MOBILE=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
-  const INTERVAL_MS=MOBILE?60000:20000;
-  const MIN_GAP_MS=4000;
+  const INTERVAL_MS=MOBILE?90000:60000;
+  const MIN_GAP_MS=5000;
   const START_GRACE_MS=12000;
   const installedAt=Date.now();
   let busy=false;
   let lastRun=0;
   let lastSnapshot='';
   let lastInteraction=0;
+  let wakeTimer=0;
 
   ['pointerdown','touchstart','keydown','scroll'].forEach(function(type){
     window.addEventListener(type,function(){lastInteraction=Date.now();},{passive:true,capture:true});
@@ -87,7 +88,7 @@
   async function refreshIfNeeded(force){
     if(busy||!safeToRefresh())return;
     const now=Date.now();
-    if(!force&&now-lastRun<MIN_GAP_MS)return;
+    if(now-lastRun<MIN_GAP_MS)return;
     if(typeof apiGet!=='function'||typeof render!=='function')return;
 
     busy=true;
@@ -103,11 +104,15 @@
       render();
       try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
     }catch(err){
-      // Un échec d'actualisation silencieux ne doit jamais bloquer Yaya.
       if(!(err&&err.name==='AbortError'))console.warn('Actualisation automatique Yaya ignorée :',err);
     }finally{
       busy=false;
     }
+  }
+
+  function scheduleWakeRefresh(){
+    clearTimeout(wakeTimer);
+    wakeTimer=setTimeout(function(){refreshIfNeeded(true);},650);
   }
 
   function install(){
@@ -121,12 +126,10 @@
     setInterval(function(){refreshIfNeeded(false);},INTERVAL_MS);
 
     document.addEventListener('visibilitychange',function(){
-      if(!document.hidden)setTimeout(function(){refreshIfNeeded(true);},500);
+      if(!document.hidden)scheduleWakeRefresh();
     });
 
-    window.addEventListener('focus',function(){
-      setTimeout(function(){refreshIfNeeded(true);},500);
-    });
+    window.addEventListener('focus',scheduleWakeRefresh);
   }
 
   install();
