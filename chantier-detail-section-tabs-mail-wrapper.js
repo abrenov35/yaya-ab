@@ -17,4 +17,46 @@ rep("      const meta=key==='documents'\n        ? ''","      const meta=(key===
 rep("      if(small)small.style.display=key==='documents'?'none':'';","      if(small)small.style.display=(key==='documents'||key==='mail')?'none':'';");
 rep("      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : (section?'0':'1');","      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : key==='mail'\n              ? (card.querySelectorAll('.message-ligne').length?'0':'1')\n              : (section?'0':'1');");
 (0,eval)(src+'\n//# sourceURL=chantier-detail-section-tabs-native-mail.js');
+
+function ensureCommandeButton(){
+  document.querySelectorAll('.yaya-detail-section-tabs').forEach(tabs=>{
+    const marche=tabs.querySelector('.yaya-detail-section-tab[data-section="marche"]');
+    const depenses=tabs.querySelector('.yaya-detail-section-tab[data-section="depenses"]');
+    if(!marche||!depenses)return;
+
+    let btn=tabs.querySelector('.yaya-commande-tab-placeholder');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='yaya-detail-section-tab yaya-commande-tab-placeholder';
+      btn.dataset.yayaPlaceholder='commande';
+      btn.textContent='Commande';
+      btn.setAttribute('aria-label','Commande');
+      btn.addEventListener('click',event=>{
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      });
+    }
+
+    if(btn.parentNode!==tabs||btn.previousElementSibling!==marche){
+      tabs.insertBefore(btn,depenses);
+    }
+  });
+}
+
+let commandeScheduled=false;
+function scheduleCommandeButton(){
+  if(commandeScheduled)return;
+  commandeScheduled=true;
+  requestAnimationFrame(()=>{
+    commandeScheduled=false;
+    ensureCommandeButton();
+  });
+}
+
+const commandeObserver=new MutationObserver(scheduleCommandeButton);
+commandeObserver.observe(document.documentElement,{childList:true,subtree:true});
+setTimeout(ensureCommandeButton,50);
+setTimeout(ensureCommandeButton,250);
+setTimeout(ensureCommandeButton,800);
 })().catch(err=>console.error(err));
