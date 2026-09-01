@@ -203,3 +203,50 @@
   setTimeout(forceEyeOnly,250);
   setTimeout(forceEyeOnly,800);
 })();
+
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-marche-eye-color-style';
+
+  function installMarcheEyeStyle(){
+    let s=document.getElementById(STYLE_ID);
+    if(!s){
+      s=document.createElement('style');
+      s.id=STYLE_ID;
+      document.head.appendChild(s);
+    }
+    s.textContent=`
+      .yaya-detail-markets-pane button::before,
+      .yaya-detail-markets-pane button::after,
+      [data-section="marche"] button::before,
+      [data-section="marche"] button::after{
+        content:none!important;
+        display:none!important;
+      }
+    `;
+  }
+
+  function forceMarcheEyeColor(){
+    installMarcheEyeStyle();
+    document.querySelectorAll('.yaya-detail-markets-pane button, [data-section="marche"] button').forEach(function(btn){
+      const t=String(btn.title||btn.getAttribute('aria-label')||btn.textContent||'').toLowerCase();
+      if(t.includes('voir')||t.includes('œil')||t.includes('oeil')){
+        btn.textContent='👁️';
+        btn.style.setProperty('font-size','16px','important');
+      }
+    });
+  }
+
+  forceMarcheEyeColor();
+  const root=document.getElementById('pane-chantiers')||document.documentElement;
+  const obs=new MutationObserver(function(){
+    clearTimeout(window.__yayaMarcheEyeTimer);
+    window.__yayaMarcheEyeTimer=setTimeout(forceMarcheEyeColor,0);
+  });
+  obs.observe(root,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',forceMarcheEyeColor);
+  setTimeout(forceMarcheEyeColor,50);
+  setTimeout(forceMarcheEyeColor,250);
+  setTimeout(forceMarcheEyeColor,800);
+})();
