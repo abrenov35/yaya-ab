@@ -59,4 +59,85 @@ commandeObserver.observe(document.documentElement,{childList:true,subtree:true})
 setTimeout(ensureCommandeButton,50);
 setTimeout(ensureCommandeButton,250);
 setTimeout(ensureCommandeButton,800);
+
+// Lien direct fiche chantier : ?chantier=ID#chantiers
+let yayaDirectPendingId='';
+try{
+  yayaDirectPendingId=String(new URL(window.location.href).searchParams.get('chantier')||'').trim();
+}catch(e){}
+
+function yayaSetDirectUrl(id){
+  try{
+    const url=new URL(window.location.href);
+    const value=String(id||'').trim();
+    if(value){
+      url.searchParams.set('chantier',value);
+      url.hash='chantiers';
+    }else{
+      url.searchParams.delete('chantier');
+      if(url.hash==='#chantiers'||!url.hash)url.hash='chantiers';
+    }
+    history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+  }catch(e){}
+}
+
+function yayaSyncDirectUrl(){
+  try{
+    if(typeof focusChantier!=='undefined'&&focusChantier){
+      yayaSetDirectUrl(focusChantier);
+      return;
+    }
+    if(!yayaDirectPendingId)yayaSetDirectUrl('');
+  }catch(e){}
+}
+
+// Synchronise automatiquement l'URL après chaque rendu de Yaya.
+try{
+  if(typeof render==='function'&&!render.__yayaDirectLinkWrapped){
+    const originalRender=render;
+    const wrappedRender=function(){
+      const result=originalRender.apply(this,arguments);
+      yayaSyncDirectUrl();
+      return result;
+    };
+    wrappedRender.__yayaDirectLinkWrapped=true;
+    render=wrappedRender;
+  }
+}catch(e){}
+
+function yayaOpenDirectChantier(){
+  if(!yayaDirectPendingId)return true;
+  try{
+    if(typeof chantierById!=='function'||typeof render!=='function')return false;
+    const id=String(yayaDirectPendingId);
+    const chantier=chantierById(id);
+    if(!chantier)return false;
+
+    if(typeof tab!=='undefined')tab='chantiers';
+    if(typeof focusChantier!=='undefined')focusChantier=id;
+    if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.clear==='function'){
+      expChantiers.clear();
+      expChantiers.add(id);
+    }
+    yayaDirectPendingId='';
+    yayaSetDirectUrl(id);
+    render();
+    window.scrollTo(0,0);
+    return true;
+  }catch(e){
+    return false;
+  }
+}
+
+if(yayaDirectPendingId){
+  yayaSetDirectUrl(yayaDirectPendingId);
+  let directAttempts=0;
+  const directTimer=setInterval(()=>{
+    directAttempts++;
+    if(yayaOpenDirectChantier()||directAttempts>=120)clearInterval(directTimer);
+  },100);
+  setTimeout(yayaOpenDirectChantier,0);
+  setTimeout(yayaOpenDirectChantier,250);
+  setTimeout(yayaOpenDirectChantier,800);
+}
 })().catch(err=>console.error(err));
