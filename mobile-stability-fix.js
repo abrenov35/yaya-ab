@@ -42,3 +42,12 @@
   window.addEventListener('orientationchange',function(){setTimeout(recadrer,120)},{passive:true});
   document.addEventListener('focusout',function(){setTimeout(recadrer,80)},{passive:true});
 })();
+
+(function(){
+  if(document.querySelector('script[data-yaya-commande-actions]'))return;
+  const s=document.createElement('script');
+  s.src='commande-actions.js?v=commande-actions-2';
+  s.async=false;
+  s.setAttribute('data-yaya-commande-actions','1');
+  document.head.appendChild(s);
+})();
