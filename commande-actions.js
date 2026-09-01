@@ -38,15 +38,28 @@
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      .yaya-detail-commande-row{
-        grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px 28px!important;
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) 90px 110px auto!important;
+        align-items:center!important;
+        gap:10px!important;
+      }
+      .yaya-commande-actions{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-end!important;
+        gap:6px!important;
+        min-width:max-content!important;
       }
       .yaya-detail-commande-edit,
       .yaya-detail-commande-delete{
-        width:28px!important;height:28px!important;padding:0!important;margin:0!important;
+        width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;padding:0!important;margin:0!important;
         display:inline-flex!important;align-items:center!important;justify-content:center!important;
         border-radius:7px!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
         font-size:14px!important;line-height:1!important;cursor:pointer!important;
+      }
+      .yaya-commande-actions .yaya-detail-commande-view{
+        width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;margin:0!important;
       }
       .yaya-detail-commande-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
       .yaya-detail-commande-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
@@ -60,7 +73,11 @@
       .yaya-commande-cancel{border:1px solid #cbd5e1!important;background:#fff!important;color:#475569!important}
       .yaya-commande-save{border:1px solid #285943!important;background:#285943!important;color:#fff!important}
       @media(max-width:640px){
-        .yaya-detail-commande-row{grid-template-columns:minmax(90px,1fr) 72px 86px 28px 28px 28px!important;gap:7px!important}
+        #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
+          grid-template-columns:minmax(0,1fr) 70px 82px auto!important;
+          gap:7px!important;
+        }
+        .yaya-commande-actions{gap:5px!important}
       }
     `;
     document.head.appendChild(s);
@@ -77,6 +94,16 @@
       const id=String(commande.id||'');
       row.dataset.commandeId=id;
 
+      let actions=row.querySelector('.yaya-commande-actions');
+      if(!actions){
+        actions=document.createElement('span');
+        actions.className='yaya-commande-actions';
+        row.appendChild(actions);
+      }
+
+      const view=row.querySelector('.yaya-detail-commande-view');
+      if(view&&view.parentNode!==actions)actions.appendChild(view);
+
       let edit=row.querySelector('.yaya-detail-commande-edit');
       if(!edit){
         edit=document.createElement('button');
@@ -85,7 +112,7 @@
         edit.title='Modifier';
         edit.setAttribute('aria-label','Modifier');
         edit.textContent='✏️';
-        row.appendChild(edit);
+        actions.appendChild(edit);
       }
       edit.dataset.commandeId=id;
 
@@ -97,7 +124,7 @@
         del.title='Supprimer';
         del.setAttribute('aria-label','Supprimer');
         del.textContent='🗑️';
-        row.appendChild(del);
+        actions.appendChild(del);
       }
       del.dataset.commandeId=id;
     });
