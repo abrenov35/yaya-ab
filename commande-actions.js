@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-commande-actions-style';
+  const STYLE_ID='yaya-commande-actions-style-v3';
   let decorating=false;
 
   function esc(v){
@@ -34,35 +34,68 @@
   }
 
   function installStyle(){
+    document.querySelectorAll('#yaya-commande-actions-style,#yaya-commande-actions-style-v2').forEach(x=>x.remove());
     if(document.getElementById(STYLE_ID))return;
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
         display:grid!important;
-        grid-template-columns:minmax(0,1fr) 90px 110px auto!important;
+        grid-template-columns:minmax(0,1fr) 90px 110px max-content!important;
         align-items:center!important;
         gap:10px!important;
+        width:100%!important;
       }
-      .yaya-commande-actions{
-        display:flex!important;
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row > strong{
+        min-width:0!important;
+      }
+      #pane-chantiers .yaya-commande-actions{
+        display:inline-flex!important;
         align-items:center!important;
         justify-content:flex-end!important;
         gap:6px!important;
-        min-width:max-content!important;
+        min-width:94px!important;
+        width:auto!important;
+        margin:0!important;
+        padding:0!important;
+        grid-column:4!important;
       }
-      .yaya-detail-commande-edit,
-      .yaya-detail-commande-delete{
-        width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;padding:0!important;margin:0!important;
-        display:inline-flex!important;align-items:center!important;justify-content:center!important;
-        border-radius:7px!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
-        font-size:14px!important;line-height:1!important;cursor:pointer!important;
+      #pane-chantiers .yaya-commande-actions > button{
+        position:static!important;
+        float:none!important;
+        flex:0 0 28px!important;
+        width:28px!important;
+        height:28px!important;
+        min-width:28px!important;
+        min-height:28px!important;
+        max-width:28px!important;
+        padding:0!important;
+        margin:0!important;
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        border-radius:7px!important;
+        box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
+        line-height:1!important;
+        cursor:pointer!important;
       }
-      .yaya-commande-actions .yaya-detail-commande-view{
-        width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;margin:0!important;
+      #pane-chantiers .yaya-commande-actions .yaya-detail-commande-view{
+        border:1px solid #a9c8e8!important;
+        background:#f3f8fd!important;
+        color:#174d7d!important;
       }
-      .yaya-detail-commande-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
-      .yaya-detail-commande-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
+      #pane-chantiers .yaya-commande-actions .yaya-detail-commande-edit{
+        border:1px solid #a8d5b5!important;
+        background:#f2faf4!important;
+        color:#26703b!important;
+        font-size:14px!important;
+      }
+      #pane-chantiers .yaya-commande-actions .yaya-detail-commande-delete{
+        border:1px solid #e6a7a7!important;
+        background:#fff3f3!important;
+        color:#c83c3c!important;
+        font-size:14px!important;
+      }
       .yaya-commande-edit-overlay{position:fixed!important;inset:0!important;z-index:10050!important;background:rgba(22,45,73,.45)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important}
       .yaya-commande-edit-modal{width:min(440px,100%)!important;background:#fff!important;border-radius:12px!important;padding:18px!important;box-shadow:0 12px 40px rgba(0,0,0,.28)!important}
       .yaya-commande-edit-modal h3{margin:0 0 14px!important;font-size:17px!important;color:#162d49!important}
@@ -74,13 +107,20 @@
       .yaya-commande-save{border:1px solid #285943!important;background:#285943!important;color:#fff!important}
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
-          grid-template-columns:minmax(0,1fr) 70px 82px auto!important;
+          grid-template-columns:minmax(0,1fr) 72px 82px max-content!important;
           gap:7px!important;
         }
-        .yaya-commande-actions{gap:5px!important}
+        #pane-chantiers .yaya-commande-actions{gap:5px!important;min-width:94px!important}
       }
     `;
     document.head.appendChild(s);
+  }
+
+  function uniqueButton(row,selector,create){
+    const found=[...row.querySelectorAll(selector)];
+    let btn=found.shift()||create();
+    found.forEach(x=>x.remove());
+    return btn;
   }
 
   function decorateCard(card){
@@ -88,45 +128,54 @@
     if(!pane)return;
     const commandes=commandesFor(card);
     const rows=[...pane.querySelectorAll('.yaya-detail-commande-row')];
+
     rows.forEach((row,index)=>{
       const commande=commandes[index];
       if(!commande)return;
       const id=String(commande.id||'');
       row.dataset.commandeId=id;
 
-      let actions=row.querySelector('.yaya-commande-actions');
-      if(!actions){
-        actions=document.createElement('span');
-        actions.className='yaya-commande-actions';
-        row.appendChild(actions);
-      }
+      const view=uniqueButton(row,'.yaya-detail-commande-view',()=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='yaya-detail-charge-view yaya-detail-commande-view';
+        b.title='Voir';
+        b.setAttribute('aria-label','Voir');
+        return b;
+      });
 
-      const view=row.querySelector('.yaya-detail-commande-view');
-      if(view&&view.parentNode!==actions)actions.appendChild(view);
+      const lien=String(commande.lien||commande.oneDriveWebUrl||'').trim();
+      view.dataset.lien=lien;
+      view.disabled=!lien;
 
-      let edit=row.querySelector('.yaya-detail-commande-edit');
-      if(!edit){
-        edit=document.createElement('button');
-        edit.type='button';
-        edit.className='yaya-detail-commande-edit';
-        edit.title='Modifier';
-        edit.setAttribute('aria-label','Modifier');
-        edit.textContent='✏️';
-        actions.appendChild(edit);
-      }
+      const edit=uniqueButton(row,'.yaya-detail-commande-edit',()=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='yaya-detail-commande-edit';
+        b.title='Modifier';
+        b.setAttribute('aria-label','Modifier');
+        b.textContent='✏️';
+        return b;
+      });
       edit.dataset.commandeId=id;
 
-      let del=row.querySelector('.yaya-detail-commande-delete');
-      if(!del){
-        del=document.createElement('button');
-        del.type='button';
-        del.className='yaya-detail-commande-delete';
-        del.title='Supprimer';
-        del.setAttribute('aria-label','Supprimer');
-        del.textContent='🗑️';
-        actions.appendChild(del);
-      }
+      const del=uniqueButton(row,'.yaya-detail-commande-delete',()=>{
+        const b=document.createElement('button');
+        b.type='button';
+        b.className='yaya-detail-commande-delete';
+        b.title='Supprimer';
+        b.setAttribute('aria-label','Supprimer');
+        b.textContent='🗑️';
+        return b;
+      });
       del.dataset.commandeId=id;
+
+      const oldActions=[...row.querySelectorAll('.yaya-commande-actions')];
+      const actions=document.createElement('span');
+      actions.className='yaya-commande-actions';
+      actions.append(view,edit,del);
+      oldActions.forEach(x=>x.remove());
+      row.appendChild(actions);
     });
   }
 
@@ -144,18 +193,12 @@
   }
 
   function endpoint(){
-    try{
-      if(typeof API!=='undefined'&&API)return String(API);
-    }catch(e){}
+    try{if(typeof API!=='undefined'&&API)return String(API);}catch(e){}
     return 'https://script.google.com/macros/s/AKfycbx6IwMFf2plAq7i8qf8qF6f6MMC-1-WynAqn1ZRqCZrVqHeE9a1ygSSTzp5uOf0L3bn/exec';
   }
 
   async function setCommandes(rows){
-    const r=await fetch(endpoint(),{
-      method:'POST',
-      cache:'no-store',
-      body:JSON.stringify({action:'setCommandes',data:rows})
-    });
+    const r=await fetch(endpoint(),{method:'POST',cache:'no-store',body:JSON.stringify({action:'setCommandes',data:rows})});
     const txt=await r.text();
     let json;
     try{json=JSON.parse(txt);}catch(e){throw new Error('Réponse Yaya invalide');}
@@ -165,10 +208,8 @@
 
   function refreshLocal(rows){
     if(typeof S!=='undefined')S.commandes=rows;
-    try{
-      if(typeof render==='function')render();
-      else window.dispatchEvent(new Event('yaya:data-refreshed'));
-    }catch(e){window.dispatchEvent(new Event('yaya:data-refreshed'));}
+    try{if(typeof render==='function')render();else window.dispatchEvent(new Event('yaya:data-refreshed'));}
+    catch(e){window.dispatchEvent(new Event('yaya:data-refreshed'));}
     setTimeout(decorate,60);
     setTimeout(decorate,250);
   }
