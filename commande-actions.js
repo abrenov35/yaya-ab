@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-commande-actions-style-v3';
-  let decorating=false;
+  const STYLE_ID='yaya-commande-actions-style-v4';
+  let rendering=false;
 
   function esc(v){
     const d=document.createElement('div');
@@ -11,9 +11,7 @@
   }
 
   function cardId(card){
-    try{
-      if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier);
-    }catch(e){}
+    try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier);}catch(e){}
     if(!card)return '';
     const nodes=[...card.querySelectorAll('[onclick]')];
     for(const el of nodes){
@@ -33,69 +31,61 @@
       .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.id||'').localeCompare(String(a.id||'')));
   }
 
+  function nativeSignature(rows){
+    return JSON.stringify(rows.map(row=>[
+      row.id||'',row.fournisseur||'',row.designation||'',row.pieceNom||'',
+      row.montantHT||0,row.date||'',row.lien||'',row.oneDriveWebUrl||''
+    ]));
+  }
+
+  function dateFr(v){
+    const raw=String(v||'').slice(0,10);
+    const m=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m?m[3]+'/'+m[2]+'/'+m[1]:raw;
+  }
+
+  function euro(v){
+    return (Number(v)||0).toLocaleString('fr-FR',{maximumFractionDigits:2})+' €';
+  }
+
   function installStyle(){
-    document.querySelectorAll('#yaya-commande-actions-style,#yaya-commande-actions-style-v2').forEach(x=>x.remove());
-    if(document.getElementById(STYLE_ID))return;
+    document.querySelectorAll('[id^="yaya-commande-actions-style"]').forEach(x=>x.remove());
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
         display:grid!important;
-        grid-template-columns:minmax(0,1fr) 90px 110px max-content!important;
+        grid-template-columns:minmax(0,1fr) 105px 90px 102px!important;
         align-items:center!important;
-        gap:10px!important;
+        gap:12px!important;
         width:100%!important;
+        min-height:50px!important;
+        padding:9px 0!important;
+        margin:0!important;
+        border-bottom:1px solid #e6ebf1!important;
       }
-      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row > strong{
-        min-width:0!important;
-      }
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row:last-child{border-bottom:0!important}
+      #pane-chantiers .yaya-commande-info{min-width:0!important}
+      #pane-chantiers .yaya-commande-info strong{display:block!important;color:#162d49!important;font-size:13px!important;line-height:1.2!important}
+      #pane-chantiers .yaya-commande-desc{display:block!important;margin-top:2px!important;color:#526b91!important;font-size:11.5px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
+      #pane-chantiers .yaya-commande-date{display:block!important;margin-top:3px!important;color:#718096!important;font-size:10.5px!important}
+      #pane-chantiers .yaya-commande-type{color:#183b68!important;text-align:left!important;white-space:nowrap!important}
+      #pane-chantiers .yaya-commande-amount{font-weight:700!important;text-align:right!important;white-space:nowrap!important;color:#162d49!important}
       #pane-chantiers .yaya-commande-actions{
-        display:inline-flex!important;
-        align-items:center!important;
-        justify-content:flex-end!important;
-        gap:6px!important;
-        min-width:94px!important;
-        width:auto!important;
-        margin:0!important;
-        padding:0!important;
-        grid-column:4!important;
+        display:flex!important;align-items:center!important;justify-content:flex-end!important;
+        gap:6px!important;width:102px!important;min-width:102px!important;margin:0!important;padding:0!important;
       }
-      #pane-chantiers .yaya-commande-actions > button{
-        position:static!important;
-        float:none!important;
-        flex:0 0 28px!important;
-        width:28px!important;
-        height:28px!important;
-        min-width:28px!important;
-        min-height:28px!important;
-        max-width:28px!important;
-        padding:0!important;
-        margin:0!important;
-        display:inline-flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        border-radius:7px!important;
-        box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
-        line-height:1!important;
-        cursor:pointer!important;
+      #pane-chantiers .yaya-commande-actions button{
+        position:static!important;float:none!important;display:inline-flex!important;
+        align-items:center!important;justify-content:center!important;flex:0 0 30px!important;
+        width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;
+        max-width:30px!important;margin:0!important;padding:0!important;border-radius:7px!important;
+        font-size:14px!important;line-height:1!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
       }
-      #pane-chantiers .yaya-commande-actions .yaya-detail-commande-view{
-        border:1px solid #a9c8e8!important;
-        background:#f3f8fd!important;
-        color:#174d7d!important;
-      }
-      #pane-chantiers .yaya-commande-actions .yaya-detail-commande-edit{
-        border:1px solid #a8d5b5!important;
-        background:#f2faf4!important;
-        color:#26703b!important;
-        font-size:14px!important;
-      }
-      #pane-chantiers .yaya-commande-actions .yaya-detail-commande-delete{
-        border:1px solid #e6a7a7!important;
-        background:#fff3f3!important;
-        color:#c83c3c!important;
-        font-size:14px!important;
-      }
+      #pane-chantiers .yaya-detail-commande-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important;font-size:0!important}
+      #pane-chantiers .yaya-detail-commande-view::before{content:'👁︎'!important;font-size:15px!important;color:#174d7d!important}
+      #pane-chantiers .yaya-detail-commande-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
+      #pane-chantiers .yaya-detail-commande-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
       .yaya-commande-edit-overlay{position:fixed!important;inset:0!important;z-index:10050!important;background:rgba(22,45,73,.45)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important}
       .yaya-commande-edit-modal{width:min(440px,100%)!important;background:#fff!important;border-radius:12px!important;padding:18px!important;box-shadow:0 12px 40px rgba(0,0,0,.28)!important}
       .yaya-commande-edit-modal h3{margin:0 0 14px!important;font-size:17px!important;color:#162d49!important}
@@ -107,89 +97,52 @@
       .yaya-commande-save{border:1px solid #285943!important;background:#285943!important;color:#fff!important}
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
-          grid-template-columns:minmax(0,1fr) 72px 82px max-content!important;
-          gap:7px!important;
+          grid-template-columns:minmax(0,1fr) 72px 70px 102px!important;gap:7px!important;padding:8px 0!important;
         }
-        #pane-chantiers .yaya-commande-actions{gap:5px!important;min-width:94px!important}
+        #pane-chantiers .yaya-commande-type{font-size:11px!important}
+        #pane-chantiers .yaya-commande-amount{font-size:12px!important}
       }
     `;
     document.head.appendChild(s);
   }
 
-  function uniqueButton(row,selector,create){
-    const found=[...row.querySelectorAll(selector)];
-    let btn=found.shift()||create();
-    found.forEach(x=>x.remove());
-    return btn;
+  function rowHtml(c){
+    const id=String(c.id||'');
+    const lien=String(c.lien||c.oneDriveWebUrl||'').trim();
+    const desc=String(c.designation||c.pieceNom||'Bon de commande');
+    return '<div class="yaya-detail-commande-row" data-commande-id="'+esc(id)+'">'
+      +'<div class="yaya-commande-info"><strong>'+esc(c.fournisseur||'Fournisseur')+'</strong>'
+      +'<span class="yaya-commande-desc">'+esc(desc)+'</span>'
+      +'<span class="yaya-commande-date">'+esc(dateFr(c.date))+'</span></div>'
+      +'<span class="yaya-commande-type">Commande</span>'
+      +'<span class="yaya-commande-amount">'+esc(euro(c.montantHT))+'</span>'
+      +'<span class="yaya-commande-actions">'
+      +'<button type="button" class="yaya-detail-commande-view" data-lien="'+esc(lien)+'" title="Voir" aria-label="Voir"'+(lien?'':' disabled')+'>Voir</button>'
+      +'<button type="button" class="yaya-detail-commande-edit" data-commande-id="'+esc(id)+'" title="Modifier" aria-label="Modifier">✏️</button>'
+      +'<button type="button" class="yaya-detail-commande-delete" data-commande-id="'+esc(id)+'" title="Supprimer" aria-label="Supprimer">🗑️</button>'
+      +'</span></div>';
   }
 
-  function decorateCard(card){
+  function renderCard(card){
     const pane=card.querySelector(':scope > .yaya-detail-commandes-pane');
     if(!pane)return;
-    const commandes=commandesFor(card);
-    const rows=[...pane.querySelectorAll('.yaya-detail-commande-row')];
-
-    rows.forEach((row,index)=>{
-      const commande=commandes[index];
-      if(!commande)return;
-      const id=String(commande.id||'');
-      row.dataset.commandeId=id;
-
-      const view=uniqueButton(row,'.yaya-detail-commande-view',()=>{
-        const b=document.createElement('button');
-        b.type='button';
-        b.className='yaya-detail-charge-view yaya-detail-commande-view';
-        b.title='Voir';
-        b.setAttribute('aria-label','Voir');
-        return b;
-      });
-
-      const lien=String(commande.lien||commande.oneDriveWebUrl||'').trim();
-      view.dataset.lien=lien;
-      view.disabled=!lien;
-
-      const edit=uniqueButton(row,'.yaya-detail-commande-edit',()=>{
-        const b=document.createElement('button');
-        b.type='button';
-        b.className='yaya-detail-commande-edit';
-        b.title='Modifier';
-        b.setAttribute('aria-label','Modifier');
-        b.textContent='✏️';
-        return b;
-      });
-      edit.dataset.commandeId=id;
-
-      const del=uniqueButton(row,'.yaya-detail-commande-delete',()=>{
-        const b=document.createElement('button');
-        b.type='button';
-        b.className='yaya-detail-commande-delete';
-        b.title='Supprimer';
-        b.setAttribute('aria-label','Supprimer');
-        b.textContent='🗑️';
-        return b;
-      });
-      del.dataset.commandeId=id;
-
-      const oldActions=[...row.querySelectorAll('.yaya-commande-actions')];
-      const actions=document.createElement('span');
-      actions.className='yaya-commande-actions';
-      actions.append(view,edit,del);
-      oldActions.forEach(x=>x.remove());
-      row.appendChild(actions);
-    });
+    const rows=commandesFor(card);
+    const sig=nativeSignature(rows);
+    if(pane.dataset.yayaCommandesRendered===sig && pane.querySelectorAll(':scope > .yaya-detail-commande-row').length===rows.length)return;
+    pane.innerHTML=rows.map(rowHtml).join('');
+    pane.dataset.empty=rows.length?'0':'1';
+    pane.dataset.yayaCommandesRendered=sig;
+    pane._yayaRowsSignature=sig;
   }
 
-  function decorate(){
-    if(decorating)return;
-    decorating=true;
+  function renderAll(){
+    if(rendering)return;
+    rendering=true;
     try{
       installStyle();
       const root=document.getElementById('pane-chantiers');
-      if(!root)return;
-      root.querySelectorAll('.card').forEach(decorateCard);
-    }finally{
-      decorating=false;
-    }
+      if(root)root.querySelectorAll('.card').forEach(renderCard);
+    }finally{rendering=false;}
   }
 
   function endpoint(){
@@ -203,20 +156,12 @@
     let json;
     try{json=JSON.parse(txt);}catch(e){throw new Error('Réponse Yaya invalide');}
     if(!json||json.ok!==true)throw new Error((json&&json.error)||'Enregistrement impossible');
-    return json;
-  }
-
-  function refreshLocal(rows){
-    if(typeof S!=='undefined')S.commandes=rows;
-    try{if(typeof render==='function')render();else window.dispatchEvent(new Event('yaya:data-refreshed'));}
-    catch(e){window.dispatchEvent(new Event('yaya:data-refreshed'));}
-    setTimeout(decorate,60);
-    setTimeout(decorate,250);
   }
 
   function findCommande(id){
-    if(typeof S==='undefined'||!Array.isArray(S.commandes))return null;
-    return S.commandes.find(c=>String(c.id||'')===String(id))||null;
+    return typeof S!=='undefined'&&Array.isArray(S.commandes)
+      ? (S.commandes.find(c=>String(c.id||'')===String(id))||null)
+      : null;
   }
 
   function parseMontant(v){
@@ -224,86 +169,68 @@
     return Number.isFinite(n)?n:0;
   }
 
+  function refreshLocal(rows){
+    if(typeof S!=='undefined')S.commandes=rows;
+    try{if(typeof render==='function')render();}catch(e){}
+    setTimeout(renderAll,0);setTimeout(renderAll,80);setTimeout(renderAll,250);
+  }
+
   function openEdit(commande){
     document.querySelectorAll('.yaya-commande-edit-overlay').forEach(x=>x.remove());
     const overlay=document.createElement('div');
     overlay.className='yaya-commande-edit-overlay';
-    overlay.innerHTML=`
-      <div class="yaya-commande-edit-modal" role="dialog" aria-modal="true">
-        <h3>Modifier la commande</h3>
-        <label class="yaya-commande-edit-field">Fournisseur<input data-field="fournisseur" value="${esc(commande.fournisseur||'')}"></label>
-        <label class="yaya-commande-edit-field">Description<input data-field="designation" value="${esc(commande.designation||commande.pieceNom||'')}"></label>
-        <label class="yaya-commande-edit-field">Montant HT<input data-field="montantHT" inputmode="decimal" value="${esc(commande.montantHT||0)}"></label>
-        <label class="yaya-commande-edit-field">Date<input data-field="date" type="date" value="${esc(String(commande.date||'').slice(0,10))}"></label>
-        <div class="yaya-commande-edit-actions">
-          <button type="button" class="yaya-commande-cancel">Annuler</button>
-          <button type="button" class="yaya-commande-save">Enregistrer</button>
-        </div>
-      </div>`;
+    overlay.innerHTML='<div class="yaya-commande-edit-modal" role="dialog" aria-modal="true">'
+      +'<h3>Modifier la commande</h3>'
+      +'<label class="yaya-commande-edit-field">Fournisseur<input data-field="fournisseur" value="'+esc(commande.fournisseur||'')+'"></label>'
+      +'<label class="yaya-commande-edit-field">Description<input data-field="designation" value="'+esc(commande.designation||commande.pieceNom||'')+'"></label>'
+      +'<label class="yaya-commande-edit-field">Montant HT<input data-field="montantHT" inputmode="decimal" value="'+esc(commande.montantHT||0)+'"></label>'
+      +'<label class="yaya-commande-edit-field">Date<input data-field="date" type="date" value="'+esc(String(commande.date||'').slice(0,10))+'"></label>'
+      +'<div class="yaya-commande-edit-actions"><button type="button" class="yaya-commande-cancel">Annuler</button><button type="button" class="yaya-commande-save">Enregistrer</button></div></div>';
     document.body.appendChild(overlay);
-
     const close=()=>overlay.remove();
-    overlay.querySelector('.yaya-commande-cancel').addEventListener('click',close);
+    overlay.querySelector('.yaya-commande-cancel').onclick=close;
     overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
-    overlay.querySelector('.yaya-commande-save').addEventListener('click',async()=>{
-      const btn=overlay.querySelector('.yaya-commande-save');
-      btn.disabled=true;
+    overlay.querySelector('.yaya-commande-save').onclick=async function(){
+      const btn=this;btn.disabled=true;
       try{
-        const updated={
-          ...commande,
+        const updated=Object.assign({},commande,{
           fournisseur:String(overlay.querySelector('[data-field="fournisseur"]').value||'').trim(),
           designation:String(overlay.querySelector('[data-field="designation"]').value||'').trim(),
           montantHT:parseMontant(overlay.querySelector('[data-field="montantHT"]').value),
           date:String(overlay.querySelector('[data-field="date"]').value||'').trim()
-        };
+        });
         const next=(S.commandes||[]).map(c=>String(c.id||'')===String(updated.id)?updated:c);
-        await setCommandes(next);
-        close();
-        refreshLocal(next);
-      }catch(err){
-        btn.disabled=false;
-        alert('Modification impossible : '+String(err&&err.message||err));
-      }
-    });
+        await setCommandes(next);close();refreshLocal(next);
+      }catch(err){btn.disabled=false;alert('Modification impossible : '+String(err&&err.message||err));}
+    };
   }
 
   async function removeCommande(id){
-    const commande=findCommande(id);
-    if(!commande)return;
-    if(!confirm('Supprimer cette commande ?'))return;
+    if(!findCommande(id)||!confirm('Supprimer cette commande ?'))return;
     try{
       const next=(S.commandes||[]).filter(c=>String(c.id||'')!==String(id));
-      await setCommandes(next);
-      refreshLocal(next);
-    }catch(err){
-      alert('Suppression impossible : '+String(err&&err.message||err));
-    }
+      await setCommandes(next);refreshLocal(next);
+    }catch(err){alert('Suppression impossible : '+String(err&&err.message||err));}
   }
 
-  document.addEventListener('click',e=>{
-    const edit=e.target&&e.target.closest?e.target.closest('.yaya-detail-commande-edit'):null;
-    if(edit){
+  document.addEventListener('click',function(e){
+    const view=e.target.closest&&e.target.closest('.yaya-detail-commande-view');
+    if(view){
       e.preventDefault();e.stopPropagation();
-      const commande=findCommande(edit.dataset.commandeId);
-      if(commande)openEdit(commande);
+      const lien=String(view.dataset.lien||'');
+      if(lien){try{if(typeof voirPiece==='function')voirPiece(lien);else window.open(lien,'_blank','noopener,noreferrer');}catch(err){window.open(lien,'_blank','noopener,noreferrer');}}
       return;
     }
-    const del=e.target&&e.target.closest?e.target.closest('.yaya-detail-commande-delete'):null;
-    if(del){
-      e.preventDefault();e.stopPropagation();
-      removeCommande(del.dataset.commandeId);
-    }
+    const edit=e.target.closest&&e.target.closest('.yaya-detail-commande-edit');
+    if(edit){e.preventDefault();e.stopPropagation();const c=findCommande(edit.dataset.commandeId);if(c)openEdit(c);return;}
+    const del=e.target.closest&&e.target.closest('.yaya-detail-commande-delete');
+    if(del){e.preventDefault();e.stopPropagation();removeCommande(del.dataset.commandeId);}
   },true);
 
   installStyle();
-  decorate();
+  renderAll();
   const root=document.getElementById('pane-chantiers')||document.documentElement;
-  const obs=new MutationObserver(()=>{
-    clearTimeout(window.__yayaCommandeActionsTimer);
-    window.__yayaCommandeActionsTimer=setTimeout(decorate,0);
-  });
-  obs.observe(root,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',decorate);
-  setTimeout(decorate,100);
-  setTimeout(decorate,500);
+  new MutationObserver(function(){clearTimeout(window.__yayaCommandeRenderTimer);window.__yayaCommandeRenderTimer=setTimeout(renderAll,0);}).observe(root,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',renderAll);
+  setTimeout(renderAll,100);setTimeout(renderAll,500);
 })();
