@@ -114,10 +114,44 @@
   function loadCommandeActions(){
     document.querySelectorAll('script[data-yaya-commande-actions]').forEach(x=>x.remove());
     const s=document.createElement('script');
-    s.src='commande-actions.js?v=commande-actions-4';
+    s.src='commande-actions.js?v=commande-actions-5';
     s.async=false;
     s.setAttribute('data-yaya-commande-actions','1');
     document.head.appendChild(s);
   }
   setTimeout(loadCommandeActions,0);
+})();
+
+(function(){
+  'use strict';
+
+  let cleaning=false;
+
+  function cleanCommandeButtons(){
+    if(cleaning)return;
+    cleaning=true;
+    try{
+      document.querySelectorAll('.yaya-detail-commande-row').forEach(function(row){
+        row.querySelectorAll('button').forEach(function(btn){
+          if(!btn.closest('.yaya-commande-actions'))btn.remove();
+        });
+      });
+    }finally{
+      cleaning=false;
+    }
+  }
+
+  cleanCommandeButtons();
+
+  const root=document.getElementById('pane-chantiers')||document.documentElement;
+  const obs=new MutationObserver(function(){
+    clearTimeout(window.__yayaCommandeButtonCleanupTimer);
+    window.__yayaCommandeButtonCleanupTimer=setTimeout(cleanCommandeButtons,0);
+  });
+  obs.observe(root,{childList:true,subtree:true});
+
+  window.addEventListener('yaya:data-refreshed',cleanCommandeButtons);
+  setTimeout(cleanCommandeButtons,50);
+  setTimeout(cleanCommandeButtons,250);
+  setTimeout(cleanCommandeButtons,800);
 })();
