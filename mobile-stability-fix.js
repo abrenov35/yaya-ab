@@ -60,3 +60,12 @@
   s.setAttribute('data-yaya-devis-fast-modal','1');
   document.head.appendChild(s);
 })();
+
+(function(){
+  if(document.querySelector('script[data-yaya-upload-preprocess]'))return;
+  const s=document.createElement('script');
+  s.src='upload-preprocess-fast.js?v=uploadfast-1';
+  s.async=false;
+  s.setAttribute('data-yaya-upload-preprocess','1');
+  document.head.appendChild(s);
+})();
