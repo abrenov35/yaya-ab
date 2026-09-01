@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-market-view-link-fix-v1';
+  const STYLE_ID='yaya-market-view-link-fix-v2';
+  const DELETED='__YAYA_DEVIS_INITIAL_SUPPRIME__';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -68,8 +69,7 @@
         const texte=norm([d.type,d.titre,d.sujet,d.categorie,d.origine].filter(Boolean).join(' '));
         return texte.includes('DEVIS')||texte.includes('MARCHE');
       });
-      const tries=candidats.concat(docs);
-      for(const d of tries){
+      for(const d of candidats){
         const lien=firstLink(d);
         if(lien)return lien;
       }
@@ -84,6 +84,7 @@
       if(typeof S==='undefined')return '';
       if(kind==='main'&&Array.isArray(S.chantiers)){
         const c=S.chantiers.find(x=>String(x&&x.id)===String(rowId));
+        if(String(c&&c.notes||'')===DELETED)return '';
         return firstLink(c)||documentFallback(rowId);
       }
       if(kind==='avenant'&&Array.isArray(S.avenants)){
@@ -123,6 +124,7 @@
         },true);
       }
     }else{
+      view.dataset.lien='';
       view.dataset.yayaMarketLink='0';
       view.disabled=true;
       view.textContent='';
