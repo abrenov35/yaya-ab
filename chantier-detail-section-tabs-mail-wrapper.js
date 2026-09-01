@@ -18,6 +18,8 @@ rep("      if(small)small.style.display=key==='documents'?'none':'';","      if(
 rep("      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : (section?'0':'1');","      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : key==='mail'\n              ? (card.querySelectorAll('.message-ligne').length?'0':'1')\n              : (section?'0':'1');");
 (0,eval)(src+'\n//# sourceURL=chantier-detail-section-tabs-native-mail.js');
 
+window.__YAYA_DIRECT_LINK_VERSION='1.0';
+
 function ensureCommandeButton(){
   document.querySelectorAll('.yaya-detail-section-tabs').forEach(tabs=>{
     const marche=tabs.querySelector('.yaya-detail-section-tab[data-section="marche"]');
