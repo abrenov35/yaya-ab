@@ -114,94 +114,12 @@
   function loadCommandeActions(){
     document.querySelectorAll('script[data-yaya-commande-actions]').forEach(x=>x.remove());
     const s=document.createElement('script');
-    s.src='commande-actions.js?v=commande-actions-6';
+    s.src='commande-actions.js?v=commande-actions-7';
     s.async=false;
     s.setAttribute('data-yaya-commande-actions','1');
     document.head.appendChild(s);
   }
   setTimeout(loadCommandeActions,0);
-})();
-
-(function(){
-  'use strict';
-
-  let cleaning=false;
-
-  function cleanCommandeButtons(){
-    if(cleaning)return;
-    cleaning=true;
-    try{
-      document.querySelectorAll('.yaya-detail-commande-row').forEach(function(row){
-        row.querySelectorAll('button').forEach(function(btn){
-          if(!btn.closest('.yaya-commande-actions'))btn.remove();
-        });
-      });
-    }finally{
-      cleaning=false;
-    }
-  }
-
-  cleanCommandeButtons();
-
-  const root=document.getElementById('pane-chantiers')||document.documentElement;
-  const obs=new MutationObserver(function(){
-    clearTimeout(window.__yayaCommandeButtonCleanupTimer);
-    window.__yayaCommandeButtonCleanupTimer=setTimeout(cleanCommandeButtons,0);
-  });
-  obs.observe(root,{childList:true,subtree:true});
-
-  window.addEventListener('yaya:data-refreshed',cleanCommandeButtons);
-  setTimeout(cleanCommandeButtons,50);
-  setTimeout(cleanCommandeButtons,250);
-  setTimeout(cleanCommandeButtons,800);
-})();
-
-(function(){
-  'use strict';
-
-  const STYLE_ID='yaya-commande-eye-only-style';
-
-  function installEyeStyle(){
-    let s=document.getElementById(STYLE_ID);
-    if(!s){
-      s=document.createElement('style');
-      s.id=STYLE_ID;
-      document.head.appendChild(s);
-    }
-    s.textContent=`
-      .yaya-detail-commande-view{
-        font-size:16px!important;
-        line-height:1!important;
-        text-indent:0!important;
-      }
-      .yaya-detail-commande-view::before,
-      .yaya-detail-commande-view::after{
-        content:none!important;
-        display:none!important;
-      }
-    `;
-  }
-
-  function forceEyeOnly(){
-    installEyeStyle();
-    document.querySelectorAll('.yaya-detail-commande-view').forEach(function(btn){
-      if(btn.textContent!=='👁️')btn.textContent='👁️';
-      btn.title='Voir';
-      btn.setAttribute('aria-label','Voir');
-    });
-  }
-
-  forceEyeOnly();
-  const root=document.getElementById('pane-chantiers')||document.documentElement;
-  const obs=new MutationObserver(function(){
-    clearTimeout(window.__yayaCommandeEyeTimer);
-    window.__yayaCommandeEyeTimer=setTimeout(forceEyeOnly,0);
-  });
-  obs.observe(root,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',forceEyeOnly);
-  setTimeout(forceEyeOnly,50);
-  setTimeout(forceEyeOnly,250);
-  setTimeout(forceEyeOnly,800);
 })();
 
 (function(){
