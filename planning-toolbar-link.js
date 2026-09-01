@@ -59,13 +59,4 @@
   }
 
   install();
-
-  // Restauration de l'accès à la recherche de dossiers Dropbox / OneDrive.
-  if(!document.querySelector('script[data-yaya-dd-db-search]')){
-    const s=document.createElement('script');
-    s.src='dd-db-search-restore.js?v=20260901-2';
-    s.defer=true;
-    s.dataset.yayaDdDbSearch='1';
-    document.head.appendChild(s);
-  }
 })();
