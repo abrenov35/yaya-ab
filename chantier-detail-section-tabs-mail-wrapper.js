@@ -91,20 +91,6 @@ function yayaSyncDirectUrl(){
   }catch(e){}
 }
 
-// Synchronise automatiquement l'URL après chaque rendu de Yaya.
-try{
-  if(typeof render==='function'&&!render.__yayaDirectLinkWrapped){
-    const originalRender=render;
-    const wrappedRender=function(){
-      const result=originalRender.apply(this,arguments);
-      yayaSyncDirectUrl();
-      return result;
-    };
-    wrappedRender.__yayaDirectLinkWrapped=true;
-    render=wrappedRender;
-  }
-}catch(e){}
-
 function yayaOpenDirectChantier(){
   if(!yayaDirectPendingId)return true;
   try{
@@ -128,6 +114,13 @@ function yayaOpenDirectChantier(){
     return false;
   }
 }
+
+// La fiche ouverte pilote toujours l'URL : cela rend la copie directe fiable.
+const directStateObserver=new MutationObserver(()=>{
+  yayaSyncDirectUrl();
+  if(yayaDirectPendingId)yayaOpenDirectChantier();
+});
+directStateObserver.observe(document.documentElement,{childList:true,subtree:true});
 
 if(yayaDirectPendingId){
   yayaSetDirectUrl(yayaDirectPendingId);
