@@ -162,27 +162,30 @@
   const STYLE_ID='yaya-commande-eye-only-style';
 
   function installEyeStyle(){
-    if(document.getElementById(STYLE_ID))return;
-    const s=document.createElement('style');
-    s.id=STYLE_ID;
+    let s=document.getElementById(STYLE_ID);
+    if(!s){
+      s=document.createElement('style');
+      s.id=STYLE_ID;
+      document.head.appendChild(s);
+    }
     s.textContent=`
       .yaya-detail-commande-view{
-        font-size:15px!important;
+        font-size:16px!important;
         line-height:1!important;
         text-indent:0!important;
       }
-      .yaya-detail-commande-view::before{
+      .yaya-detail-commande-view::before,
+      .yaya-detail-commande-view::after{
         content:none!important;
         display:none!important;
       }
     `;
-    document.head.appendChild(s);
   }
 
   function forceEyeOnly(){
     installEyeStyle();
     document.querySelectorAll('.yaya-detail-commande-view').forEach(function(btn){
-      if(btn.textContent!=='👁')btn.textContent='👁';
+      if(btn.textContent!=='👁️')btn.textContent='👁️';
       btn.title='Voir';
       btn.setAttribute('aria-label','Voir');
     });
