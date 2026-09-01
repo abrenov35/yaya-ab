@@ -45,9 +45,7 @@
         white-space:nowrap!important;
         box-shadow:none!important;
       }
-      .hdr .tabs .yaya-hours-toolbar-btn:hover{
-        background:#3453a2!important;
-      }
+      .hdr .tabs .yaya-hours-toolbar-btn:hover{background:#3453a2!important}
       @media(max-width:760px){
         .hdr .tabs .yaya-hours-toolbar-btn{
           min-height:36px!important;
@@ -65,27 +63,21 @@
     try{
       const tabs=document.querySelector('.hdr .tabs');
       if(!tabs)return;
-
       removeMailTab(tabs);
-
       const buttons=[...document.querySelectorAll('button')].filter(isHoursButton);
       if(!buttons.length)return;
-
       let toolbarBtn=buttons.find(b=>tabs.contains(b));
       const outside=buttons.filter(b=>!tabs.contains(b));
-
       if(!toolbarBtn && outside.length){
         toolbarBtn=outside.shift();
         toolbarBtn.classList.add('tab','yaya-hours-toolbar-btn');
         toolbarBtn.setAttribute('data-yaya-hours-toolbar','1');
         tabs.appendChild(toolbarBtn);
       }
-
       if(toolbarBtn){
         toolbarBtn.classList.add('tab','yaya-hours-toolbar-btn');
         toolbarBtn.setAttribute('data-yaya-hours-toolbar','1');
       }
-
       outside.forEach(b=>b.remove());
       removeMailTab(tabs);
     }finally{
@@ -96,13 +88,11 @@
   function install(){
     installStyle();
     moveHours();
-
     const obs=new MutationObserver(()=>{
       clearTimeout(window.__yayaHoursToolbarTimer);
       window.__yayaHoursToolbarTimer=setTimeout(moveHours,0);
     });
     obs.observe(document.documentElement,{childList:true,subtree:true});
-
     setTimeout(moveHours,120);
     setTimeout(moveHours,500);
   }
@@ -121,10 +111,13 @@
 })();
 
 (function(){
-  if(document.querySelector('script[data-yaya-commande-actions]'))return;
-  const s=document.createElement('script');
-  s.src='commande-actions.js?v=commande-actions-1';
-  s.async=false;
-  s.setAttribute('data-yaya-commande-actions','1');
-  document.head.appendChild(s);
+  function loadCommandeActions(){
+    document.querySelectorAll('script[data-yaya-commande-actions]').forEach(x=>x.remove());
+    const s=document.createElement('script');
+    s.src='commande-actions.js?v=commande-actions-3';
+    s.async=false;
+    s.setAttribute('data-yaya-commande-actions','1');
+    document.head.appendChild(s);
+  }
+  setTimeout(loadCommandeActions,0);
 })();
