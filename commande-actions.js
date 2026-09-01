@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-commande-actions-style-v4';
+  const STYLE_ID='yaya-commande-actions-style-v6';
   let rendering=false;
 
   function esc(v){
@@ -82,8 +82,9 @@
         max-width:30px!important;margin:0!important;padding:0!important;border-radius:7px!important;
         font-size:14px!important;line-height:1!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;
       }
-      #pane-chantiers .yaya-detail-commande-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important;font-size:0!important}
-      #pane-chantiers .yaya-detail-commande-view::before{content:'👁︎'!important;font-size:15px!important;color:#174d7d!important}
+      #pane-chantiers .yaya-detail-commande-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important;font-size:16px!important}
+      #pane-chantiers .yaya-detail-commande-view::before,
+      #pane-chantiers .yaya-detail-commande-view::after{content:none!important;display:none!important}
       #pane-chantiers .yaya-detail-commande-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
       #pane-chantiers .yaya-detail-commande-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
       .yaya-commande-edit-overlay{position:fixed!important;inset:0!important;z-index:10050!important;background:rgba(22,45,73,.45)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important}
@@ -117,10 +118,25 @@
       +'<span class="yaya-commande-type">Commande</span>'
       +'<span class="yaya-commande-amount">'+esc(euro(c.montantHT))+'</span>'
       +'<span class="yaya-commande-actions">'
-      +'<button type="button" class="yaya-detail-commande-view" data-lien="'+esc(lien)+'" title="Voir" aria-label="Voir"'+(lien?'':' disabled')+'>Voir</button>'
+      +'<button type="button" class="yaya-detail-commande-view" data-lien="'+esc(lien)+'" title="Voir" aria-label="Voir"'+(lien?'':' disabled')+'>👁️</button>'
       +'<button type="button" class="yaya-detail-commande-edit" data-commande-id="'+esc(id)+'" title="Modifier" aria-label="Modifier">✏️</button>'
       +'<button type="button" class="yaya-detail-commande-delete" data-commande-id="'+esc(id)+'" title="Supprimer" aria-label="Supprimer">🗑️</button>'
       +'</span></div>';
+  }
+
+  function rowStructureOk(pane,rows){
+    const rendered=[...pane.querySelectorAll(':scope > .yaya-detail-commande-row')];
+    if(rendered.length!==rows.length)return false;
+    return rendered.every(function(row){
+      const actions=row.querySelector(':scope > .yaya-commande-actions');
+      if(!actions)return false;
+      if(actions.querySelectorAll(':scope > button').length!==3)return false;
+      return !!(
+        actions.querySelector(':scope > .yaya-detail-commande-view') &&
+        actions.querySelector(':scope > .yaya-detail-commande-edit') &&
+        actions.querySelector(':scope > .yaya-detail-commande-delete')
+      );
+    });
   }
 
   function renderCard(card){
@@ -128,7 +144,7 @@
     if(!pane)return;
     const rows=commandesFor(card);
     const sig=nativeSignature(rows);
-    if(pane.dataset.yayaCommandesRendered===sig && pane.querySelectorAll(':scope > .yaya-detail-commande-row').length===rows.length)return;
+    if(pane.dataset.yayaCommandesRendered===sig && rowStructureOk(pane,rows))return;
     pane.innerHTML=rows.map(rowHtml).join('');
     pane.dataset.empty=rows.length?'0':'1';
     pane.dataset.yayaCommandesRendered=sig;
