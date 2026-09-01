@@ -12,10 +12,14 @@
         padding:18px 12px!important;
       }
       .yaya-devis-fast-modal{
+        display:block!important;
         width:min(520px,calc(100vw - 24px))!important;
         max-width:520px!important;
+        height:auto!important;
+        max-height:calc(100dvh - 36px)!important;
         padding:18px!important;
         border-radius:12px!important;
+        overflow-y:auto!important;
         box-shadow:0 16px 50px rgba(15,30,50,.22)!important;
       }
       .yaya-devis-fast-head{
@@ -26,7 +30,12 @@
         margin:0 0 16px!important;
       }
       .yaya-devis-fast-head h5{
+        position:static!important;
+        min-height:0!important;
         margin:0!important;
+        padding:0!important;
+        border:0!important;
+        background:transparent!important;
         color:#374151!important;
         font-size:19px!important;
         font-weight:800!important;
@@ -142,9 +151,18 @@
       }
       @media(max-width:640px){
         .yaya-devis-fast-overlay{align-items:flex-start!important;padding:12px 8px!important;}
-        .yaya-devis-fast-modal{width:calc(100vw - 16px)!important;padding:14px!important;margin-top:max(8px,env(safe-area-inset-top))!important;}
+        .yaya-devis-fast-modal{
+          display:block!important;
+          width:calc(100vw - 16px)!important;
+          height:auto!important;
+          max-height:calc(100dvh - 24px)!important;
+          padding:14px!important;
+          margin-top:max(8px,env(safe-area-inset-top))!important;
+          border-radius:12px!important;
+          overflow-y:auto!important;
+        }
         .yaya-devis-fast-head{margin-bottom:13px!important;}
-        .yaya-devis-fast-head h5{font-size:18px!important;}
+        .yaya-devis-fast-head h5{position:static!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;font-size:18px!important;}
         .yaya-devis-fast-fields{gap:10px!important;}
         .yaya-devis-fast-field input{min-height:42px!important;font-size:16px!important;}
         .yaya-devis-fast-foot{margin-top:15px!important;}
