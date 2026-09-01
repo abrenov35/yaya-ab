@@ -50,10 +50,20 @@
       .yaya-detail-section-tab[data-section="commandes"]{background:#f5f1e5!important;border-color:#d7c690!important;color:#745e18!important}
       .yaya-detail-section-tab[data-section="commandes"] small{display:inline-flex!important;background:#ebe1bd!important}
       .yaya-detail-section-tab[data-section="commandes"].on{background:#eadfae!important;border-color:#b99b35!important;color:#59470f!important;box-shadow:inset 0 0 0 1px #b99b35!important}
+
+      /* Mode Commande : aucun autre contenu de section ne doit rester visible. */
+      .card.yaya-commandes-mode > .yaya-detail-section-node,
+      .card.yaya-commandes-mode > .yaya-detail-empty-pane,
+      .card.yaya-commandes-mode > .yaya-detail-mails-pane,
+      .card.yaya-commandes-mode > .message-ligne,
+      .card.yaya-commandes-mode > [data-section="mail"]{
+        display:none!important;
+      }
+
       .yaya-detail-commandes-pane{display:none!important;margin:0 0 8px!important}
-      .yaya-detail-commandes-pane.yaya-commandes-visible{display:block!important}
+      .card.yaya-commandes-mode > .yaya-detail-commandes-pane.yaya-commandes-visible{display:block!important}
       .yaya-detail-commandes-empty{display:none!important;padding:20px 14px!important;margin:0 0 8px!important;border:1px dashed #cbd5e1!important;border-radius:8px!important;background:#fafbfd!important;color:#718096!important;font-size:12.5px!important;text-align:center!important}
-      .yaya-detail-commandes-empty.yaya-commandes-visible{display:block!important}
+      .card.yaya-commandes-mode > .yaya-detail-commandes-empty.yaya-commandes-visible{display:block!important}
       .yaya-detail-commande-row{display:grid!important;grid-template-columns:minmax(130px,1fr) minmax(180px,2fr) 95px 82px 32px!important;align-items:center!important;gap:10px!important;min-height:38px!important;padding:7px 12px!important;border-bottom:1px solid #e6ebf1!important;font-size:13px!important}
       .yaya-detail-commande-row:last-child{border-bottom:0!important}
       .yaya-detail-commande-row strong{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#1c2b48!important}
@@ -91,6 +101,8 @@
     }).join('');
     pane._yayaRowsSignature=signature;
     pane.querySelectorAll('.yaya-detail-commande-view:not(:disabled)').forEach(btn=>{
+      if(btn._yayaBound)return;
+      btn._yayaBound=true;
       btn.addEventListener('click',e=>{
         e.preventDefault();e.stopPropagation();
         const lien=String(btn.dataset.lien||'');
@@ -149,6 +161,7 @@
 
   function hideCommandes(card){
     if(!card)return;
+    card.classList.remove('yaya-commandes-mode');
     const pane=card.querySelector(':scope > .yaya-detail-commandes-pane');
     const empty=card.querySelector(':scope > .yaya-detail-commandes-empty');
     if(pane)pane.classList.remove('yaya-commandes-visible');
@@ -158,12 +171,13 @@
   function activate(card){
     if(!card)return;
     ensureCard(card);
+    card.classList.add('yaya-commandes-mode');
+    card.dataset.yayaDetailSection='commandes';
+
     const rows=commandesFor(card);
     const pane=card.querySelector(':scope > .yaya-detail-commandes-pane');
     const empty=card.querySelector(':scope > .yaya-detail-commandes-empty');
 
-    card.querySelectorAll(':scope > .yaya-detail-section-node').forEach(node=>node.style.setProperty('display','none','important'));
-    card.querySelectorAll(':scope > .yaya-detail-empty-pane').forEach(node=>node.style.setProperty('display','none','important'));
     card.querySelectorAll(':scope > .yaya-detail-section-tabs .yaya-detail-section-tab').forEach(btn=>{
       const on=btn.dataset.section==='commandes';
       btn.classList.toggle('on',on);
