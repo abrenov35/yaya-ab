@@ -51,3 +51,12 @@
   s.setAttribute('data-yaya-commande-actions','1');
   document.head.appendChild(s);
 })();
+
+(function(){
+  if(document.querySelector('script[data-yaya-devis-fast-modal]'))return;
+  const s=document.createElement('script');
+  s.src='devis-edit-fast-modal.js?v=devisfast-1';
+  s.async=false;
+  s.setAttribute('data-yaya-devis-fast-modal','1');
+  document.head.appendChild(s);
+})();
