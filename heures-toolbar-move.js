@@ -119,3 +119,12 @@
   s.setAttribute('data-yaya-achat-st-modal-fix','1');
   document.head.appendChild(s);
 })();
+
+(function(){
+  if(document.querySelector('script[data-yaya-commande-actions]'))return;
+  const s=document.createElement('script');
+  s.src='commande-actions.js?v=commande-actions-1';
+  s.async=false;
+  s.setAttribute('data-yaya-commande-actions','1');
+  document.head.appendChild(s);
+})();
