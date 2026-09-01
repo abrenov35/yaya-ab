@@ -114,7 +114,7 @@
   function loadCommandeActions(){
     document.querySelectorAll('script[data-yaya-commande-actions]').forEach(x=>x.remove());
     const s=document.createElement('script');
-    s.src='commande-actions.js?v=commande-actions-3';
+    s.src='commande-actions.js?v=commande-actions-4';
     s.async=false;
     s.setAttribute('data-yaya-commande-actions','1');
     document.head.appendChild(s);
