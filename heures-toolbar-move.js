@@ -231,8 +231,17 @@
     if(typeof S==='undefined'||!Array.isArray(S.commandes))return;
 
     document.querySelectorAll('.yaya-detail-commandes-pane .yaya-detail-commande-row').forEach(function(row){
-      const actions=row.querySelector('.yaya-commande-actions');
-      if(!actions)return;
+      let actions=row.querySelector('.yaya-commande-actions');
+      if(!actions){
+        actions=document.createElement('span');
+        actions.className='yaya-commande-actions';
+        row.appendChild(actions);
+      }
+
+      [...row.querySelectorAll(':scope > button')].forEach(function(button){
+        actions.appendChild(button);
+      });
+
       if(actions.querySelectorAll(':scope > button').length===3)return;
 
       const strong=row.querySelector('strong');
