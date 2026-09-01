@@ -168,3 +168,114 @@
   setTimeout(forceMarcheEyeColor,250);
   setTimeout(forceMarcheEyeColor,800);
 })();
+
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-native-commande-actions-style';
+
+  function norm(v){
+    return String(v||'').trim().toUpperCase();
+  }
+
+  function frDate(v){
+    const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(v||'');
+  }
+
+  function installStyle(){
+    let st=document.getElementById(STYLE_ID);
+    if(!st){
+      st=document.createElement('style');
+      st.id=STYLE_ID;
+      document.head.appendChild(st);
+    }
+    st.textContent=`
+      .yaya-commande-actions{
+        display:flex!important;
+        justify-content:flex-end!important;
+        align-items:center!important;
+        gap:6px!important;
+      }
+      .yaya-commande-actions button{
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        width:30px!important;
+        height:30px!important;
+        min-width:30px!important;
+        padding:0!important;
+        border-radius:7px!important;
+        font-size:15px!important;
+      }
+      .yaya-detail-commande-view::before,
+      .yaya-detail-commande-view::after{
+        content:none!important;
+        display:none!important;
+      }
+    `;
+  }
+
+  function makeButton(cls,title,text){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className=cls;
+    b.title=title;
+    b.setAttribute('aria-label',title);
+    b.textContent=text;
+    return b;
+  }
+
+  function restoreNativeCommandeActions(){
+    installStyle();
+    if(typeof S==='undefined'||!Array.isArray(S.commandes))return;
+
+    document.querySelectorAll('.yaya-detail-commandes-pane .yaya-detail-commande-row').forEach(function(row){
+      const actions=row.querySelector('.yaya-commande-actions');
+      if(!actions)return;
+      if(actions.querySelectorAll(':scope > button').length===3)return;
+
+      const strong=row.querySelector('strong');
+      const fournisseur=norm(strong&&strong.childNodes&&strong.childNodes[0] ? strong.childNodes[0].textContent : '');
+      const costNode=row.querySelector('.yaya-detail-charge-cost, .yaya-commande-amount');
+      const montant=parseFloat(String(costNode&&costNode.textContent||'').replace(/[^\d,.-]/g,'').replace(',','.'))||0;
+      const dateNode=row.querySelector('.yaya-history-date, .yaya-commande-date');
+      const date=String(dateNode&&dateNode.textContent||'').trim();
+
+      const commande=S.commandes.find(function(c){
+        return norm(c.fournisseur)===fournisseur &&
+          Number(c.montantHT||0)===montant &&
+          frDate(c.date)===date;
+      });
+      if(!commande)return;
+
+      const lien=String(commande.lien||commande.oneDriveWebUrl||'');
+      const id=String(commande.id||'');
+      actions.innerHTML='';
+
+      const eye=makeButton('yaya-detail-commande-view','Voir','👁️');
+      eye.dataset.lien=lien;
+      if(!lien)eye.disabled=true;
+
+      const edit=makeButton('yaya-detail-commande-edit','Modifier','✏️');
+      edit.dataset.commandeId=id;
+
+      const del=makeButton('yaya-detail-commande-delete','Supprimer','🗑️');
+      del.dataset.commandeId=id;
+
+      actions.append(eye,edit,del);
+    });
+  }
+
+  restoreNativeCommandeActions();
+  const root=document.getElementById('pane-chantiers')||document.documentElement;
+  const obs=new MutationObserver(function(){
+    clearTimeout(window.__yayaRestoreCommandeActionsTimer);
+    window.__yayaRestoreCommandeActionsTimer=setTimeout(restoreNativeCommandeActions,0);
+  });
+  obs.observe(root,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',restoreNativeCommandeActions);
+  setTimeout(restoreNativeCommandeActions,50);
+  setTimeout(restoreNativeCommandeActions,250);
+  setTimeout(restoreNativeCommandeActions,800);
+})();
