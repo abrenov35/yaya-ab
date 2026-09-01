@@ -3,6 +3,7 @@
 
   const STYLE_ID='yaya-hours-toolbar-move-style';
   let syncing=false;
+  let moveTimer=0;
 
   function norm(v){
     return String(v||'')
@@ -85,15 +86,31 @@
     }
   }
 
+  function scheduleMove(delay){
+    clearTimeout(moveTimer);
+    moveTimer=setTimeout(moveHours,Number(delay)||0);
+  }
+
   function install(){
     installStyle();
     moveHours();
-    const obs=new MutationObserver(()=>{
-      clearTimeout(window.__yayaHoursToolbarTimer);
-      window.__yayaHoursToolbarTimer=setTimeout(moveHours,0);
-    });
-    obs.observe(document.documentElement,{childList:true,subtree:true});
-    setTimeout(moveHours,120);
+
+    // La barre d'en-tête est la seule zone qui nous intéresse ici.
+    // On évite de surveiller document.documentElement en permanence.
+    const header=document.querySelector('.hdr');
+    if(header){
+      const obs=new MutationObserver(function(records){
+        if(records.some(r=>r.addedNodes.length||r.removedNodes.length))scheduleMove(0);
+      });
+      obs.observe(header,{childList:true,subtree:true});
+    }
+
+    window.addEventListener('yaya:data-refreshed',function(){scheduleMove(0);});
+    document.addEventListener('click',function(e){
+      if(e.target&&e.target.closest&&e.target.closest('.hdr .tabs button'))scheduleMove(0);
+    },true);
+
+    scheduleMove(120);
     setTimeout(moveHours,500);
   }
 
@@ -114,6 +131,7 @@
   'use strict';
 
   const STYLE_ID='yaya-marche-eye-color-style';
+  let eyeTimer=0;
 
   function installMarcheEyeStyle(){
     let s=document.getElementById(STYLE_ID);
@@ -144,15 +162,21 @@
     });
   }
 
+  function scheduleEye(delay){
+    clearTimeout(eyeTimer);
+    eyeTimer=setTimeout(forceMarcheEyeColor,Number(delay)||0);
+  }
+
   forceMarcheEyeColor();
-  const root=document.getElementById('pane-chantiers')||document.documentElement;
-  const obs=new MutationObserver(function(){
-    clearTimeout(window.__yayaMarcheEyeTimer);
-    window.__yayaMarcheEyeTimer=setTimeout(forceMarcheEyeColor,0);
-  });
-  obs.observe(root,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',forceMarcheEyeColor);
-  setTimeout(forceMarcheEyeColor,50);
+
+  // Plus de MutationObserver sur tout #pane-chantiers : on agit uniquement
+  // lors d'un rafraîchissement de données ou quand l'onglet Marché est ouvert.
+  window.addEventListener('yaya:data-refreshed',function(){scheduleEye(0);});
+  document.addEventListener('click',function(e){
+    const tab=e.target&&e.target.closest?e.target.closest('.yaya-detail-section-tab[data-section="marche"]'):null;
+    if(tab)scheduleEye(0);
+  },true);
+
+  scheduleEye(50);
   setTimeout(forceMarcheEyeColor,250);
-  setTimeout(forceMarcheEyeColor,800);
 })();
