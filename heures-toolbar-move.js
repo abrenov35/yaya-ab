@@ -279,3 +279,61 @@
   setTimeout(restoreNativeCommandeActions,250);
   setTimeout(restoreNativeCommandeActions,800);
 })();
+
+(function(){
+  'use strict';
+  const STYLE_ID='yaya-commande-actions-position-final';
+  let st=document.getElementById(STYLE_ID);
+  if(!st){
+    st=document.createElement('style');
+    st.id=STYLE_ID;
+    document.head.appendChild(st);
+  }
+  st.textContent=`
+    .yaya-detail-commande-row{
+      display:grid!important;
+      grid-template-columns:minmax(0,1fr) 105px 90px 110px!important;
+      align-items:center!important;
+      gap:12px!important;
+    }
+    .yaya-detail-commande-row .yaya-commande-actions{
+      grid-column:4!important;
+      display:flex!important;
+      flex-direction:row!important;
+      align-items:center!important;
+      justify-content:flex-end!important;
+      gap:6px!important;
+      position:static!important;
+      width:110px!important;
+      margin:0!important;
+      padding:0!important;
+    }
+    .yaya-detail-commande-row .yaya-commande-actions > button,
+    .yaya-detail-commande-row .yaya-detail-charge-edit,
+    .yaya-detail-commande-row .yaya-detail-charge-delete,
+    .yaya-detail-commande-row .yaya-detail-charge-view{
+      position:static!important;
+      top:auto!important;
+      right:auto!important;
+      bottom:auto!important;
+      left:auto!important;
+      transform:none!important;
+      float:none!important;
+      margin:0!important;
+      flex:0 0 30px!important;
+      width:30px!important;
+      height:30px!important;
+      min-width:30px!important;
+      min-height:30px!important;
+      padding:0!important;
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+    }
+    .yaya-detail-commande-view::before,
+    .yaya-detail-commande-view::after{
+      content:none!important;
+      display:none!important;
+    }
+  `;
+})();
