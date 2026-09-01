@@ -155,3 +155,48 @@
   setTimeout(cleanCommandeButtons,250);
   setTimeout(cleanCommandeButtons,800);
 })();
+
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-commande-eye-only-style';
+
+  function installEyeStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const s=document.createElement('style');
+    s.id=STYLE_ID;
+    s.textContent=`
+      .yaya-detail-commande-view{
+        font-size:15px!important;
+        line-height:1!important;
+        text-indent:0!important;
+      }
+      .yaya-detail-commande-view::before{
+        content:none!important;
+        display:none!important;
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function forceEyeOnly(){
+    installEyeStyle();
+    document.querySelectorAll('.yaya-detail-commande-view').forEach(function(btn){
+      if(btn.textContent!=='👁')btn.textContent='👁';
+      btn.title='Voir';
+      btn.setAttribute('aria-label','Voir');
+    });
+  }
+
+  forceEyeOnly();
+  const root=document.getElementById('pane-chantiers')||document.documentElement;
+  const obs=new MutationObserver(function(){
+    clearTimeout(window.__yayaCommandeEyeTimer);
+    window.__yayaCommandeEyeTimer=setTimeout(forceEyeOnly,0);
+  });
+  obs.observe(root,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',forceEyeOnly);
+  setTimeout(forceEyeOnly,50);
+  setTimeout(forceEyeOnly,250);
+  setTimeout(forceEyeOnly,800);
+})();
