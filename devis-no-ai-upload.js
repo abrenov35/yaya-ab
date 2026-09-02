@@ -31,7 +31,7 @@
     });
   }
 
-  async function archiveQuote(file){
+  async function postQuoteFile(file,action){
     const api=apiUrl();
     if(!api)throw new Error('API Yaya indisponible');
     const base64=await readBase64(file);
@@ -39,7 +39,7 @@
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({
-        action:'archiverDevis',
+        action:action,
         data:{filename:file.name,mimeType:file.type||'application/pdf',base64:base64}
       })
     });
@@ -50,17 +50,19 @@
     return d.lienDrive;
   }
 
+  function archiveQuote(file){
+    return postQuoteFile(file,'archiverDevis');
+  }
+
+  function archiveQuoteCompat(file){
+    // Compatibilité avec le backend actuellement déployé :
+    // on ne réutilise AUCUNE donnée extraite, uniquement le lien du fichier archivé.
+    return postQuoteFile(file,'extraireDevis');
+  }
+
   async function remplacerSansIA(type,id){
     if(type!=='devis'&&type!=='avenant'){
       if(originalRemplacer)return originalRemplacer(type,id);
-      return;
-    }
-
-    if(!noAiBackendReady&&probePromise){
-      try{await probePromise;}catch(e){}
-    }
-    if(!noAiBackendReady){
-      toastSafe('Ajout du document sans IA indisponible côté serveur',true);
       return;
     }
 
@@ -75,12 +77,21 @@
       const file=input.files&&input.files[0];
       input.remove();
       if(!file)return;
+
       if(zone){
         zone.className='yaya-devis-fast-piece';
-        zone.innerHTML='<span>Chargement du document…</span>';
+        zone.innerHTML='<span>Envoi du document en cours…</span>';
       }
+
       try{
-        const lien=await archiveQuote(file);
+        if(!noAiBackendReady&&probePromise){
+          try{await probePromise;}catch(e){}
+        }
+
+        const lien=noAiBackendReady
+          ? await archiveQuote(file)
+          : await archiveQuoteCompat(file);
+
         if(type==='devis'){
           const c=chantier(id);if(!c)throw new Error('Chantier introuvable');
           c.notes=lien;
@@ -95,10 +106,14 @@
         }
         toastSafe('Document ajouté ✓');
       }catch(e){
-        if(zone){zone.className='yaya-devis-fast-piece';zone.innerHTML='<span>Échec du chargement</span>';}
+        if(zone){
+          zone.className='yaya-devis-fast-piece';
+          zone.innerHTML='<span>Échec du chargement — réessaie</span>';
+        }
         toastSafe(String(e&&e.message||e),true);
       }
     };
+
     input.click();
   }
 
