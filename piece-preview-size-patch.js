@@ -27,6 +27,11 @@
       const r=img.getBoundingClientRect();
       if(r.width>=120&&r.height>=120)return r;
     }
+    const frame=modal.querySelector('.yaya-drive-fit-frame');
+    if(frame){
+      const r=frame.getBoundingClientRect();
+      if(r.width>=120&&r.height>=120)return r;
+    }
     return null;
   }
 
@@ -116,12 +121,21 @@
     const stage=modal.querySelector('.piece-preview-stage');
     if(stage){
       stage.style.setProperty('border-radius',full?'5px':'7px','important');
-      stage.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
+      stage.style.setProperty('cursor',full?'default':'zoom-in','important');
     }
 
     modal.querySelectorAll('.piece-pdf-page,.piece-pdf-page canvas,.piece-image-stage img,.piece-drive-pages-stage img').forEach(function(el){
       el.style.setProperty('cursor',full?'zoom-out':'zoom-in','important');
     });
+
+    // Avec le lecteur Drive direct, les clics restent à l'intérieur de l'iframe.
+    // Cette couche capte uniquement le premier clic pour agrandir la vue, puis
+    // se désactive afin de laisser l'iframe Drive totalement utilisable.
+    const driveHit=modal.querySelector('.yaya-drive-zoom-hit');
+    if(driveHit){
+      driveHit.style.setProperty('pointer-events',full?'none':'auto','important');
+      driveHit.style.setProperty('cursor',full?'default':'zoom-in','important');
+    }
 
     return changed;
   }
@@ -182,7 +196,7 @@
     root.dataset.yayaPreviewInteractions='1';
 
     root.addEventListener('click',function(e){
-      const target=e.target&&e.target.closest?e.target.closest('.piece-pdf-page,.piece-image-stage img,.piece-drive-pages-stage img'):null;
+      const target=e.target&&e.target.closest?e.target.closest('.piece-pdf-page,.piece-image-stage img,.piece-drive-pages-stage img,.yaya-drive-zoom-hit'):null;
       if(!target)return;
       const modal=target.closest('.piece-preview-modal');
       if(!modal)return;
@@ -198,6 +212,15 @@
         setTimeout(function(){fitCurrentModal(false);},30);
       }
     },true);
+
+    root.addEventListener('keydown',function(e){
+      const target=e.target&&e.target.closest?e.target.closest('.yaya-drive-zoom-hit'):null;
+      if(!target||!(e.key==='Enter'||e.key===' '))return;
+      const modal=target.closest('.piece-preview-modal');
+      if(!modal)return;
+      e.preventDefault();
+      toggleFullscreen(modal,true);
+    });
 
     window.addEventListener('keydown',function(e){
       if(e.key!=='Escape')return;
