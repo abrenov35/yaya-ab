@@ -65,13 +65,152 @@
     });
   }
 
-  function bindSyntheticSearch(input){if(!input||input.dataset.yayaSearchBound==='1')return;input.dataset.yayaSearchBound='1';input.addEventListener('input',()=>{try{filtreChantier=input.value;}catch(e){}try{if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.clear==='function')expChantiers.clear();}catch(e){}if(typeof window.renderChantiers==='function')window.renderChantiers();});}
-  function ensureSingleSearch(pane){
-    const inputs=[...pane.querySelectorAll('#filtreInput')];let input=inputs[0]||null;inputs.slice(1).forEach(el=>{const parent=el.parentElement;el.remove();if(parent&&parent.classList&&parent.classList.contains('yaya-search-wrap')&&!parent.querySelector('#filtreInput'))parent.remove();});
-    if(!input){input=document.createElement('input');input.id='filtreInput';input.className='inp';input.type='search';input.autocomplete='off';input.placeholder='Rechercher un chantier...';try{input.value=String(filtreChantier||'');}catch(e){input.value='';}bindSyntheticSearch(input);}
-    let wrap=input.closest('.yaya-search-wrap');if(!wrap){const previousParent=input.parentElement;wrap=document.createElement('div');wrap.className='yaya-search-wrap';if(previousParent)previousParent.insertBefore(wrap,input);wrap.appendChild(input);if(previousParent&&previousParent!==pane){[...previousParent.querySelectorAll(':scope > span')].forEach(el=>{const t=String(el.textContent||'').trim();if(t==='🔍'||t==='🔎'||t==='⌕')el.remove();});if(previousParent.children.length===0&&!String(previousParent.textContent||'').trim())previousParent.remove();}}
-    wrap.querySelectorAll('.yaya-search-icon').forEach(el=>el.remove());return wrap;
+  let yayaSearchFrame = null;
+
+function normaliserRechercheChantier(v){
+  return String(v || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .trim();
+}
+
+function filtrerCartesChantiers(valeur){
+  const q = normaliserRechercheChantier(valeur);
+
+  document
+    .querySelectorAll('#pane-chantiers > .card')
+    .forEach(function(card){
+
+      const top = card.querySelector('.top');
+
+      const texte = normaliserRechercheChantier(
+        top ? top.textContent : card.textContent
+      );
+
+      card.style.display =
+        !q || texte.includes(q)
+          ? ''
+          : 'none';
+    });
+}
+
+function bindSyntheticSearch(input){
+  if(!input) return;
+
+  // Supprime l'ancien oninput qui recréait toute la page
+  input.oninput = null;
+  input.removeAttribute('oninput');
+  input.removeAttribute('onchange');
+
+  if(input.dataset.yayaSearchBound === '1') return;
+
+  input.dataset.yayaSearchBound = '1';
+
+  input.addEventListener('input', function(){
+
+    const valeur = input.value;
+
+    try{
+      filtreChantier = valeur;
+    }catch(e){}
+
+    if(yayaSearchFrame){
+      cancelAnimationFrame(yayaSearchFrame);
+    }
+
+    yayaSearchFrame = requestAnimationFrame(function(){
+      filtrerCartesChantiers(valeur);
+    });
+  });
+}
+
+function ensureSingleSearch(pane){
+
+  const inputs = [...pane.querySelectorAll('#filtreInput')];
+
+  let input = inputs[0] || null;
+
+  inputs.slice(1).forEach(function(el){
+
+    const parent = el.parentElement;
+
+    el.remove();
+
+    if(
+      parent &&
+      parent.classList &&
+      parent.classList.contains('yaya-search-wrap') &&
+      !parent.querySelector('#filtreInput')
+    ){
+      parent.remove();
+    }
+  });
+
+  if(!input){
+
+    input = document.createElement('input');
+
+    input.id = 'filtreInput';
+    input.className = 'inp';
+    input.type = 'search';
+    input.autocomplete = 'off';
+    input.placeholder = 'Rechercher un chantier...';
+
+    try{
+      input.value = String(filtreChantier || '');
+    }catch(e){
+      input.value = '';
+    }
   }
+
+  // Important : appliqué même si le champ existait déjà
+  bindSyntheticSearch(input);
+
+  let wrap = input.closest('.yaya-search-wrap');
+
+  if(!wrap){
+
+    const previousParent = input.parentElement;
+
+    wrap = document.createElement('div');
+    wrap.className = 'yaya-search-wrap';
+
+    if(previousParent){
+      previousParent.insertBefore(wrap,input);
+    }
+
+    wrap.appendChild(input);
+
+    if(previousParent && previousParent !== pane){
+
+      [...previousParent.querySelectorAll(':scope > span')]
+        .forEach(function(el){
+
+          const t = String(el.textContent || '').trim();
+
+          if(t === '🔍' || t === '🔎' || t === '⌕'){
+            el.remove();
+          }
+        });
+
+      if(
+        previousParent.children.length === 0 &&
+        !String(previousParent.textContent || '').trim()
+      ){
+        previousParent.remove();
+      }
+    }
+  }
+
+  wrap
+    .querySelectorAll('.yaya-search-icon')
+    .forEach(function(el){
+      el.remove();
+    });
+
+  return wrap;
+}
 
   function syncMainLine(){
     const pane=document.getElementById('pane-chantiers');if(!pane)return;removeOrphanSearchIcons(pane);
