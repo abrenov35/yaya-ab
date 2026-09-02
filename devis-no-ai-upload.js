@@ -1,8 +1,7 @@
 (function(){
   'use strict';
 
-  let noAiBackendReady=false;
-  let probePromise=null;
+  let uploading=false;
   const nativeFetch=window.fetch.bind(window);
   const originalRemplacer=typeof window.remplacerPJ==='function'?window.remplacerPJ:null;
 
@@ -44,7 +43,11 @@
       })
     });
     const j=await resp.json();
-    if(!j||!j.ok)throw new Error(j&&j.error?j.error:'Archivage impossible');
+    if(!j||!j.ok){
+      const message=j&&j.error?j.error:'Archivage impossible';
+      if(/action inconnue.*archiverDevis/i.test(message))throw new Error('Le serveur Yaya doit être mis à jour pour joindre les devis sans IA.');
+      throw new Error(message);
+    }
     const d=j.data||{};
     if(!d.lienDrive)throw new Error(d.archiveErreur||'Fichier non archivé');
     return d.lienDrive;
@@ -54,19 +57,15 @@
     return postQuoteFile(file,'archiverDevis');
   }
 
-  function archiveQuoteCompat(file){
-    // Compatibilité avec le backend actuellement déployé :
-    // on ne réutilise AUCUNE donnée extraite, uniquement le lien du fichier archivé.
-    return postQuoteFile(file,'extraireDevis');
-  }
-
   async function remplacerSansIA(type,id){
     if(type!=='devis'&&type!=='avenant'){
       if(originalRemplacer)return originalRemplacer(type,id);
       return;
     }
 
+    if(uploading){toastSafe('Un document est déjà en cours d’envoi');return;}
     const zone=document.getElementById('pj-zone');
+    const modal=zone&&zone.closest('.modal');
     const input=document.createElement('input');
     input.type='file';
     input.accept='application/pdf,image/*';
@@ -77,32 +76,39 @@
       const file=input.files&&input.files[0];
       input.remove();
       if(!file)return;
+      if(uploading)return;
+      if(file.size>8*1024*1024){toastSafe('Fichier trop lourd (8 Mo max)',true);return;}
+      uploading=true;
+      const save=modal&&modal.querySelector('#yayaFastSave');
+      if(save)save.disabled=true;
+      function reopen(edit){
+        if(!modal||!modal.isConnected||typeof edit!=='function')return;
+        const draft=Array.from(modal.querySelectorAll('input[id]')).map(function(el){return {id:el.id,value:el.value};});
+        edit(id);
+        draft.forEach(function(saved){const el=document.getElementById(saved.id);if(el)el.value=saved.value;});
+      }
 
       if(zone){
-        zone.className='yaya-devis-fast-piece';
+        zone.className='scan-zone';
         zone.innerHTML='<span>Envoi du document en cours…</span>';
       }
 
       try{
-        if(!noAiBackendReady&&probePromise){
-          try{await probePromise;}catch(e){}
-        }
-
-        const lien=noAiBackendReady
-          ? await archiveQuote(file)
-          : await archiveQuoteCompat(file);
+        const lien=await archiveQuote(file);
 
         if(type==='devis'){
           const c=chantier(id);if(!c)throw new Error('Chantier introuvable');
-          c.notes=lien;
-          if(typeof apiPost!=='function'||!await apiPost('setChantiers',S.chantiers))throw new Error('Enregistrement impossible');
-          if(typeof editMontantDevis==='function')editMontantDevis(id);
+          const previous=c.notes;c.notes=lien;
+          try{if(typeof apiPost!=='function'||!await apiPost('setChantiers',S.chantiers))throw new Error('Enregistrement impossible');}
+          catch(error){c.notes=previous;throw error;}
+          if(typeof editMontantDevis==='function')reopen(editMontantDevis);
         }else{
           const v=avenant(id);if(!v)throw new Error('Devis introuvable');
-          v.lien=lien;
-          if(typeof apiPost!=='function'||!await apiPost('setAvenants',S.avenants))throw new Error('Enregistrement impossible');
-          if(typeof editAvenantComplet==='function')editAvenantComplet(id);
-          else if(typeof editMontantAvenant==='function')editMontantAvenant(id);
+          const previous=v.lien;v.lien=lien;
+          try{if(typeof apiPost!=='function'||!await apiPost('setAvenants',S.avenants))throw new Error('Enregistrement impossible');}
+          catch(error){v.lien=previous;throw error;}
+          if(typeof editAvenantComplet==='function')reopen(editAvenantComplet);
+          else if(typeof editMontantAvenant==='function')reopen(editMontantAvenant);
         }
         toastSafe('Document ajouté ✓');
       }catch(e){
@@ -111,6 +117,8 @@
           zone.innerHTML='<span>Échec du chargement — réessaie</span>';
         }
         toastSafe(String(e&&e.message||e),true);
+      }finally{
+        uploading=false;if(save)save.disabled=false;
       }
     };
 
@@ -121,7 +129,7 @@
     if(window.__yayaNoAiFetchInstalled)return;
     window.__yayaNoAiFetchInstalled=true;
     window.fetch=function(input,init){
-      if(noAiBackendReady&&init&&typeof init.body==='string'){
+      if(typeof input==='string'&&input===apiUrl()&&init&&typeof init.body==='string'){
         try{
           const body=JSON.parse(init.body);
           if(body&&body.action==='extraireDevis'){
@@ -140,7 +148,6 @@
   }
 
   function cleanAiLabels(root){
-    if(!noAiBackendReady)return;
     (root||document).querySelectorAll('.scan-zone,.scan-ok,#avEtat,#chEtat,#pj-zone').forEach(function(el){
       const txt=String(el.textContent||'');
       if(/scan ia|analyse ia|analyse du document|lecture ia/i.test(txt)){
@@ -152,33 +159,14 @@
     });
   }
 
-  async function probe(){
-    const api=apiUrl();
-    if(!api)return false;
-    try{
-      const resp=await nativeFetch(api,{
-        method:'POST',
-        headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({action:'archiverDevis',data:{probe:true}})
-      });
-      const j=await resp.json();
-      noAiBackendReady=!!(j&&j.ok&&j.data&&j.data.supported);
-    }catch(e){
-      noAiBackendReady=false;
-    }
-    if(noAiBackendReady)cleanAiLabels(document);
-    return noAiBackendReady;
-  }
-
   installFetchRewrite();
   installReplace();
-  probePromise=probe();
   new MutationObserver(function(){
     installReplace();
-    if(noAiBackendReady)cleanAiLabels(document);
+    cleanAiLabels(document);
   }).observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',function(){
     installReplace();
-    if(noAiBackendReady)cleanAiLabels(document);
+    cleanAiLabels(document);
   });
 })();
