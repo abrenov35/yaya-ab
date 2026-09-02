@@ -39,21 +39,25 @@
 
     head.append(title,close);
 
+    // Lecteur Drive DIRECT.
+    // Important : on ne lui applique plus le redimensionnement/scale du vieux
+    // fallback Drive. La petite vue remplit normalement sa fenêtre et le clic
+    // sur la visu déclenche l'agrandissement géré par piece-preview-size-patch.
     const stage=document.createElement('div');
-    stage.className='piece-preview-stage yaya-drive-fit-stage';
+    stage.className='piece-preview-stage yaya-drive-direct-stage';
     stage.style.position='relative';
 
     const iframe=document.createElement('iframe');
-    iframe.className='yaya-drive-fit-frame';
+    iframe.className='yaya-drive-direct-frame';
     iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
     iframe.setAttribute('allow','autoplay');
     iframe.setAttribute('loading','eager');
     iframe.setAttribute('title','Pièce jointe');
-    iframe.style.cssText='width:100%;height:100%;border:0;background:#111;';
+    iframe.style.cssText='position:absolute;inset:0;width:100%;height:100%;border:0;background:#111;';
 
-    // Première vue : un clic sur la pièce agrandit la modale comme avant.
-    // Une fois agrandie, cette couche devient inactive afin de laisser
-    // l'utilisateur interagir directement avec le lecteur Google Drive.
+    // En vue 1, cette couche transforme toute la visu en bouton d'agrandissement.
+    // Dès que la fenêtre est agrandie, piece-preview-size-patch désactive la couche
+    // et le lecteur Google Drive redevient entièrement interactif.
     const zoomHit=document.createElement('div');
     zoomHit.className='yaya-drive-zoom-hit';
     zoomHit.setAttribute('role','button');
@@ -66,8 +70,6 @@
     modal.append(head,stage);
     overlay.appendChild(modal);
     root.appendChild(overlay);
-
-    return iframe;
   }
 
   window.voirPiece=function(url){
