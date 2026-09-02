@@ -1,296 +1,228 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-search-line-v10';
-  let searchFrame=0;
-  let installTimer=0;
+  const brand=document.querySelector('.hdr .brand span');
+  if(brand)brand.textContent='AB RENOV 35';
 
-  function injectStyle(){
-    if(document.getElementById(STYLE_ID)) return;
-
+  const STYLE_ID='yaya-create-chantier-search-line-main-v4';
+  if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      .yaya-search-wrap{
-        position:relative!important;
-        display:block!important;
-        width:100%!important;
-        min-width:0!important;
-      }
-
-      .yaya-search-wrap #filtreInput{
-        width:100%!important;
-        min-width:0!important;
-        box-sizing:border-box!important;
-        padding-right:48px!important;
-      }
-
-      .yaya-search-clear{
-        position:absolute!important;
-        right:10px!important;
-        top:50%!important;
-        transform:translateY(-50%)!important;
-        width:30px!important;
-        height:30px!important;
-        min-width:30px!important;
-        border:0!important;
-        border-radius:999px!important;
-        background:transparent!important;
-        color:#8a94a6!important;
-        display:none!important;
-        align-items:center!important;
-        justify-content:center!important;
-        font-size:24px!important;
-        line-height:1!important;
-        cursor:pointer!important;
-        z-index:20!important;
-        pointer-events:auto!important;
-      }
-
-      .yaya-search-clear:hover{
-        background:rgba(15,23,42,.06)!important;
-        color:#334155!important;
-      }
-
-      .yaya-search-clear:focus{
-        outline:none!important;
-        box-shadow:0 0 0 2px rgba(59,130,246,.22)!important;
-      }
-
-      .yaya-search-wrap.has-value .yaya-search-clear{
-        display:flex!important;
+      .hdr .tab[data-tab="heures"]{display:none!important;}
+      #pane-chantiers .yaya-chantier-search-line{display:flex!important;align-items:center!important;gap:10px!important;margin:10px 0 14px!important;width:100%!important;max-width:100%!important;overflow:visible!important;}
+      #pane-chantiers .yaya-chantier-search-line[hidden]{display:none!important;}
+      #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{position:relative!important;flex:1 1 0!important;width:auto!important;max-width:none!important;min-width:0!important;margin:0!important;}
+      #pane-chantiers .yaya-chantier-search-line #filtreInput{display:block!important;width:100%!important;max-width:none!important;height:40px!important;min-height:40px!important;margin:0!important;padding:0 14px!important;box-sizing:border-box!important;}
+      #pane-chantiers .yaya-search-icon{display:none!important;}
+      #pane-chantiers .yaya-chantier-search-line #yayaHeuresChantierBtn,
+      #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{display:inline-flex!important;visibility:visible!important;opacity:1!important;flex:0 0 auto!important;width:auto!important;height:40px!important;min-height:40px!important;margin:0!important;padding:0 15px!important;align-items:center!important;justify-content:center!important;white-space:nowrap!important;border-radius:8px!important;font-size:13px!important;font-weight:700!important;}
+      #pane-chantiers .yaya-chantier-search-line #yayaHeuresChantierBtn{background:#3151a5!important;color:#fff!important;border:1px solid #6f87c5!important;}
+      #pane-chantiers .yaya-chantier-search-line #yayaHeuresChantierBtn:hover{background:#29478f!important;}
+      #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{background:#24436B!important;color:#fff!important;border:1px solid #24436B!important;}
+      #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn:hover{background:#1c3657!important;border-color:#1c3657!important;}
+      #pane-chantiers #yayaCreateChantierWrap:empty{display:none!important;}
+      #pane-chantiers .card .top button[onclick*="toggleChantier"].yaya-chantier-view-eye{width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #a9c8e8!important;border-radius:7px!important;background:#f3f8fd!important;color:#174d7d!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:14px!important;line-height:1!important;}
+      @media(max-width:640px){
+        #pane-chantiers .yaya-chantier-search-line{gap:7px!important;flex-wrap:nowrap!important;}
+        #pane-chantiers .yaya-chantier-search-line .yaya-search-wrap{flex:1 1 105px!important;width:105px!important;min-width:72px!important;max-width:none!important;}
+        #pane-chantiers .yaya-chantier-search-line #yayaHeuresChantierBtn,
+        #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{padding:0 8px!important;font-size:11px!important;}
       }
     `;
     document.head.appendChild(style);
   }
 
-  function normaliserRecherche(v){
-    return String(v || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g,'')
-      .toLowerCase()
-      .trim();
+  function isMainChantiersPage(){try{if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.size==='number')return expChantiers.size===0;}catch(e){}return true;}
+  function removeOrphanSearchIcons(pane){pane.querySelectorAll('.yaya-search-icon').forEach(el=>el.remove());[...pane.querySelectorAll('span')].forEach(el=>{const t=String(el.textContent||'').trim();if(t==='🔍'||t==='🔎'||t==='⌕')el.remove();});}
+
+  function ensureCreateButton(pane){
+    const buttons=[...pane.querySelectorAll('#yayaCreateChantierBtn')];buttons.slice(1).forEach(el=>el.remove());
+    let btn=buttons[0]||null;
+    if(!btn){btn=document.createElement('button');btn.id='yayaCreateChantierBtn';btn.type='button';btn.className='btnp';btn.addEventListener('click',()=>{if(typeof window.openChantierModal==='function')window.openChantierModal();});}
+    btn.textContent='➕ Ajouter un chantier';return btn;
   }
 
-  function getPane(){
-    return document.getElementById('pane-chantiers');
+  function ensureHoursButton(pane){
+    let btn=pane.querySelector('#yayaHeuresChantierBtn');
+    if(!btn){
+      btn=document.createElement('button');btn.id='yayaHeuresChantierBtn';btn.type='button';btn.className='btn2';btn.textContent='⏱️ Heures';
+      btn.addEventListener('click',()=>{
+        try{tab='heures';location.hash='heures';if(typeof window.render==='function')window.render();}
+        catch(e){const native=document.querySelector('.hdr .tab[data-tab="heures"]');if(native)native.click();}
+      });
+    }
+    return btn;
   }
 
-  function getCards(pane){
-    return [...pane.querySelectorAll('.card')].filter(function(card){
-      return !!card.querySelector('.top');
+  function normalizeChantierViewButtons(pane){
+    pane.querySelectorAll('.card .top button[onclick*="toggleChantier"]').forEach(btn=>{
+      if(String(btn.textContent||'').trim()!=='Voir')return;
+      btn.textContent='👁️';
+      btn.title='Voir le chantier';
+      btn.setAttribute('aria-label','Voir le chantier');
+      btn.classList.add('yaya-chantier-view-eye');
     });
   }
 
-  function filtrerCartes(pane,valeur){
-    if(!pane) return;
+  let yayaSearchFrame = null;
 
-    const q=normaliserRecherche(valeur);
+function normaliserRechercheChantier(v){
+  return String(v || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase()
+    .trim();
+}
 
-    getCards(pane).forEach(function(card){
-      const top=card.querySelector('.top');
-      const texte=normaliserRecherche(
+function filtrerCartesChantiers(valeur){
+  const q = normaliserRechercheChantier(valeur);
+
+  document
+    .querySelectorAll('#pane-chantiers > .card')
+    .forEach(function(card){
+
+      const top = card.querySelector('.top');
+
+      const texte = normaliserRechercheChantier(
         top ? top.textContent : card.textContent
       );
 
-      card.style.display=
+      card.style.display =
         !q || texte.includes(q)
           ? ''
           : 'none';
     });
-  }
+}
 
-  function setFiltreGlobal(value){
+function bindSyntheticSearch(input){
+  if(!input) return;
+
+  // Supprime l'ancien oninput qui recréait toute la page
+  input.oninput = null;
+  input.removeAttribute('oninput');
+  input.removeAttribute('onchange');
+
+  if(input.dataset.yayaSearchBound === '1') return;
+
+  input.dataset.yayaSearchBound = '1';
+
+  input.addEventListener('input', function(){
+
+    const valeur = input.value;
+
     try{
-      filtreChantier=String(value || '');
+      filtreChantier = valeur;
     }catch(e){}
-  }
 
-  function getFiltreGlobal(){
-    try{
-      return String(filtreChantier || '');
-    }catch(e){
-      return '';
-    }
-  }
-
-  function updateClearState(wrap,input){
-    if(!wrap || !input) return;
-    const hasValue=String(input.value || '').trim().length>0;
-    wrap.classList.toggle('has-value',hasValue);
-  }
-
-  function runFilter(pane,input){
-    if(searchFrame){
-      cancelAnimationFrame(searchFrame);
+    if(yayaSearchFrame){
+      cancelAnimationFrame(yayaSearchFrame);
     }
 
-    const value=String(input && input.value || '');
-
-    setFiltreGlobal(value);
-
-    searchFrame=requestAnimationFrame(function(){
-      filtrerCartes(pane,value);
+    yayaSearchFrame = requestAnimationFrame(function(){
+      filtrerCartesChantiers(valeur);
     });
-  }
+  });
+}
 
-  function clearSearch(pane,input,wrap){
-    if(!input) return;
+function ensureSingleSearch(pane){
 
-    input.value='';
-    setFiltreGlobal('');
-    updateClearState(wrap,input);
+  const inputs = [...pane.querySelectorAll('#filtreInput')];
 
-    if(searchFrame){
-      cancelAnimationFrame(searchFrame);
-      searchFrame=0;
+  let input = inputs[0] || null;
+
+  inputs.slice(1).forEach(function(el){
+
+    const parent = el.parentElement;
+
+    el.remove();
+
+    if(
+      parent &&
+      parent.classList &&
+      parent.classList.contains('yaya-search-wrap') &&
+      !parent.querySelector('#filtreInput')
+    ){
+      parent.remove();
     }
-
-    filtrerCartes(pane,'');
-    input.focus();
-  }
-
-  function ensureClearButton(pane,wrap,input){
-    let btn=wrap.querySelector('.yaya-search-clear');
-
-    if(!btn){
-      btn=document.createElement('button');
-      btn.type='button';
-      btn.className='yaya-search-clear';
-      btn.setAttribute('aria-label','Effacer la recherche');
-      btn.setAttribute('title','Effacer la recherche');
-      btn.innerHTML='&times;';
-      wrap.appendChild(btn);
-    }
-
-    if(btn.dataset.yayaBound!=='1'){
-      btn.dataset.yayaBound='1';
-
-      btn.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        clearSearch(pane,input,wrap);
-      });
-
-      btn.addEventListener('mousedown',function(e){
-        e.preventDefault();
-      });
-    }
-
-    updateClearState(wrap,input);
-    return btn;
-  }
-
-  function bindInput(pane,input,wrap){
-    if(!input) return;
-
-    input.oninput=null;
-    input.onchange=null;
-    input.removeAttribute('oninput');
-    input.removeAttribute('onchange');
-
-    if(input.dataset.yayaSearchBound!=='1'){
-      input.dataset.yayaSearchBound='1';
-
-      input.addEventListener('input',function(){
-        updateClearState(wrap,input);
-        runFilter(pane,input);
-      });
-
-      input.addEventListener('keydown',function(e){
-        if(e.key==='Escape'){
-          e.preventDefault();
-          clearSearch(pane,input,wrap);
-        }
-      });
-    }
-
-    updateClearState(wrap,input);
-  }
-
-  function ensureWrapAroundInput(pane,input){
-    let wrap=input.closest('.yaya-search-wrap');
-
-    if(!wrap){
-      wrap=document.createElement('div');
-      wrap.className='yaya-search-wrap';
-
-      const parent=input.parentElement;
-      if(parent){
-        parent.insertBefore(wrap,input);
-      }
-      wrap.appendChild(input);
-    }
-
-    return wrap;
-  }
-
-  function createSearchIfMissing(pane){
-    let input=document.getElementById('filtreInput');
-    if(input) return input;
-
-    const line=document.createElement('div');
-    line.style.margin='10px 0 14px';
-
-    const wrap=document.createElement('div');
-    wrap.className='yaya-search-wrap';
-
-    input=document.createElement('input');
-    input.id='filtreInput';
-    input.className='inp';
-    input.type='search';
-    input.autocomplete='off';
-    input.placeholder='Rechercher un chantier...';
-    input.value=getFiltreGlobal();
-
-    wrap.appendChild(input);
-    line.appendChild(wrap);
-
-    const firstCard=getCards(pane)[0];
-    if(firstCard){
-      pane.insertBefore(line,firstCard);
-    }else{
-      pane.prepend(line);
-    }
-
-    return input;
-  }
-
-  function install(){
-    injectStyle();
-
-    const pane=getPane();
-    if(!pane) return;
-
-    const input=createSearchIfMissing(pane);
-    if(!input) return;
-
-    const wrap=ensureWrapAroundInput(pane,input);
-
-    ensureClearButton(pane,wrap,input);
-    bindInput(pane,input,wrap);
-
-    if(String(input.value || '').trim()){
-      filtrerCartes(pane,input.value);
-    }else{
-      filtrerCartes(pane,'');
-    }
-  }
-
-  function scheduleInstall(){
-    clearTimeout(installTimer);
-    installTimer=setTimeout(install,20);
-  }
-
-  install();
-
-  new MutationObserver(function(){
-    scheduleInstall();
-  }).observe(document.documentElement,{
-    childList:true,
-    subtree:true
   });
 
-  window.addEventListener('resize',scheduleInstall,{passive:true});
-  window.addEventListener('yaya:data-refreshed',scheduleInstall);
+  if(!input){
+
+    input = document.createElement('input');
+
+    input.id = 'filtreInput';
+    input.className = 'inp';
+    input.type = 'search';
+    input.autocomplete = 'off';
+    input.placeholder = 'Rechercher un chantier...';
+
+    try{
+      input.value = String(filtreChantier || '');
+    }catch(e){
+      input.value = '';
+    }
+  }
+
+  // Important : appliqué même si le champ existait déjà
+  bindSyntheticSearch(input);
+
+  let wrap = input.closest('.yaya-search-wrap');
+
+  if(!wrap){
+
+    const previousParent = input.parentElement;
+
+    wrap = document.createElement('div');
+    wrap.className = 'yaya-search-wrap';
+
+    if(previousParent){
+      previousParent.insertBefore(wrap,input);
+    }
+
+    wrap.appendChild(input);
+
+    if(previousParent && previousParent !== pane){
+
+      [...previousParent.querySelectorAll(':scope > span')]
+        .forEach(function(el){
+
+          const t = String(el.textContent || '').trim();
+
+          if(t === '🔍' || t === '🔎' || t === '⌕'){
+            el.remove();
+          }
+        });
+
+      if(
+        previousParent.children.length === 0 &&
+        !String(previousParent.textContent || '').trim()
+      ){
+        previousParent.remove();
+      }
+    }
+  }
+
+  wrap
+    .querySelectorAll('.yaya-search-icon')
+    .forEach(function(el){
+      el.remove();
+    });
+
+  return wrap;
+}
+
+  function syncMainLine(){
+    const pane=document.getElementById('pane-chantiers');if(!pane)return;removeOrphanSearchIcons(pane);
+    const rows=[...pane.querySelectorAll('.yaya-chantier-search-line')];rows.slice(1).forEach(el=>el.remove());let row=rows[0]||null;
+    const searchWrap=ensureSingleSearch(pane);if(!row){row=document.createElement('div');row.className='yaya-chantier-search-line';pane.insertBefore(row,pane.firstChild);}if(searchWrap.parentNode!==row)row.appendChild(searchWrap);
+    const hours=ensureHoursButton(pane);if(hours.parentNode!==row)row.appendChild(hours);
+    const create=ensureCreateButton(pane);if(create.parentNode!==row)row.appendChild(create);
+    const oldWrap=document.getElementById('yayaCreateChantierWrap');if(oldWrap&&oldWrap!==row)oldWrap.remove();row.hidden=!isMainChantiersPage();
+    normalizeChantierViewButtons(pane);
+  }
+
+  function wrapAfterRender(name){const fn=window[name];if(typeof fn!=='function'||fn.__yayaMainLineWrapped)return true;const wrapped=function(){const result=fn.apply(this,arguments);setTimeout(syncMainLine,0);return result;};wrapped.__yayaMainLineWrapped=true;window[name]=wrapped;return true;}
+  function install(){syncMainLine();const ok1=wrapAfterRender('renderChantiers');const ok2=wrapAfterRender('toggleChantier');if(!ok1||!ok2)setTimeout(install,180);}
+  install();
 })();
