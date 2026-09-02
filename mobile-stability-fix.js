@@ -36,11 +36,70 @@
     }
     @media(max-width:390px){#pane-chantiers .kpis{grid-template-columns:1fr!important}.hdr .tab,.hdr .fiche-inter-tab{padding:0 9px!important;font-size:11.5px!important}.modal{padding-left:10px!important;padding-right:10px!important}}
     @media(max-width:760px) and (orientation:portrait){.hdr{position:static!important;top:auto!important}}
+    @media(max-width:760px), (hover:none) and (pointer:coarse){
+      html:root .overlay{top:var(--yaya-visible-top,0px)!important;bottom:auto!important;height:var(--yaya-visible-height,100dvh)!important;box-sizing:border-box!important;overflow:hidden!important}
+      html:root .overlay .modal{box-sizing:border-box!important;max-height:100%!important;min-height:0!important;overflow-y:auto!important;scroll-behavior:auto!important;scroll-padding:70px 0 90px;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
+      html:root .overlay .modal>*{flex-shrink:0!important}
+      html:root .overlay .modal input,html:root .overlay .modal select,html:root .overlay .modal textarea{font-size:16px!important}
+      html:root .yaya-devis-fast-overlay .yaya-devis-fast-modal{max-height:calc(100% - max(8px,env(safe-area-inset-top,0px)))!important}
+    }
   `;
   document.head.appendChild(style);
   function recadrer(){if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches&&window.scrollX)window.scrollTo({left:0,top:window.scrollY,behavior:'auto'});}
   window.addEventListener('orientationchange',function(){setTimeout(recadrer,120)},{passive:true});
   document.addEventListener('focusout',function(){setTimeout(recadrer,80)},{passive:true});
+
+  // iOS changes the visual viewport when the keyboard opens, not 100dvh.
+  const viewport=window.visualViewport;
+  const mobile=window.matchMedia('(max-width:760px), (hover:none) and (pointer:coarse)');
+  let frame=0, reveal=false, focusTimer=0;
+  function editable(el){return el&&el.matches('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="button"]):not([type="submit"]):not([type="file"]),textarea,select,[contenteditable="true"]');}
+  function keepFieldVisible(){
+    const field=document.activeElement;
+    if(!editable(field))return;
+    const modal=field.closest('.modal');
+    const top=viewport?viewport.offsetTop:0;
+    const bottom=top+(viewport?viewport.height:window.innerHeight);
+    const rect=field.getBoundingClientRect();
+    if(!modal){
+      if(rect.bottom>bottom-16||rect.top<top+16)field.scrollIntoView({block:'center',inline:'nearest',behavior:'auto'});
+      return;
+    }
+    const box=modal.getBoundingClientRect();
+    let visibleTop=Math.max(box.top,top)+12;
+    let visibleBottom=Math.min(box.bottom,bottom)-12;
+    const head=modal.querySelector('h5');
+    const foot=modal.querySelector('.mfoot');
+    if(head&&getComputedStyle(head).position==='sticky')visibleTop=Math.max(visibleTop,head.getBoundingClientRect().bottom+12);
+    if(foot&&getComputedStyle(foot).position==='sticky'&&!foot.contains(field))visibleBottom=Math.min(visibleBottom,foot.getBoundingClientRect().top-12);
+    if(visibleBottom<=visibleTop)return;
+    // Scroll only the form, preserving focus and the surrounding page position.
+    if(rect.top<visibleTop||rect.height>visibleBottom-visibleTop)modal.scrollTop+=rect.top-visibleTop;
+    else if(rect.bottom>visibleBottom)modal.scrollTop+=rect.bottom-visibleBottom;
+  }
+  function syncViewport(){
+    frame=0;
+    const shouldReveal=reveal;reveal=false;
+    const root=document.documentElement;
+    if(!mobile.matches){root.style.removeProperty('--yaya-visible-height');root.style.removeProperty('--yaya-visible-top');return;}
+    root.style.setProperty('--yaya-visible-height',(viewport?viewport.height:window.innerHeight)+'px');
+    root.style.setProperty('--yaya-visible-top',(viewport?viewport.offsetTop:0)+'px');
+    if(shouldReveal)keepFieldVisible();
+  }
+  function scheduleViewport(keepVisible){reveal=reveal||keepVisible;if(!frame)frame=requestAnimationFrame(syncViewport);}
+  if(viewport){
+    viewport.addEventListener('resize',function(){scheduleViewport(true)},{passive:true});
+    // Panning must update the overlay without fighting the user's scrolling.
+    viewport.addEventListener('scroll',function(){scheduleViewport(false)},{passive:true});
+  }
+  window.addEventListener('resize',function(){scheduleViewport(true)},{passive:true});
+  document.addEventListener('focusin',function(event){
+    if(!editable(event.target))return;
+    scheduleViewport(true);clearTimeout(focusTimer);
+    focusTimer=setTimeout(function(){scheduleViewport(true)},350);
+  },{passive:true});
+  document.addEventListener('focusout',function(){clearTimeout(focusTimer);scheduleViewport(false)},{passive:true});
+  scheduleViewport(false);
 })();
 
 (function(){
