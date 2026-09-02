@@ -7,16 +7,19 @@
   const MOBILE=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
   const META_INTERVAL_MS=MOBILE?90000:60000;
   const FALLBACK_FULL_INTERVAL_MS=MOBILE?900000:600000;
-  const START_GRACE_MS=2500;
+  const START_GRACE_MS=window.__yayaCachedBoot?350:2500;
   const APPLY_IDLE_MS=2200;
+  const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
+  const CACHE_META_KEY='YAYA_CACHE_META_V2';
 
   let busy=false;
   let metaSupported=null;
   let lastCheck=0;
   let lastFull=Date.now();
   let lastInteraction=0;
-  let lastMeta=null;
+  let lastMeta=(window.__yayaCachedMeta&&window.__yayaCachedMeta.tabs)?window.__yayaCachedMeta:null;
   let pendingData=null;
+  let pendingMeta=null;
   let applyTimer=0;
 
   ['pointerdown','touchstart','keydown','scroll'].forEach(function(type){
@@ -25,6 +28,22 @@
 
   function apiUrl(){
     try{return typeof API!=='undefined'?String(API||''):'';}catch(e){return '';}
+  }
+
+  function saveCache(data,meta){
+    try{
+      if(!data||typeof data!=='object')return;
+      localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(data));
+      if(meta&&meta.tabs)localStorage.setItem(CACHE_META_KEY,JSON.stringify(meta));
+    }catch(e){
+      // Quota ou stockage privé : Yaya continue normalement sans cache.
+    }
+  }
+
+  function persistCurrent(){
+    let current=null;
+    try{current=S;}catch(e){}
+    if(current&&typeof current==='object')saveCache(current,lastMeta);
   }
 
   function fixDate(value){
@@ -158,13 +177,16 @@
     }
 
     const next=pendingData;
+    const metaForCache=pendingMeta||lastMeta;
     pendingData=null;
+    pendingMeta=null;
     const x=window.scrollX||0;
     const y=window.scrollY||0;
 
     try{
       S=next;
       if(typeof render==='function')render();
+      saveCache(next,metaForCache);
       requestAnimationFrame(function(){try{window.scrollTo(x,y);}catch(e){}});
       try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
     }catch(e){
@@ -172,8 +194,9 @@
     }
   }
 
-  function queuePartial(partial){
+  function queuePartial(partial,meta){
     pendingData=mergePartial(partial);
+    if(meta&&meta.tabs)pendingMeta=meta;
     applyPending();
   }
 
@@ -201,16 +224,16 @@
 
   async function fullRefreshInBackground(){
     if(typeof apiGet!=='function')return;
-    const fresh=await apiGet();
+    const fresh=await apiGet(true);
     lastFull=Date.now();
-    if(fresh&&typeof fresh==='object')queuePartial(fresh);
+    if(fresh&&typeof fresh==='object')queuePartial(fresh,lastMeta);
   }
 
   async function smartCheck(force){
     if(busy||loaderVisible())return;
 
     const now=Date.now();
-    const minGap=force?5000:META_INTERVAL_MS;
+    const minGap=force?300:META_INTERVAL_MS;
     if(now-lastCheck<minGap)return;
 
     const api=apiUrl();
@@ -230,8 +253,6 @@
       const sep=api.includes('?')?'&':'?';
       const metaJson=await getJson(api+sep+'mode=meta&_yaya_meta='+Date.now());
 
-      // Ancien backend : il ignore mode=meta et renvoie encore la base complète.
-      // On ne recommence alors une lecture complète qu'après 10/15 minutes.
       if(!metaJson.meta||!metaJson.meta.tabs){
         metaSupported=false;
         lastFull=Date.now();
@@ -240,25 +261,28 @@
 
       metaSupported=true;
 
-      // La page vient d'effectuer son chargement initial complet : la première
-      // réponse meta devient simplement notre point de référence, sans relire les feuilles.
+      // Si le démarrage vient du cache, lastMeta contient la révision du cache.
+      // On compare donc immédiatement avec le serveur et on ne lit que les onglets modifiés.
       if(!lastMeta){
         lastMeta=metaJson.meta;
+        saveCache((function(){try{return S;}catch(e){return null;}})(),lastMeta);
         return;
       }
 
       const changed=changedTabs(metaJson.meta,lastMeta);
       if(!changed.length){
         lastMeta=metaJson.meta;
+        saveCache((function(){try{return S;}catch(e){return null;}})(),lastMeta);
         return;
       }
 
       const deltaUrl=api+sep+'tabs='+encodeURIComponent(changed.join(','))+'&_yaya_delta='+Date.now();
       const deltaJson=await getJson(deltaUrl);
+      const nextMeta=deltaJson.meta&&deltaJson.meta.tabs?deltaJson.meta:metaJson.meta;
+      lastMeta=nextMeta;
       if(deltaJson.data&&typeof deltaJson.data==='object'){
-        queuePartial(deltaJson.data);
+        queuePartial(deltaJson.data,nextMeta);
       }
-      lastMeta=deltaJson.meta&&deltaJson.meta.tabs?deltaJson.meta:metaJson.meta;
 
     }catch(err){
       if(!(err&&err.name==='AbortError'))console.warn('Synchronisation Yaya en arrière-plan ignorée :',err);
@@ -273,7 +297,6 @@
       return;
     }
 
-    // Aucun contrôle tant que le premier chargement de la page n'est pas terminé.
     const waitInitial=function(){
       if(loaderVisible()){
         setTimeout(waitInitial,300);
@@ -285,9 +308,12 @@
     waitInitial();
 
     document.addEventListener('visibilitychange',function(){
-      if(!document.hidden)setTimeout(function(){smartCheck(true);},700);
+      if(document.hidden){persistCurrent();return;}
+      setTimeout(function(){smartCheck(true);},700);
     });
     window.addEventListener('focus',function(){setTimeout(function(){smartCheck(true);},700);});
+    window.addEventListener('pagehide',persistCurrent);
+    setInterval(persistCurrent,30000);
   }
 
   install();
