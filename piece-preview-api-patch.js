@@ -41,6 +41,7 @@
 
     const stage=document.createElement('div');
     stage.className='piece-preview-stage yaya-drive-fit-stage';
+    stage.style.position='relative';
 
     const iframe=document.createElement('iframe');
     iframe.className='yaya-drive-fit-frame';
@@ -50,7 +51,18 @@
     iframe.setAttribute('title','Pièce jointe');
     iframe.style.cssText='width:100%;height:100%;border:0;background:#111;';
 
-    stage.appendChild(iframe);
+    // Première vue : un clic sur la pièce agrandit la modale comme avant.
+    // Une fois agrandie, cette couche devient inactive afin de laisser
+    // l'utilisateur interagir directement avec le lecteur Google Drive.
+    const zoomHit=document.createElement('div');
+    zoomHit.className='yaya-drive-zoom-hit';
+    zoomHit.setAttribute('role','button');
+    zoomHit.setAttribute('aria-label','Agrandir la pièce jointe');
+    zoomHit.setAttribute('title','Cliquer pour agrandir');
+    zoomHit.tabIndex=0;
+    zoomHit.style.cssText='position:absolute;inset:0;z-index:4;background:transparent;cursor:zoom-in;';
+
+    stage.append(iframe,zoomHit);
     modal.append(head,stage);
     overlay.appendChild(modal);
     root.appendChild(overlay);
