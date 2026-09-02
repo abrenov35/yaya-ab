@@ -216,7 +216,7 @@ function ensureSingleSearch(pane){
     const pane=document.getElementById('pane-chantiers');if(!pane)return;removeOrphanSearchIcons(pane);
     const rows=[...pane.querySelectorAll('.yaya-chantier-search-line')];rows.slice(1).forEach(el=>el.remove());let row=rows[0]||null;
     const searchWrap=ensureSingleSearch(pane);if(!row){row=document.createElement('div');row.className='yaya-chantier-search-line';pane.insertBefore(row,pane.firstChild);}if(searchWrap.parentNode!==row)row.appendChild(searchWrap);
-    const hours=ensureHoursButton(pane);if(hours.parentNode!==row)row.appendChild(hours);
+    const hours=pane.querySelector('#yayaHeuresChantierBtn');if(hours)hours.remove();
     const create=ensureCreateButton(pane);if(create.parentNode!==row)row.appendChild(create);
     const oldWrap=document.getElementById('yayaCreateChantierWrap');if(oldWrap&&oldWrap!==row)oldWrap.remove();row.hidden=!isMainChantiersPage();
     normalizeChantierViewButtons(pane);
