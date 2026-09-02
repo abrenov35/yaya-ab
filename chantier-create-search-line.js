@@ -150,10 +150,23 @@
       clear.addEventListener('click',function(e){
         e.preventDefault();
         e.stopPropagation();
+
         input.value='';
-        input.dispatchEvent(new Event('input',{bubbles:true}));
+        try{filtreChantier='';}catch(e){}
+
+        if(yayaSearchFrame){
+          cancelAnimationFrame(yayaSearchFrame);
+          yayaSearchFrame=null;
+        }
+
+        document
+          .querySelectorAll('#pane-chantiers > .card')
+          .forEach(function(card){
+            card.style.display='';
+          });
+
+        clear.dataset.visible='0';
         input.focus();
-        refresh();
       });
     }
 
