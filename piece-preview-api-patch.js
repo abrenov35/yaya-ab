@@ -162,7 +162,12 @@
 
     let current=1;
     let rendering=false;
-    let queued=null;
+    let queuedPage=null;
+    let rerenderRequested=false;
+
+    function isFullscreen(){
+      return ui.modal.dataset.yayaPreviewFullscreen==='1';
+    }
 
     function updateNav(){
       info.textContent='Page '+current+' / '+pdf.numPages;
@@ -172,54 +177,92 @@
       next.style.opacity=next.disabled?'.4':'1';
     }
 
-    async function draw(pageNumber){
+    async function draw(pageNumber,force){
       pageNumber=Math.max(1,Math.min(pdf.numPages,Number(pageNumber)||1));
-      if(rendering){queued=pageNumber;return;}
+
+      if(rendering){
+        queuedPage=pageNumber;
+        if(force)rerenderRequested=true;
+        return;
+      }
+
       rendering=true;
+
       try{
         current=pageNumber;
         updateNav();
+
+        const full=isFullscreen();
         pageSlot.innerHTML='<div class="piece-preview-loading">Chargement de la page…</div>';
+
         const page=await pdf.getPage(current);
         if(!ui.modal.isConnected)return;
+
         const raw=page.getViewport({scale:1});
-        const w=Math.max(120,pageSlot.clientWidth||ui.stage.clientWidth||600);
-        const h=Math.max(120,pageSlot.clientHeight||ui.stage.clientHeight||600);
-        const fit=Math.min((w-12)/raw.width,(h-12)/raw.height);
-        const dpr=Math.min(1.6,Math.max(1,window.devicePixelRatio||1));
-        const cssScale=Math.max(.05,fit);
+        const w=Math.max(120,viewer.clientWidth||ui.stage.clientWidth||600);
+        const h=Math.max(120,viewer.clientHeight||ui.stage.clientHeight||600);
+        const widthScale=Math.max(.05,(w-16)/raw.width);
+        const heightScale=Math.max(.05,(h-16)/raw.height);
+        const cssScale=full?widthScale:Math.min(widthScale,heightScale);
+        const cssWidth=Math.max(1,Math.floor(raw.width*cssScale));
+        const cssHeight=Math.max(1,Math.floor(raw.height*cssScale));
+        const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+
+        viewer.style.setProperty('overflow-x','hidden','important');
+        viewer.style.setProperty('overflow-y',full?'auto':'hidden','important');
+        viewer.style.setProperty('scroll-behavior',full?'auto':'smooth','important');
+        viewer.style.setProperty('scroll-snap-type','none','important');
+
+        if(full){
+          pageSlot.style.setProperty('height',(cssHeight+8)+'px','important');
+          pageSlot.style.setProperty('min-height',(cssHeight+8)+'px','important');
+          pageSlot.style.setProperty('align-items','flex-start','important');
+          pageSlot.style.setProperty('overflow','visible','important');
+        }else{
+          pageSlot.style.setProperty('height','100%','important');
+          pageSlot.style.setProperty('min-height','100%','important');
+          pageSlot.style.setProperty('align-items','center','important');
+          pageSlot.style.setProperty('overflow','hidden','important');
+        }
+
         const viewport=page.getViewport({scale:cssScale*dpr});
         const canvas=document.createElement('canvas');
         canvas.width=Math.max(1,Math.floor(viewport.width));
         canvas.height=Math.max(1,Math.floor(viewport.height));
-        canvas.style.width=Math.floor(raw.width*cssScale)+'px';
-        canvas.style.height=Math.floor(raw.height*cssScale)+'px';
-        canvas.style.maxWidth='100%';
-        canvas.style.maxHeight='100%';
+        canvas.style.setProperty('width',cssWidth+'px','important');
+        canvas.style.setProperty('height',cssHeight+'px','important');
+        canvas.style.setProperty('max-width','100%','important');
+        canvas.style.setProperty('max-height',full?'none':'100%','important');
+
         pageSlot.replaceChildren(canvas);
-        await page.render({canvasContext:canvas.getContext('2d'),viewport:viewport}).promise;
+
+        await page.render({
+          canvasContext:canvas.getContext('2d'),
+          viewport:viewport
+        }).promise;
+
+        if(full)viewer.scrollTop=0;
+
       }finally{
         rendering=false;
-        if(queued!=null){const q=queued;queued=null;if(q!==current)draw(q);}
+
+        if(queuedPage!=null||rerenderRequested){
+          const q=queuedPage==null?current:queuedPage;
+          const forceAgain=rerenderRequested;
+          queuedPage=null;
+          rerenderRequested=false;
+          draw(q,forceAgain);
+        }
       }
     }
 
-    prev.onclick=function(e){e.preventDefault();e.stopPropagation();if(current>1)draw(current-1);};
-    next.onclick=function(e){e.preventDefault();e.stopPropagation();if(current<pdf.numPages)draw(current+1);};
+    prev.onclick=function(e){e.preventDefault();e.stopPropagation();if(current>1)draw(current-1,true);};
+    next.onclick=function(e){e.preventDefault();e.stopPropagation();if(current<pdf.numPages)draw(current+1,true);};
     nav.onclick=function(e){e.stopPropagation();};
 
-    let wheelLock=false;
-    ui.stage.addEventListener('wheel',function(e){
-      if(Math.abs(e.deltaY)<10||pdf.numPages<2)return;
-      if(ui.modal.dataset.yayaPreviewFullscreen!=='1')return;
-      e.preventDefault();
-      if(wheelLock)return;
-      wheelLock=true;
-      draw(current+(e.deltaY>0?1:-1));
-      setTimeout(function(){wheelLock=false;},220);
-    },{passive:false});
-
-    ui.modal.__yayaRedrawPdf=function(){draw(current);};
+    ui.modal.__yayaRedrawPdf=function(){
+      return draw(current,true);
+    };
 
     const cleanup=new MutationObserver(function(){
       if(!ui.modal.isConnected){
@@ -230,7 +273,7 @@
     cleanup.observe(document.documentElement,{childList:true,subtree:true});
 
     updateNav();
-    await draw(1);
+    await draw(1,true);
   }
 
   window.voirPiece=async function(url){
