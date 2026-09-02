@@ -4,7 +4,7 @@
   const originalVoirPiece=window.voirPiece;
   if(typeof originalVoirPiece!=='function')return;
 
-  const STYLE_ID='yaya-piece-preview-v4-style';
+  const STYLE_ID='yaya-piece-preview-v5-style';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -20,8 +20,11 @@
       .piece-page-indicator{position:absolute!important;left:50%!important;bottom:8px!important;transform:translateX(-50%)!important;z-index:3!important;padding:5px 10px!important;border-radius:14px!important;background:rgba(20,31,48,.78)!important;color:#fff!important;font-size:11.5px!important;font-weight:700!important;pointer-events:none!important;box-shadow:0 1px 4px rgba(0,0,0,.18)!important;}
       .piece-page-loading{position:absolute!important;inset:0!important;display:flex!important;align-items:center!important;justify-content:center!important;background:rgba(238,241,245,.72)!important;color:var(--navy)!important;font-size:12.5px!important;font-weight:600!important;z-index:2!important;}
       .piece-pdf-pages{height:100%!important;width:100%!important;overflow-y:auto!important;overflow-x:hidden!important;scroll-snap-type:y mandatory!important;scroll-behavior:smooth!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;}
-      .piece-pdf-page{width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:center!important;scroll-snap-align:start!important;scroll-snap-stop:always!important;overflow:hidden!important;padding:4px!important;background:#eef1f5!important;}
+      .piece-pdf-page{width:100%!important;min-width:0!important;display:flex!important;align-items:center!important;justify-content:center!important;scroll-snap-align:start!important;scroll-snap-stop:always!important;overflow:hidden!important;padding:4px!important;background:#eef1f5!important;box-sizing:border-box!important;}
       .piece-pdf-page canvas{display:block!important;max-width:100%!important;max-height:100%!important;background:#fff!important;box-shadow:0 1px 6px rgba(0,0,0,.12)!important;}
+      .piece-preview-modal[data-yaya-preview-fullscreen="1"] .piece-pdf-pages{scroll-snap-type:none!important;scroll-behavior:auto!important;}
+      .piece-preview-modal[data-yaya-preview-fullscreen="1"] .piece-pdf-page{align-items:flex-start!important;overflow:visible!important;scroll-snap-align:none!important;scroll-snap-stop:normal!important;}
+      .piece-preview-modal[data-yaya-preview-fullscreen="1"] .piece-pdf-page canvas{max-height:none!important;}
       .piece-preview-loading{height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:20px!important;text-align:center!important;font-size:13px!important;color:var(--navy)!important;}
       @media(max-width:640px){
         .piece-preview-overlay{padding:4px!important;}
@@ -67,40 +70,77 @@
     const m=String(u||'').match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
     return m?m[1]:'';
   }
+
   function dropboxRaw(u){
-    try{const d=new URL(u);d.searchParams.delete('dl');d.searchParams.set('raw','1');return d.toString();}
-    catch(e){return u;}
+    try{
+      const d=new URL(u);
+      d.searchParams.delete('dl');
+      d.searchParams.set('raw','1');
+      return d.toString();
+    }catch(e){
+      return u;
+    }
   }
-  function imageByExtension(u){return /\.(jpe?g|png|webp|gif|bmp|svg)(?:[?#]|$)/i.test(String(u||''));}
-  function pdfByExtension(u){return /\.pdf(?:[?#]|$)/i.test(String(u||''));}
+
+  function imageByExtension(u){
+    return /\.(jpe?g|png|webp|gif|bmp|svg)(?:[?#]|$)/i.test(String(u||''));
+  }
+
+  function pdfByExtension(u){
+    return /\.pdf(?:[?#]|$)/i.test(String(u||''));
+  }
 
   function makeModal(root){
     root.replaceChildren();
+
     const overlay=document.createElement('div');
     overlay.className='overlay piece-preview-overlay';
-    overlay.onclick=e=>{if(e.target===overlay&&typeof window.closeModal==='function')window.closeModal();};
+    overlay.onclick=e=>{
+      if(e.target===overlay&&typeof window.closeModal==='function')window.closeModal();
+    };
+
     const modal=document.createElement('div');
     modal.className='modal piece-modal piece-preview-modal';
+
     const head=document.createElement('h5');
     head.className='piece-preview-head';
-    const title=document.createElement('span');title.textContent='Pièce jointe';
-    const close=document.createElement('button');close.type='button';close.textContent='Fermer';close.onclick=()=>window.closeModal();
+
+    const title=document.createElement('span');
+    title.textContent='Pièce jointe';
+
+    const close=document.createElement('button');
+    close.type='button';
+    close.textContent='Fermer';
+    close.onclick=()=>window.closeModal();
+
     head.append(title,close);
-    const stage=document.createElement('div');stage.className='piece-preview-stage';
-    modal.append(head,stage);overlay.appendChild(modal);root.appendChild(overlay);
+
+    const stage=document.createElement('div');
+    stage.className='piece-preview-stage';
+
+    modal.append(head,stage);
+    overlay.appendChild(modal);
+    root.appendChild(overlay);
+
     return {overlay,modal,stage};
   }
 
   function showLoading(root,text){
     const ui=makeModal(root);
-    const loading=document.createElement('div');loading.className='piece-preview-loading';loading.textContent=text||'Chargement de la pièce…';ui.stage.appendChild(loading);
+    const loading=document.createElement('div');
+    loading.className='piece-preview-loading';
+    loading.textContent=text||'Chargement de la pièce…';
+    ui.stage.appendChild(loading);
     return ui;
   }
 
   function showImage(root,src){
     const ui=makeModal(root);
     ui.stage.classList.add('piece-image-stage');
-    const img=document.createElement('img');img.alt='Pièce jointe';img.src=src;ui.stage.appendChild(img);
+    const img=document.createElement('img');
+    img.alt='Pièce jointe';
+    img.src=src;
+    ui.stage.appendChild(img);
     return ui;
   }
 
@@ -108,7 +148,13 @@
     return new Promise(resolve=>{
       let done=false;
       const img=new Image();
-      const finish=ok=>{if(done)return;done=true;clearTimeout(timer);img.onload=img.onerror=null;resolve(ok);};
+      const finish=ok=>{
+        if(done)return;
+        done=true;
+        clearTimeout(timer);
+        img.onload=img.onerror=null;
+        resolve(ok);
+      };
       const timer=setTimeout(()=>finish(false),timeoutMs||2200);
       img.onload=()=>finish(!!(img.naturalWidth&&img.naturalHeight));
       img.onerror=()=>finish(false);
@@ -119,20 +165,36 @@
   function loadImageFromCandidates(urls,timeoutMs){
     return new Promise((resolve,reject)=>{
       let index=0;
+
       function next(){
-        if(index>=urls.length){reject(new Error('Page Drive indisponible'));return;}
+        if(index>=urls.length){
+          reject(new Error('Page Drive indisponible'));
+          return;
+        }
+
         const url=urls[index++];
         let finished=false;
         const img=new Image();
         const timer=setTimeout(()=>finish(false),timeoutMs||5500);
+
         function finish(ok){
-          if(finished)return;finished=true;clearTimeout(timer);img.onload=img.onerror=null;
-          if(ok&&img.naturalWidth>20&&img.naturalHeight>20)resolve({img,url});else next();
+          if(finished)return;
+          finished=true;
+          clearTimeout(timer);
+          img.onload=img.onerror=null;
+
+          if(ok&&img.naturalWidth>20&&img.naturalHeight>20){
+            resolve({img,url});
+          }else{
+            next();
+          }
         }
+
         img.onload=()=>finish(true);
         img.onerror=()=>finish(false);
         img.src=url;
       }
+
       next();
     });
   }
@@ -141,6 +203,7 @@
     const safeId=encodeURIComponent(id);
     const p=Math.max(1,Number(page)||1);
     const w=Math.max(600,Math.min(2200,Math.round(width||1400)));
+
     return [
       'https://drive.google.com/file/d/'+safeId+'/image?pagenumber='+p+'&w='+w,
       'https://docs.google.com/file/d/'+safeId+'/image?pagenumber='+p+'&w='+w
@@ -150,10 +213,18 @@
   async function renderDrivePdfPages(root,id){
     const ui=makeModal(root);
     ui.stage.classList.add('piece-drive-pages-stage');
+
     const img=document.createElement('img');
     img.alt='Page PDF';
-    const indicator=document.createElement('div');indicator.className='piece-page-indicator';indicator.textContent='Page 1';
-    const loading=document.createElement('div');loading.className='piece-page-loading';loading.textContent='Chargement de la page…';
+
+    const indicator=document.createElement('div');
+    indicator.className='piece-page-indicator';
+    indicator.textContent='Page 1';
+
+    const loading=document.createElement('div');
+    loading.className='piece-page-loading';
+    loading.textContent='Chargement de la page…';
+
     ui.stage.append(img,loading,indicator);
 
     let current=1;
@@ -172,152 +243,398 @@
       if(n<1)throw new Error('Première page');
       if(knownLastPage&&n>knownLastPage)throw new Error('Dernière page');
       if(cache.has(n))return cache.get(n);
-      const promise=loadImageFromCandidates(drivePageCandidates(id,n,targetWidth()),6500).then(r=>r.url).catch(err=>{cache.delete(n);throw err;});
+
+      const promise=loadImageFromCandidates(
+        drivePageCandidates(id,n,targetWidth()),
+        6500
+      ).then(r=>r.url).catch(err=>{
+        cache.delete(n);
+        throw err;
+      });
+
       cache.set(n,promise);
       return promise;
     }
 
     async function showPage(n){
       if(busy||n<1||n===current)return false;
-      busy=true;loading.style.display='flex';
+
+      busy=true;
+      loading.style.display='flex';
+
       try{
         const src=await getPage(n);
         if(!root.contains(ui.modal))return false;
+
         img.src=src;
         current=n;
         indicator.textContent='Page '+current+(knownLastPage?' / '+knownLastPage:'');
+
         if(!knownLastPage){
-          getPage(current+1).catch(()=>{knownLastPage=current;indicator.textContent='Page '+current+' / '+knownLastPage;});
+          getPage(current+1).catch(()=>{
+            knownLastPage=current;
+            indicator.textContent='Page '+current+' / '+knownLastPage;
+          });
         }
+
         return true;
       }catch(e){
-        if(n>current){knownLastPage=current;indicator.textContent='Page '+current+' / '+knownLastPage;}
+        if(n>current){
+          knownLastPage=current;
+          indicator.textContent='Page '+current+' / '+knownLastPage;
+        }
         return false;
-      }finally{loading.style.display='none';busy=false;}
+      }finally{
+        loading.style.display='none';
+        busy=false;
+      }
     }
 
     const first=await getPage(1);
     if(!root.contains(ui.modal))throw new Error('Aperçu fermé');
+
     img.src=first;
     loading.style.display='none';
-    getPage(2).catch(()=>{knownLastPage=1;indicator.textContent='Page 1 / 1';});
+
+    getPage(2).catch(()=>{
+      knownLastPage=1;
+      indicator.textContent='Page 1 / 1';
+    });
 
     ui.stage.addEventListener('wheel',e=>{
       if(Math.abs(e.deltaY)<3)return;
       e.preventDefault();
       if(wheelLocked||busy)return;
+
       wheelLocked=true;
-      showPage(current+(e.deltaY>0?1:-1)).finally(()=>setTimeout(()=>{wheelLocked=false;},260));
+      showPage(current+(e.deltaY>0?1:-1))
+        .finally(()=>setTimeout(()=>{wheelLocked=false;},260));
     },{passive:false});
 
-    ui.stage.addEventListener('touchstart',e=>{if(e.touches&&e.touches[0])touchY=e.touches[0].clientY;},{passive:true});
+    ui.stage.addEventListener('touchstart',e=>{
+      if(e.touches&&e.touches[0])touchY=e.touches[0].clientY;
+    },{passive:true});
+
     ui.stage.addEventListener('touchend',e=>{
       if(touchY==null||!e.changedTouches||!e.changedTouches[0])return;
-      const dy=e.changedTouches[0].clientY-touchY;touchY=null;
+
+      const dy=e.changedTouches[0].clientY-touchY;
+      touchY=null;
+
       if(Math.abs(dy)<38||busy)return;
       showPage(current+(dy<0?1:-1));
     },{passive:true});
 
     const onKey=e=>{
       if(!root.contains(ui.modal))return;
-      if(['ArrowDown','PageDown',' '].includes(e.key)){e.preventDefault();showPage(current+1);}
-      else if(['ArrowUp','PageUp'].includes(e.key)){e.preventDefault();showPage(current-1);}
+
+      if(['ArrowDown','PageDown',' '].includes(e.key)){
+        e.preventDefault();
+        showPage(current+1);
+      }else if(['ArrowUp','PageUp'].includes(e.key)){
+        e.preventDefault();
+        showPage(current-1);
+      }
     };
+
     window.addEventListener('keydown',onKey);
+
     const cleanupObserver=new MutationObserver(()=>{
-      if(!root.contains(ui.modal)){window.removeEventListener('keydown',onKey);cleanupObserver.disconnect();}
+      if(!root.contains(ui.modal)){
+        window.removeEventListener('keydown',onKey);
+        cleanupObserver.disconnect();
+      }
     });
+
     cleanupObserver.observe(root,{childList:true});
     return ui;
   }
 
   async function renderPdf(root,pdfUrl){
     const ui=makeModal(root);
-    const loading=document.createElement('div');loading.className='piece-preview-loading';loading.textContent='Chargement du PDF…';ui.stage.appendChild(loading);
+
+    const loading=document.createElement('div');
+    loading.className='piece-preview-loading';
+    loading.textContent='Chargement du PDF…';
+    ui.stage.appendChild(loading);
+
     const pdfjs=await ensurePdfJs();
     if(!root.contains(ui.modal))throw new Error('Aperçu fermé');
+
     const task=pdfjs.getDocument({url:pdfUrl,withCredentials:false});
     const pdf=await task.promise;
     if(!root.contains(ui.modal))throw new Error('Aperçu fermé');
-    const viewer=document.createElement('div');viewer.className='piece-pdf-pages';ui.stage.replaceChildren(viewer);
 
-    let lastPageHeight=0,resizeTimer=null,rendering=false,rerenderRequested=false,wheelLocked=false;
+    const viewer=document.createElement('div');
+    viewer.className='piece-pdf-pages';
+    ui.stage.replaceChildren(viewer);
+
+    let resizeTimer=null;
+    let rendering=false;
+    let rerenderRequested=false;
+    let wheelLocked=false;
+
+    function isFullscreen(){
+      return ui.modal.dataset.yayaPreviewFullscreen==='1';
+    }
+
+    function currentPageIndex(){
+      const slots=[...viewer.querySelectorAll('.piece-pdf-page')];
+      if(!slots.length)return 0;
+
+      const top=viewer.scrollTop;
+      let bestIndex=0;
+      let bestDistance=Infinity;
+
+      slots.forEach((slot,index)=>{
+        const distance=Math.abs(slot.offsetTop-top);
+        if(distance<bestDistance){
+          bestDistance=distance;
+          bestIndex=index;
+        }
+      });
+
+      return Math.max(0,Math.min(pdf.numPages-1,bestIndex));
+    }
+
     async function drawAll(){
-      if(rendering){rerenderRequested=true;return;}
+      if(rendering){
+        rerenderRequested=true;
+        return;
+      }
+
       if(!root.contains(ui.modal))return;
+
       rendering=true;
+
       try{
-        const oldHeight=Math.max(1,lastPageHeight||viewer.clientHeight||1);
-        const current=Math.max(0,Math.min(pdf.numPages-1,Math.round(viewer.scrollTop/oldHeight)));
-        const w=Math.max(120,viewer.clientWidth),h=Math.max(120,viewer.clientHeight);
-        lastPageHeight=h;viewer.replaceChildren();
+        const current=currentPageIndex();
+        const w=Math.max(120,viewer.clientWidth);
+        const h=Math.max(120,viewer.clientHeight);
+        const full=isFullscreen();
         const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+
+        viewer.style.setProperty(
+          'scroll-snap-type',
+          full?'none':'y mandatory',
+          'important'
+        );
+        viewer.style.setProperty(
+          'scroll-behavior',
+          full?'auto':'smooth',
+          'important'
+        );
+
+        viewer.replaceChildren();
+
         for(let n=1;n<=pdf.numPages;n++){
           if(!root.contains(ui.modal))return;
-          const slot=document.createElement('div');slot.className='piece-pdf-page';slot.style.height=h+'px';slot.style.minHeight=h+'px';
-          const canvas=document.createElement('canvas');slot.appendChild(canvas);viewer.appendChild(slot);
-          const page=await pdf.getPage(n),raw=page.getViewport({scale:1});
-          const cssScale=Math.min(Math.max(0.05,(w-10)/raw.width),Math.max(0.05,(h-10)/raw.height));
+
+          const page=await pdf.getPage(n);
+          const raw=page.getViewport({scale:1});
+
+          const widthScale=Math.max(0.05,(w-16)/raw.width);
+          const heightScale=Math.max(0.05,(h-16)/raw.height);
+          const cssScale=full
+            ? widthScale
+            : Math.min(widthScale,heightScale);
+
+          const cssWidth=Math.max(1,Math.floor(raw.width*cssScale));
+          const cssHeight=Math.max(1,Math.floor(raw.height*cssScale));
+
+          const slot=document.createElement('div');
+          slot.className='piece-pdf-page';
+
+          if(full){
+            const slotHeight=cssHeight+8;
+            slot.style.setProperty('height',slotHeight+'px','important');
+            slot.style.setProperty('min-height',slotHeight+'px','important');
+            slot.style.setProperty('align-items','flex-start','important');
+            slot.style.setProperty('overflow','visible','important');
+          }else{
+            slot.style.setProperty('height',h+'px','important');
+            slot.style.setProperty('min-height',h+'px','important');
+            slot.style.setProperty('align-items','center','important');
+            slot.style.setProperty('overflow','hidden','important');
+          }
+
+          const canvas=document.createElement('canvas');
+          slot.appendChild(canvas);
+          viewer.appendChild(slot);
+
           const viewport=page.getViewport({scale:cssScale*dpr});
-          canvas.width=Math.max(1,Math.floor(viewport.width));canvas.height=Math.max(1,Math.floor(viewport.height));
-          canvas.style.width=Math.floor(raw.width*cssScale)+'px';canvas.style.height=Math.floor(raw.height*cssScale)+'px';
-          await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+
+          canvas.width=Math.max(1,Math.floor(viewport.width));
+          canvas.height=Math.max(1,Math.floor(viewport.height));
+          canvas.style.setProperty('width',cssWidth+'px','important');
+          canvas.style.setProperty('height',cssHeight+'px','important');
+          canvas.style.setProperty('max-width','100%','important');
+          canvas.style.setProperty('max-height',full?'none':'100%','important');
+
+          await page.render({
+            canvasContext:canvas.getContext('2d'),
+            viewport
+          }).promise;
         }
-        viewer.scrollTop=current*h;
-      }finally{rendering=false;if(rerenderRequested){rerenderRequested=false;drawAll();}}
+
+        const slots=[...viewer.querySelectorAll('.piece-pdf-page')];
+        const wanted=slots[current];
+        viewer.scrollTop=wanted?wanted.offsetTop:0;
+
+      }finally{
+        rendering=false;
+
+        if(rerenderRequested){
+          rerenderRequested=false;
+          drawAll();
+        }
+      }
     }
+
+    ui.modal.__yayaRedrawPdf=function(){
+      return drawAll();
+    };
+
     viewer.addEventListener('wheel',e=>{
-      if(Math.abs(e.deltaY)<4||pdf.numPages<2)return;e.preventDefault();if(wheelLocked)return;wheelLocked=true;
-      const h=Math.max(1,lastPageHeight||viewer.clientHeight),current=Math.round(viewer.scrollTop/h);
-      const next=Math.max(0,Math.min(pdf.numPages-1,current+(e.deltaY>0?1:-1)));
-      viewer.scrollTo({top:next*h,behavior:'smooth'});setTimeout(()=>{wheelLocked=false;},320);
+      if(isFullscreen())return;
+      if(Math.abs(e.deltaY)<4||pdf.numPages<2)return;
+
+      e.preventDefault();
+      if(wheelLocked)return;
+
+      const slots=[...viewer.querySelectorAll('.piece-pdf-page')];
+      if(slots.length<2)return;
+
+      const current=currentPageIndex();
+      const next=Math.max(
+        0,
+        Math.min(pdf.numPages-1,current+(e.deltaY>0?1:-1))
+      );
+
+      if(next===current)return;
+
+      wheelLocked=true;
+      viewer.scrollTo({
+        top:slots[next]?slots[next].offsetTop:0,
+        behavior:'smooth'
+      });
+
+      setTimeout(()=>{wheelLocked=false;},320);
     },{passive:false});
-    const onResize=()=>{clearTimeout(resizeTimer);resizeTimer=setTimeout(()=>drawAll(),140);};
+
+    const onResize=()=>{
+      clearTimeout(resizeTimer);
+      resizeTimer=setTimeout(()=>drawAll(),140);
+    };
+
     window.addEventListener('resize',onResize,{passive:true});
+
     const cleanupObserver=new MutationObserver(()=>{
-      if(!root.contains(ui.modal)){clearTimeout(resizeTimer);window.removeEventListener('resize',onResize);cleanupObserver.disconnect();try{task.destroy();}catch(e){}}
+      if(!root.contains(ui.modal)){
+        clearTimeout(resizeTimer);
+        window.removeEventListener('resize',onResize);
+        cleanupObserver.disconnect();
+
+        try{delete ui.modal.__yayaRedrawPdf;}catch(e){}
+        try{task.destroy();}catch(e){}
+      }
     });
+
     cleanupObserver.observe(root,{childList:true});
-    await drawAll();return ui;
+
+    await drawAll();
+    return ui;
   }
 
   function showFallback(root,u){
-    if(root.querySelector('.piece-preview-modal')&&typeof originalVoirPiece==='function')originalVoirPiece(u);
+    if(
+      root.querySelector('.piece-preview-modal')&&
+      typeof originalVoirPiece==='function'
+    ){
+      originalVoirPiece(u);
+    }
   }
 
   window.voirPiece=async function(u){
-    u=String(u||'').trim();if(!u)return;
-    const root=document.getElementById('modalRoot');if(!root)return;
-    const driveId=driveIdFromUrl(u);
-    let direct=u;if(String(u).toLowerCase().includes('dropbox.com'))direct=dropboxRaw(u);
+    u=String(u||'').trim();
+    if(!u)return;
 
-    if(imageByExtension(direct)){showImage(root,direct);return;}
+    const root=document.getElementById('modalRoot');
+    if(!root)return;
+
+    const driveId=driveIdFromUrl(u);
+
+    let direct=u;
+    if(String(u).toLowerCase().includes('dropbox.com')){
+      direct=dropboxRaw(u);
+    }
+
+    if(imageByExtension(direct)){
+      showImage(root,direct);
+      return;
+    }
 
     if(driveId){
       const pending=showLoading(root,'Analyse de la pièce…');
-      const imageCandidate='https://drive.google.com/uc?export=view&id='+encodeURIComponent(driveId);
+      const imageCandidate=
+        'https://drive.google.com/uc?export=view&id='+
+        encodeURIComponent(driveId);
+
       try{
         const isImage=await canLoadImage(imageCandidate,1700);
         if(!root.contains(pending.modal))return;
-        if(isImage){showImage(root,imageCandidate);return;}
-      }catch(e){if(!root.contains(pending.modal))return;}
+
+        if(isImage){
+          showImage(root,imageCandidate);
+          return;
+        }
+      }catch(e){
+        if(!root.contains(pending.modal))return;
+      }
 
       try{
         await renderDrivePdfPages(root,driveId);
         return;
       }catch(e){
-        console.warn('Rendu Drive page-par-page indisponible :',e);
+        console.warn(
+          'Rendu Drive page-par-page indisponible :',
+          e
+        );
       }
 
-      const pdfCandidate='https://drive.google.com/uc?export=download&id='+encodeURIComponent(driveId);
-      try{await renderPdf(root,pdfCandidate);return;}
-      catch(e){console.warn('PDF.js Drive indisponible, retour lecteur Drive :',e);showFallback(root,u);return;}
+      const pdfCandidate=
+        'https://drive.google.com/uc?export=download&id='+
+        encodeURIComponent(driveId);
+
+      try{
+        await renderPdf(root,pdfCandidate);
+        return;
+      }catch(e){
+        console.warn(
+          'PDF.js Drive indisponible, retour lecteur Drive :',
+          e
+        );
+        showFallback(root,u);
+        return;
+      }
     }
 
     if(pdfByExtension(direct)||!imageByExtension(direct)){
-      try{await renderPdf(root,direct);return;}
-      catch(e){console.warn('Aperçu PDF page-par-page indisponible, retour lecteur actuel :',e);showFallback(root,u);return;}
+      try{
+        await renderPdf(root,direct);
+        return;
+      }catch(e){
+        console.warn(
+          'Aperçu PDF page-par-page indisponible, retour lecteur actuel :',
+          e
+        );
+        showFallback(root,u);
+        return;
+      }
     }
-    if(typeof originalVoirPiece==='function')originalVoirPiece(u);
+
+    if(typeof originalVoirPiece==='function'){
+      originalVoirPiece(u);
+    }
   };
 })();
