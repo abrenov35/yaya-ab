@@ -51,25 +51,22 @@
   },true);
 })();
 
-// Diagnostic OneDrive : évite qu'une modale reste bloquée indéfiniment
-// si le backend Yaya ne répond pas.
+// Watchdog OneDrive v2 : délai réseau + sécurité visuelle indépendante.
 (function(){
-  if(document.querySelector('script[data-yaya-onedrive-timeout-loader]'))return;
+  if(document.querySelector('script[data-yaya-onedrive-timeout-loader-v2]'))return;
   const s=document.createElement('script');
-  s.src='onedrive-timeout-diagnostic.js?v=onedrive-timeout-1';
+  s.src='onedrive-timeout-diagnostic.js?v=onedrive-timeout-2';
   s.async=false;
-  s.setAttribute('data-yaya-onedrive-timeout-loader','1');
+  s.setAttribute('data-yaya-onedrive-timeout-loader-v2','1');
   document.head.appendChild(s);
 })();
 
-// Recharger le lecteur OneDrive en dernier. Il récupère maintenant le fichier
-// via le backend Yaya puis l'affiche dans le lecteur PDF/image commun.
+// Recharger le lecteur OneDrive en dernier.
 (function(){
-  const old=document.querySelector('script[data-yaya-onedrive-final-loader]');
-  if(old)return;
+  if(document.querySelector('script[data-yaya-onedrive-final-loader-v2]'))return;
   const s=document.createElement('script');
-  s.src='onedrive-external-open.js?v=onedrive-binary-preview-11';
+  s.src='onedrive-external-open.js?v=onedrive-binary-preview-12';
   s.async=false;
-  s.setAttribute('data-yaya-onedrive-final-loader','1');
+  s.setAttribute('data-yaya-onedrive-final-loader-v2','1');
   document.head.appendChild(s);
 })();
