@@ -51,13 +51,13 @@
   },true);
 })();
 
-// Recharger le lecteur OneDrive en dernier afin que le clic sur l'œil ouvre
-// toujours la petite modale d'aperçu, comme Google Drive et Dropbox.
+// Recharger le lecteur OneDrive en dernier afin qu'il utilise exactement le
+// même cycle que les autres pièces : petite modale puis agrandissement au clic.
 (function(){
   const old=document.querySelector('script[data-yaya-onedrive-final-loader]');
   if(old)return;
   const s=document.createElement('script');
-  s.src='onedrive-external-open.js?v=onedrive-modal-preview-9';
+  s.src='onedrive-external-open.js?v=onedrive-modal-zoom-10';
   s.async=false;
   s.setAttribute('data-yaya-onedrive-final-loader','1');
   document.head.appendChild(s);
