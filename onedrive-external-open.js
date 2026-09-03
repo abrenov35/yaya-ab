@@ -1,6 +1,10 @@
 (function(){
   'use strict';
 
+  const FLAG='__yayaOneDriveNewTabV5';
+  if(window[FLAG])return;
+  window[FLAG]=true;
+
   function isOneDriveUrl(value){
     try{
       const u=new URL(String(value||''),window.location.href);
@@ -19,48 +23,85 @@
 
   function openExternal(url){
     const u=String(url||'').trim();
-    if(!u)return;
+    if(!u)return false;
 
-    // Ouverture explicite dans un nouvel onglet, comme les autres pièces.
-    // window.open est appelé directement pendant le clic utilisateur pour
-    // éviter que le navigateur remplace l'onglet Yaya courant.
-    let opened=null;
-    try{
-      opened=window.open(u,'_blank','noopener,noreferrer');
-    }catch(e){}
+    // Création immédiate d'un nouveau contexte pendant le clic utilisateur.
+    // On charge ensuite OneDrive dedans : l'onglet Yaya ne peut pas être remplacé.
+    let win=null;
+    try{win=window.open('about:blank','_blank');}catch(e){}
 
-    if(opened){
-      try{opened.opener=null;}catch(e){}
-      return;
+    if(win){
+      try{win.opener=null;}catch(e){}
+      try{win.location.href=u;}catch(e){
+        try{win.location.replace(u);}catch(_e){}
+      }
+      return true;
     }
 
-    // Secours si window.open est filtré par le navigateur.
-    const a=document.createElement('a');
-    a.href=u;
-    a.target='_blank';
-    a.rel='noopener noreferrer';
-    a.style.position='fixed';
-    a.style.left='-9999px';
-    a.style.top='-9999px';
-    document.body.appendChild(a);
-    a.dispatchEvent(new MouseEvent('click',{
-      view:window,
-      bubbles:true,
-      cancelable:true,
-      ctrlKey:true
-    }));
-    a.remove();
+    // Secours : lien natif target=_blank. Aucune navigation de l'onglet courant.
+    try{
+      const a=document.createElement('a');
+      a.href=u;
+      a.target='_blank';
+      a.rel='noopener noreferrer';
+      a.style.display='none';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return true;
+    }catch(e){
+      return false;
+    }
   }
 
-  function install(){
+  function oneDriveUrlFromClick(target){
+    if(!(target instanceof Element))return '';
+
+    const dataNode=target.closest('[data-lien],[data-url],[data-href]');
+    if(dataNode){
+      const vals=[dataNode.dataset.lien,dataNode.dataset.url,dataNode.dataset.href];
+      for(const v of vals){if(v&&isOneDriveUrl(v))return String(v);}
+    }
+
+    const link=target.closest('a[href]');
+    if(link){
+      const href=link.getAttribute('href')||link.href||'';
+      if(isOneDriveUrl(href))return String(href);
+    }
+
+    const onclickNode=target.closest('[onclick]');
+    if(onclickNode){
+      const raw=String(onclickNode.getAttribute('onclick')||'');
+      const m=raw.match(/voirPiece\(\s*(['"])(.*?)\1\s*\)/i);
+      if(m&&m[2]){
+        const value=m[2].replace(/\\(['"])/g,'$1');
+        if(isOneDriveUrl(value))return value;
+      }
+    }
+
+    return '';
+  }
+
+  // Capture AVANT les handlers Yaya : on bloque toute navigation résiduelle
+  // et on ouvre seulement le document OneDrive dans un nouvel onglet.
+  document.addEventListener('click',function(e){
+    const url=oneDriveUrlFromClick(e.target);
+    if(!url)return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
+    openExternal(url);
+  },true);
+
+  function wrapVoirPiece(){
     if(typeof window.voirPiece!=='function'){
-      setTimeout(install,150);
+      setTimeout(wrapVoirPiece,120);
       return;
     }
-    if(window.voirPiece.__yayaOneDriveDirectV4)return;
+    if(window.voirPiece.__yayaOneDriveNewTabV5)return;
 
     const previous=window.voirPiece;
-
     function voirPieceOneDrive(url){
       const u=String(url||'').trim();
       if(u&&isOneDriveUrl(u)){
@@ -69,10 +110,9 @@
       }
       return previous.apply(this,arguments);
     }
-
-    voirPieceOneDrive.__yayaOneDriveDirectV4=true;
+    voirPieceOneDrive.__yayaOneDriveNewTabV5=true;
     window.voirPiece=voirPieceOneDrive;
   }
 
-  install();
+  wrapVoirPiece();
 })();
