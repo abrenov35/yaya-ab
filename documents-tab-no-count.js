@@ -10,14 +10,30 @@
   }
 
   style.textContent=`
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="marche"] small,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="commandes"] small,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"] small,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="mail"] small{
       display:inline-flex!important;
+      font-size:0!important;
     }
 
+    #pane-chantiers .yaya-detail-section-tab[data-section="marche"] small[data-yaya-count]::after,
+    #pane-chantiers .yaya-detail-section-tab[data-section="commandes"] small[data-yaya-count]::after,
     #pane-chantiers .yaya-detail-section-tab[data-section="documents"] small[data-yaya-count]::after,
     #pane-chantiers .yaya-detail-section-tab[data-section="mail"] small[data-yaya-count]::after{
       content:attr(data-yaya-count);
+      font-size:10.5px!important;
+      line-height:1!important;
+    }
+
+    @media(max-width:760px){
+      #pane-chantiers .yaya-detail-section-tab[data-section="marche"] small[data-yaya-count]::after,
+      #pane-chantiers .yaya-detail-section-tab[data-section="commandes"] small[data-yaya-count]::after,
+      #pane-chantiers .yaya-detail-section-tab[data-section="documents"] small[data-yaya-count]::after,
+      #pane-chantiers .yaya-detail-section-tab[data-section="mail"] small[data-yaya-count]::after{
+        font-size:10px!important;
+      }
     }
   `;
 
@@ -42,6 +58,8 @@
     if(!pane)return;
 
     pane.querySelectorAll('.card:has(> .yaya-detail-section-tabs)').forEach(card=>{
+      setCount(card,'marche','.yaya-detail-markets-pane',':scope > .yaya-detail-market-row');
+      setCount(card,'commandes','.yaya-detail-commandes-pane',':scope > .yaya-detail-commande-row');
       setCount(card,'documents','.yaya-detail-documents-pane',':scope > .yaya-detail-document-row');
       setCount(card,'mail','.yaya-detail-mails-pane',':scope > .yaya-detail-mail-row');
     });
