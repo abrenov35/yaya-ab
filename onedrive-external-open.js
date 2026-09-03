@@ -18,13 +18,37 @@
   }
 
   function openExternal(url){
+    const u=String(url||'').trim();
+    if(!u)return;
+
+    // Ouverture explicite dans un nouvel onglet, comme les autres pièces.
+    // window.open est appelé directement pendant le clic utilisateur pour
+    // éviter que le navigateur remplace l'onglet Yaya courant.
+    let opened=null;
+    try{
+      opened=window.open(u,'_blank','noopener,noreferrer');
+    }catch(e){}
+
+    if(opened){
+      try{opened.opener=null;}catch(e){}
+      return;
+    }
+
+    // Secours si window.open est filtré par le navigateur.
     const a=document.createElement('a');
-    a.href=String(url||'');
+    a.href=u;
     a.target='_blank';
     a.rel='noopener noreferrer';
-    a.style.display='none';
+    a.style.position='fixed';
+    a.style.left='-9999px';
+    a.style.top='-9999px';
     document.body.appendChild(a);
-    a.click();
+    a.dispatchEvent(new MouseEvent('click',{
+      view:window,
+      bubbles:true,
+      cancelable:true,
+      ctrlKey:true
+    }));
     a.remove();
   }
 
@@ -33,23 +57,20 @@
       setTimeout(install,150);
       return;
     }
-    if(window.voirPiece.__yayaOneDriveDirectV3)return;
+    if(window.voirPiece.__yayaOneDriveDirectV4)return;
 
     const previous=window.voirPiece;
 
     function voirPieceOneDrive(url){
       const u=String(url||'').trim();
       if(u&&isOneDriveUrl(u)){
-        // OneDrive Entreprise / SharePoint bloque les liens de partage ordinaires
-        // dans les iframes externes. L'ouverture directe conserve la session
-        // Microsoft de l'utilisateur et évite l'écran "élément non chargé".
         openExternal(u);
-        return;
+        return false;
       }
       return previous.apply(this,arguments);
     }
 
-    voirPieceOneDrive.__yayaOneDriveDirectV3=true;
+    voirPieceOneDrive.__yayaOneDriveDirectV4=true;
     window.voirPiece=voirPieceOneDrive;
   }
 
