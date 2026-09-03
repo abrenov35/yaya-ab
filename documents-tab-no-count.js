@@ -12,6 +12,8 @@
   style.textContent=`
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="marche"] small,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="commandes"] small,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="depenses"] small,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"] small,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"] small,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="mail"] small{
       display:inline-flex!important;
@@ -20,6 +22,8 @@
 
     #pane-chantiers .yaya-detail-section-tab[data-section="marche"] small[data-yaya-count]::after,
     #pane-chantiers .yaya-detail-section-tab[data-section="commandes"] small[data-yaya-count]::after,
+    #pane-chantiers .yaya-detail-section-tab[data-section="depenses"] small[data-yaya-count]::after,
+    #pane-chantiers .yaya-detail-section-tab[data-section="charges"] small[data-yaya-count]::after,
     #pane-chantiers .yaya-detail-section-tab[data-section="documents"] small[data-yaya-count]::after,
     #pane-chantiers .yaya-detail-section-tab[data-section="mail"] small[data-yaya-count]::after{
       content:attr(data-yaya-count);
@@ -30,6 +34,8 @@
     @media(max-width:760px){
       #pane-chantiers .yaya-detail-section-tab[data-section="marche"] small[data-yaya-count]::after,
       #pane-chantiers .yaya-detail-section-tab[data-section="commandes"] small[data-yaya-count]::after,
+      #pane-chantiers .yaya-detail-section-tab[data-section="depenses"] small[data-yaya-count]::after,
+      #pane-chantiers .yaya-detail-section-tab[data-section="charges"] small[data-yaya-count]::after,
       #pane-chantiers .yaya-detail-section-tab[data-section="documents"] small[data-yaya-count]::after,
       #pane-chantiers .yaya-detail-section-tab[data-section="mail"] small[data-yaya-count]::after{
         font-size:10px!important;
@@ -60,6 +66,8 @@
     pane.querySelectorAll('.card:has(> .yaya-detail-section-tabs)').forEach(card=>{
       setCount(card,'marche','.yaya-detail-markets-pane',':scope > .yaya-detail-market-row');
       setCount(card,'commandes','.yaya-detail-commandes-pane',':scope > .yaya-detail-commande-row');
+      setCount(card,'depenses','.yaya-detail-expenses-pane',':scope > .yaya-detail-expense-row');
+      setCount(card,'charges','.yaya-detail-charges-pane',':scope > .yaya-detail-charge-row');
       setCount(card,'documents','.yaya-detail-documents-pane',':scope > .yaya-detail-document-row');
       setCount(card,'mail','.yaya-detail-mails-pane',':scope > .yaya-detail-mail-row');
     });
