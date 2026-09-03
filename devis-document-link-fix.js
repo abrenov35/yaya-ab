@@ -50,3 +50,15 @@
     }
   },true);
 })();
+
+// Toujours recharger le garde OneDrive en dernier : il intercepte les clics
+// avant tout autre handler et garantit que Yaya reste dans son onglet.
+(function(){
+  const old=document.querySelector('script[data-yaya-onedrive-final-loader]');
+  if(old)return;
+  const s=document.createElement('script');
+  s.src='onedrive-external-open.js?v=onedrive-newtab-final-8';
+  s.async=false;
+  s.setAttribute('data-yaya-onedrive-final-loader','1');
+  document.head.appendChild(s);
+})();
