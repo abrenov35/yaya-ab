@@ -35,6 +35,16 @@
     }
   }
 
+  function loadRecentFirstAll(){
+    if(document.querySelector('script[data-yaya-recent-first-all]'))return;
+    const script=document.createElement('script');
+    script.src='recent-first-all.js?v=recent-first-all-1';
+    script.async=false;
+    script.setAttribute('data-yaya-recent-first-all','1');
+    document.head.appendChild(script);
+  }
+
   setTimeout(install,0);
   setTimeout(install,150);
+  loadRecentFirstAll();
 })();
