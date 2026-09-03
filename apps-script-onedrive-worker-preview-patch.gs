@@ -28,8 +28,8 @@ function ym2PreviewOneDrive_(data) {
     throw new Error('Liaison privée OneDrive absente du service.');
   }
 
-  // Lecture du DriveItem avec la connexion privée déjà utilisée par le worker.
-  // @microsoft.graph.downloadUrl est une URL temporaire préautorisée.
+  // Le DriveItem est lu directement depuis Microsoft Graph avec la connexion
+  // privée déjà utilisée par ce worker.
   var item = ym2OdGraph_(
     '/drives/' + encodeURIComponent(config.resolvedDriveId) +
     '/items/' + encodeURIComponent(itemId)
@@ -60,10 +60,16 @@ function ym2PreviewOneDrive_(data) {
     throw new Error('Ce format OneDrive n’est pas prévisualisable dans Yaya.');
   }
 
-  var privateUrl = ym2OdUrlPrivee_(item['@microsoft.graph.downloadUrl']);
+  // IMPORTANT : cette URL temporaire n'est PAS fournie par le navigateur.
+  // Elle vient directement de la réponse authentifiée de Microsoft Graph.
+  // Aucun Bearer token n'est envoyé à cette URL : elle est déjà préautorisée.
+  var privateUrl = String(item['@microsoft.graph.downloadUrl'] || '').trim();
+  if (!/^https:\/\/[^\s]+$/i.test(privateUrl)) {
+    throw new Error('Adresse temporaire OneDrive invalide.');
+  }
 
-  // L’URL est créée à l’instant par Graph et reste côté serveur.
-  // Elle n’est jamais renvoyée au navigateur ni journalisée.
+  // L’URL reste strictement côté serveur : elle n’est jamais renvoyée au
+  // navigateur, enregistrée dans Yaya ou écrite dans les journaux.
   var response = UrlFetchApp.fetch(privateUrl, {
     method: 'get',
     muteHttpExceptions: true,
