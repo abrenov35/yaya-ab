@@ -129,4 +129,12 @@
     h.setAttribute('data-yaya-hours-toolbar-loader','1');
     document.head.appendChild(h);
   }
+
+  if(!document.querySelector('script[data-yaya-recent-first-all-loader]')){
+    const r=document.createElement('script');
+    r.src='recent-first-all.js?v=recent-first-all-1';
+    r.async=false;
+    r.setAttribute('data-yaya-recent-first-all-loader','1');
+    document.head.appendChild(r);
+  }
 })();
