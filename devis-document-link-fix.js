@@ -51,13 +51,13 @@
   },true);
 })();
 
-// Toujours recharger le garde OneDrive en dernier : il intercepte les clics
-// avant tout autre handler et garantit que Yaya reste dans son onglet.
+// Recharger le lecteur OneDrive en dernier afin que le clic sur l'œil ouvre
+// toujours la petite modale d'aperçu, comme Google Drive et Dropbox.
 (function(){
   const old=document.querySelector('script[data-yaya-onedrive-final-loader]');
   if(old)return;
   const s=document.createElement('script');
-  s.src='onedrive-external-open.js?v=onedrive-newtab-final-8';
+  s.src='onedrive-external-open.js?v=onedrive-modal-preview-9';
   s.async=false;
   s.setAttribute('data-yaya-onedrive-final-loader','1');
   document.head.appendChild(s);
