@@ -77,13 +77,18 @@
     return 'Objet non renseigné';
   }
 
+  function getDoc(id){
+    if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return null;
+    return S.documents.find(x=>String(x.id)===String(id))||null;
+  }
+
   window.voirMessageYaya=function(id){
-    const d=(window.S&&Array.isArray(S.documents))?S.documents.find(x=>String(x.id)===String(id)):null;
+    const d=getDoc(id);
     if(!d)return;
 
     const lien=String(d.lien||'');
     if(!isMail(d)&&lien.startsWith('http')&&!/mail\.google\.com/i.test(lien)){
-      if(typeof window.voirPiece==='function')window.voirPiece(lien);
+      if(typeof voirPiece==='function')voirPiece(lien);
       return;
     }
 
@@ -105,7 +110,7 @@
   };
 
   window.editDocument=function(id){
-    const d=(window.S&&Array.isArray(S.documents))?S.documents.find(x=>String(x.id)===String(id)):null;
+    const d=getDoc(id);
     if(!d)return;
     if(!isMail(d)){
       if(originalEdit)return originalEdit(id);
@@ -114,22 +119,24 @@
 
     const root=document.getElementById('modalRoot');
     if(!root)return;
-    const chantiers=Array.isArray(S.chantiers)?S.chantiers:[];
+    const chantiers=(typeof S!=='undefined'&&Array.isArray(S.chantiers))?S.chantiers:[];
     const chOpts=chantiers.map(c=>'<option value="'+html(c.id)+'"'+(String(c.id)===String(d.chantierId)?' selected':'')+'>'+html(c.nom)+'</option>').join('');
     const types=(typeof TYPES_DOC2!=='undefined'&&Array.isArray(TYPES_DOC2))?TYPES_DOC2:['MAIL','Document'];
+    const objetAffiche=mailObject(d);
+    const objetValue=objetAffiche==='Objet non renseigné'?'':objetAffiche;
 
     root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'
       +'<h5>Modifier le mail<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
       +'<div class="mrow"><select class="msel" id="edDocCh">'+chOpts+'</select></div>'
       +'<div class="mrow"><select class="msel" id="edDocType">'+types.map(t=>'<option'+(String(d.type)===String(t)?' selected':'')+'>'+html(t)+'</option>').join('')+'</select></div>'
       +'<div class="mrow"><input class="msel" id="edDocSujet" value="'+html(mailName(d))+'" placeholder="Expéditeur"></div>'
-      +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+html(mailObject(d)==='Objet non renseigné'?'':html(mailObject(d))+'" placeholder="Objet du mail"></div>'
+      +'<div class="mrow"><input class="msel" id="edDocTitre" value="'+html(objetValue)+'" placeholder="Objet du mail"></div>'
       +'<div class="mfoot"><button class="btnp go" onclick="saveDocumentEdit(\''+html(id)+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
       +'</div></div>';
   };
 
   window.saveDocumentEdit=async function(id){
-    const d=(window.S&&Array.isArray(S.documents))?S.documents.find(x=>String(x.id)===String(id)):null;
+    const d=getDoc(id);
     if(!d)return;
     if(!isMail(d)){
       if(originalSave)return originalSave(id);
@@ -150,7 +157,7 @@
     const ancienObjet=mailObject(d)==='Objet non renseigné'?'':mailObject(d);
 
     if(String(d.chantierId||'')===nouveauCh&&String(d.type||'')===nouveauType&&ancienNom===nouveauNom&&ancienObjet===nouvelObjet){
-      if(typeof window.toast==='function')toast('Aucune modification à enregistrer');
+      if(typeof toast==='function')toast('Aucune modification à enregistrer');
       return;
     }
 
@@ -166,31 +173,30 @@
     d.titre=nouvelObjet;
 
     if(corpsAvant)d.contenuMail=corpsAvant;
-    if(nouveauType.toUpperCase()!=='MAIL')d.origineMail='MAIL';
-    if(ancienType.toUpperCase()==='MAIL'&&nouveauType.toUpperCase()!=='MAIL')d.origineMail='MAIL';
+    if(nouveauType.toUpperCase()!=='MAIL'||ancienType.toUpperCase()==='MAIL'&&nouveauType.toUpperCase()!=='MAIL')d.origineMail='MAIL';
 
-    if(typeof window.closeModal==='function')closeModal();
-    if(typeof window.render==='function')render();
+    if(typeof closeModal==='function')closeModal();
+    if(typeof render==='function')render();
 
-    const ok=typeof window.apiPost==='function'?await apiPost('setDocuments',S.documents):false;
+    const ok=typeof apiPost==='function'?await apiPost('setDocuments',S.documents):false;
     if(ok){
-      if(typeof window.toast==='function')toast('Mail modifié ✓');
+      if(typeof toast==='function')toast('Mail modifié ✓');
       window.dispatchEvent(new Event('yaya:data-refreshed'));
     }else{
       Object.keys(d).forEach(k=>delete d[k]);
       Object.assign(d,avant);
-      if(typeof window.render==='function')render();
-      if(typeof window.toast==='function')toast('La modification du mail a échoué',true);
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast('La modification du mail a échoué',true);
     }
   };
 
   function fixRows(){
-    if(!window.S||!Array.isArray(S.documents))return;
+    if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return;
     document.querySelectorAll('#pane-chantiers .yaya-detail-mail-row').forEach(row=>{
       const btn=row.querySelector('[data-mail-id]');
       const id=String(btn&&btn.dataset.mailId||'');
       if(!id)return;
-      const d=S.documents.find(x=>String(x.id)===id);
+      const d=getDoc(id);
       if(!d)return;
       const sender=row.querySelector('.yaya-mail-sender');
       const subject=row.querySelector('.yaya-mail-subject');
