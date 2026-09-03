@@ -5,7 +5,7 @@
 
   function escHtml(v){
     if(typeof window.esc==='function')return window.esc(v==null?'':String(v));
-    return String(v==null?'':v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+    return String(v==null?'':v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
   }
   function euro(v){
     if(typeof window.eur==='function')return window.eur(Number(v)||0);
@@ -25,7 +25,28 @@
     const st=String(a&&a.sousTraitant||'').trim();
     return type.includes('sous-trait')||!!st;
   }
-  function sortKey(a){return String(a.horodatage||a.createdAt||a.dateCreation||a.date||'');}
+  function parseSortDate(value){
+    if(value==null||value==='')return 0;
+    if(typeof value==='number'&&Number.isFinite(value))return value;
+    const raw=String(value).trim();
+    if(!raw)return 0;
+    let m=raw.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+    if(m)return new Date(Number(m[1]),Number(m[2])-1,Number(m[3]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0)).getTime();
+    m=raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:[T\s](\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+    if(m)return new Date(Number(m[3]),Number(m[2])-1,Number(m[1]),Number(m[4]||0),Number(m[5]||0),Number(m[6]||0)).getTime();
+    const d=new Date(raw);
+    return Number.isNaN(d.getTime())?0:d.getTime();
+  }
+  function sortKey(a){
+    const vals=[
+      a&&a.dateDepot,a&&a.date_depot,a&&a.horodatageDepot,a&&a.horodatage_depot,
+      a&&a.deposeLe,a&&a.depose_le,a&&a.uploadedAt,a&&a.uploaded_at,
+      a&&a.createdAt,a&&a.created_at,a&&a.dateCreation,a&&a.date_creation,
+      a&&a.horodatage,a&&a.timestamp,a&&a.date
+    ];
+    for(const v of vals){const t=parseSortDate(v);if(t)return t;}
+    return 0;
+  }
 
   function installStyle(){
     if(document.getElementById('yaya-st-page-style-v1'))return;
@@ -74,7 +95,7 @@
     const pane=ensureUi();if(!pane)return;
     const achats=(typeof S!=='undefined'&&S&&Array.isArray(S.achats))?S.achats:[];
     const data=achats.filter(isSousTraitant)
-      .map((a,i)=>({a,i})).sort((x,y)=>sortKey(y.a).localeCompare(sortKey(x.a))||y.i-x.i).slice(0,10).map(x=>x.a);
+      .map((a,i)=>({a,i})).sort((x,y)=>(sortKey(y.a)-sortKey(x.a))||y.i-x.i).slice(0,10).map(x=>x.a);
     if(!data.length){pane.innerHTML='<div class="st-empty">Aucune facture de sous-traitant enregistrée.</div>';return;}
     let html='<div class="st-list">';
     data.forEach(a=>{
@@ -132,9 +153,17 @@
 
   if(!document.querySelector('script[data-yaya-recent-first-all-loader]')){
     const r=document.createElement('script');
-    r.src='recent-first-all.js?v=recent-first-all-1';
+    r.src='recent-first-all.js?v=recent-first-all-2';
     r.async=false;
     r.setAttribute('data-yaya-recent-first-all-loader','1');
     document.head.appendChild(r);
+  }
+
+  if(!document.querySelector('script[data-yaya-sous-traitant-detail-recent-loader]')){
+    const s=document.createElement('script');
+    s.src='sous-traitant-detail-recent.js?v=st-detail-recent-1';
+    s.async=false;
+    s.setAttribute('data-yaya-sous-traitant-detail-recent-loader','1');
+    document.head.appendChild(s);
   }
 })();
