@@ -30,6 +30,27 @@
     if(looksLikeBody(d.description))return String(d.description);
     return '';
   }
+  function cachedBody(d){
+    if(!d)return '';
+    try{
+      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+      if(!raw)return '';
+      const cache=JSON.parse(raw);
+      const old=cache&&Array.isArray(cache.documents)?cache.documents.find(x=>String(x.id)===String(d.id)):null;
+      if(!old)return '';
+      const body=explicitBody(old);
+      if(body)return body;
+      if(looksLikeBody(old.titre))return String(old.titre);
+    }catch(e){}
+    return '';
+  }
+  function mailBody(d){
+    if(!d)return '';
+    const body=explicitBody(d);
+    if(body)return body;
+    if(looksLikeBody(d.titre))return String(d.titre);
+    return cachedBody(d);
+  }
   function cleanObject(v,sender){
     let out=txt(v).replace(/^(?:objet|subject)\s*[:\-]\s*/i,'').replace(/[#*]+$/,'').trim();
     if(!out||out===sender||looksLikeBody(out)||out.length>180)return '';
@@ -40,45 +61,26 @@
     const sender=mailName(d);
     const direct=[d.objetMail,d.mailSubject,d.emailSubject,d.subject,d.objet,d.messageSubject,d.gmailSubject,d.subjectMail,d.titreMail,d.intitule];
     for(const v of direct){const out=cleanObject(v,sender);if(out)return out;}
-
-    const titre=cleanObject(d.titre,sender);
-    if(titre)return titre;
-
-    const body=explicitBody(d);
+    if(!looksLikeBody(d.titre)){
+      const titre=cleanObject(d.titre,sender);
+      if(titre)return titre;
+    }
+    const body=mailBody(d);
     if(body){
       const m=String(body).match(/(?:^|\n)\s*(?:objet|subject)\s*:\s*(.+?)(?=\r?\n|$)/i);
       if(m){const out=cleanObject(m[1],sender);if(out)return out;}
-      const shortBody=cleanObject(body,sender);
-      if(shortBody)return shortBody;
     }
     return 'Objet non renseigné';
-  }
-  function mailBody(d){
-    if(!d)return '';
-    const body=explicitBody(d);
-    if(body){
-      const obj=mailObjectWithoutBodyFallback(d);
-      if(obj&&txt(body)===txt(obj)&&!looksLikeBody(body))return '';
-      return body;
-    }
-    if(looksLikeBody(d.titre))return String(d.titre);
-    return '';
-  }
-  function mailObjectWithoutBodyFallback(d){
-    if(!d)return '';
-    const sender=mailName(d);
-    const direct=[d.objetMail,d.mailSubject,d.emailSubject,d.subject,d.objet,d.messageSubject,d.gmailSubject,d.subjectMail,d.titreMail,d.intitule];
-    for(const v of direct){const out=cleanObject(v,sender);if(out)return out;}
-    return cleanObject(d.titre,sender);
   }
 
   window.nomMailYaya=function(d){return mailName(d);};
   window.objetMailYaya=function(d){return mailObject(d);};
   window.contenuMailYaya=function(d){return mailBody(d);};
 
+  function getDoc(id){return docs().find(x=>String(x.id)===String(id))||null;}
+
   function openMail(id){
-    const d=docs().find(x=>String(x.id)===String(id));
-    if(!d)return;
+    const d=getDoc(id);if(!d)return;
     const lien=String(d.lien||'');
     if(!isMail(d)&&lien.startsWith('http')&&!/mail\.google\.com/i.test(lien)){
       if(typeof voirPiece==='function')voirPiece(lien);
@@ -86,9 +88,8 @@
     }
     const date=String(d.date||'').slice(0,10).split('-').reverse().join('/');
     const body=mailBody(d);
-    const contenu=esc(body||'Aucun contenu disponible.').replace(/\r?\n/g,'<br>');
-    const root=document.getElementById('modalRoot');
-    if(!root)return;
+    const contenu=esc(body||'Contenu du mail indisponible dans Yaya.').replace(/\r?\n/g,'<br>');
+    const root=document.getElementById('modalRoot');if(!root)return;
     root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()">'
       +'<div class="modal message-modal">'
       +'<h5><span>Échange chantier</span><button class="btn2" onclick="closeModal()">Fermer</button></h5>'
@@ -102,11 +103,9 @@
   window.voirMessageYaya=openMail;
 
   function openEdit(id){
-    const d=docs().find(x=>String(x.id)===String(id));
-    if(!d)return;
+    const d=getDoc(id);if(!d)return;
     if(!isMail(d)){if(originalEdit)originalEdit(id);return;}
-    const root=document.getElementById('modalRoot');
-    if(!root)return;
+    const root=document.getElementById('modalRoot');if(!root)return;
     let chantiers=[];try{chantiers=(typeof S!=='undefined'&&Array.isArray(S.chantiers))?S.chantiers:[];}catch(e){}
     const chOpts=chantiers.map(c=>'<option value="'+esc(c.id)+'"'+(String(c.id)===String(d.chantierId)?' selected':'')+'>'+esc(c.nom||c.numero||'Chantier')+'</option>').join('');
     let types=['MAIL','Document'];try{if(typeof TYPES_DOC2!=='undefined'&&Array.isArray(TYPES_DOC2))types=TYPES_DOC2;}catch(e){}
@@ -123,48 +122,57 @@
   window.editDocument=openEdit;
 
   window.saveDocumentEdit=async function(id){
-    const d=docs().find(x=>String(x.id)===String(id));
-    if(!d)return;
+    const d=getDoc(id);if(!d)return;
     if(!isMail(d)){if(originalSave)return originalSave(id);return;}
     const ch=document.getElementById('edDocCh');
     const type=document.getElementById('edDocType');
     const sender=document.getElementById('edDocSujet');
     const object=document.getElementById('edDocTitre');
     if(!ch||!type||!sender||!object)return;
-    const nouveauCh=String(ch.value||'');
-    const nouveauType=String(type.value||'');
-    const nouveauNom=String(sender.value||'').trim();
-    const nouvelObjet=String(object.value||'').trim();
+
     const avant={...d};
     const corpsAvant=mailBody(d);
-    d.chantierId=nouveauCh;
-    d.type=nouveauType;
-    d.sujet=nouveauNom;
-    d.nomMail=nouveauNom;
-    d.objetMail=nouvelObjet;
-    d.titre=nouvelObjet;
-    if(corpsAvant&&txt(corpsAvant)!==txt(nouvelObjet))d.contenuMail=corpsAvant;
-    if(nouveauType.toUpperCase()!=='MAIL')d.origineMail='MAIL';
+    const ancienTitre=String(d.titre||'');
+
+    d.chantierId=String(ch.value||'');
+    d.type=String(type.value||'');
+    d.sujet=String(sender.value||'').trim();
+    d.nomMail=d.sujet;
+    d.objetMail=String(object.value||'').trim();
+
+    if(corpsAvant){
+      d.contenuMail=corpsAvant;
+      if(looksLikeBody(ancienTitre))d.titre=ancienTitre;
+    }
+    if(String(d.type||'').toUpperCase()!=='MAIL')d.origineMail='MAIL';
+
     if(typeof closeModal==='function')closeModal();
     if(typeof render==='function')render();
+
     let ok=false;try{ok=typeof apiPost==='function'?await apiPost('setDocuments',docs()):false;}catch(e){ok=false;}
-    if(ok){if(typeof toast==='function')toast('Mail modifié ✓');window.dispatchEvent(new Event('yaya:data-refreshed'));}
-    else{Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,avant);if(typeof render==='function')render();if(typeof toast==='function')toast('La modification du mail a échoué',true);}
+    if(ok){
+      if(typeof toast==='function')toast('Mail modifié ✓');
+      window.dispatchEvent(new Event('yaya:data-refreshed'));
+    }else{
+      Object.keys(d).forEach(k=>delete d[k]);Object.assign(d,avant);
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast('La modification du mail a échoué',true);
+    }
   };
 
   function mailIdFromButton(btn){
-    return String(btn&&(
-      btn.getAttribute('data-mail-id')||
-      btn.dataset&&btn.dataset.mailId||
-      ''
-    )||'');
+    return String(btn&&((btn.getAttribute('data-mail-id'))||(btn.dataset&&btn.dataset.mailId)||'')||'');
+  }
+  function idFromOnclick(el){
+    const m=String(el&&el.getAttribute('onclick')||'').match(/['\"]([^'\"]+)['\"]/);
+    return m&&m[1]?String(m[1]):'';
   }
 
   document.addEventListener('click',function(e){
     const view=e.target&&e.target.closest&&e.target.closest('.yaya-detail-mail-row .yaya-detail-document-view,.message-ligne .yaya-mail-view');
-    if(view){const id=mailIdFromButton(view)||String((view.getAttribute('onclick')||'').match(/['\"]([^'\"]+)['\"]/)?.[1]||'');if(id){e.preventDefault();e.stopImmediatePropagation();openMail(id);}return;}
+    if(view){const id=mailIdFromButton(view)||idFromOnclick(view);if(id){e.preventDefault();e.stopImmediatePropagation();openMail(id);}return;}
     const edit=e.target&&e.target.closest&&e.target.closest('.yaya-detail-mail-row .yaya-detail-document-edit,.message-ligne .yaya-mail-edit');
-    if(edit){const id=mailIdFromButton(edit)||String((edit.getAttribute('onclick')||'').match(/['\"]([^'\"]+)['\"]/)?.[1]||'');if(id){e.preventDefault();e.stopImmediatePropagation();openEdit(id);}}
+    if(edit){const id=mailIdFromButton(edit)||idFromOnclick(edit);if(id){e.preventDefault();e.stopImmediatePropagation();openEdit(id);}}
   },true);
 
   function fixRows(){
@@ -172,14 +180,14 @@
     document.querySelectorAll('#pane-chantiers .yaya-detail-mail-row').forEach(row=>{
       const btn=row.querySelector('[data-mail-id]');
       const id=String(btn&&btn.dataset.mailId||'');
-      const d=list.find(x=>String(x.id)===id);
-      if(!d)return;
+      const d=list.find(x=>String(x.id)===id);if(!d)return;
       const sender=row.querySelector('.yaya-mail-sender');
       const subject=row.querySelector('.yaya-mail-subject');
       if(sender){sender.textContent=mailName(d);sender.title=mailName(d);}
       if(subject){subject.textContent=mailObject(d);subject.title=mailObject(d);}
     });
   }
+
   let pending=false;
   function schedule(){if(pending)return;pending=true;requestAnimationFrame(function(){pending=false;fixRows();});}
   fixRows();
