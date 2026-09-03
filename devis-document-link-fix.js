@@ -51,6 +51,17 @@
   },true);
 })();
 
+// Diagnostic OneDrive : évite qu'une modale reste bloquée indéfiniment
+// si le backend Yaya ne répond pas.
+(function(){
+  if(document.querySelector('script[data-yaya-onedrive-timeout-loader]'))return;
+  const s=document.createElement('script');
+  s.src='onedrive-timeout-diagnostic.js?v=onedrive-timeout-1';
+  s.async=false;
+  s.setAttribute('data-yaya-onedrive-timeout-loader','1');
+  document.head.appendChild(s);
+})();
+
 // Recharger le lecteur OneDrive en dernier. Il récupère maintenant le fichier
 // via le backend Yaya puis l'affiche dans le lecteur PDF/image commun.
 (function(){
