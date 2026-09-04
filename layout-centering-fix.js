@@ -46,13 +46,13 @@
         min-width:0!important;
       }
 
-      .achat-edit-modal .mfoot{
+      .yaya-finance-edit-modal .mfoot{
         display:flex!important;
         justify-content:flex-start!important;
         align-items:center!important;
         gap:0!important;
       }
-      .achat-edit-modal .yaya-achat-single-save{
+      .yaya-finance-edit-modal .yaya-achat-single-save{
         min-width:140px!important;
         height:42px!important;
         padding:0 20px!important;
@@ -71,8 +71,29 @@
     if(window.scrollX)window.scrollTo(0,window.scrollY);
   }
 
-  function simplifyAchatEditButtons(){
-    document.querySelectorAll('.achat-edit-modal').forEach(function(modal){
+  function isFinanceEditModal(modal){
+    if(!modal)return false;
+    if(modal.classList.contains('achat-edit-modal') || modal.classList.contains('charge-edit-modal'))return true;
+
+    const title=modal.querySelector('h5');
+    const txt=String(title&&title.textContent||'').trim();
+    if(/^Modifier\s+(l[’']achat|la charge)/i.test(txt))return true;
+
+    return !!modal.querySelector('#eaCh,#eaType,#eaFour,#eaDes,#eaDate,#eaMt');
+  }
+
+  function financeEditModals(){
+    const modals=[];
+    document.querySelectorAll('.overlay .modal').forEach(function(modal){
+      if(!isFinanceEditModal(modal))return;
+      modal.classList.add('yaya-finance-edit-modal');
+      modals.push(modal);
+    });
+    return modals;
+  }
+
+  function simplifyFinanceEditButtons(){
+    financeEditModals().forEach(function(modal){
       const candidates=[...modal.querySelectorAll('#pj-zone button,.mfoot button')];
       if(!candidates.length)return;
 
@@ -95,18 +116,14 @@
       save.classList.add('yaya-achat-single-save');
 
       const pj=modal.querySelector('#pj-zone');
-      if(pj && !pj.querySelector('button,input,select,textarea') && !String(pj.textContent||'').trim()){
+      if(pj && !pj.querySelector('button,input,select,textarea')){
         pj.style.display='none';
       }
     });
   }
 
   function centerTargetModals(){
-    const modals=new Set();
-
-    document.querySelectorAll('.achat-edit-modal').forEach(function(modal){
-      modals.add(modal);
-    });
+    const modals=new Set(financeEditModals());
 
     ['acCh','acType','acFour','acMt','docFile','docCh','docLien','docEtat'].forEach(function(id){
       const field=document.getElementById(id);
@@ -137,7 +154,7 @@
 
   function applyModalFixes(){
     centerTargetModals();
-    simplifyAchatEditButtons();
+    simplifyFinanceEditButtons();
   }
 
   function install(){
