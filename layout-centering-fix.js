@@ -53,24 +53,37 @@
     if(window.scrollX)window.scrollTo(0,window.scrollY);
   }
 
-  function centerAchatEditModals(){
+  function centerAchatModals(){
+    const modals=new Set();
+
     document.querySelectorAll('.achat-edit-modal').forEach(function(modal){
+      modals.add(modal);
+    });
+
+    ['acCh','acType','acFour','acMt'].forEach(function(id){
+      const field=document.getElementById(id);
+      const modal=field&&field.closest('.modal');
+      if(modal)modals.add(modal);
+    });
+
+    modals.forEach(function(modal){
       const overlay=modal.closest('.overlay');
       if(!overlay)return;
       overlay.style.setProperty('align-items','center','important');
       overlay.style.setProperty('justify-content','center','important');
+      overlay.style.setProperty('padding','16px','important');
     });
   }
 
   function install(){
     if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)return;
     installStyle();
-    centerAchatEditModals();
+    centerAchatModals();
     requestAnimationFrame(resetPageHorizontalScroll);
     window.addEventListener('resize',resetPageHorizontalScroll,{passive:true});
     window.addEventListener('orientationchange',function(){setTimeout(resetPageHorizontalScroll,80);},{passive:true});
 
-    const observer=new MutationObserver(centerAchatEditModals);
+    const observer=new MutationObserver(centerAchatModals);
     observer.observe(document.documentElement,{childList:true,subtree:true});
   }
 
