@@ -4,7 +4,7 @@
   const brand=document.querySelector('.hdr .brand span');
   if(brand)brand.textContent='AB RENOV 35';
 
-  const STYLE_ID='yaya-create-chantier-search-line-main-v6';
+  const STYLE_ID='yaya-create-chantier-search-line-main-v7';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -27,7 +27,7 @@
         height:38px!important;
         min-height:38px!important;
         margin:0!important;
-        padding:0 34px 0 12px!important;
+        padding:0 12px!important;
         border:1px solid rgba(255,255,255,.45)!important;
         border-radius:7px!important;
         background:#fff!important;
@@ -36,31 +36,29 @@
         font-size:13px!important;
         font-weight:600!important;
         outline:none!important;
+        appearance:none!important;
+        -webkit-appearance:none!important;
       }
       .hdr .tabs .yaya-header-chantier-search #filtreInput::placeholder{color:#718096!important;font-weight:500!important;}
       .hdr .tabs .yaya-header-chantier-search #filtreInput:focus{
         border-color:#C9A227!important;
         box-shadow:0 0 0 2px rgba(201,162,39,.22)!important;
       }
-      .hdr .tabs .yaya-header-chantier-search #filtreInput::-webkit-search-cancel-button{-webkit-appearance:none!important;appearance:none!important;display:none!important;}
-      .hdr .tabs .yaya-header-chantier-search #yayaSearchClear{
-        all:unset!important;
-        position:absolute!important;
-        right:8px!important;
-        top:50%!important;
-        transform:translateY(-50%)!important;
-        width:22px!important;
-        height:22px!important;
+      .hdr .tabs .yaya-header-chantier-search #filtreInput::-webkit-search-cancel-button,
+      .hdr .tabs .yaya-header-chantier-search #filtreInput::-webkit-search-decoration,
+      .hdr .tabs .yaya-header-chantier-search #filtreInput::-webkit-search-results-button,
+      .hdr .tabs .yaya-header-chantier-search #filtreInput::-webkit-search-results-decoration{
+        -webkit-appearance:none!important;
+        appearance:none!important;
         display:none!important;
-        align-items:center!important;
-        justify-content:center!important;
-        color:#718096!important;
-        font-size:20px!important;
-        line-height:22px!important;
-        cursor:pointer!important;
-        z-index:3!important;
       }
-      .hdr .tabs .yaya-header-chantier-search #yayaSearchClear[data-visible="1"]{display:inline-flex!important;}
+      .hdr .tabs .yaya-header-chantier-search::before,
+      .hdr .tabs .yaya-header-chantier-search::after,
+      .hdr .tabs .yaya-header-chantier-search .yaya-search-icon,
+      .hdr .tabs .yaya-header-chantier-search #yayaSearchClear{
+        display:none!important;
+        content:none!important;
+      }
       #pane-chantiers .yaya-chantier-search-line{
         display:flex!important;
         align-items:center!important;
@@ -99,7 +97,7 @@
       }
       @media(max-width:760px){
         .hdr .tabs .yaya-header-chantier-search{flex:0 1 150px!important;width:150px!important;min-width:105px!important;height:36px!important;}
-        .hdr .tabs .yaya-header-chantier-search #filtreInput{height:36px!important;min-height:36px!important;font-size:12px!important;padding-left:10px!important;}
+        .hdr .tabs .yaya-header-chantier-search #filtreInput{height:36px!important;min-height:36px!important;font-size:12px!important;padding:0 10px!important;}
         #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{padding:0 9px!important;font-size:11px!important;}
       }
     `;
@@ -147,38 +145,6 @@
     });
   }
 
-  function ensureClearButton(input,wrap){
-    let clear=wrap.querySelector('#yayaSearchClear');
-    if(!clear){
-      clear=document.createElement('button');
-      clear.id='yayaSearchClear';
-      clear.type='button';
-      clear.textContent='×';
-      clear.title='Effacer la recherche';
-      clear.setAttribute('aria-label','Effacer la recherche');
-      wrap.appendChild(clear);
-    }
-    function refresh(){clear.dataset.visible=input.value?'1':'0';}
-    if(input.dataset.yayaClearBound!=='1'){
-      input.dataset.yayaClearBound='1';
-      input.addEventListener('input',refresh);
-    }
-    if(clear.dataset.yayaClearBound!=='1'){
-      clear.dataset.yayaClearBound='1';
-      clear.addEventListener('click',function(e){
-        e.preventDefault();
-        e.stopPropagation();
-        input.value='';
-        try{filtreChantier='';}catch(e){}
-        if(yayaSearchFrame){cancelAnimationFrame(yayaSearchFrame);yayaSearchFrame=null;}
-        document.querySelectorAll('#pane-chantiers > .card').forEach(function(card){card.style.display='';});
-        clear.dataset.visible='0';
-        input.focus();
-      });
-    }
-    refresh();
-  }
-
   function ensureHeaderSearch(){
     const tabs=document.querySelector('.hdr .tabs');
     if(!tabs)return;
@@ -196,12 +162,13 @@
     if(!input){
       input=document.createElement('input');
       input.id='filtreInput';
-      input.type='search';
       input.autocomplete='off';
       input.placeholder='Rechercher...';
       try{input.value=String(filtreChantier||'');}catch(e){input.value='';}
     }
 
+    input.type='text';
+    input.setAttribute('inputmode','search');
     bindSearch(input);
 
     let wrap=document.getElementById('yayaHeaderChantierSearch');
@@ -211,9 +178,14 @@
       wrap.className='yaya-header-chantier-search';
     }
 
+    wrap.querySelectorAll('#yayaSearchClear,.yaya-search-icon').forEach(function(el){el.remove();});
+    [...wrap.querySelectorAll('span')].forEach(function(el){
+      const t=String(el.textContent||'').trim();
+      if(t==='🔍'||t==='🔎'||t==='⌕'||t==='×'||t==='✕')el.remove();
+    });
+
     const oldParent=input.parentElement;
     if(input.parentElement!==wrap)wrap.appendChild(input);
-    ensureClearButton(input,wrap);
 
     if(oldParent&&oldParent!==wrap&&oldParent!==document.body){
       const isLegacySearchBlock=oldParent.closest&&oldParent.closest('#pane-chantiers');
@@ -279,7 +251,7 @@
       pane.insertBefore(row,pane.firstChild);
     }
 
-    row.querySelectorAll('#filtreInput,.yaya-search-wrap,.yaya-search-input-box,#yayaSearchClear').forEach(function(el){el.remove();});
+    row.querySelectorAll('#filtreInput,.yaya-search-wrap,.yaya-search-input-box,#yayaSearchClear,.yaya-search-icon').forEach(function(el){el.remove();});
 
     const create=ensureCreateButton(pane);
     if(create.parentNode!==row)row.appendChild(create);
@@ -290,7 +262,7 @@
       const hasCard=el.classList.contains('card')||el.querySelector('.card');
       const hasUsefulButton=el.querySelector('button:not(#yayaCreateChantierBtn)');
       const hasInput=el.querySelector('input,select,textarea');
-      const txt=String(el.textContent||'').replace(/[🔍🔎⌕×]/g,'').trim();
+      const txt=String(el.textContent||'').replace(/[🔍🔎⌕×✕]/g,'').trim();
       if(!hasCard&&!hasUsefulButton&&!hasInput&&!txt)el.remove();
     });
 
