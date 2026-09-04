@@ -140,3 +140,19 @@
   s.setAttribute('data-yaya-document-edit-close-loader-v1','1');
   document.head.appendChild(s);
 })();
+
+// Masque complètement la zone Document dans la modale Modifier le devis.
+(function(){
+  const id='yaya-devis-edit-hide-document-zone-v1';
+  if(document.getElementById(id))return;
+  const style=document.createElement('style');
+  style.id=id;
+  style.textContent=`
+    .yaya-devis-fast-modal .yaya-devis-document-field,
+    .yaya-devis-fast-modal .yaya-devis-fast-piece,
+    .yaya-devis-fast-modal #pj-zone{
+      display:none!important;
+    }
+  `;
+  document.head.appendChild(style);
+})();
