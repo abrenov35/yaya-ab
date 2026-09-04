@@ -80,6 +80,48 @@
     observer.observe(document.body,{childList:true,subtree:true});
   }
 
+  function centerEditModals(){
+    const candidates=document.querySelectorAll('.overlay,.yaya-commande-edit-overlay');
+    candidates.forEach(function(overlay){
+      const modal=overlay.querySelector('.modal,[role="dialog"]');
+      if(!modal)return;
+
+      const title=modal.querySelector('h1,h2,h3,h4,h5,h6');
+      const text=String(title?title.textContent:'').replace(/\s+/g,' ').trim();
+      if(!/^Modifier\b/i.test(text))return;
+
+      overlay.style.setProperty('position','fixed','important');
+      overlay.style.setProperty('inset','0','important');
+      overlay.style.setProperty('display','flex','important');
+      overlay.style.setProperty('align-items','center','important');
+      overlay.style.setProperty('justify-content','center','important');
+      overlay.style.setProperty('padding','16px','important');
+      overlay.style.setProperty('overflow','auto','important');
+      overlay.style.setProperty('z-index','30000','important');
+
+      modal.style.setProperty('position','relative','important');
+      modal.style.setProperty('top','auto','important');
+      modal.style.setProperty('right','auto','important');
+      modal.style.setProperty('bottom','auto','important');
+      modal.style.setProperty('left','auto','important');
+      modal.style.setProperty('transform','none','important');
+      modal.style.setProperty('margin','auto','important');
+      modal.style.setProperty('max-height','calc(100vh - 32px)','important');
+      modal.style.setProperty('overflow','auto','important');
+    });
+  }
+
+  function installEditModalCentering(){
+    centerEditModals();
+    if(!document.body){
+      setTimeout(installEditModalCentering,100);
+      return;
+    }
+    const observer=new MutationObserver(centerEditModals);
+    observer.observe(document.body,{childList:true,subtree:true});
+  }
+
   install();
   installReloadButtonRemoval();
+  installEditModalCentering();
 })();
