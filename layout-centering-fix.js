@@ -53,17 +53,24 @@
     if(window.scrollX)window.scrollTo(0,window.scrollY);
   }
 
-  function centerAchatModals(){
+  function centerTargetModals(){
     const modals=new Set();
 
     document.querySelectorAll('.achat-edit-modal').forEach(function(modal){
       modals.add(modal);
     });
 
-    ['acCh','acType','acFour','acMt'].forEach(function(id){
+    ['acCh','acType','acFour','acMt','docFile','docCh','docLien','docEtat'].forEach(function(id){
       const field=document.getElementById(id);
       const modal=field&&field.closest('.modal');
       if(modal)modals.add(modal);
+    });
+
+    document.querySelectorAll('.overlay .modal').forEach(function(modal){
+      const title=modal.querySelector('h5');
+      if(title&&String(title.textContent||'').trim().startsWith('Ajouter un document')){
+        modals.add(modal);
+      }
     });
 
     modals.forEach(function(modal){
@@ -78,12 +85,12 @@
   function install(){
     if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)return;
     installStyle();
-    centerAchatModals();
+    centerTargetModals();
     requestAnimationFrame(resetPageHorizontalScroll);
     window.addEventListener('resize',resetPageHorizontalScroll,{passive:true});
     window.addEventListener('orientationchange',function(){setTimeout(resetPageHorizontalScroll,80);},{passive:true});
 
-    const observer=new MutationObserver(centerAchatModals);
+    const observer=new MutationObserver(centerTargetModals);
     observer.observe(document.documentElement,{childList:true,subtree:true});
   }
 
