@@ -4,6 +4,11 @@
   const BADGE_ID='yayaBuildVersion';
   const STYLE_ID='yaya-build-version-style';
 
+  function removeLegacyVersion(){
+    const legacy=document.getElementById('yayaVersion');
+    if(legacy)legacy.remove();
+  }
+
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
@@ -34,6 +39,7 @@
   }
 
   function show(version){
+    removeLegacyVersion();
     installStyle();
     const title='Yaya v'+version+' — AB RENOV 35';
     document.title=title;
@@ -51,6 +57,8 @@
     }
     badge.textContent='v'+version;
   }
+
+  removeLegacyVersion();
 
   fetch('version.txt?_yaya_version='+Date.now(),{cache:'no-store'})
     .then(function(r){if(!r.ok)throw new Error('version '+r.status);return r.text();})
