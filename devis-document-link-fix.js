@@ -73,10 +73,20 @@
 
 // La toolbar doit rester sticky après tous les correctifs mobile.
 (function(){
-  if(document.querySelector('script[data-yaya-header-sticky-loader-v2]'))return;
+  if(document.querySelector('script[data-yaya-header-sticky-loader-v3]'))return;
   const s=document.createElement('script');
-  s.src='header-sticky-toolbar.js?v=sticky-2';
+  s.src='header-sticky-toolbar.js?v=sticky-3';
   s.async=false;
-  s.setAttribute('data-yaya-header-sticky-loader-v2','1');
+  s.setAttribute('data-yaya-header-sticky-loader-v3','1');
+  document.head.appendChild(s);
+})();
+
+// Affiche la version réellement déployée dans Yaya.
+(function(){
+  if(document.querySelector('script[data-yaya-version-indicator]'))return;
+  const s=document.createElement('script');
+  s.src='version-indicator.js?v=version-1';
+  s.async=false;
+  s.setAttribute('data-yaya-version-indicator','1');
   document.head.appendChild(s);
 })();

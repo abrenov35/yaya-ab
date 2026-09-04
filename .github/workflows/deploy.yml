@@ -35,41 +35,21 @@ jobs:
           from pathlib import Path
           import re
 
-          version_file = Path('version.txt')
-          current = version_file.read_text(encoding='utf-8').strip() if version_file.exists() else '205.3'
+          p = Path('version.txt')
+          current = p.read_text(encoding='utf-8').strip() if p.exists() else '205.3'
           m = re.fullmatch(r'(\d+)\.(\d+)', current)
           if not m:
               raise SystemExit(f'Version invalide: {current!r}')
 
-          major = int(m.group(1))
-          minor = int(m.group(2)) + 1
-          new_version = f'{major}.{minor}'
-          version_file.write_text(new_version + '\n', encoding='utf-8')
+          new_version = f'{int(m.group(1))}.{int(m.group(2)) + 1}'
+          p.write_text(new_version + '\n', encoding='utf-8')
           print(f'Yaya {current} -> {new_version}')
-
-          index = Path('index.html')
-          s = index.read_text(encoding='utf-8')
-          anchor = '<script src="devis-document-link-fix.js?v=linkfix-4"><\\/script>'
-          sticky = '<script src="header-sticky-toolbar.js?v=sticky-3"><\\/script>'
-          version_loader = '<script src="version-indicator.js?v=version-1"><\\/script>'
-
-          extras = ''
-          if 'header-sticky-toolbar.js' not in s:
-              extras += sticky
-          if 'version-indicator.js' not in s:
-              extras += version_loader
-
-          if extras:
-              if anchor not in s:
-                  raise SystemExit('Point insertion final introuvable dans index.html')
-              s = s.replace(anchor, anchor + extras, 1)
-              index.write_text(s, encoding='utf-8')
           PY
 
       - name: Commit & push version
         run: |
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
-          git add version.txt index.html
+          git add version.txt
           git commit -m "Bump Yaya visible version" || echo "No change"
           git push
