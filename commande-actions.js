@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-commande-action-modal-style-v1';
+  const STYLE_ID='yaya-commande-action-modal-style-v2';
 
   function esc(v){
     const d=document.createElement('div');
@@ -14,15 +14,63 @@
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      .yaya-commande-edit-overlay{position:fixed!important;inset:0!important;z-index:10050!important;background:rgba(22,45,73,.45)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important}
-      .yaya-commande-edit-modal{width:min(440px,100%)!important;background:#fff!important;border-radius:12px!important;padding:18px!important;box-shadow:0 12px 40px rgba(0,0,0,.28)!important}
-      .yaya-commande-edit-modal h3{margin:0 0 14px!important;font-size:17px!important;color:#162d49!important}
+      .yaya-commande-edit-overlay,
+      .yaya-commande-delete-overlay{
+        position:fixed!important;
+        inset:0!important;
+        z-index:20000!important;
+        background:rgba(22,45,73,.48)!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        padding:16px!important;
+        overflow:auto!important;
+      }
+      .yaya-commande-edit-modal,
+      .yaya-commande-delete-modal{
+        width:min(440px,100%)!important;
+        max-height:calc(100vh - 32px)!important;
+        overflow:auto!important;
+        margin:auto!important;
+        background:#fff!important;
+        border-radius:14px!important;
+        padding:20px!important;
+        box-shadow:0 18px 55px rgba(0,0,0,.28)!important;
+      }
+      .yaya-commande-edit-modal h3,
+      .yaya-commande-delete-modal h3{
+        margin:0 0 14px!important;
+        font-size:17px!important;
+        color:#162d49!important;
+      }
+      .yaya-commande-delete-text{
+        margin:0!important;
+        font-size:14px!important;
+        line-height:1.5!important;
+        color:#334155!important;
+      }
       .yaya-commande-edit-field{display:block!important;margin:10px 0!important;font-size:12px!important;font-weight:700!important;color:#4b5b70!important}
-      .yaya-commande-edit-field input{display:block!important;width:100%!important;margin-top:5px!important;padding:9px 10px!important;border:1px solid #cbd5e1!important;border-radius:7px!important;font:inherit!important;color:#162d49!important;background:#fff!important}
-      .yaya-commande-edit-actions{display:flex!important;justify-content:flex-end!important;gap:9px!important;margin-top:16px!important}
-      .yaya-commande-edit-actions button{padding:9px 14px!important;border-radius:7px!important;font-weight:700!important;cursor:pointer!important}
-      .yaya-commande-cancel{border:1px solid #cbd5e1!important;background:#fff!important;color:#475569!important}
+      .yaya-commande-edit-field input{display:block!important;width:100%!important;margin-top:5px!important;padding:9px 10px!important;border:1px solid #cbd5e1!important;border-radius:7px!important;font:inherit!important;color:#162d49!important;background:#fff!important;box-sizing:border-box!important}
+      .yaya-commande-edit-actions,
+      .yaya-commande-delete-actions{
+        display:flex!important;
+        justify-content:flex-end!important;
+        gap:10px!important;
+        margin-top:18px!important;
+        flex-wrap:wrap!important;
+      }
+      .yaya-commande-edit-actions button,
+      .yaya-commande-delete-actions button{
+        padding:9px 15px!important;
+        border-radius:8px!important;
+        font-weight:700!important;
+        cursor:pointer!important;
+      }
+      .yaya-commande-cancel,
+      .yaya-commande-delete-cancel{border:1px solid #cbd5e1!important;background:#fff!important;color:#334155!important}
       .yaya-commande-save{border:1px solid #285943!important;background:#285943!important;color:#fff!important}
+      .yaya-commande-delete-confirm{border:1px solid #b42318!important;background:#b42318!important;color:#fff!important;font-weight:800!important}
+      .yaya-commande-delete-confirm:disabled{opacity:.6!important;cursor:default!important}
     `;
     document.head.appendChild(s);
   }
@@ -96,8 +144,52 @@
     };
   }
 
+  function demanderSuppression(commande){
+    installStyle();
+    document.querySelectorAll('.yaya-commande-delete-overlay').forEach(x=>x.remove());
+
+    return new Promise(function(resolve){
+      const overlay=document.createElement('div');
+      overlay.className='yaya-commande-delete-overlay';
+
+      const libelle=String(
+        commande.designation||
+        commande.pieceNom||
+        commande.fournisseur||
+        'cette commande'
+      ).trim();
+
+      overlay.innerHTML='<div class="yaya-commande-delete-modal" role="dialog" aria-modal="true" aria-labelledby="yayaCommandeDeleteTitle">'
+        +'<h3 id="yayaCommandeDeleteTitle">Supprimer la commande ?</h3>'
+        +'<p class="yaya-commande-delete-text">Confirmer la suppression de <b>« '+esc(libelle)+' »</b> ?</p>'
+        +'<div class="yaya-commande-delete-actions">'
+        +'<button type="button" class="yaya-commande-delete-cancel">Annuler</button>'
+        +'<button type="button" class="yaya-commande-delete-confirm">Supprimer</button>'
+        +'</div></div>';
+
+      function done(value){
+        if(overlay.parentNode)overlay.remove();
+        resolve(value);
+      }
+
+      overlay.querySelector('.yaya-commande-delete-cancel').onclick=function(){done(false);};
+      overlay.querySelector('.yaya-commande-delete-confirm').onclick=function(){done(true);};
+      overlay.addEventListener('click',function(e){if(e.target===overlay)done(false);});
+      document.body.appendChild(overlay);
+      setTimeout(function(){
+        const b=overlay.querySelector('.yaya-commande-delete-cancel');
+        if(b)b.focus();
+      },0);
+    });
+  }
+
   async function removeCommande(id){
-    if(!findCommande(id)||!confirm('Supprimer cette commande ?'))return;
+    const commande=findCommande(id);
+    if(!commande)return;
+
+    const ok=await demanderSuppression(commande);
+    if(!ok)return;
+
     try{
       const next=(S.commandes||[]).filter(c=>String(c.id||'')!==String(id));
       await setCommandes(next);
