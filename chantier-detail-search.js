@@ -108,38 +108,44 @@
   }
 
   function ensure(card){
-    if(!card || card.querySelector(':scope > .'+WRAP_CLASS))return;
+    if(!card)return;
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(!tabs)return;
 
-    const wrap=document.createElement('div');
-    wrap.className=WRAP_CLASS;
+    let wrap=card.querySelector(':scope > .'+WRAP_CLASS);
+    if(!wrap){
+      wrap=document.createElement('div');
+      wrap.className=WRAP_CLASS;
 
-    const input=document.createElement('input');
-    input.type='search';
-    input.className=INPUT_CLASS;
-    input.placeholder='Rechercher…';
-    input.autocomplete='off';
-    input.spellcheck=false;
-    input.setAttribute('aria-label','Rechercher dans la fiche chantier');
+      const input=document.createElement('input');
+      input.type='search';
+      input.className=INPUT_CLASS;
+      input.placeholder='Rechercher…';
+      input.autocomplete='off';
+      input.spellcheck=false;
+      input.setAttribute('aria-label','Rechercher dans la fiche chantier');
 
-    const clear=document.createElement('button');
-    clear.type='button';
-    clear.className='yaya-detail-search-clear';
-    clear.textContent='×';
-    clear.title='Effacer la recherche';
-    clear.setAttribute('aria-label','Effacer la recherche');
+      const clear=document.createElement('button');
+      clear.type='button';
+      clear.className='yaya-detail-search-clear';
+      clear.textContent='×';
+      clear.title='Effacer la recherche';
+      clear.setAttribute('aria-label','Effacer la recherche');
 
-    wrap.append(input,clear);
-    tabs.insertAdjacentElement('afterend',wrap);
+      wrap.append(input,clear);
 
-    input.addEventListener('input',()=>apply(card));
-    input.addEventListener('search',()=>apply(card));
-    clear.addEventListener('click',()=>{
-      input.value='';
-      apply(card);
-      input.focus();
-    });
+      input.addEventListener('input',()=>apply(card));
+      input.addEventListener('search',()=>apply(card));
+      clear.addEventListener('click',()=>{
+        input.value='';
+        apply(card);
+        input.focus();
+      });
+    }
+
+    if(tabs.nextElementSibling!==wrap){
+      tabs.insertAdjacentElement('afterend',wrap);
+    }
 
     apply(card);
   }
