@@ -45,12 +45,60 @@
         max-width:100%!important;
         min-width:0!important;
       }
+
+      .achat-edit-modal .mfoot{
+        display:flex!important;
+        justify-content:flex-start!important;
+        align-items:center!important;
+        gap:0!important;
+      }
+      .achat-edit-modal .yaya-achat-single-save{
+        min-width:140px!important;
+        height:42px!important;
+        padding:0 20px!important;
+        border-radius:8px!important;
+        background:#003D7A!important;
+        color:#fff!important;
+        border:1px solid #003D7A!important;
+        font-size:14px!important;
+        font-weight:700!important;
+      }
     `;
     document.head.appendChild(style);
   }
 
   function resetPageHorizontalScroll(){
     if(window.scrollX)window.scrollTo(0,window.scrollY);
+  }
+
+  function simplifyAchatEditButtons(){
+    document.querySelectorAll('.achat-edit-modal').forEach(function(modal){
+      const candidates=[...modal.querySelectorAll('#pj-zone button,.mfoot button')];
+      if(!candidates.length)return;
+
+      const save=candidates.find(function(button){
+        const txt=String(button.textContent||'').trim();
+        const aria=String(button.getAttribute('aria-label')||'');
+        return button.classList.contains('achat-icon-save') || /enregistrer/i.test(txt) || /enregistrer/i.test(aria) || txt==='✓';
+      });
+
+      if(!save)return;
+
+      candidates.forEach(function(button){
+        if(button!==save)button.remove();
+      });
+
+      save.textContent='Enregistrer';
+      save.title='Enregistrer';
+      save.setAttribute('aria-label','Enregistrer');
+      save.classList.remove('achat-icon-btn','achat-icon-save','achat-icon-cancel');
+      save.classList.add('yaya-achat-single-save');
+
+      const pj=modal.querySelector('#pj-zone');
+      if(pj && !pj.querySelector('button,input,select,textarea') && !String(pj.textContent||'').trim()){
+        pj.style.display='none';
+      }
+    });
   }
 
   function centerTargetModals(){
@@ -87,15 +135,20 @@
     });
   }
 
+  function applyModalFixes(){
+    centerTargetModals();
+    simplifyAchatEditButtons();
+  }
+
   function install(){
     if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)return;
     installStyle();
-    centerTargetModals();
+    applyModalFixes();
     requestAnimationFrame(resetPageHorizontalScroll);
     window.addEventListener('resize',resetPageHorizontalScroll,{passive:true});
     window.addEventListener('orientationchange',function(){setTimeout(resetPageHorizontalScroll,80);},{passive:true});
 
-    const observer=new MutationObserver(centerTargetModals);
+    const observer=new MutationObserver(applyModalFixes);
     observer.observe(document.documentElement,{childList:true,subtree:true});
   }
 
