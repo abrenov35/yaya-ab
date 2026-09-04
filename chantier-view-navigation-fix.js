@@ -66,3 +66,112 @@
 
   install();
 })();
+
+/* =========================================================
+   LIEN DIRECT EXTRANET -> YAYA
+   Format : ?c=C142#chantiers
+========================================================= */
+(function(){
+  'use strict';
+
+  const params=new URLSearchParams(window.location.search);
+  const requestedId=String(params.get('c')||'').trim().toUpperCase();
+
+  if(!/^C\d+$/.test(requestedId))return;
+
+  let opened=false;
+  let forcedRefreshDone=false;
+  let timer=null;
+
+  function currentChantiers(){
+    try{
+      return (typeof S!=='undefined' && S && Array.isArray(S.chantiers))
+        ? S.chantiers
+        : [];
+    }catch(e){
+      return [];
+    }
+  }
+
+  function findTarget(){
+    return currentChantiers().find(function(c){
+      return String(c&&c.id||'').trim().toUpperCase()===requestedId;
+    })||null;
+  }
+
+  function openTarget(){
+    if(opened)return true;
+
+    const chantier=findTarget();
+    if(!chantier)return false;
+
+    const id=String(chantier.id);
+
+    try{tab='chantiers';}catch(e){}
+    try{
+      if(window.location.hash!=='#chantiers'){
+        history.replaceState(
+          null,
+          '',
+          window.location.pathname+window.location.search+'#chantiers'
+        );
+      }
+    }catch(e){}
+
+    try{
+      focusChantier=id;
+      expChantiers.clear();
+      expChantiers.add(id);
+    }catch(e){
+      try{
+        if(typeof toggleChantier==='function')toggleChantier(id);
+      }catch(_){}
+    }
+
+    try{
+      if(typeof render==='function')render();
+    }catch(e){}
+
+    try{window.scrollTo(0,0);}catch(e){}
+
+    opened=true;
+    if(timer)clearInterval(timer);
+    return true;
+  }
+
+  async function forceFreshChantiersOnce(){
+    if(opened||forcedRefreshDone)return;
+    forcedRefreshDone=true;
+
+    try{
+      if(typeof apiGet!=='function')return;
+      const fresh=await apiGet(true);
+      if(!fresh||!Array.isArray(fresh.chantiers))return;
+
+      if(typeof S!=='undefined' && S){
+        S.chantiers=fresh.chantiers;
+      }
+
+      openTarget();
+    }catch(e){
+      console.warn('Lien chantier Extranet : actualisation impossible',e);
+    }
+  }
+
+  function attempt(){
+    openTarget();
+  }
+
+  attempt();
+  timer=setInterval(attempt,250);
+
+  // Si le lien est ouvert juste après la création du chantier,
+  // on contourne une seule fois un éventuel cache local ancien.
+  setTimeout(forceFreshChantiersOnce,1200);
+
+  setTimeout(function(){
+    if(timer)clearInterval(timer);
+  },15000);
+
+  window.addEventListener('yaya:data-refreshed',attempt);
+})();
