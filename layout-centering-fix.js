@@ -69,6 +69,21 @@
         line-height:1!important;
         font-weight:700!important;
       }
+      .yaya-finance-edit-modal .yaya-finance-edit-actions{
+        display:flex!important;
+        justify-content:center!important;
+        align-items:center!important;
+        gap:10px!important;
+        margin-top:16px!important;
+      }
+      .yaya-finance-edit-modal .yaya-finance-edit-cancel{
+        min-width:120px!important;
+        height:42px!important;
+        min-height:42px!important;
+        margin:0!important;
+        padding:0 20px!important;
+        border-radius:8px!important;
+      }
       .yaya-finance-create-actions,
       .yaya-document-create-actions{
         display:flex!important;
@@ -120,7 +135,7 @@
 
   function simplifyFinanceEditButtons(root){
     financeEditModals(root).forEach(function(modal){
-      const candidates=[...modal.querySelectorAll('#pj-zone button,.mfoot button')];
+      const candidates=[...modal.querySelectorAll('#pj-zone button,.mfoot button,.yaya-finance-edit-actions button')];
       if(!candidates.length)return;
 
       const save=candidates.find(function(button){
@@ -130,6 +145,7 @@
         const onclick=String(button.getAttribute('onclick')||'');
         return /saveAchat/.test(onclick) ||
           button.classList.contains('achat-icon-save') ||
+          button.classList.contains('yaya-achat-single-save') ||
           /enregistrer/i.test(txt) ||
           /enregistrer/i.test(aria) ||
           /enregistrer/i.test(title) ||
@@ -138,13 +154,56 @@
 
       if(!save)return;
 
+      const type=modal.querySelector('#eaType');
+      let typeText='';
+      if(type){
+        typeText=String(type.value||'');
+        if(type.options&&type.selectedIndex>=0&&type.options[type.selectedIndex]){
+          typeText+=' '+String(type.options[type.selectedIndex].text||'');
+        }
+      }
+      const isCharge=modal.classList.contains('charge-edit-modal') || /sous[-\s]?trait/i.test(typeText);
+
       candidates.forEach(function(button){
-        if(button!==save)button.remove();
+        if(button!==save && !button.classList.contains('yaya-finance-edit-cancel'))button.remove();
       });
 
       if(save.title!=='Enregistrer')save.title='Enregistrer';
       if(save.getAttribute('aria-label')!=='Enregistrer')save.setAttribute('aria-label','Enregistrer');
       if(!save.classList.contains('yaya-achat-single-save'))save.classList.add('yaya-achat-single-save');
+
+      if(isCharge){
+        const heading=modal.querySelector('h5');
+        if(heading){
+          heading.querySelectorAll('button,[role="button"]').forEach(function(button){button.remove();});
+          if(String(heading.textContent||'').trim()!=='Modifier la charge')heading.textContent='Modifier la charge';
+        }
+
+        let actions=modal.querySelector('.yaya-finance-edit-actions');
+        if(!actions){
+          const oldParent=save.parentElement;
+          actions=document.createElement('div');
+          actions.className='yaya-finance-edit-actions';
+          if(oldParent)oldParent.insertAdjacentElement('afterend',actions);
+          else modal.appendChild(actions);
+          actions.appendChild(save);
+          if(oldParent && !oldParent.children.length && !String(oldParent.textContent||'').trim())oldParent.remove();
+        }else if(save.parentElement!==actions){
+          actions.insertBefore(save,actions.firstChild);
+        }
+
+        let cancel=actions.querySelector('.yaya-finance-edit-cancel');
+        if(!cancel){
+          cancel=document.createElement('button');
+          cancel.type='button';
+          cancel.className='btn2 yaya-finance-edit-cancel';
+          cancel.textContent='Annuler';
+          cancel.addEventListener('click',function(){
+            try{if(typeof closeModal==='function')closeModal();else modal.closest('.overlay')?.remove();}catch(e){modal.closest('.overlay')?.remove();}
+          });
+          actions.appendChild(cancel);
+        }
+      }
 
       const pj=modal.querySelector('#pj-zone');
       if(pj && !pj.querySelector('button,input,select,textarea')){
