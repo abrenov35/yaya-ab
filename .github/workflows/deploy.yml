@@ -49,12 +49,20 @@ jobs:
 
           index = Path('index.html')
           s = index.read_text(encoding='utf-8')
-          loader = '<script src="version-indicator.js?v=version-1"><\\/script>'
+          anchor = '<script src="devis-document-link-fix.js?v=linkfix-4"><\\/script>'
+          sticky = '<script src="header-sticky-toolbar.js?v=sticky-3"><\\/script>'
+          version_loader = '<script src="version-indicator.js?v=version-1"><\\/script>'
+
+          extras = ''
+          if 'header-sticky-toolbar.js' not in s:
+              extras += sticky
           if 'version-indicator.js' not in s:
-              anchor = '<script src="header-sticky-toolbar.js?v=sticky-2"><\\/script>'
+              extras += version_loader
+
+          if extras:
               if anchor not in s:
-                  raise SystemExit('Point insertion version-indicator introuvable dans index.html')
-              s = s.replace(anchor, anchor + loader, 1)
+                  raise SystemExit('Point insertion final introuvable dans index.html')
+              s = s.replace(anchor, anchor + extras, 1)
               index.write_text(s, encoding='utf-8')
           PY
 
