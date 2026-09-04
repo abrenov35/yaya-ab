@@ -8,6 +8,9 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      .yaya-chantier-edit-modal h5 > button{
+        display:none!important;
+      }
       .yaya-chantier-edit-modal .mfoot.yaya-chantier-edit-actions-fixed{
         display:flex!important;
         align-items:center!important;
