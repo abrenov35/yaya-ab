@@ -113,6 +113,18 @@
       background:#ddc0ae!important;color:#68402d!important;
     }
 
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab.yaya-commande-tab-contrast{
+      background:#e2e8f0!important;
+      border-color:#94a3b8!important;
+      color:#334155!important;
+      font-weight:700!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab.yaya-commande-tab-contrast small,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab.yaya-commande-tab-contrast > span{
+      background:#cbd5e1!important;
+      color:#1e293b!important;
+    }
+
     /* Les trois actions de gauche ont exactement le même style. */
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
     #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
@@ -182,4 +194,23 @@
   `;
 
   document.head.appendChild(style);
+
+  function patchCommandeTab(){
+    document.querySelectorAll('#pane-chantiers .yaya-detail-section-tab').forEach(function(button){
+      if(/^Commande\b/i.test(String(button.innerText||'').trim())){
+        button.classList.add('yaya-commande-tab-contrast');
+      }
+    });
+  }
+
+  patchCommandeTab();
+  let raf=0;
+  const observer=new MutationObserver(function(){
+    if(raf)return;
+    raf=requestAnimationFrame(function(){
+      raf=0;
+      patchCommandeTab();
+    });
+  });
+  observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
