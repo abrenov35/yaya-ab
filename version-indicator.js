@@ -4,9 +4,34 @@
   const BADGE_ID='yayaBuildVersion';
   const STYLE_ID='yaya-build-version-style';
 
-  function removeLegacyVersion(){
+  function removeLegacyVersions(){
     const legacy=document.getElementById('yayaVersion');
     if(legacy)legacy.remove();
+
+    const header=document.querySelector('.hdr');
+    if(!header)return;
+
+    header.querySelectorAll('span,.sync').forEach(function(el){
+      if(el.id===BADGE_ID)return;
+      const text=String(el.textContent||'').trim();
+      if(/^v\d+(?:\.\d+)+$/i.test(text))el.remove();
+    });
+  }
+
+  function watchLegacyVersions(){
+    const header=document.querySelector('.hdr');
+    if(!header){
+      setTimeout(watchLegacyVersions,120);
+      return;
+    }
+
+    removeLegacyVersions();
+
+    const observer=new MutationObserver(function(){
+      removeLegacyVersions();
+    });
+
+    observer.observe(header,{childList:true,subtree:true,characterData:true});
   }
 
   function installStyle(){
@@ -39,7 +64,7 @@
   }
 
   function show(version){
-    removeLegacyVersion();
+    removeLegacyVersions();
     installStyle();
     const title='Yaya v'+version+' — AB RENOV 35';
     document.title=title;
@@ -56,9 +81,11 @@
       brand.appendChild(badge);
     }
     badge.textContent='v'+version;
+    removeLegacyVersions();
   }
 
-  removeLegacyVersion();
+  removeLegacyVersions();
+  watchLegacyVersions();
 
   fetch('version.txt?_yaya_version='+Date.now(),{cache:'no-store'})
     .then(function(r){if(!r.ok)throw new Error('version '+r.status);return r.text();})
