@@ -116,7 +116,7 @@
       +'<label class="yaya-commande-edit-field">Description<input data-field="designation" value="'+esc(commande.designation||commande.pieceNom||'')+'"></label>'
       +'<label class="yaya-commande-edit-field">Montant HT<input data-field="montantHT" inputmode="decimal" value="'+esc(commande.montantHT||0)+'"></label>'
       +'<label class="yaya-commande-edit-field">Date<input data-field="date" type="date" value="'+esc(String(commande.date||'').slice(0,10))+'"></label>'
-      +'<div class="yaya-commande-edit-actions"><button type="button" class="yaya-commande-cancel">Annuler</button><button type="button" class="yaya-commande-save">Enregistrer</button></div></div>';
+      +'<div class="yaya-commande-edit-actions"><button type="button" class="yaya-commande-save">Enregistrer</button><button type="button" class="yaya-commande-cancel">Annuler</button></div></div>';
     document.body.appendChild(overlay);
 
     const close=()=>overlay.remove();
