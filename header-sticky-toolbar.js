@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-header-sticky-toolbar-v1';
+  const STYLE_ID='yaya-header-sticky-toolbar-v2';
   if(document.getElementById(STYLE_ID))return;
 
   const style=document.createElement('style');
@@ -9,9 +9,7 @@
     .hdr{
       position:sticky!important;
       top:0!important;
-      z-index:10000!important;
-      width:100%!important;
-      background:inherit!important;
+      z-index:60!important;
     }
   `;
   document.head.appendChild(style);
