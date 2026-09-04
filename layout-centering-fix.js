@@ -71,6 +71,10 @@
     if(window.scrollX)window.scrollTo(0,window.scrollY);
   }
 
+  function getModalRoot(){
+    return document.getElementById('modalRoot');
+  }
+
   function isFinanceEditModal(modal){
     if(!modal)return false;
     if(modal.classList.contains('achat-edit-modal') || modal.classList.contains('charge-edit-modal'))return true;
@@ -82,18 +86,21 @@
     return !!modal.querySelector('#eaCh,#eaType,#eaFour,#eaDes,#eaDate,#eaMt');
   }
 
-  function financeEditModals(){
+  function financeEditModals(root){
     const modals=[];
-    document.querySelectorAll('.overlay .modal').forEach(function(modal){
+    if(!root)return modals;
+    root.querySelectorAll('.overlay .modal').forEach(function(modal){
       if(!isFinanceEditModal(modal))return;
-      modal.classList.add('yaya-finance-edit-modal');
+      if(!modal.classList.contains('yaya-finance-edit-modal')){
+        modal.classList.add('yaya-finance-edit-modal');
+      }
       modals.push(modal);
     });
     return modals;
   }
 
-  function simplifyFinanceEditButtons(){
-    financeEditModals().forEach(function(modal){
+  function simplifyFinanceEditButtons(root){
+    financeEditModals(root).forEach(function(modal){
       const candidates=[...modal.querySelectorAll('#pj-zone button,.mfoot button')];
       if(!candidates.length)return;
 
@@ -109,11 +116,11 @@
         if(button!==save)button.remove();
       });
 
-      save.textContent='Enregistrer';
-      save.title='Enregistrer';
-      save.setAttribute('aria-label','Enregistrer');
+      if(String(save.textContent||'').trim()!=='Enregistrer')save.textContent='Enregistrer';
+      if(save.title!=='Enregistrer')save.title='Enregistrer';
+      if(save.getAttribute('aria-label')!=='Enregistrer')save.setAttribute('aria-label','Enregistrer');
       save.classList.remove('achat-icon-btn','achat-icon-save','achat-icon-cancel');
-      save.classList.add('yaya-achat-single-save');
+      if(!save.classList.contains('yaya-achat-single-save'))save.classList.add('yaya-achat-single-save');
 
       const pj=modal.querySelector('#pj-zone');
       if(pj && !pj.querySelector('button,input,select,textarea')){
@@ -122,16 +129,17 @@
     });
   }
 
-  function centerTargetModals(){
-    const modals=new Set(financeEditModals());
+  function centerTargetModals(root){
+    if(!root)return;
+    const modals=new Set(financeEditModals(root));
 
     ['acCh','acType','acFour','acMt','docFile','docCh','docLien','docEtat'].forEach(function(id){
-      const field=document.getElementById(id);
+      const field=root.querySelector('#'+id);
       const modal=field&&field.closest('.modal');
       if(modal)modals.add(modal);
     });
 
-    document.querySelectorAll('.overlay .modal').forEach(function(modal){
+    root.querySelectorAll('.overlay .modal').forEach(function(modal){
       const title=modal.querySelector('h5');
       if(title&&String(title.textContent||'').trim().startsWith('Ajouter un document')){
         modals.add(modal);
@@ -153,8 +161,10 @@
   }
 
   function applyModalFixes(){
-    centerTargetModals();
-    simplifyFinanceEditButtons();
+    const root=getModalRoot();
+    if(!root)return;
+    centerTargetModals(root);
+    simplifyFinanceEditButtons(root);
   }
 
   function install(){
@@ -162,11 +172,19 @@
     installStyle();
     applyModalFixes();
     requestAnimationFrame(resetPageHorizontalScroll);
-    window.addEventListener('resize',resetPageHorizontalScroll,{passive:true});
-    window.addEventListener('orientationchange',function(){setTimeout(resetPageHorizontalScroll,80);},{passive:true});
 
-    const observer=new MutationObserver(applyModalFixes);
-    observer.observe(document.documentElement,{childList:true,subtree:true});
+    const root=getModalRoot();
+    if(!root)return;
+
+    let raf=0;
+    const observer=new MutationObserver(function(){
+      if(raf)return;
+      raf=requestAnimationFrame(function(){
+        raf=0;
+        applyModalFixes();
+      });
+    });
+    observer.observe(root,{childList:true,subtree:true});
   }
 
   if(document.body)install();
