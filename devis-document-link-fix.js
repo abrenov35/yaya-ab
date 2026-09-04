@@ -130,3 +130,13 @@
   s.setAttribute('data-yaya-chantier-edit-actions-loader-v3','1');
   document.head.appendChild(s);
 })();
+
+// Supprime Fermer en haut de la modale Modifier le document.
+(function(){
+  if(document.querySelector('script[data-yaya-document-edit-close-loader-v1]'))return;
+  const s=document.createElement('script');
+  s.src='document-edit-close-fix.js?v=doceditclose-1';
+  s.async=false;
+  s.setAttribute('data-yaya-document-edit-close-loader-v1','1');
+  document.head.appendChild(s);
+})();
