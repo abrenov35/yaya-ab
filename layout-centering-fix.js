@@ -71,6 +71,11 @@
       if(title&&String(title.textContent||'').trim().startsWith('Ajouter un document')){
         modals.add(modal);
       }
+
+      const saveDevis=[...modal.querySelectorAll('button')].find(function(button){
+        return /Enregistrer le devis/i.test(String(button.textContent||''));
+      });
+      if(saveDevis)modals.add(modal);
     });
 
     modals.forEach(function(modal){
