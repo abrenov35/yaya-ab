@@ -53,12 +53,25 @@
     if(window.scrollX)window.scrollTo(0,window.scrollY);
   }
 
+  function centerAchatEditModals(){
+    document.querySelectorAll('.achat-edit-modal').forEach(function(modal){
+      const overlay=modal.closest('.overlay');
+      if(!overlay)return;
+      overlay.style.setProperty('align-items','center','important');
+      overlay.style.setProperty('justify-content','center','important');
+    });
+  }
+
   function install(){
     if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)return;
     installStyle();
+    centerAchatEditModals();
     requestAnimationFrame(resetPageHorizontalScroll);
     window.addEventListener('resize',resetPageHorizontalScroll,{passive:true});
     window.addEventListener('orientationchange',function(){setTimeout(resetPageHorizontalScroll,80);},{passive:true});
+
+    const observer=new MutationObserver(centerAchatEditModals);
+    observer.observe(document.documentElement,{childList:true,subtree:true});
   }
 
   if(document.body)install();
