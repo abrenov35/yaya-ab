@@ -156,7 +156,7 @@
     let types=['Mail','Document'];try{if(typeof TYPES_DOC2!=='undefined'&&Array.isArray(TYPES_DOC2))types=TYPES_DOC2;}catch(e){}
     const objet=mailObject(d)==='Objet non renseigné'?'':mailObject(d);
     root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'
-      +'<h5>Modifier le mail<button onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
+      +'<h5>Modifier le mail</h5>'
       +'<div class="mrow"><select class="msel" id="edDocCh">'+chOpts+'</select></div>'
       +'<div class="mrow"><select class="msel" id="edDocType">'+types.map(t=>'<option'+(String(d.type).toUpperCase()===String(t).toUpperCase()?' selected':'')+'>'+esc(t)+'</option>').join('')+'</select></div>'
       +'<div class="mrow"><input class="msel" id="edDocSujet" value="'+esc(mailName(d))+'" placeholder="Expéditeur"></div>'
