@@ -4,11 +4,16 @@
   const brand=document.querySelector('.hdr .brand span');
   if(brand)brand.textContent='AB RENOV 35';
 
-  const STYLE_ID='yaya-create-chantier-search-line-main-v7';
+  const STYLE_ID='yaya-create-chantier-search-line-main-v8';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      .hdr{
+        position:sticky!important;
+        top:0!important;
+        z-index:10000!important;
+      }
       .hdr .tab[data-tab="heures"]:not(.yaya-hours-toolbar-btn){display:none!important;}
       .hdr .tabs{align-items:center!important;}
       .hdr .tabs .yaya-header-chantier-search{
