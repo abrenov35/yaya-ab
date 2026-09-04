@@ -110,3 +110,13 @@
   s.setAttribute('data-yaya-achat-create-actions-loader-v1','1');
   document.head.appendChild(s);
 })();
+
+// Aligne Fermer en bas de la modale Ajouter un document.
+(function(){
+  if(document.querySelector('script[data-yaya-document-close-bottom-loader-v1]'))return;
+  const s=document.createElement('script');
+  s.src='document-create-close-bottom-fix.js?v=docclose-1';
+  s.async=false;
+  s.setAttribute('data-yaya-document-close-bottom-loader-v1','1');
+  document.head.appendChild(s);
+})();
