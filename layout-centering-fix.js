@@ -69,12 +69,13 @@
         line-height:1!important;
         font-weight:700!important;
       }
-      .yaya-finance-create-actions{
+      .yaya-finance-create-actions,
+      .yaya-document-create-actions{
         display:flex!important;
         align-items:center!important;
         justify-content:flex-start!important;
         gap:10px!important;
-        flex-wrap:wrap!important;
+        flex-wrap:nowrap!important;
         margin-top:14px!important;
       }
     `;
@@ -204,6 +205,66 @@
     }
   }
 
+  function patchDocumentCreateModal(root){
+    if(!root)return;
+
+    const modal=[...root.querySelectorAll('.overlay .modal')].find(function(item){
+      const title=String(item.querySelector('h5')&&item.querySelector('h5').textContent||'').trim();
+      return /^Ajouter un document/i.test(title) || !!item.querySelector('#docFile,#docCh,#docLien,#docEtat');
+    });
+    if(!modal)return;
+
+    const buttons=[...modal.querySelectorAll('button')];
+    const upload=buttons.find(function(button){
+      const txt=String(button.textContent||'').trim();
+      const onclick=String(button.getAttribute('onclick')||'');
+      return /Déposer un document/i.test(txt) || /PDF ou photo/i.test(txt) || /docFile/i.test(onclick);
+    });
+    if(!upload)return;
+
+    upload.textContent='Déposer un document';
+    upload.style.setProperty('background','#249457','important');
+    upload.style.setProperty('border','1px solid #249457','important');
+    upload.style.setProperty('color','#fff','important');
+    upload.style.setProperty('opacity','1','important');
+    upload.style.setProperty('filter','none','important');
+    upload.style.setProperty('height','42px','important');
+    upload.style.setProperty('min-height','42px','important');
+
+    let footer=modal.querySelector('.mfoot');
+    const save=buttons.find(function(button){
+      return /^Enregistrer$/i.test(String(button.textContent||'').trim());
+    });
+    const cancel=buttons.find(function(button){
+      return /^Annuler$/i.test(String(button.textContent||'').trim());
+    });
+
+    if(!footer && save)footer=save.parentElement;
+    if(!footer && cancel)footer=cancel.parentElement;
+    if(!footer){
+      footer=document.createElement('div');
+      footer.className='mfoot';
+      modal.appendChild(footer);
+    }
+
+    footer.classList.add('yaya-document-create-actions');
+    footer.style.setProperty('display','flex','important');
+    footer.style.setProperty('align-items','center','important');
+    footer.style.setProperty('justify-content','flex-start','important');
+    footer.style.setProperty('gap','10px','important');
+    footer.style.setProperty('flex-wrap','nowrap','important');
+
+    if(upload.parentElement!==footer)footer.insertBefore(upload,footer.firstChild);
+    if(save && save.parentElement!==footer)footer.appendChild(save);
+    if(cancel && cancel.parentElement!==footer)footer.appendChild(cancel);
+
+    [...footer.querySelectorAll('button')].forEach(function(button){
+      button.style.setProperty('height','42px','important');
+      button.style.setProperty('min-height','42px','important');
+      button.style.setProperty('margin','0','important');
+    });
+  }
+
   function centerTargetModals(root){
     if(!root)return;
     const modals=new Set(financeEditModals(root));
@@ -240,6 +301,7 @@
     if(!root)return;
 
     patchFinanceCreateModal(root);
+    patchDocumentCreateModal(root);
 
     if(!isDesktop())return;
     centerTargetModals(root);
