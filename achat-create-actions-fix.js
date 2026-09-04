@@ -10,9 +10,10 @@
     style.textContent=`
       .yaya-achat-create-actions-fixed{
         display:flex!important;
+        flex-direction:row!important;
         align-items:center!important;
-        justify-content:flex-start!important;
-        gap:10px!important;
+        justify-content:center!important;
+        gap:12px!important;
         flex-wrap:nowrap!important;
         margin-top:14px!important;
       }
@@ -20,9 +21,12 @@
         height:44px!important;
         min-height:44px!important;
         margin:0!important;
+        margin-left:0!important;
+        margin-right:0!important;
         white-space:nowrap!important;
       }
       .yaya-achat-create-actions-fixed .yaya-achat-import-btn{
+        order:1!important;
         background:#249457!important;
         border:1px solid #249457!important;
         color:#fff!important;
@@ -30,6 +34,12 @@
         filter:none!important;
         padding:0 22px!important;
         font-weight:700!important;
+      }
+      .yaya-achat-create-actions-fixed .yaya-achat-save-btn{
+        order:2!important;
+      }
+      .yaya-achat-create-actions-fixed .yaya-achat-close-btn{
+        order:3!important;
       }
       .yaya-achat-create-actions-fixed .yaya-achat-import-btn:hover{
         background:#1f7f4b!important;
@@ -80,6 +90,8 @@
 
     upload.textContent='Importer';
     upload.classList.add('yaya-achat-import-btn');
+    save.classList.add('yaya-achat-save-btn');
+    close.classList.add('yaya-achat-close-btn');
 
     let footer=modal.querySelector('.yaya-achat-create-actions-fixed');
     if(!footer){
@@ -88,8 +100,17 @@
       modal.appendChild(footer);
     }
 
-    [upload,save,close].forEach(function(button){
+    footer.style.setProperty('display','flex','important');
+    footer.style.setProperty('flex-direction','row','important');
+    footer.style.setProperty('justify-content','center','important');
+    footer.style.setProperty('gap','12px','important');
+
+    [upload,save,close].forEach(function(button,index){
       if(button.parentElement!==footer)footer.appendChild(button);
+      button.style.setProperty('order',String(index+1),'important');
+      button.style.setProperty('margin','0','important');
+      button.style.setProperty('margin-left','0','important');
+      button.style.setProperty('margin-right','0','important');
     });
 
     [...modal.children].forEach(function(child){
