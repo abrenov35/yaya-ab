@@ -70,3 +70,13 @@
   s.setAttribute('data-yaya-onedrive-final-loader-v2','1');
   document.head.appendChild(s);
 })();
+
+// La toolbar doit rester sticky après tous les correctifs mobile.
+(function(){
+  if(document.querySelector('script[data-yaya-header-sticky-loader-v2]'))return;
+  const s=document.createElement('script');
+  s.src='header-sticky-toolbar.js?v=sticky-2';
+  s.async=false;
+  s.setAttribute('data-yaya-header-sticky-loader-v2','1');
+  document.head.appendChild(s);
+})();
