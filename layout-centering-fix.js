@@ -99,6 +99,20 @@
     return modals;
   }
 
+  function forceFinanceSaveLabel(root){
+    if(!root)return;
+    root.querySelectorAll('.mfoot button[onclick*="saveAchat"]').forEach(function(save){
+      const modal=save.closest('.modal');
+      if(!isFinanceEditModal(modal))return;
+      modal.classList.add('yaya-finance-edit-modal');
+      if(String(save.textContent||'').trim()!=='Enregistrer')save.textContent='Enregistrer';
+      save.title='Enregistrer';
+      save.setAttribute('aria-label','Enregistrer');
+      save.classList.remove('achat-icon-btn','achat-icon-save','achat-icon-cancel');
+      save.classList.add('yaya-achat-single-save');
+    });
+  }
+
   function simplifyFinanceEditButtons(root){
     financeEditModals(root).forEach(function(modal){
       const candidates=[...modal.querySelectorAll('#pj-zone button,.mfoot button')];
@@ -107,7 +121,7 @@
       const save=candidates.find(function(button){
         const txt=String(button.textContent||'').trim();
         const aria=String(button.getAttribute('aria-label')||'');
-        return button.classList.contains('achat-icon-save') || /enregistrer/i.test(txt) || /enregistrer/i.test(aria) || txt==='✓';
+        return button.classList.contains('achat-icon-save') || /enregistrer/i.test(txt) || /enregistrer/i.test(aria) || txt==='✓' || /saveAchat/.test(String(button.getAttribute('onclick')||''));
       });
 
       if(!save)return;
@@ -165,6 +179,7 @@
     if(!root)return;
     centerTargetModals(root);
     simplifyFinanceEditButtons(root);
+    forceFinanceSaveLabel(root);
   }
 
   function install(){
