@@ -100,3 +100,13 @@
   s.setAttribute('data-yaya-devis-create-actions-loader-v1','1');
   document.head.appendChild(s);
 })();
+
+// Simplifie et aligne les actions de la modale Achat / facture.
+(function(){
+  if(document.querySelector('script[data-yaya-achat-create-actions-loader-v1]'))return;
+  const s=document.createElement('script');
+  s.src='achat-create-actions-fix.js?v=achatactions-1';
+  s.async=false;
+  s.setAttribute('data-yaya-achat-create-actions-loader-v1','1');
+  document.head.appendChild(s);
+})();
