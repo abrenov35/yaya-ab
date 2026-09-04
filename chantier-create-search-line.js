@@ -4,7 +4,7 @@
   const brand=document.querySelector('.hdr .brand span');
   if(brand)brand.textContent='AB RENOV 35';
 
-  const STYLE_ID='yaya-create-chantier-search-line-main-v8';
+  const STYLE_ID='yaya-create-chantier-search-line-main-v9';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -64,36 +64,34 @@
         display:none!important;
         content:none!important;
       }
-      #pane-chantiers .yaya-chantier-search-line{
-        display:flex!important;
-        align-items:center!important;
-        justify-content:flex-end!important;
-        gap:10px!important;
-        margin:10px 0 14px!important;
-        width:100%!important;
-      }
-      #pane-chantiers .yaya-chantier-search-line[hidden]{display:none!important;}
-      #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{
+      .hdr .tabs #yayaCreateChantierBtn{
+        position:relative!important;
         display:inline-flex!important;
         visibility:visible!important;
         opacity:1!important;
-        flex:0 0 auto!important;
-        width:auto!important;
-        height:40px!important;
-        min-height:40px!important;
-        margin:0!important;
-        padding:0 15px!important;
         align-items:center!important;
         justify-content:center!important;
-        white-space:nowrap!important;
-        border-radius:8px!important;
+        gap:7px!important;
+        flex:0 0 auto!important;
+        min-width:160px!important;
+        height:42px!important;
+        min-height:42px!important;
+        margin:0!important;
+        padding:0 16px!important;
+        border:1px solid #7d91c7!important;
+        border-radius:7px!important;
+        background:#294796!important;
+        color:#fff!important;
+        box-shadow:none!important;
         font-size:13px!important;
         font-weight:700!important;
-        background:#24436B!important;
-        color:#fff!important;
-        border:1px solid #24436B!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+        font-family:inherit!important;
+        cursor:pointer!important;
       }
-      #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn:hover{background:#1c3657!important;border-color:#1c3657!important;}
+      .hdr .tabs #yayaCreateChantierBtn:hover{background:#3453a2!important;}
+      #pane-chantiers .yaya-chantier-search-line{display:none!important;}
       #pane-chantiers .card .top button[onclick*="toggleChantier"].yaya-chantier-view-eye{
         width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;
         padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;
@@ -103,17 +101,10 @@
       @media(max-width:760px){
         .hdr .tabs .yaya-header-chantier-search{flex:0 1 150px!important;width:150px!important;min-width:105px!important;height:36px!important;}
         .hdr .tabs .yaya-header-chantier-search #filtreInput{height:36px!important;min-height:36px!important;font-size:12px!important;padding:0 10px!important;}
-        #pane-chantiers .yaya-chantier-search-line #yayaCreateChantierBtn{padding:0 9px!important;font-size:11px!important;}
+        .hdr .tabs #yayaCreateChantierBtn{min-width:auto!important;height:38px!important;min-height:38px!important;padding:0 11px!important;font-size:11px!important;}
       }
     `;
     document.head.appendChild(style);
-  }
-
-  function isMainChantiersPage(){
-    try{
-      if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.size==='number')return expChantiers.size===0;
-    }catch(e){}
-    return true;
   }
 
   function normaliserRechercheChantier(v){
@@ -212,23 +203,46 @@
   }
 
   function ensureCreateButton(pane){
-    let btn=pane.querySelector('#yayaCreateChantierBtn');
-    if(!btn){
+    let btn=document.getElementById('yayaCreateChantierBtn');
+    if(!btn&&pane){
       const legacy=[...pane.querySelectorAll('button')].find(function(b){
         return String(b.getAttribute('onclick')||'').includes('openChantierModal');
       });
-      btn=legacy||document.createElement('button');
+      btn=legacy||null;
+    }
+    if(!btn){
+      btn=document.createElement('button');
       btn.id='yayaCreateChantierBtn';
       btn.type='button';
       btn.className='btnp';
-      if(!legacy){
-        btn.addEventListener('click',function(){
-          if(typeof window.openChantierModal==='function')window.openChantierModal();
-        });
-      }
+      btn.addEventListener('click',function(){
+        if(typeof window.openChantierModal==='function')window.openChantierModal();
+      });
+    }else{
+      btn.id='yayaCreateChantierBtn';
+      btn.type='button';
     }
     btn.textContent='➕ Ajouter un chantier';
     return btn;
+  }
+
+  function ensureToolbarCreateButton(){
+    const tabs=document.querySelector('.hdr .tabs');
+    const pane=document.getElementById('pane-chantiers');
+    if(!tabs||!pane)return;
+
+    const btn=ensureCreateButton(pane);
+    const planning=document.getElementById('yayaPlanningToolbarLink') || tabs.querySelector('.planning-external-tab');
+
+    if(planning){
+      if(btn.parentElement!==tabs || btn.previousElementSibling!==planning){
+        planning.insertAdjacentElement('afterend',btn);
+      }
+    }else if(btn.parentElement!==tabs){
+      tabs.appendChild(btn);
+    }
+
+    document.querySelectorAll('#pane-chantiers .yaya-chantier-search-line').forEach(function(row){row.remove();});
   }
 
   function normalizeChantierViewButtons(pane){
@@ -246,23 +260,9 @@
     if(!pane)return;
 
     ensureHeaderSearch();
-
-    const rows=[...pane.querySelectorAll('.yaya-chantier-search-line')];
-    rows.slice(1).forEach(function(el){el.remove();});
-    let row=rows[0]||null;
-    if(!row){
-      row=document.createElement('div');
-      row.className='yaya-chantier-search-line';
-      pane.insertBefore(row,pane.firstChild);
-    }
-
-    row.querySelectorAll('#filtreInput,.yaya-search-wrap,.yaya-search-input-box,#yayaSearchClear,.yaya-search-icon').forEach(function(el){el.remove();});
-
-    const create=ensureCreateButton(pane);
-    if(create.parentNode!==row)row.appendChild(create);
+    ensureToolbarCreateButton();
 
     [...pane.children].forEach(function(el){
-      if(el===row)return;
       if(el.tagName!=='DIV')return;
       const hasCard=el.classList.contains('card')||el.querySelector('.card');
       const hasUsefulButton=el.querySelector('button:not(#yayaCreateChantierBtn)');
@@ -271,7 +271,6 @@
       if(!hasCard&&!hasUsefulButton&&!hasInput&&!txt)el.remove();
     });
 
-    row.hidden=!isMainChantiersPage();
     normalizeChantierViewButtons(pane);
   }
 
@@ -291,7 +290,10 @@
   let headerTimer=0;
   function scheduleHeader(){
     clearTimeout(headerTimer);
-    headerTimer=setTimeout(ensureHeaderSearch,0);
+    headerTimer=setTimeout(function(){
+      ensureHeaderSearch();
+      ensureToolbarCreateButton();
+    },0);
   }
 
   function install(){
@@ -306,8 +308,8 @@
         if(records.some(function(r){return r.addedNodes.length||r.removedNodes.length;}))scheduleHeader();
       }).observe(header,{childList:true,subtree:true});
     }
-    setTimeout(ensureHeaderSearch,150);
-    setTimeout(ensureHeaderSearch,600);
+    setTimeout(function(){ensureHeaderSearch();ensureToolbarCreateButton();},150);
+    setTimeout(function(){ensureHeaderSearch();ensureToolbarCreateButton();},600);
   }
 
   install();
