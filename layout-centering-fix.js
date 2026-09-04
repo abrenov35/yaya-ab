@@ -69,6 +69,14 @@
         line-height:1!important;
         font-weight:700!important;
       }
+      .yaya-finance-create-actions{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        gap:10px!important;
+        flex-wrap:wrap!important;
+        margin-top:14px!important;
+      }
     `;
     document.head.appendChild(style);
   }
@@ -79,6 +87,10 @@
 
   function getModalRoot(){
     return document.getElementById('modalRoot');
+  }
+
+  function isDesktop(){
+    return !(window.matchMedia&&window.matchMedia('(max-width:760px)').matches);
   }
 
   function isFinanceEditModal(modal){
@@ -140,6 +152,58 @@
     });
   }
 
+  function patchFinanceCreateModal(root){
+    if(!root)return;
+    const type=root.querySelector('#acType');
+    if(!type)return;
+
+    const modal=type.closest('.modal');
+    if(!modal || isFinanceEditModal(modal))return;
+
+    const buttons=[...modal.querySelectorAll('button')];
+    const paste=buttons.find(function(button){
+      const txt=String(button.textContent||'');
+      const onclick=String(button.getAttribute('onclick')||'');
+      return /Coller une capture/i.test(txt) || (/collerCapture/.test(onclick) && /achat/i.test(onclick));
+    });
+    if(paste)paste.remove();
+
+    const upload=[...modal.querySelectorAll('button')].find(function(button){
+      const txt=String(button.textContent||'');
+      const onclick=String(button.getAttribute('onclick')||'');
+      return /achatFile/.test(onclick) || /Déposer un BL|facture.*PDF|facture.*photo/i.test(txt);
+    });
+
+    const save=[...modal.querySelectorAll('button')].find(function(button){
+      if(button.closest('h5'))return false;
+      const txt=String(button.textContent||'').trim();
+      const onclick=String(button.getAttribute('onclick')||'');
+      return /^Enregistrer$/i.test(txt) || /addAchat/.test(onclick);
+    });
+
+    if(!upload||!save)return;
+
+    const oldRow=upload.parentElement;
+    let footer=modal.querySelector('.yaya-finance-create-actions');
+    if(!footer){
+      footer=document.createElement('div');
+      footer.className='mfoot yaya-finance-create-actions';
+      modal.appendChild(footer);
+    }
+
+    if(upload.parentElement!==footer)footer.appendChild(upload);
+    if(save.parentElement!==footer)footer.appendChild(save);
+
+    if(oldRow && oldRow!==footer){
+      const hasVisibleButton=oldRow.querySelector('button');
+      const state=oldRow.querySelector('#achatEtat');
+      if(!hasVisibleButton && (!state || !String(state.textContent||'').trim())){
+        oldRow.style.margin='0';
+        oldRow.style.minHeight='0';
+      }
+    }
+  }
+
   function centerTargetModals(root){
     if(!root)return;
     const modals=new Set(financeEditModals(root));
@@ -174,15 +238,21 @@
   function applyModalFixes(){
     const root=getModalRoot();
     if(!root)return;
+
+    patchFinanceCreateModal(root);
+
+    if(!isDesktop())return;
     centerTargetModals(root);
     simplifyFinanceEditButtons(root);
   }
 
   function install(){
-    if(window.matchMedia&&window.matchMedia('(max-width:760px)').matches)return;
-    installStyle();
+    if(isDesktop()){
+      installStyle();
+      requestAnimationFrame(resetPageHorizontalScroll);
+    }
+
     applyModalFixes();
-    requestAnimationFrame(resetPageHorizontalScroll);
 
     const root=getModalRoot();
     if(!root)return;
