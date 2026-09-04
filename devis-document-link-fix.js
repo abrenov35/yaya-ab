@@ -123,10 +123,10 @@
 
 // Centre et ordonne les actions de la modale Modifier le chantier.
 (function(){
-  if(document.querySelector('script[data-yaya-chantier-edit-actions-loader-v2]'))return;
+  if(document.querySelector('script[data-yaya-chantier-edit-actions-loader-v3]'))return;
   const s=document.createElement('script');
-  s.src='chantier-edit-actions-fix.js?v=chantieractions-2';
+  s.src='chantier-edit-actions-fix.js?v=chantieractions-3';
   s.async=false;
-  s.setAttribute('data-yaya-chantier-edit-actions-loader-v2','1');
+  s.setAttribute('data-yaya-chantier-edit-actions-loader-v3','1');
   document.head.appendChild(s);
 })();
