@@ -90,3 +90,13 @@
   s.setAttribute('data-yaya-version-indicator','1');
   document.head.appendChild(s);
 })();
+
+// Simplifie et aligne les actions de la modale Ajouter le devis.
+(function(){
+  if(document.querySelector('script[data-yaya-devis-create-actions-loader-v1]'))return;
+  const s=document.createElement('script');
+  s.src='devis-create-actions-fix.js?v=devisactions-1';
+  s.async=false;
+  s.setAttribute('data-yaya-devis-create-actions-loader-v1','1');
+  document.head.appendChild(s);
+})();
