@@ -58,5 +58,27 @@
     fiche.insertAdjacentElement('afterend',link);
   }
 
+  function removeReloadButton(){
+    document.querySelectorAll('button').forEach(function(button){
+      const label=String(button.textContent||'')
+        .replace(/[↻⟳⟲]/g,'')
+        .replace(/\s+/g,' ')
+        .trim()
+        .toLowerCase();
+      if(label==='recharger')button.remove();
+    });
+  }
+
+  function installReloadButtonRemoval(){
+    removeReloadButton();
+    if(!document.body){
+      setTimeout(installReloadButtonRemoval,100);
+      return;
+    }
+    const observer=new MutationObserver(removeReloadButton);
+    observer.observe(document.body,{childList:true,subtree:true});
+  }
+
   install();
+  installReloadButtonRemoval();
 })();
