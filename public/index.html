@@ -1,9 +1,49 @@
+mercredi 7:32
+enleve
+ce bouton es nomé classement d'une piece jointe
+ce bouton doit etre nommé :  classement d'une piece jointe (enleve LE MAIL) de ce boton
+
+C’est corrigé sur le bon index actuel de Yaya.
+
+Remplacez ces deux fichiers dans le dépôt GitHub yaya-ab :
+
+index.html
+fiche-inter-same-tab.js
+
+Ensuite, validez les deux fichiers dans GitHub et rechargez Yaya avec Ctrl + F5.
+
+Le bouton AB DOC apparaîtra dans la barre d’outils. Il ouvrira AB DOC directement sous la barre d’outils, sans ouvrir un nouvel onglet.
+
+N’utilisez plus l’ancien fichier V204 : celui-ci est basé sur l’index actuel V205.3.
+
+index.html
+HTML
+fiche-inter-same-tab.js
+Code
+le bouton pointe sur 
+YAYA-AB 
+revient a la vervion avant l'ajout ab doc 
+le compteur ne se reactualide pas
+
+C’est revenu à la version avant AB DOC.
+
+Le bouton AB DOC est entièrement supprimé.
+Le compteur affichera maintenant correctement V205.3.
+L’actualisation automatique est conservée.
+
+Remplacez ces deux fichiers dans GitHub :
+
+index.html
+fiche-inter-same-tab.js
+
+Faites le commit des deux fichiers, puis rechargez Yaya avec Ctrl + F5.
+
 <!doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Yaya v205.4 — AB RENOV 35</title>
+  <title>Yaya v205.3 — AB RENOV 35</title>
 </head>
 
 <body>
@@ -22,6 +62,12 @@
     if(!r.ok)throw new Error('base '+r.status);
     return r.text();
   });
+
+  // Aligne le compteur visible sur la version réellement chargée.
+  base=base.replace(
+    "version.textContent='V204.2'",
+    "version.textContent='V205.3'"
+  );
 
 
   const sourceLoader=
@@ -300,7 +346,7 @@
     '<script src="chantier-tabs-order.js?v=order-3"><\\/script>'+
     '<script src="chantier-save-close-patch.js?v=saveclose-1"><\\/script>'+
     '<script src="chantier-search-focus-fix.js?v=searchfix-1"><\\/script>'+
-    '<script src="fiche-inter-same-tab.js?v=inline-abdoc-4"><\\/script>'+
+    '<script src="fiche-inter-same-tab.js?v=inline-3"><\\/script>'+
     '<script src="planning-toolbar-link.js?v=planning-link-1"><\\/script>'+
     '<script src="yaya-auto-refresh.js?v=autorefresh-7"><\\/script>'+
     '<script src="delete-confirm-preserve-files.js?v=deletepreserve-1"><\\/script>'+
@@ -366,3 +412,7 @@
 
 </body>
 </html>
+index.html
+HTML
+fiche-inter-same-tab.js
+Code
