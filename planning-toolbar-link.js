@@ -9,6 +9,7 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      #yayaVersion{display:none!important}
       .planning-external-tab{
         position:relative!important;
         display:inline-flex!important;
