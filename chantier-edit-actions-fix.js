@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-actions-fix-v1';
+  const STYLE_ID='yaya-chantier-edit-actions-fix-v3';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -48,6 +48,12 @@
     const modal=root.querySelector('.yaya-chantier-edit-modal');
     if(!modal)return;
 
+    modal.querySelectorAll('h5 > button').forEach(function(button){
+      const txt=String(button.textContent||'').trim();
+      const aria=String(button.getAttribute('aria-label')||'');
+      if(txt==='×' || /Fermer/i.test(aria))button.remove();
+    });
+
     const footer=modal.querySelector('.mfoot');
     if(!footer)return;
 
@@ -66,16 +72,46 @@
     if(!del||!save||!cancel)return;
 
     footer.classList.add('yaya-chantier-edit-actions-fixed');
+    footer.style.setProperty('display','flex','important');
+    footer.style.setProperty('align-items','center','important');
+    footer.style.setProperty('justify-content','center','important');
+    footer.style.setProperty('gap','12px','important');
+    footer.style.setProperty('flex-wrap','nowrap','important');
+
+    del.style.setProperty('background','#d93636','important');
+    del.style.setProperty('border','1px solid #d93636','important');
+    del.style.setProperty('color','#fff','important');
+    del.style.setProperty('margin','0','important');
 
     [del,save,cancel].forEach(function(button){
-      if(button.parentElement!==footer || footer.lastElementChild!==button){
-        footer.appendChild(button);
-      }
+      button.style.setProperty('height','42px','important');
+      button.style.setProperty('min-height','42px','important');
+      button.style.setProperty('margin','0','important');
     });
+
+    footer.appendChild(del);
+    footer.appendChild(save);
+    footer.appendChild(cancel);
+  }
+
+  function wrapOpen(){
+    const fn=window.openExistingChantierModal;
+    if(typeof fn!=='function' || fn.__yayaActionsWrapped)return;
+
+    function wrapped(){
+      const out=fn.apply(this,arguments);
+      patch();
+      requestAnimationFrame(patch);
+      setTimeout(patch,0);
+      return out;
+    }
+    wrapped.__yayaActionsWrapped=true;
+    window.openExistingChantierModal=wrapped;
   }
 
   function install(){
     installStyle();
+    wrapOpen();
     patch();
 
     const root=document.getElementById('modalRoot');
@@ -86,6 +122,7 @@
       if(raf)return;
       raf=requestAnimationFrame(function(){
         raf=0;
+        wrapOpen();
         patch();
       });
     });
