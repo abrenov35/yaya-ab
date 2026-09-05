@@ -24,6 +24,12 @@
     document.querySelectorAll('.yaya-planning-box').forEach(function(box){
       box.style.setProperty('display','none','important');
     });
+
+    const demarrage=document.getElementById('chDemarrage');
+    if(demarrage){
+      const bloc=demarrage.closest('label')||demarrage.parentElement;
+      if(bloc)bloc.style.setProperty('display','none','important');
+    }
   }
 
   function installUiCleanup(){
