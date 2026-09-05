@@ -149,13 +149,22 @@
       if(!isEdit&&!isCreate)return;
 
       overlay.style.setProperty('position','fixed','important');
-      overlay.style.setProperty('inset','0','important');
+      overlay.style.setProperty('right','0','important');
+      overlay.style.setProperty('bottom','0','important');
+      overlay.style.setProperty('left','0','important');
       overlay.style.setProperty('display','flex','important');
       overlay.style.setProperty('align-items','center','important');
       overlay.style.setProperty('justify-content','center','important');
-      overlay.style.setProperty('padding','16px','important');
       overlay.style.setProperty('overflow','auto','important');
       overlay.style.setProperty('z-index','30000','important');
+
+      if(isCreate){
+        overlay.style.setProperty('top','54px','important');
+        overlay.style.setProperty('padding','12px','important');
+      }else{
+        overlay.style.setProperty('top','0','important');
+        overlay.style.setProperty('padding','16px','important');
+      }
 
       modal.style.setProperty('position','relative','important');
       modal.style.setProperty('top','auto','important');
@@ -164,7 +173,7 @@
       modal.style.setProperty('left','auto','important');
       modal.style.setProperty('transform','none','important');
       modal.style.setProperty('margin','auto','important');
-      modal.style.setProperty('max-height','calc(100vh - 32px)','important');
+      modal.style.setProperty('max-height',isCreate?'calc(100vh - 78px)':'calc(100vh - 32px)','important');
       modal.style.setProperty('overflow','auto','important');
     });
   }
