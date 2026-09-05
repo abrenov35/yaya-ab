@@ -16,6 +16,21 @@
     document.head.appendChild(style);
   }
 
+  function hideCreateCloseButton(){
+    const createBtn=document.getElementById('chCreateBtn');
+    if(!createBtn)return;
+    const modal=createBtn.closest('.modal,[role="dialog"]');
+    if(!modal)return;
+
+    modal.querySelectorAll('button').forEach(function(button){
+      const label=String(button.textContent||'').trim();
+      const aria=String(button.getAttribute('aria-label')||'').trim().toLowerCase();
+      if(label==='×'||label==='✕'||label==='✖'||aria==='fermer'||aria==='close'){
+        button.style.setProperty('display','none','important');
+      }
+    });
+  }
+
   function hidePlanningUi(){
     const toggle=document.getElementById('chPlanningToggle');
     if(toggle&&toggle.parentElement){
@@ -30,6 +45,8 @@
       const bloc=demarrage.closest('label')||demarrage.parentElement;
       if(bloc)bloc.style.setProperty('display','none','important');
     }
+
+    hideCreateCloseButton();
   }
 
   function installUiCleanup(){
