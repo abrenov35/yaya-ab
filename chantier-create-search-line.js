@@ -126,6 +126,34 @@
     });
   }
 
+  function quitterFichePourRecherche(valeur,input){
+    let surFiche=false;
+    try{surFiche=!!focusChantier;}catch(e){}
+    if(!surFiche)return false;
+
+    try{focusChantier=null;}catch(e){}
+    try{
+      if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.clear==='function')expChantiers.clear();
+    }catch(e){}
+    try{filtreChantier=valeur;}catch(e){}
+
+    try{
+      if(typeof render==='function')render();
+      else if(typeof renderChantiers==='function')renderChantiers();
+    }catch(e){}
+
+    requestAnimationFrame(function(){
+      ensureHeaderSearch();
+      const active=document.getElementById('filtreInput')||input;
+      if(!active)return;
+      active.value=valeur;
+      filtrerCartesChantiers(valeur);
+      try{active.focus({preventScroll:true});}catch(e){try{active.focus();}catch(_){} }
+      try{active.setSelectionRange(valeur.length,valeur.length);}catch(e){}
+    });
+    return true;
+  }
+
   function bindSearch(input){
     if(!input)return;
     input.oninput=null;
@@ -136,6 +164,9 @@
     input.addEventListener('input',function(){
       const valeur=input.value;
       try{filtreChantier=valeur;}catch(e){}
+
+      if(quitterFichePourRecherche(valeur,input))return;
+
       if(yayaSearchFrame)cancelAnimationFrame(yayaSearchFrame);
       yayaSearchFrame=requestAnimationFrame(function(){filtrerCartesChantiers(valeur);});
     });
