@@ -32,7 +32,7 @@
 
       const overlay=document.createElement('div');
       overlay.className='yaya-chantier-delete-overlay';
-      overlay.style.cssText='position:fixed;inset:0;z-index:20000;background:rgba(22,45,73,.48);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+      overlay.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(22,45,73,.58);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
       overlay.innerHTML=''
         +'<div role="dialog" aria-modal="true" aria-labelledby="yayaChDeleteTitle" style="width:min(430px,100%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.28);margin:auto">'
         +'<div id="yayaChDeleteTitle" style="font-size:17px;font-weight:800;color:#162D49;margin-bottom:10px">Supprimer le chantier ?</div>'
