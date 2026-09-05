@@ -3,7 +3,6 @@
 
   const LINK_ID='yayaPlanningToolbarLink';
   const AB_DOCS_ID='yayaAbDocsToolbarLink';
-  const AB_DOCS_VIEW_ID='yayaAbDocsInlineView';
   const STYLE_ID='yaya-planning-toolbar-link-style';
 
   function ensureStyle(){
@@ -38,28 +37,6 @@
       .ab-docs-external-tab{min-width:112px!important}
       .planning-external-tab:hover,
       .ab-docs-external-tab:hover{background:#3453a2!important}
-      .ab-docs-external-tab.is-open{
-        background:#C9A227!important;
-        border-color:#C9A227!important;
-        color:#162D49!important;
-      }
-      #${AB_DOCS_VIEW_ID}{
-        position:fixed!important;
-        left:0!important;
-        right:0!important;
-        bottom:0!important;
-        z-index:9000!important;
-        background:#fff!important;
-        overflow:hidden!important;
-      }
-      #${AB_DOCS_VIEW_ID}[hidden]{display:none!important}
-      #${AB_DOCS_VIEW_ID} iframe{
-        display:block!important;
-        width:100%!important;
-        height:100%!important;
-        border:0!important;
-        background:#fff!important;
-      }
       @media(max-width:1050px){
         .planning-external-tab,
         .ab-docs-external-tab{min-width:auto!important;padding:0 13px!important}
@@ -88,77 +65,19 @@
     return link;
   }
 
-  function ensureAbDocsView(){
-    let view=document.getElementById(AB_DOCS_VIEW_ID);
-    if(view)return view;
-
-    view=document.createElement('section');
-    view.id=AB_DOCS_VIEW_ID;
-    view.hidden=true;
-    view.setAttribute('aria-label','AB Docs');
-
-    const frame=document.createElement('iframe');
-    frame.title='AB Docs';
-    frame.loading='eager';
-    frame.src='https://abrenov35.github.io/ab-db/';
-    view.appendChild(frame);
-
-    document.body.appendChild(view);
-    return view;
-  }
-
-  function resizeAbDocsView(){
-    const view=document.getElementById(AB_DOCS_VIEW_ID);
-    if(!view || view.hidden)return;
-    const hdr=document.querySelector('.hdr');
-    const top=hdr?Math.max(0,Math.round(hdr.getBoundingClientRect().bottom)):0;
-    view.style.setProperty('top',top+'px','important');
-  }
-
-  function closeAbDocs(){
-    const view=document.getElementById(AB_DOCS_VIEW_ID);
-    const btn=document.getElementById(AB_DOCS_ID);
-    if(view)view.hidden=true;
-    if(btn){
-      btn.classList.remove('is-open');
-      btn.setAttribute('aria-pressed','false');
-    }
-  }
-
-  function openAbDocs(){
-    const view=ensureAbDocsView();
-    const btn=document.getElementById(AB_DOCS_ID);
-    view.hidden=false;
-    if(btn){
-      btn.classList.add('is-open');
-      btn.setAttribute('aria-pressed','true');
-    }
-    resizeAbDocsView();
-  }
-
-  function toggleAbDocs(){
-    const view=ensureAbDocsView();
-    if(view.hidden)openAbDocs();
-    else closeAbDocs();
-  }
-
   function ensureAbDocsLink(planning){
     if(!planning)return null;
 
     let link=document.getElementById(AB_DOCS_ID);
     if(!link){
-      link=document.createElement('button');
+      link=document.createElement('a');
       link.id=AB_DOCS_ID;
-      link.type='button';
       link.className='ab-docs-external-tab';
+      link.href='https://abrenov35.github.io/ab-db/';
+      link.target='_blank';
+      link.rel='noopener noreferrer';
       link.textContent='AB Docs';
-      link.setAttribute('aria-label','Ouvrir AB Docs sous la barre Yaya');
-      link.setAttribute('aria-pressed','false');
-      link.addEventListener('click',function(event){
-        event.preventDefault();
-        event.stopPropagation();
-        toggleAbDocs();
-      });
+      link.setAttribute('aria-label','Ouvrir AB Docs dans un nouvel onglet');
     }
 
     const createBtn=document.getElementById('yayaCreateChantierBtn');
@@ -173,25 +92,11 @@
     return link;
   }
 
-  function installToolbarCloseBehavior(){
-    const hdr=document.querySelector('.hdr');
-    if(!hdr){setTimeout(installToolbarCloseBehavior,120);return;}
-    if(hdr.dataset.yayaAbDocsCloseBound==='1')return;
-    hdr.dataset.yayaAbDocsCloseBound='1';
-    hdr.addEventListener('click',function(event){
-      const action=event.target&&event.target.closest?event.target.closest('button,a'):null;
-      if(!action || action.id===AB_DOCS_ID)return;
-      closeAbDocs();
-    },true);
-  }
-
   function install(){
     ensureStyle();
     const planning=ensurePlanningLink();
     if(!planning){setTimeout(install,120);return;}
     ensureAbDocsLink(planning);
-    ensureAbDocsView();
-    installToolbarCloseBehavior();
   }
 
   function keepToolbarLinksInPlace(){
@@ -205,7 +110,6 @@
       timer=setTimeout(function(){
         const planning=ensurePlanningLink();
         if(planning)ensureAbDocsLink(planning);
-        resizeAbDocsView();
       },0);
     });
     observer.observe(document.body,{childList:true,subtree:true});
@@ -272,9 +176,6 @@
     const observer=new MutationObserver(centerEditModals);
     observer.observe(document.body,{childList:true,subtree:true});
   }
-
-  window.addEventListener('resize',resizeAbDocsView,{passive:true});
-  window.addEventListener('orientationchange',function(){setTimeout(resizeAbDocsView,120);},{passive:true});
 
   install();
   keepToolbarLinksInPlace();
