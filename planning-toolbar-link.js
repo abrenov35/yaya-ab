@@ -144,7 +144,9 @@
 
       const title=modal.querySelector('h1,h2,h3,h4,h5,h6');
       const text=String(title?title.textContent:'').replace(/\s+/g,' ').trim();
-      if(!/^Modifier\b/i.test(text))return;
+      const isEdit=/^Modifier\b/i.test(text);
+      const isCreate=!!modal.querySelector('#chCreateBtn');
+      if(!isEdit&&!isCreate)return;
 
       overlay.style.setProperty('position','fixed','important');
       overlay.style.setProperty('inset','0','important');
