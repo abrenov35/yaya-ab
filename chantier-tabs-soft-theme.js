@@ -125,14 +125,14 @@
       color:#1e293b!important;
     }
 
-    /* Actions chantier : palette neutre bleu-gris cohérente avec Yaya. */
+    /* Actions chantier : style sobre, blanc + bleu Yaya. */
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
     #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"],
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp{
-      background:#F7F9FC!important;
-      color:#24436B!important;
-      border:1px solid #C7D4E3!important;
+      background:#FFFFFF!important;
+      color:#003D7A!important;
+      border:1px solid #C8D6E4!important;
       border-radius:7px!important;
       box-shadow:none!important;
       min-height:38px!important;
@@ -145,32 +145,39 @@
     #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn:hover,
     #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]:hover,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp:hover{
-      background:#E8F0FA!important;
-      border-color:#AFC2D5!important;
-      color:#24436B!important;
+      background:#EAF2F9!important;
+      border-color:#9FB7CF!important;
+      color:#003D7A!important;
+    }
+
+    /* Ajouter un devis : seul bouton légèrement mis en avant. */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp{
+      background:#F2F7FC!important;
+      border-color:#A8BED3!important;
+      color:#003D7A!important;
     }
 
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn{
-      background:#EEF3F8!important;
-      border-color:#BFCFDE!important;
-      color:#24436B!important;
+      background:#FFFFFF!important;
+      border-color:#B9C9D9!important;
+      color:#003D7A!important;
       box-shadow:none!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn:hover{
-      background:#E3ECF5!important;
-      border-color:#A9BED2!important;
-      color:#1D3B60!important;
+      background:#EAF2F9!important;
+      border-color:#9FB7CF!important;
+      color:#003D7A!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn{
-      background:#F7F5F2!important;
-      border-color:#D8D3CC!important;
-      color:#6B625A!important;
+      background:#FFFFFF!important;
+      border-color:#D1D8DF!important;
+      color:#5F6D79!important;
       box-shadow:none!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn:hover{
-      background:#EEEAE5!important;
-      border-color:#C9C1B8!important;
-      color:#5B534C!important;
+      background:#F4F6F8!important;
+      border-color:#BCC7D0!important;
+      color:#485661!important;
     }
 
     @media(max-width:760px){
