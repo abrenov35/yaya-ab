@@ -80,6 +80,9 @@
     try{
       if(typeof S!=='undefined'&&S&&typeof S==='object'){
         localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));
+        if(window.__yayaCache&&typeof window.__yayaCache.write==='function'){
+          window.__yayaCache.write(S,null);
+        }
       }
     }catch(e){}
   }
@@ -129,21 +132,48 @@
     run();
   }
 
+  function apiUrl(){
+    try{return typeof API!=='undefined'?String(API||''):'';}catch(e){return '';}
+  }
+
+  async function directRead(){
+    const api=apiUrl();
+    if(!api)throw new Error('API Yaya indisponible');
+
+    const sep=api.includes('?')?'&':'?';
+    const url=api+sep+'tabs=chantiers%2Cavenants&_yaya_fresh='+Date.now();
+    const ctrl=new AbortController();
+    const timer=setTimeout(function(){ctrl.abort();},18000);
+
+    try{
+      const r=await fetch(url,{method:'GET',cache:'no-store',signal:ctrl.signal});
+      const text=await r.text();
+      const json=JSON.parse(text);
+      if(!json||json.ok!==true)throw new Error(json&&json.error?json.error:'Réponse Yaya invalide');
+      const data=json.data||{};
+      if(!Array.isArray(data.chantiers))throw new Error('Liste chantiers absente');
+      return data;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
   async function refresh(force){
     const now=Date.now();
     if(busy)return;
     if(!force&&now-lastRun<MIN_GAP_MS)return;
 
-    if(typeof apiGet!=='function'){
-      setTimeout(function(){refresh(force);},500);
-      return;
-    }
-
     busy=true;
     lastRun=now;
 
     try{
-      const fresh=await apiGet(true);
+      let fresh;
+      try{
+        fresh=await directRead();
+      }catch(directErr){
+        if(typeof apiGet!=='function')throw directErr;
+        fresh=await apiGet(true);
+      }
       queueApply(fresh);
     }catch(e){
       console.warn('Lecture reseau chantiers/devis impossible :',e);
@@ -153,14 +183,14 @@
   }
 
   function start(){
-    setTimeout(function(){refresh(true);},900);
+    setTimeout(function(){refresh(true);},500);
 
     document.addEventListener('visibilitychange',function(){
-      if(!document.hidden)setTimeout(function(){refresh(false);},500);
+      if(!document.hidden)setTimeout(function(){refresh(false);},400);
     });
 
     window.addEventListener('focus',function(){
-      setTimeout(function(){refresh(false);},500);
+      setTimeout(function(){refresh(false);},400);
     });
 
     setInterval(function(){refresh(false);},PERIODIC_MS);
