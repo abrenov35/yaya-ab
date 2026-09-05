@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisNoAiUploadV7)return;
-  window.__yayaDevisNoAiUploadV7=true;
+  if(window.__yayaDevisNoAiUploadV8)return;
+  window.__yayaDevisNoAiUploadV8=true;
 
   let uploading=false;
   const nativeFetch=window.fetch.bind(window);
@@ -12,7 +12,7 @@
   const IMAGE_OPTIMIZE_FROM=650*1024;
   const IMAGE_MAX_SIDE=1800;
   const IMAGE_QUALITY=0.82;
-  const UPLOAD_TIMEOUT=30000;
+  const UPLOAD_TIMEOUT=25000;
 
   function apiUrl(){
     try{return typeof API!=='undefined'?API:'';}catch(e){return '';}
@@ -145,7 +145,7 @@
       try{json=await response.json();}catch(e){throw new Error('Réponse serveur invalide');}
       return json;
     }catch(e){
-      if(e&&e.name==='AbortError')throw new Error('Envoi trop long — opération libérée après 30 secondes');
+      if(e&&e.name==='AbortError')throw new Error('Import interrompu après 25 secondes — réessaie');
       throw e;
     }finally{
       clearTimeout(timer);
@@ -156,16 +156,10 @@
     const base64=await readBase64(file);
     if(!base64)throw new Error('Document vide ou illisible');
 
-    let json=await postPayload('archiverDevis',file,base64);
-
-    if(!json||!json.ok){
-      const message=String(json&&json.error||'Archivage impossible');
-      if(/action inconnue.*archiverDevis/i.test(message)){
-        // Compatibilité immédiate avec le serveur actuellement déployé.
-        // extraireDevis archive aussi la pièce et renvoie lienDrive.
-        json=await postPayload('extraireDevis',file,base64);
-      }
-    }
+    // Utilise directement l'action déjà déployée et fonctionnelle.
+    // On ne tente plus archiverDevis avant : cette tentative pouvait bloquer
+    // la modale jusqu'au timeout lorsque le backend ne la gérait pas.
+    const json=await postPayload('extraireDevis',file,base64);
 
     if(!json||!json.ok)throw new Error(String(json&&json.error||'Archivage impossible'));
     const data=json.data||{};
@@ -227,15 +221,12 @@
       if(file.size>MAX_FILE_SIZE){
         toastSafe('Fichier trop lourd (8 Mo max)',true);
         emitState('error',type,id,'Fichier trop lourd (8 Mo max)');
+        emitState('end',type,id,'');
         return;
       }
 
       uploading=true;
       emitState('start',type,id,'Import en cours');
-
-      const modal=document.querySelector('.yaya-devis-fast-modal');
-      const save=modal&&modal.querySelector('#yayaFastSave');
-      if(save)save.disabled=true;
 
       try{
         file=await optimizeFile(file);
@@ -252,45 +243,11 @@
         emitState('error',type,id,message);
       }finally{
         uploading=false;
-        if(save&&save.isConnected)save.disabled=false;
         emitState('end',type,id,'');
       }
     };
 
     input.click();
-  }
-
-  function installSafeFetchRewrite(){
-    if(window.__yayaNoAiSafeFetchInstalled)return;
-    window.__yayaNoAiSafeFetchInstalled=true;
-
-    window.fetch=async function(input,init){
-      if(
-        typeof input==='string'&&
-        input===apiUrl()&&
-        init&&
-        typeof init.body==='string'
-      ){
-        try{
-          const originalBody=JSON.parse(init.body);
-          if(originalBody&&originalBody.action==='extraireDevis'){
-            const noAiBody=Object.assign({},originalBody,{action:'archiverDevis'});
-            const noAiInit=Object.assign({},init,{body:JSON.stringify(noAiBody)});
-            const first=await nativeFetch(input,noAiInit);
-            try{
-              const probe=await first.clone().json();
-              const message=String(probe&&probe.error||'');
-              if(probe&&probe.ok)return first;
-              if(/action inconnue.*archiverDevis/i.test(message)){
-                return nativeFetch(input,init);
-              }
-            }catch(e){}
-            return first;
-          }
-        }catch(e){}
-      }
-      return nativeFetch(input,init);
-    };
   }
 
   function installReplace(){
@@ -311,7 +268,6 @@
     });
   }
 
-  installSafeFetchRewrite();
   installReplace();
   cleanAiLabels(document);
 
