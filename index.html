@@ -254,9 +254,9 @@
 
 
   const sourceRetry=`  let source=await fetch('index-legacy.html?v=cacheboot-1',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
-  source=source.replace(/async function apiGet\\(\\)\\{[\\s\\S]*?\\n\\}/,${JSON.stringify(apiGetPatch)});
+  source=source.replace(/async function apiGet\(\)\{[\s\S]*?\n\}/,${JSON.stringify(apiGetPatch)});
   source=source.replaceAll('x=>x.id===id','x=>String(x.id)===String(id)');
-  source=source.replace('    await synchroniserDatesPlanning();\\n    syncMsg("✓ connecté");\\n    render();','    syncMsg("✓ connecté");\\n    render();\\n    setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);');`;
+  source=source.replace('    await synchroniserDatesPlanning();\n    syncMsg("✓ connecté");\n    render();','    syncMsg("✓ connecté");\n    render();\n    setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);');`;
 
 
   if(!base.includes(sourceLoader)){
@@ -332,7 +332,7 @@
     '<script src="market-view-link-fix.js?v=marketview-3"><\\/script>'+
     '<script src="market-initial-quote-actions.js?v=marketinitial-3"><\\/script>'+
     '<script src="devis-delete-confirm.js?v=devisconfirm-1"><\\/script>'+
-    '<script src="devis-no-ai-upload.js?v=noai-fast-7"><\\/script>'+
+    '<script src="devis-no-ai-upload.js?v=noai-fast-8"><\\/script>'+
     '<script src="devis-document-link-fix.js?v=linkfix-8"><\\/script>'+
     "</body>'";
 
