@@ -125,11 +125,8 @@
       color:#1e293b!important;
     }
 
-    /* Actions chantier : style sobre, blanc + bleu Yaya. */
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"],
-    #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn,
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"],
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp{
+    /* Actions chantier : tous les boutons ont exactement le même style. */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > button{
       background:#FFFFFF!important;
       color:#003D7A!important;
       border:1px solid #C8D6E4!important;
@@ -141,43 +138,19 @@
       font-size:12px!important;
       font-weight:700!important;
     }
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openAvenant"]:hover,
-    #pane-chantiers .chantier-fin-toolbar > .chantier-expense-btn:hover,
-    #pane-chantiers .chantier-fin-toolbar > button[onclick*="openDocumentModal"]:hover,
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp:hover{
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > button:hover{
       background:#EAF2F9!important;
       border-color:#9FB7CF!important;
       color:#003D7A!important;
     }
-
-    /* Ajouter un devis : seul bouton légèrement mis en avant. */
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .btnp.btnp{
-      background:#F2F7FC!important;
-      border-color:#A8BED3!important;
-      color:#003D7A!important;
-    }
-
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn{
-      background:#FFFFFF!important;
-      border-color:#B9C9D9!important;
-      color:#003D7A!important;
-      box-shadow:none!important;
-    }
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .yaya-edit-chantier-btn:hover{
-      background:#EAF2F9!important;
-      border-color:#9FB7CF!important;
-      color:#003D7A!important;
-    }
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn{
-      background:#FFFFFF!important;
-      border-color:#D1D8DF!important;
-      color:#5F6D79!important;
-      box-shadow:none!important;
-    }
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn:hover{
-      background:#F4F6F8!important;
-      border-color:#BCC7D0!important;
-      color:#485661!important;
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-archive-btn::before{
+      content:"📦";
+      display:inline-block;
+      margin-right:5px;
+      font-size:11px;
+      line-height:1;
+      opacity:.78;
+      vertical-align:-1px;
     }
 
     @media(max-width:760px){
