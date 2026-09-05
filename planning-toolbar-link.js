@@ -2,6 +2,7 @@
   'use strict';
 
   const LINK_ID='yayaPlanningToolbarLink';
+  const AB_DOCS_ID='yayaAbDocsToolbarLink';
   const STYLE_ID='yaya-planning-toolbar-link-style';
 
   function ensureStyle(){
@@ -10,7 +11,8 @@
     style.id=STYLE_ID;
     style.textContent=`
       #yayaVersion{display:none!important}
-      .planning-external-tab{
+      .planning-external-tab,
+      .ab-docs-external-tab{
         position:relative!important;
         display:inline-flex!important;
         align-items:center!important;
@@ -32,22 +34,25 @@
         cursor:pointer!important;
         text-decoration:none!important;
       }
-      .planning-external-tab:hover{background:#3453a2!important}
+      .ab-docs-external-tab{min-width:112px!important}
+      .planning-external-tab:hover,
+      .ab-docs-external-tab:hover{background:#3453a2!important}
       @media(max-width:1050px){
-        .planning-external-tab{min-width:auto!important;padding:0 13px!important}
+        .planning-external-tab,
+        .ab-docs-external-tab{min-width:auto!important;padding:0 13px!important}
       }
     `;
     document.head.appendChild(style);
   }
 
-  function install(){
-    ensureStyle();
-    if(document.getElementById(LINK_ID))return;
+  function ensurePlanningLink(){
+    let link=document.getElementById(LINK_ID);
+    if(link)return link;
 
     const fiche=document.querySelector('.fiche-inter-tab');
-    if(!fiche){setTimeout(install,120);return;}
+    if(!fiche)return null;
 
-    const link=document.createElement('a');
+    link=document.createElement('a');
     link.id=LINK_ID;
     link.className='planning-external-tab';
     link.href='https://abrenov35.github.io/planning-ab/';
@@ -57,6 +62,57 @@
     link.setAttribute('aria-label','Ouvrir le planning dans un nouvel onglet');
 
     fiche.insertAdjacentElement('afterend',link);
+    return link;
+  }
+
+  function ensureAbDocsLink(planning){
+    if(!planning)return null;
+
+    let link=document.getElementById(AB_DOCS_ID);
+    if(!link){
+      link=document.createElement('a');
+      link.id=AB_DOCS_ID;
+      link.className='ab-docs-external-tab';
+      link.href='https://abrenov35.github.io/ab-db/';
+      link.target='_blank';
+      link.rel='noopener noreferrer';
+      link.textContent='AB Docs';
+      link.setAttribute('aria-label','Ouvrir AB Docs dans un nouvel onglet');
+    }
+
+    const createBtn=document.getElementById('yayaCreateChantierBtn');
+    const anchor=createBtn&&createBtn.parentElement===planning.parentElement
+      ?createBtn
+      :planning;
+
+    if(link.parentElement!==anchor.parentElement || link.previousElementSibling!==anchor){
+      anchor.insertAdjacentElement('afterend',link);
+    }
+
+    return link;
+  }
+
+  function install(){
+    ensureStyle();
+    const planning=ensurePlanningLink();
+    if(!planning){setTimeout(install,120);return;}
+    ensureAbDocsLink(planning);
+  }
+
+  function keepToolbarLinksInPlace(){
+    if(!document.body){
+      setTimeout(keepToolbarLinksInPlace,100);
+      return;
+    }
+    let timer=0;
+    const observer=new MutationObserver(function(){
+      clearTimeout(timer);
+      timer=setTimeout(function(){
+        const planning=ensurePlanningLink();
+        if(planning)ensureAbDocsLink(planning);
+      },0);
+    });
+    observer.observe(document.body,{childList:true,subtree:true});
   }
 
   function removeReloadButton(){
@@ -122,6 +178,7 @@
   }
 
   install();
+  keepToolbarLinksInPlace();
   installReloadButtonRemoval();
   installEditModalCentering();
 })();
