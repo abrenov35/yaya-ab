@@ -4,6 +4,14 @@
   let suppressionEnCours=false;
   let dernierDeclenchement=0;
 
+  function esc(v){
+    return String(v==null?'':v)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
+  }
+
   function ready(){
     try{
       return typeof S!=='undefined' && Array.isArray(S.chantiers) &&
@@ -43,22 +51,54 @@
     return texte==='supprimer le chantier'?btn:null;
   }
 
-  function confirmationNative(id){
-    const c=getChantier(id);
-    if(!c)return false;
-    const nb=Array.isArray(S.achats)
-      ?S.achats.filter(function(a){return String(a.chantierId)===String(id);}).length
-      :0;
-    const hh=Array.isArray(S.heures)
-      ?S.heures.filter(function(h){return h.type==='chantier'&&String(h.ref)===String(id);})
-        .reduce(function(t,h){return t+(Number(h.heures)||0);},0)
-      :0;
+  function confirmationCentree(id){
+    return new Promise(function(resolve){
+      const c=getChantier(id);
+      if(!c){resolve(false);return;}
 
-    let msg='Supprimer le chantier « '+String(c.nom||'Chantier')+' » ?';
-    if(nb)msg+='\n\n• Ses '+nb+' achat(s) / charge(s) seront supprimés aussi.';
-    if(hh)msg+='\n• Ses '+hh+' h saisies resteront dans l’historique des heures.';
-    msg+='\n\nCette action est définitive dans Yaya.';
-    return window.confirm(msg);
+      const nb=Array.isArray(S.achats)
+        ?S.achats.filter(function(a){return String(a.chantierId)===String(id);}).length
+        :0;
+      const hh=Array.isArray(S.heures)
+        ?S.heures.filter(function(h){return h.type==='chantier'&&String(h.ref)===String(id);})
+          .reduce(function(t,h){return t+(Number(h.heures)||0);},0)
+        :0;
+
+      document.querySelectorAll('.yaya-chantier-delete-overlay').forEach(function(x){x.remove();});
+
+      const overlay=document.createElement('div');
+      overlay.className='yaya-chantier-delete-overlay';
+      overlay.style.cssText='position:fixed;inset:0;z-index:60000;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;pointer-events:auto;touch-action:manipulation';
+      overlay.innerHTML=''
+        +'<div role="dialog" aria-modal="true" aria-labelledby="yayaChDeleteTitle" style="width:min(430px,calc(100vw - 36px));max-width:430px;background:#fff;border-radius:14px;padding:22px;box-shadow:0 22px 65px rgba(15,23,42,.30);margin:auto;position:relative">'
+        +'<div id="yayaChDeleteTitle" style="font-size:18px;font-weight:800;color:#162D49;text-align:center;margin-bottom:12px">Supprimer le chantier ?</div>'
+        +'<div style="font-size:14px;line-height:1.5;color:#334155;text-align:center;margin-bottom:14px">Confirmer la suppression de <b>« '+esc(c.nom||'Chantier')+' »</b> ?</div>'
+        +(nb?'<div style="font-size:12.5px;line-height:1.45;color:#9a3412;margin:5px 0">• '+nb+' achat'+(nb>1?'s':'')+' / charge'+(nb>1?'s':'')+' lié'+(nb>1?'s':'')+' sera'+(nb>1?'ont':'')+' aussi supprimé'+(nb>1?'s':'')+'.</div>':'')
+        +(hh?'<div style="font-size:12.5px;line-height:1.45;color:#64748b;margin:5px 0">• '+hh+' h saisies resteront dans l’historique des heures.</div>':'')
+        +'<div style="font-size:12px;color:#64748b;text-align:center;margin-top:12px">Cette action est définitive dans Yaya.</div>'
+        +'<div style="display:flex;gap:10px;justify-content:center;margin-top:20px">'
+        +'<button type="button" data-cancel style="min-width:120px;min-height:42px;padding:9px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;font-family:inherit;touch-action:manipulation">Annuler</button>'
+        +'<button type="button" data-confirm style="min-width:120px;min-height:42px;padding:9px 16px;border-radius:8px;border:1px solid #b42318;background:#b42318;color:#fff;font-weight:800;font-family:inherit;touch-action:manipulation">Supprimer</button>'
+        +'</div></div>';
+
+      let fini=false;
+      function done(value){
+        if(fini)return;
+        fini=true;
+        if(overlay.parentNode)overlay.remove();
+        resolve(value);
+      }
+
+      overlay.querySelector('[data-cancel]').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();done(false);});
+      overlay.querySelector('[data-confirm]').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();done(true);});
+      overlay.addEventListener('click',function(e){if(e.target===overlay)done(false);});
+
+      document.body.appendChild(overlay);
+      requestAnimationFrame(function(){
+        const b=overlay.querySelector('[data-cancel]');
+        if(b)b.focus({preventScroll:true});
+      });
+    });
   }
 
   async function supprimerApresValidation(id){
@@ -71,7 +111,8 @@
       return;
     }
 
-    if(!confirmationNative(id))return;
+    const confirme=await confirmationCentree(id);
+    if(!confirme)return;
 
     suppressionEnCours=true;
     const oldChantiers=S.chantiers.slice();
@@ -127,8 +168,8 @@
   }
 
   function installCapture(){
-    if(document.documentElement.dataset.yayaDeleteChantierCaptureV3==='1')return;
-    document.documentElement.dataset.yayaDeleteChantierCaptureV3='1';
+    if(document.documentElement.dataset.yayaDeleteChantierCaptureV4==='1')return;
+    document.documentElement.dataset.yayaDeleteChantierCaptureV4='1';
 
     window.addEventListener('pointerup',function(event){
       const btn=estBoutonSuppression(event.target);
