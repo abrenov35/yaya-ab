@@ -101,6 +101,22 @@
     });
   }
 
+  async function verifierSuppressionServeur(id){
+    if(typeof apiGet!=='function')return true;
+    await new Promise(function(resolve){setTimeout(resolve,180);});
+    const fresh=await apiGet(true);
+    const list=Array.isArray(fresh&&fresh.chantiers)?fresh.chantiers:[];
+    const existe=list.some(function(c){return String(c.id)===String(id);});
+    if(existe)throw new Error('suppression non enregistrée sur le serveur');
+
+    if(fresh&&typeof fresh==='object'){
+      if(Array.isArray(fresh.chantiers))S.chantiers=fresh.chantiers;
+      if(Array.isArray(fresh.achats))S.achats=fresh.achats;
+      if(Array.isArray(fresh.avenants))S.avenants=fresh.avenants;
+    }
+    return true;
+  }
+
   async function supprimerApresValidation(id){
     id=String(id||'').trim();
     if(!id||suppressionEnCours)return;
@@ -129,8 +145,8 @@
     }
 
     try{
-      if(typeof closeModal==='function')closeModal();
       render();
+      if(typeof toast==='function')toast('Suppression en cours…');
 
       const ok1=await apiPost('setChantiers',S.chantiers);
       const ok2=await apiPost('setAchats',S.achats);
@@ -138,13 +154,18 @@
       if(hadAv)ok3=await apiPost('setAvenants',S.avenants);
 
       if(!(ok1&&ok2&&ok3))throw new Error('enregistrement incomplet');
+      await verifierSuppressionServeur(id);
+
+      try{if(typeof closeModal==='function')closeModal();}catch(e){}
+      render();
       if(typeof toast==='function')toast('Chantier supprimé ✓');
     }catch(e){
       S.chantiers=oldChantiers;
       S.achats=oldAchats;
       S.avenants=oldAvenants;
       render();
-      if(typeof toast==='function')toast('Suppression impossible : aucune donnée n’a été supprimée',true);
+      if(typeof toast==='function')toast('Suppression impossible : le chantier est toujours présent',true);
+      console.error('Suppression chantier non confirmée :',e);
     }finally{
       suppressionEnCours=false;
     }
