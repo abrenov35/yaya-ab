@@ -33,7 +33,7 @@
       opacity:1!important;
     }
 
-    /* KPI : plus de contraste sur les libellés et les valeurs */
+    /* KPI : contenu centré dans les pavés */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
       gap:9px!important;
       margin-top:0!important;
@@ -46,6 +46,11 @@
       border-radius:10px!important;
       background:#f8fafc!important;
       box-shadow:none!important;
+      display:flex!important;
+      flex-direction:column!important;
+      align-items:center!important;
+      justify-content:center!important;
+      text-align:center!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{
       margin-bottom:4px!important;
@@ -54,17 +59,23 @@
       font-size:10.5px!important;
       font-weight:650!important;
       letter-spacing:.07em!important;
+      text-align:center!important;
+      width:100%!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
       color:#173452!important;
       font-size:18px!important;
       font-weight:750!important;
+      text-align:center!important;
+      width:100%!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{
       margin-top:3px!important;
       color:#6a7c8e!important;
       opacity:1!important;
       font-size:11px!important;
+      text-align:center!important;
+      width:100%!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat.marge-pos{
       background:#eef7f1!important;
