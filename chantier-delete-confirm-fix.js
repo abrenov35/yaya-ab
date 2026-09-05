@@ -101,6 +101,16 @@
     });
   }
 
+  async function chargerEtatServeurAvantSuppression(id){
+    if(typeof apiGet!=='function')return null;
+    const fresh=await apiGet(true);
+    const list=Array.isArray(fresh&&fresh.chantiers)?fresh.chantiers:[];
+    const matches=list.filter(function(c){return String(c.id)===String(id);});
+    if(matches.length===0)throw new Error('chantier absent du serveur');
+    if(matches.length>1)throw new Error('doublon technique du même identifiant');
+    return fresh;
+  }
+
   async function verifierSuppressionServeur(id){
     if(typeof apiGet!=='function')return true;
     await new Promise(function(resolve){setTimeout(resolve,180);});
@@ -129,6 +139,19 @@
 
     const confirme=await confirmationCentree(id);
     if(!confirme)return;
+
+    try{
+      const fresh=await chargerEtatServeurAvantSuppression(id);
+      if(fresh&&typeof fresh==='object'){
+        if(Array.isArray(fresh.chantiers))S.chantiers=fresh.chantiers;
+        if(Array.isArray(fresh.achats))S.achats=fresh.achats;
+        if(Array.isArray(fresh.avenants))S.avenants=fresh.avenants;
+      }
+    }catch(e){
+      if(typeof toast==='function')toast('Suppression bloquée : '+(e&&e.message?e.message:'état serveur invalide'),true);
+      console.error('Suppression chantier bloquée avant écriture :',e);
+      return;
+    }
 
     suppressionEnCours=true;
     const oldChantiers=S.chantiers.slice();
@@ -189,8 +212,8 @@
   }
 
   function installCapture(){
-    if(document.documentElement.dataset.yayaDeleteChantierCaptureV4==='1')return;
-    document.documentElement.dataset.yayaDeleteChantierCaptureV4='1';
+    if(document.documentElement.dataset.yayaDeleteChantierCaptureV5==='1')return;
+    document.documentElement.dataset.yayaDeleteChantierCaptureV5='1';
 
     window.addEventListener('pointerup',function(event){
       const btn=estBoutonSuppression(event.target);
@@ -239,5 +262,15 @@
   s.src='chantier-planning-save-confirm.js?v=planning-save-1';
   s.async=false;
   s.setAttribute('data-yaya-planning-save-confirm','1');
+  document.head.appendChild(s);
+})();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-duplicate-display-guard]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-duplicate-display-guard.js?v=dupguard-1';
+  s.async=false;
+  s.setAttribute('data-yaya-duplicate-display-guard','1');
   document.head.appendChild(s);
 })();
