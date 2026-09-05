@@ -86,12 +86,12 @@
 
   function applyBlueActionStyle(el){
     if(!el||!el.style)return;
-    const palette={background:'#f1ecf8',color:'#5f4778',border:'#b9a7d1'};
+    const palette={background:'#FFFFFF',color:'#003D7A',border:'#C8D6E4'};
     el.style.setProperty('background',palette.background,'important');
     el.style.setProperty('color',palette.color,'important');
     el.style.setProperty('border','1px solid '+palette.border,'important');
     el.style.setProperty('border-radius','7px','important');
-    el.style.setProperty('box-shadow','0 1px 2px rgba(22,45,73,.08)','important');
+    el.style.setProperty('box-shadow','none','important');
     el.style.setProperty('min-height','38px','important');
     el.style.setProperty('height','38px','important');
     el.style.setProperty('padding','0 15px','important');
