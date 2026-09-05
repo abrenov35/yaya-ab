@@ -156,3 +156,43 @@
   `;
   document.head.appendChild(style);
 })();
+
+// Centre horizontalement le groupe de boutons de la toolbar Yaya sur ordinateur.
+(function(){
+  const id='yaya-toolbar-buttons-center-v1';
+  if(document.getElementById(id))return;
+  const style=document.createElement('style');
+  style.id=id;
+  style.textContent=`
+    @media(min-width:1100px){
+      .hdr{
+        display:grid!important;
+        grid-template-columns:minmax(150px,1fr) auto minmax(150px,1fr)!important;
+        align-items:center!important;
+        gap:16px!important;
+      }
+      .hdr > .brand{
+        grid-column:1!important;
+        justify-self:start!important;
+      }
+      .hdr > .tabs{
+        grid-column:2!important;
+        justify-self:center!important;
+        justify-content:center!important;
+        flex-wrap:nowrap!important;
+      }
+      .hdr > .sync{
+        grid-column:3!important;
+        justify-self:end!important;
+        margin-left:0!important;
+        padding-left:0!important;
+      }
+    }
+    @media(min-width:761px) and (max-width:1099px){
+      .hdr > .tabs{
+        justify-content:center!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
