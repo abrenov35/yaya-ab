@@ -32,7 +32,7 @@
 
       const overlay=document.createElement('div');
       overlay.className='yaya-chantier-delete-overlay';
-      overlay.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(22,45,73,.58);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto';
+      overlay.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(22,45,73,.58);display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;pointer-events:auto;touch-action:manipulation';
       overlay.innerHTML=''
         +'<div role="dialog" aria-modal="true" aria-labelledby="yayaChDeleteTitle" style="width:min(430px,100%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.28);margin:auto">'
         +'<div id="yayaChDeleteTitle" style="font-size:17px;font-weight:800;color:#162D49;margin-bottom:10px">Supprimer le chantier ?</div>'
@@ -40,8 +40,8 @@
         +(nb?'<div style="font-size:12.5px;color:#9a3412;margin-bottom:5px">• '+nb+' charge'+(nb>1?'s':'')+' liée'+(nb>1?'s':'')+' sera'+(nb>1?'ont':'')+' aussi supprimée'+(nb>1?'s':'')+'.</div>':'')
         +(hh?'<div style="font-size:12.5px;color:#64748b;margin-bottom:12px">• '+hh+' h saisies resteront dans l’historique des heures.</div>':'')
         +'<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap">'
-        +'<button type="button" data-cancel style="padding:9px 15px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700">Annuler</button>'
-        +'<button type="button" data-confirm style="padding:9px 15px;border-radius:8px;border:1px solid #b42318;background:#b42318;color:#fff;font-weight:800">Supprimer</button>'
+        +'<button type="button" data-cancel style="padding:9px 15px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;touch-action:manipulation">Annuler</button>'
+        +'<button type="button" data-confirm style="padding:9px 15px;border-radius:8px;border:1px solid #b42318;background:#b42318;color:#fff;font-weight:800;touch-action:manipulation">Supprimer</button>'
         +'</div></div>';
 
       function done(value){
@@ -96,9 +96,25 @@
     }
   }
 
+  function bindMobileSafeDelete(){
+    if(document.documentElement.dataset.yayaDeleteChantierCapture==='1')return;
+    document.documentElement.dataset.yayaDeleteChantierCapture='1';
+    document.addEventListener('click',function(event){
+      const btn=event.target&&event.target.closest?event.target.closest('.yaya-delete-chantier-modal-btn'):null;
+      if(!btn)return;
+      const code=String(btn.getAttribute('onclick')||'');
+      const m=code.match(/deleteExistingChantier\(['\"]([^'\"]+)['\"]\)/);
+      if(!m)return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      supprimerApresValidation(m[1]);
+    },true);
+  }
+
   function install(){
     if(!ready())return setTimeout(install,120);
     window.deleteExistingChantier=supprimerApresValidation;
+    bindMobileSafeDelete();
   }
 
   install();
