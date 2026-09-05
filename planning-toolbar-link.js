@@ -37,6 +37,16 @@
       .ab-docs-external-tab{min-width:112px!important}
       .planning-external-tab:hover,
       .ab-docs-external-tab:hover{background:#3453a2!important}
+      .yaya-signature-selects{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+        gap:8px!important;
+        width:100%!important;
+      }
+      .yaya-signature-selects .inp{
+        width:100%!important;
+        min-width:0!important;
+      }
       @media(max-width:1050px){
         .planning-external-tab,
         .ab-docs-external-tab{min-width:auto!important;padding:0 13px!important}
@@ -136,7 +146,76 @@
     observer.observe(document.body,{childList:true,subtree:true});
   }
 
+  const SIGNATURE_MONTHS=[
+    ['01','Janvier'],['02','Février'],['03','Mars'],['04','Avril'],
+    ['05','Mai'],['06','Juin'],['07','Juillet'],['08','Août'],
+    ['09','Septembre'],['10','Octobre'],['11','Novembre'],['12','Décembre']
+  ];
+
+  function enhanceCreateSignature(){
+    const input=document.getElementById('chSignature');
+    if(!input||input.dataset.yayaSignatureSelects==='1')return;
+
+    const label=input.closest('label')||input.parentElement;
+    if(!label)return;
+
+    input.dataset.yayaSignatureSelects='1';
+    const match=String(input.value||'').match(/^(\d{4})-(\d{2})$/);
+    const currentYear=new Date().getFullYear();
+
+    input.style.setProperty('display','none','important');
+    input.setAttribute('tabindex','-1');
+
+    const help=label.querySelector('span');
+    if(help)help.textContent='choisir le mois et l’année';
+
+    const wrap=document.createElement('div');
+    wrap.className='yaya-signature-selects';
+
+    const month=document.createElement('select');
+    month.id='chSignatureMonth';
+    month.className='inp';
+    month.setAttribute('aria-label','Mois de signature');
+    month.appendChild(new Option('Mois',''));
+    SIGNATURE_MONTHS.forEach(function(item){
+      month.appendChild(new Option(item[1],item[0]));
+    });
+
+    const year=document.createElement('select');
+    year.id='chSignatureYear';
+    year.className='inp';
+    year.setAttribute('aria-label','Année de signature');
+    year.appendChild(new Option('Année',''));
+
+    const years=[];
+    for(let y=currentYear-2;y<=currentYear+5;y++)years.push(y);
+    if(match&&match[1]&&!years.includes(Number(match[1])))years.push(Number(match[1]));
+    years.sort(function(a,b){return a-b;});
+    years.forEach(function(y){
+      year.appendChild(new Option(String(y),String(y)));
+    });
+
+    month.value=match?match[2]:'';
+    year.value=match?match[1]:String(currentYear);
+
+    function sync(){
+      input.value=month.value&&year.value?year.value+'-'+month.value:'';
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+      input.dispatchEvent(new Event('change',{bubbles:true}));
+    }
+
+    month.addEventListener('change',sync);
+    year.addEventListener('change',sync);
+
+    try{input.focus=function(){month.focus();};}catch(e){}
+
+    input.insertAdjacentElement('afterend',wrap);
+    wrap.appendChild(month);
+    wrap.appendChild(year);
+  }
+
   function centerEditModals(){
+    enhanceCreateSignature();
     const candidates=document.querySelectorAll('.overlay,.yaya-commande-edit-overlay');
     candidates.forEach(function(overlay){
       const modal=overlay.querySelector('.modal,[role="dialog"]');
