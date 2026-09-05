@@ -5,6 +5,9 @@
   const style=document.createElement('style');
   style.id=id;
   style.textContent=`
+    .yaya-chantier-edit-modal label:has(#editChDemarrage){
+      display:none!important;
+    }
     #pane-chantiers .chantier-fin-toolbar{
       display:flex!important;
       align-items:center!important;
