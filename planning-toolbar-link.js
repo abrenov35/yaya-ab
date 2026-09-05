@@ -182,3 +182,13 @@
   installReloadButtonRemoval();
   installEditModalCentering();
 })();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-landscape-toolbar-fix]'))return;
+  const script=document.createElement('script');
+  script.src='landscape-toolbar-phone-fix.js?v=landscape-1';
+  script.async=false;
+  script.setAttribute('data-yaya-landscape-toolbar-fix','1');
+  document.head.appendChild(script);
+})();
