@@ -207,3 +207,55 @@
   s.setAttribute('data-yaya-devis-edit-import-loader-v3','1');
   document.head.appendChild(s);
 })();
+
+// Pour le devis 1, affiche l'objet / lot comme libellé au lieu de « Devis principal ».
+(function(){
+  'use strict';
+
+  function chantierById(id){
+    try{
+      return Array.isArray(S&&S.chantiers)
+        ?S.chantiers.find(function(c){return String(c&&c.id)===String(id);})||null
+        :null;
+    }catch(e){return null;}
+  }
+
+  function apply(){
+    document.querySelectorAll('#pane-chantiers .yaya-detail-market-row').forEach(function(row){
+      const edit=row.querySelector('.yaya-detail-document-edit[data-kind="main"]');
+      const strong=row.querySelector('strong');
+      if(!edit||!strong)return;
+
+      const c=chantierById(edit.dataset.rowId||'');
+      if(!c)return;
+
+      const objet=String(c.numero||'').trim();
+      if(!objet)return;
+
+      let textNode=null;
+      for(const node of strong.childNodes){
+        if(node.nodeType===Node.TEXT_NODE){textNode=node;break;}
+      }
+      if(textNode)textNode.nodeValue=objet;
+      else strong.insertBefore(document.createTextNode(objet),strong.firstChild);
+
+      strong.querySelectorAll('small').forEach(function(small){
+        if(String(small.textContent||'').trim()==='N° '+objet)small.remove();
+      });
+    });
+  }
+
+  let scheduled=false;
+  function schedule(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(function(){
+      scheduled=false;
+      apply();
+    });
+  }
+
+  schedule();
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',schedule);
+})();
