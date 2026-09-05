@@ -17,8 +17,8 @@ jobs:
           fetch-depth: 0
 
       - name: Secure chantier deletion and load duplicate guard
-        shell: python
         run: |
+          python - <<'PY'
           from pathlib import Path
 
           delete_path = Path('chantier-delete-confirm-fix.js')
@@ -60,6 +60,7 @@ jobs:
                   raise SystemExit('Index delete loader anchor not found')
               index = index.replace(anchor, anchor + loader, 1)
           index_path.write_text(index, encoding='utf-8')
+          PY
 
       - name: Commit patch
         run: |
