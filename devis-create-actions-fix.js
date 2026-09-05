@@ -137,6 +137,7 @@
   'use strict';
 
   const originalSave=typeof saveAvenant==='function'?saveAvenant:null;
+  const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   let saving=false;
 
   function wait(ms){
@@ -153,6 +154,14 @@
 
   function toastSafe(message,isError){
     try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
+  }
+
+  function persistState(){
+    try{
+      if(typeof S!=='undefined'&&S&&typeof S==='object'){
+        localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));
+      }
+    }catch(e){}
   }
 
   function dateToday(){
@@ -216,6 +225,7 @@
       const already=base.find(function(v){return sameQuote(v,row);});
       if(already){
         if(typeof S!=='undefined'&&S)S.avenants=base;
+        persistState();
         try{avenantLien='';devisNumeroExtrait='';}catch(e){}
         if(typeof closeModal==='function')closeModal();
         if(typeof render==='function')render();
@@ -243,6 +253,7 @@
       if(!confirmed)throw new Error('Le serveur a répondu mais le devis n’est pas présent dans la base');
 
       if(typeof S!=='undefined'&&S)S.avenants=confirmed;
+      persistState();
       try{avenantLien='';devisNumeroExtrait='';}catch(e){}
       if(typeof closeModal==='function')closeModal();
       if(typeof render==='function')render();
