@@ -199,10 +199,12 @@
 
 // Ajoute le bouton Importer dans la modale Modifier le devis.
 (function(){
-  if(document.querySelector('script[data-yaya-devis-edit-import-loader-v1]'))return;
+  if(document.querySelector('script[data-yaya-devis-edit-import-loader-v2]'))return;
+  const old=document.querySelector('script[data-yaya-devis-edit-import-loader-v1]');
+  if(old)old.remove();
   const s=document.createElement('script');
-  s.src='devis-edit-import-button.js?v=import-1';
+  s.src='devis-edit-import-button.js?v=import-2';
   s.async=false;
-  s.setAttribute('data-yaya-devis-edit-import-loader-v1','1');
+  s.setAttribute('data-yaya-devis-edit-import-loader-v2','1');
   document.head.appendChild(s);
 })();
