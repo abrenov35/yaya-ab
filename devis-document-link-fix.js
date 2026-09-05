@@ -71,13 +71,14 @@
   document.head.appendChild(s);
 })();
 
-// La toolbar doit rester sticky après tous les correctifs mobile.
+// La toolbar doit rester fixe après tous les correctifs mobile.
 (function(){
-  if(document.querySelector('script[data-yaya-header-sticky-loader-v3]'))return;
+  if(document.querySelector('script[data-yaya-header-sticky-loader-v4]'))return;
+  document.querySelectorAll('script[data-yaya-header-sticky-loader-v3]').forEach(function(old){old.remove();});
   const s=document.createElement('script');
-  s.src='header-sticky-toolbar.js?v=sticky-3';
+  s.src='header-sticky-toolbar.js?v=sticky-4';
   s.async=false;
-  s.setAttribute('data-yaya-header-sticky-loader-v3','1');
+  s.setAttribute('data-yaya-header-sticky-loader-v4','1');
   document.head.appendChild(s);
 })();
 
