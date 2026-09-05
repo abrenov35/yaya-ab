@@ -1,0 +1,151 @@
+(function(){
+  'use strict';
+
+  if(window.__yayaFreshChantiersInstalled)return;
+  window.__yayaFreshChantiersInstalled=true;
+
+  const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
+  const MIN_GAP_MS=45000;
+  const PERIODIC_MS=300000;
+
+  let busy=false;
+  let lastRun=0;
+  let pendingTimer=0;
+
+  function key(value){
+    return String(value||'')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g,' ')
+      .trim();
+  }
+
+  function preservePlanning(fresh,current){
+    fresh=Array.isArray(fresh)?fresh:[];
+    current=Array.isArray(current)?current:[];
+
+    const byId=new Map(current.map(function(c){
+      return [String(c&&c.id||''),c];
+    }));
+    const byName=new Map();
+
+    current.forEach(function(c){
+      const k=key(c&&c.nom);
+      if(k&&!byName.has(k))byName.set(k,c);
+    });
+
+    fresh.forEach(function(c){
+      const previous=
+        byId.get(String(c&&c.id||'')) ||
+        byName.get(key(c&&c.nom));
+
+      if(!previous)return;
+      if(!c.dateSignature&&previous.dateSignature)c.dateSignature=previous.dateSignature;
+      if(!c.sourcePlanningId&&previous.sourcePlanningId)c.sourcePlanningId=previous.sourcePlanningId;
+      if(!c.planningNom&&previous.planningNom)c.planningNom=previous.planningNom;
+      if(c.planningPresent==null&&previous.planningPresent!=null)c.planningPresent=previous.planningPresent;
+    });
+
+    return fresh;
+  }
+
+  function safeToApply(){
+    if(document.hidden)return false;
+    if(window.yayaHoursPending)return false;
+
+    const root=document.getElementById('modalRoot');
+    if(root&&root.children&&root.children.length)return false;
+
+    const active=document.activeElement;
+    if(active&&/^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName||''))return false;
+
+    return true;
+  }
+
+  function saveCache(){
+    try{
+      if(typeof S!=='undefined'&&S&&typeof S==='object'){
+        localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));
+      }
+    }catch(e){}
+  }
+
+  function applyFresh(data){
+    if(!data||!Array.isArray(data.chantiers))return;
+
+    let current=[];
+    try{current=Array.isArray(S&&S.chantiers)?S.chantiers:[];}catch(e){}
+
+    const fresh=preservePlanning(data.chantiers,current);
+    fresh.forEach(function(c){
+      c.montantDevisHT=Number(c.montantDevisHT)||0;
+    });
+
+    try{
+      S.chantiers=fresh;
+      saveCache();
+      if(typeof render==='function')render();
+      try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
+    }catch(e){
+      console.warn('Rafraichissement des chantiers ignore :',e);
+    }
+  }
+
+  function queueApply(data){
+    clearTimeout(pendingTimer);
+
+    const run=function(){
+      if(!safeToApply()){
+        pendingTimer=setTimeout(run,900);
+        return;
+      }
+      applyFresh(data);
+    };
+
+    run();
+  }
+
+  async function refresh(force){
+    const now=Date.now();
+    if(busy)return;
+    if(!force&&now-lastRun<MIN_GAP_MS)return;
+
+    if(typeof apiGet!=='function'){
+      setTimeout(function(){refresh(force);},500);
+      return;
+    }
+
+    busy=true;
+    lastRun=now;
+
+    try{
+      const fresh=await apiGet(true);
+      queueApply(fresh);
+    }catch(e){
+      console.warn('Lecture reseau des chantiers impossible :',e);
+    }finally{
+      busy=false;
+    }
+  }
+
+  function start(){
+    setTimeout(function(){refresh(true);},900);
+
+    document.addEventListener('visibilitychange',function(){
+      if(!document.hidden)setTimeout(function(){refresh(false);},500);
+    });
+
+    window.addEventListener('focus',function(){
+      setTimeout(function(){refresh(false);},500);
+    });
+
+    setInterval(function(){refresh(false);},PERIODIC_MS);
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',start,{once:true});
+  }else{
+    start();
+  }
+})();
