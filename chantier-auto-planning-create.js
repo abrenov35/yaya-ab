@@ -12,23 +12,37 @@
     if(document.getElementById(UI_STYLE_ID))return;
     const style=document.createElement('style');
     style.id=UI_STYLE_ID;
-    style.textContent='.yaya-planning-box{display:none!important;}';
+    style.textContent='.yaya-planning-box{display:none!important}.yaya-chantier-edit-cancel{min-height:42px!important;min-width:78px!important;touch-action:manipulation!important;pointer-events:auto!important}';
     document.head.appendChild(style);
   }
 
-  function hideCreateCloseButton(){
-    const createBtn=document.getElementById('chCreateBtn');
-    if(!createBtn)return;
-    const modal=createBtn.closest('.modal,[role="dialog"]');
-    if(!modal)return;
+  window.cancelExistingChantierEdit=function(event){
+    if(event){
+      try{event.preventDefault();}catch(e){}
+      try{event.stopPropagation();}catch(e){}
+    }
+    try{
+      const root=document.getElementById('modalRoot');
+      if(root){root.innerHTML='';return false;}
+    }catch(e){}
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
+    return false;
+  };
 
-    modal.querySelectorAll('button').forEach(function(button){
-      const label=String(button.textContent||'').trim();
-      const aria=String(button.getAttribute('aria-label')||'').trim().toLowerCase();
-      if(label==='×'||label==='✕'||label==='✖'||aria==='fermer'||aria==='close'){
-        button.style.setProperty('display','none','important');
-      }
+  function fixEditCancelButton(){
+    const modal=document.querySelector('.yaya-chantier-edit-modal');
+    if(!modal)return;
+    const buttons=modal.querySelectorAll('.mfoot button');
+    let cancel=null;
+    buttons.forEach(function(btn){
+      const text=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+      if(text==='annuler')cancel=btn;
     });
+    if(!cancel)return;
+    cancel.id='editChCancel';
+    cancel.classList.add('yaya-chantier-edit-cancel');
+    cancel.setAttribute('type','button');
+    cancel.setAttribute('onclick','return cancelExistingChantierEdit(event)');
   }
 
   function hidePlanningUi(){
@@ -46,7 +60,7 @@
       if(bloc)bloc.style.setProperty('display','none','important');
     }
 
-    hideCreateCloseButton();
+    fixEditCancelButton();
   }
 
   function installUiCleanup(){
