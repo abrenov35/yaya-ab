@@ -59,6 +59,24 @@
     }
   }
 
+  function hideAchatDocumentCount(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+
+    pane.querySelectorAll('.kpis .stat').forEach(stat=>{
+      const label=stat.querySelector('small');
+      if(!label||String(label.textContent||'').trim().toLowerCase()!=='achats')return;
+
+      const sub=stat.querySelector('.sub');
+      if(!sub)return;
+
+      const text=String(sub.textContent||'').trim();
+      if(/^\d+\s+(?:doc|document)/i.test(text)){
+        sub.style.setProperty('display','none','important');
+      }
+    });
+  }
+
   function updateCounts(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
@@ -71,6 +89,8 @@
       setCount(card,'documents','.yaya-detail-documents-pane',':scope > .yaya-detail-document-row');
       setCount(card,'mail','.yaya-detail-mails-pane',':scope > .yaya-detail-mail-row');
     });
+
+    hideAchatDocumentCount();
   }
 
   let scheduled=false;
