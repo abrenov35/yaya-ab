@@ -130,3 +130,132 @@
   if(document.body)install();
   else document.addEventListener('DOMContentLoaded',install,{once:true});
 })();
+
+// Enregistrement fiable des Devis 2+ : on lit d'abord la base, on écrit,
+// puis on relit la base avant d'afficher le devis comme enregistré.
+(function(){
+  'use strict';
+
+  const originalSave=typeof saveAvenant==='function'?saveAvenant:null;
+  let saving=false;
+
+  function wait(ms){
+    return new Promise(function(resolve){setTimeout(resolve,ms);});
+  }
+
+  function saveButton(){
+    const modal=document.querySelector('#modalRoot .yaya-devis-create-patched');
+    if(!modal)return null;
+    return [...modal.querySelectorAll('button')].find(function(button){
+      return /^Enregistrer$/i.test(String(button.textContent||'').trim()) || /Enregistrer le devis/i.test(String(button.textContent||''));
+    })||null;
+  }
+
+  function toastSafe(message,isError){
+    try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
+  }
+
+  function dateToday(){
+    try{return typeof isoDate==='function'?isoDate(new Date()):new Date().toISOString().slice(0,10);}catch(e){return new Date().toISOString().slice(0,10);}
+  }
+
+  async function freshAvenants(){
+    if(typeof apiGet!=='function')throw new Error('Lecture de la base indisponible');
+    const fresh=await apiGet(true);
+    if(!fresh||!Array.isArray(fresh.avenants))throw new Error('Liste des devis indisponible dans la base');
+    return fresh.avenants.slice();
+  }
+
+  function sameQuote(v,row){
+    return String(v&&v.chantierId||'')===String(row.chantierId||'')
+      && String(v&&v.libelle||'').trim()===String(row.libelle||'').trim()
+      && Number(v&&v.montantHT||0)===Number(row.montantHT||0)
+      && String(v&&v.date||'').slice(0,10)===String(row.date||'').slice(0,10)
+      && String(v&&v.lien||'')===String(row.lien||'');
+  }
+
+  async function saveVerified(cid){
+    let numero=0;
+    try{numero=Number(devisNumeroEnCours)||0;}catch(e){}
+    if(numero<=1){
+      if(originalSave)return originalSave(cid);
+      return;
+    }
+    if(saving)return;
+
+    const libInput=document.getElementById('avLib');
+    const mtInput=document.getElementById('avMt');
+    if(!libInput||!mtInput)return;
+
+    const libelle=String(libInput.value||'').trim()||('Devis '+numero);
+    const montantHT=Number(String(mtInput.value||'0').replace(',','.'))||0;
+    if(!montantHT){toastSafe('Indique le montant HT du devis',true);return;}
+
+    let lien='';
+    try{lien=String(avenantLien||'');}catch(e){}
+
+    const row={
+      id:(typeof uid==='function'?uid():(Date.now().toString(36)+Math.random().toString(36).slice(2,8))),
+      chantierId:String(cid||''),
+      libelle:libelle,
+      montantHT:montantHT,
+      date:dateToday(),
+      lien:lien
+    };
+
+    const btn=saveButton();
+    const oldText=btn?String(btn.textContent||'Enregistrer'):'Enregistrer';
+    saving=true;
+    if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
+
+    try{
+      // Important : repartir de l'état réellement présent dans le Sheet,
+      // et non d'une ancienne copie locale susceptible d'écraser des lignes.
+      let base=await freshAvenants();
+
+      const already=base.find(function(v){return sameQuote(v,row);});
+      if(already){
+        if(typeof S!=='undefined'&&S)S.avenants=base;
+        try{avenantLien='';devisNumeroExtrait='';}catch(e){}
+        if(typeof closeModal==='function')closeModal();
+        if(typeof render==='function')render();
+        toastSafe('Devis déjà enregistré ✓');
+        return;
+      }
+
+      const payload=base.concat([row]);
+      let ok=typeof apiPost==='function'?await apiPost('setAvenants',payload):false;
+      if(!ok){
+        await wait(500);
+        ok=typeof apiPost==='function'?await apiPost('setAvenants',payload):false;
+      }
+      if(!ok)throw new Error('Écriture dans la base impossible');
+
+      let confirmed=null;
+      for(let attempt=0;attempt<3;attempt++){
+        if(attempt)await wait(450*attempt);
+        const check=await freshAvenants();
+        if(check.some(function(v){return String(v&&v.id||'')===String(row.id);})){
+          confirmed=check;
+          break;
+        }
+      }
+      if(!confirmed)throw new Error('Le serveur a répondu mais le devis n’est pas présent dans la base');
+
+      if(typeof S!=='undefined'&&S)S.avenants=confirmed;
+      try{avenantLien='';devisNumeroExtrait='';}catch(e){}
+      if(typeof closeModal==='function')closeModal();
+      if(typeof render==='function')render();
+      toastSafe('Devis '+numero+' enregistré dans la base ✓');
+    }catch(e){
+      console.error('Yaya — enregistrement devis '+numero+' non confirmé :',e);
+      toastSafe('Devis non enregistré dans la base — réessaie. ('+String(e&&e.message||e)+')',true);
+    }finally{
+      saving=false;
+      if(btn&&btn.isConnected){btn.disabled=false;btn.textContent=oldText;}
+    }
+  }
+
+  window.saveAvenant=saveVerified;
+  try{saveAvenant=saveVerified;}catch(e){}
+})();
