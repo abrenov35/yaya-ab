@@ -1,11 +1,11 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisEditImportButtonV3)return;
-  window.__yayaDevisEditImportButtonV3=true;
+  if(window.__yayaDevisEditImportButtonV4)return;
+  window.__yayaDevisEditImportButtonV4=true;
 
   const BUTTON_ID='yayaDevisEditImportBtn';
-  const STYLE_ID='yaya-devis-edit-import-style-v3';
+  const STYLE_ID='yaya-devis-edit-import-style-v4';
   let current={kind:'',id:''};
 
   function toastSafe(message,isError){
@@ -41,18 +41,33 @@
 
   function ensureStyle(){
     if(document.getElementById(STYLE_ID))return;
-    ['yaya-devis-edit-import-style-v1','yaya-devis-edit-import-style-v2'].forEach(function(id){
+    ['yaya-devis-edit-import-style-v1','yaya-devis-edit-import-style-v2','yaya-devis-edit-import-style-v3'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
 
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      .yaya-devis-fast-modal #${BUTTON_ID}{
-        min-height:42px!important;
-        height:42px!important;
+      .yaya-devis-fast-modal .yaya-devis-fast-foot{
+        display:grid!important;
+        grid-template-columns:repeat(3,minmax(0,1fr))!important;
+        align-items:stretch!important;
+        gap:10px!important;
+      }
+      .yaya-devis-fast-modal .yaya-devis-fast-foot > button{
+        width:100%!important;
+        min-width:0!important;
+        min-height:44px!important;
+        height:44px!important;
         margin:0!important;
-        padding:0 18px!important;
+      }
+      .yaya-devis-fast-modal #${BUTTON_ID}{
+        width:100%!important;
+        min-width:0!important;
+        min-height:44px!important;
+        height:44px!important;
+        margin:0!important;
+        padding:0 12px!important;
         display:inline-flex!important;
         align-items:center!important;
         justify-content:center!important;
@@ -72,7 +87,14 @@
       .yaya-devis-fast-modal #${BUTTON_ID}:hover{background:#1f814c!important;border-color:#1f814c!important}
       .yaya-devis-fast-modal #${BUTTON_ID}:disabled{opacity:.62!important;cursor:default!important}
       @media(max-width:640px){
-        .yaya-devis-fast-modal #${BUTTON_ID}{padding:0 13px!important;font-size:12px!important}
+        .yaya-devis-fast-modal .yaya-devis-fast-foot{gap:8px!important;}
+        .yaya-devis-fast-modal .yaya-devis-fast-foot > button,
+        .yaya-devis-fast-modal #${BUTTON_ID}{
+          min-height:44px!important;
+          height:44px!important;
+          padding:0 8px!important;
+          font-size:12px!important;
+        }
       }
     `;
     document.head.appendChild(style);
