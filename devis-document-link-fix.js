@@ -198,14 +198,14 @@
   document.head.appendChild(style);
 })();
 
-// Ajoute le bouton Importer dans la modale Modifier le devis.
+// Ajoute le bouton Importer dans la modale Modifier le devis et aligne les 3 actions.
 (function(){
-  if(document.querySelector('script[data-yaya-devis-edit-import-loader-v3]'))return;
-  document.querySelectorAll('script[data-yaya-devis-edit-import-loader-v1],script[data-yaya-devis-edit-import-loader-v2]').forEach(function(old){old.remove();});
+  if(document.querySelector('script[data-yaya-devis-edit-import-loader-v4]'))return;
+  document.querySelectorAll('script[data-yaya-devis-edit-import-loader-v1],script[data-yaya-devis-edit-import-loader-v2],script[data-yaya-devis-edit-import-loader-v3]').forEach(function(old){old.remove();});
   const s=document.createElement('script');
-  s.src='devis-edit-import-button.js?v=import-3';
+  s.src='devis-edit-import-button.js?v=import-4';
   s.async=false;
-  s.setAttribute('data-yaya-devis-edit-import-loader-v3','1');
+  s.setAttribute('data-yaya-devis-edit-import-loader-v4','1');
   document.head.appendChild(s);
 })();
 
