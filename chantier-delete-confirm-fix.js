@@ -119,3 +119,13 @@
 
   install();
 })();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-planning-save-confirm]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-planning-save-confirm.js?v=planning-save-1';
+  s.async=false;
+  s.setAttribute('data-yaya-planning-save-confirm','1');
+  document.head.appendChild(s);
+})();
