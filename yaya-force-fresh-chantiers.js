@@ -21,6 +21,19 @@
       .trim();
   }
 
+  function fixDate(value){
+    const s=String(value||'');
+    if(!s)return '';
+    if(s.includes('T')){
+      try{
+        const d=new Date(s);
+        d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+        return d.toISOString().slice(0,10);
+      }catch(e){return s.slice(0,10);}
+    }
+    return s.slice(0,10);
+  }
+
   function preservePlanning(fresh,current){
     fresh=Array.isArray(fresh)?fresh:[];
     current=Array.isArray(current)?current:[];
@@ -82,13 +95,23 @@
       c.montantDevisHT=Number(c.montantDevisHT)||0;
     });
 
+    const freshAvenants=Array.isArray(data.avenants)
+      ?data.avenants.map(function(v){
+        const row=Object.assign({},v||{});
+        row.montantHT=Number(row.montantHT)||0;
+        row.date=fixDate(row.date);
+        return row;
+      })
+      :null;
+
     try{
       S.chantiers=fresh;
+      if(freshAvenants)S.avenants=freshAvenants;
       saveCache();
       if(typeof render==='function')render();
       try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
     }catch(e){
-      console.warn('Rafraichissement des chantiers ignore :',e);
+      console.warn('Rafraichissement chantiers/devis ignore :',e);
     }
   }
 
@@ -123,7 +146,7 @@
       const fresh=await apiGet(true);
       queueApply(fresh);
     }catch(e){
-      console.warn('Lecture reseau des chantiers impossible :',e);
+      console.warn('Lecture reseau chantiers/devis impossible :',e);
     }finally{
       busy=false;
     }
