@@ -2,8 +2,9 @@
   'use strict';
 
   const BUTTON_ID='yayaDevisEditImportBtn';
-  const STYLE_ID='yaya-devis-edit-import-style-v1';
+  const STYLE_ID='yaya-devis-edit-import-style-v2';
   let current={kind:'',id:''};
+  let apiPostPatched=false;
 
   function toastSafe(message,isError){
     try{
@@ -40,8 +41,40 @@
     return {kind:'',id:''};
   }
 
+  function ensureApiPostCompatibility(){
+    if(apiPostPatched)return true;
+
+    let original=null;
+    try{
+      original=window.apiPost || (typeof apiPost==='function'?apiPost:null);
+    }catch(e){
+      original=window.apiPost||null;
+    }
+
+    if(typeof original!=='function')return false;
+
+    const patched=async function(action,data){
+      if(action==='updateChantier'){
+        try{
+          if(typeof S!=='undefined'&&Array.isArray(S.chantiers)){
+            return await original('setChantiers',S.chantiers);
+          }
+        }catch(e){}
+      }
+      return original(action,data);
+    };
+
+    window.apiPost=patched;
+    try{apiPost=patched;}catch(e){}
+    apiPostPatched=true;
+    return true;
+  }
+
   function ensureStyle(){
     if(document.getElementById(STYLE_ID))return;
+
+    const old=document.getElementById('yaya-devis-edit-import-style-v1');
+    if(old)old.remove();
 
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -89,8 +122,30 @@
     return modal.querySelector('.yaya-devis-fast-foot,.mfoot')||null;
   }
 
+  function watchSelectedFile(button){
+    setTimeout(function(){
+      const inputs=[...document.querySelectorAll('body > input[type="file"]')];
+      const input=inputs.length?inputs[inputs.length-1]:null;
+      if(!input||input.dataset.yayaImportFeedback==='1')return;
+      input.dataset.yayaImportFeedback='1';
+      input.addEventListener('change',function(){
+        const file=input.files&&input.files[0];
+        if(!file)return;
+        button.disabled=true;
+        button.textContent='⏳ Import en cours…';
+        setTimeout(function(){
+          if(button&&button.isConnected){
+            button.disabled=false;
+            button.textContent='📎 Importer';
+          }
+        },32000);
+      },{once:true});
+    },0);
+  }
+
   function ensureButton(){
     ensureStyle();
+    ensureApiPostCompatibility();
 
     const modal=document.querySelector('.yaya-devis-fast-modal');
     if(!modal)return;
@@ -117,10 +172,16 @@
           return;
         }
 
+        if(!ensureApiPostCompatibility()){
+          toastSafe('Enregistrement Yaya indisponible',true);
+          return;
+        }
+
         const type=ctx.kind==='avenant'?'avenant':'devis';
 
         if(typeof remplacerPJ==='function'){
           remplacerPJ(type,ctx.id);
+          watchSelectedFile(button);
         }else{
           toastSafe('Import du devis indisponible',true);
         }
