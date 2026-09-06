@@ -86,3 +86,14 @@
   s.setAttribute('data-yaya-modal-enter-save','1');
   document.head.appendChild(s);
 })();
+
+/* Bloc-note chantier affiché directement dans la section Marché. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-chantier-market-note="1"]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-market-note.js?v=market-note-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-chantier-market-note','1');
+  document.head.appendChild(s);
+})();
