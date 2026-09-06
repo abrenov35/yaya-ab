@@ -97,3 +97,14 @@
   s.setAttribute('data-yaya-chantier-market-note','1');
   document.head.appendChild(s);
 })();
+
+/* Correctif dédié : centre réellement la modale du bloc-note chantier. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-note-modal-center-fix="1"]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-note-modal-center-fix.js?v=note-center-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-note-modal-center-fix','1');
+  document.head.appendChild(s);
+})();
