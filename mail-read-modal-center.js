@@ -13,13 +13,17 @@
       .overlay.${CENTER_CLASS}{
         align-items:center!important;
         justify-content:center!important;
-        padding:20px!important;
+        padding:var(--yaya-mail-safe-top,20px) 20px 18px!important;
       }
 
       .overlay.${CENTER_CLASS} > .modal{
         margin:auto!important;
         width:min(680px, calc(100vw - 24px))!important;
         max-width:680px!important;
+        max-height:calc(100vh - var(--yaya-mail-safe-top,20px) - 18px)!important;
+        max-height:calc(100dvh - var(--yaya-mail-safe-top,20px) - 18px)!important;
+        overflow-y:auto!important;
+        overscroll-behavior:contain!important;
       }
 
       .overlay.${CENTER_CLASS} .yaya-mail-clickable-link{
@@ -33,12 +37,14 @@
 
       @media(max-width:640px){
         .overlay.${CENTER_CLASS}{
-          padding:14px!important;
+          padding:var(--yaya-mail-safe-top,14px) 10px 12px!important;
         }
 
         .overlay.${CENTER_CLASS} > .modal{
           width:min(100%, calc(100vw - 18px))!important;
           max-width:none!important;
+          max-height:calc(100vh - var(--yaya-mail-safe-top,14px) - 12px)!important;
+          max-height:calc(100dvh - var(--yaya-mail-safe-top,14px) - 12px)!important;
         }
       }
     `;
@@ -55,6 +61,18 @@
     if(/Voir mail/i.test(txt)) return true;
 
     return false;
+  }
+
+  function safeTopPx(){
+    let top=12;
+    const hdr=document.querySelector('.hdr');
+    if(hdr){
+      const r=hdr.getBoundingClientRect();
+      if(r.height>0 && r.bottom>0){
+        top=Math.ceil(r.bottom)+10;
+      }
+    }
+    return Math.max(12,Math.min(top,180));
   }
 
   function linkifyTextNode(node){
@@ -145,9 +163,11 @@
 
       if(isMailReadModal(modal)){
         overlay.classList.add(CENTER_CLASS);
+        overlay.style.setProperty('--yaya-mail-safe-top',safeTopPx()+'px');
         makeLinksClickable(modal);
       } else {
         overlay.classList.remove(CENTER_CLASS);
+        overlay.style.removeProperty('--yaya-mail-safe-top');
       }
     });
   }
@@ -164,6 +184,8 @@
       childList:true,
       subtree:true
     });
+
+    window.addEventListener('resize',applyMailEnhancements,{passive:true});
 
     setTimeout(applyMailEnhancements,50);
     setTimeout(applyMailEnhancements,200);
