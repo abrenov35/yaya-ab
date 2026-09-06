@@ -5,7 +5,7 @@
   window.__yayaPiecePreviewDisplayFixInstalled=true;
 
   const ROOT_ID='modalRoot';
-  const STYLE_ID='yaya-piece-preview-display-fix-v1';
+  const STYLE_ID='yaya-piece-preview-display-fix-v2';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -152,7 +152,7 @@
     },90);
   }
 
-  function toggleFromPointer(modal){
+  function togglePreview(modal){
     if(!modal||modal.dataset.yayaPreviewTransition==='1')return;
 
     rememberNormal(modal);
@@ -169,18 +169,26 @@
   }
 
   function bind(){
-    const root=document.getElementById(ROOT_ID);
-    if(!root){setTimeout(bind,120);return;}
-    if(root.dataset.yayaDisplayFixBound==='1')return;
-    root.dataset.yayaDisplayFixBound='1';
+    if(document.documentElement.dataset.yayaDisplayFixBound==='1')return;
+    document.documentElement.dataset.yayaDisplayFixBound='1';
 
-    root.addEventListener('pointerdown',function(e){
+    // Le correctif historique piece-preview-size-patch.js possède déjà un handler
+    // de clic sur #modalRoot. On intercepte donc le clic au niveau document,
+    // avant ce handler, afin qu'un clic ne déclenche qu'un seul agrandissement.
+    document.addEventListener('click',function(e){
       if(e.button!=null&&e.button!==0)return;
-      const target=e.target&&e.target.closest?e.target.closest('.piece-pdf-page,.piece-image-stage img,.piece-drive-pages-stage img,.yaya-drive-zoom-hit'):null;
+      const target=e.target&&e.target.closest
+        ?e.target.closest('#'+ROOT_ID+' .piece-pdf-page,#'+ROOT_ID+' .piece-image-stage img,#'+ROOT_ID+' .piece-drive-pages-stage img,#'+ROOT_ID+' .yaya-drive-zoom-hit')
+        :null;
       if(!target)return;
+
       const modal=target.closest('.piece-preview-modal');
       if(!modal)return;
-      toggleFromPointer(modal);
+
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      togglePreview(modal);
     },true);
   }
 
