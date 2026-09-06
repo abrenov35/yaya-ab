@@ -26,7 +26,7 @@
 
       /* Lignes chantiers */
       #pane-chantiers .yaya-chantier-home-row{
-        border:1px solid #d6d9df !important;
+        border:1px solid #cbd1d8 !important;
         border-radius:10px !important;
         box-shadow:none !important;
         margin:0 0 10px 0 !important;
@@ -39,7 +39,7 @@
       }
 
       #pane-chantiers .yaya-chantier-home-row.yaya-row-grey{
-        background:#f1f3f5 !important;
+        background:#e2e5e9 !important;
       }
 
       /* Nettoyage des cartes internes éventuelles */
@@ -64,7 +64,7 @@
       /* Boutons actions à droite plus sobres */
       #pane-chantiers .yaya-chantier-home-row button{
         background:#ffffff !important;
-        border:1px solid #cfd4dc !important;
+        border:1px solid #c4cad1 !important;
         color:#4b5563 !important;
         box-shadow:none !important;
       }
