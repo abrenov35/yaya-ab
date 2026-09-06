@@ -21,11 +21,10 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          old='''  source=source.replace('    await synchroniserDatesPlanning();\\n    syncMsg("✓ connecté");\\n    render();','    syncMsg("✓ connecté");\\n    render();\\n    setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);');'''
-          new='''  source=source.replace('    await synchroniserDatesPlanning();\\n    syncMsg("✓ connecté");\\n    render();','    syncMsg("✓ connecté");\\n    render();');'''
+          old=r'''\\n    setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);'''
           if s.count(old)!=1:
-              raise SystemExit(f'Bloc attendu introuvable ou multiple: {s.count(old)}')
-          p.write_text(s.replace(old,new,1))
+              raise SystemExit(f'Appel Planning attendu introuvable ou multiple: {s.count(old)}')
+          p.write_text(s.replace(old,'',1))
           PY
       - name: Commit
         run: |
