@@ -106,12 +106,21 @@
   function preservePlanningData(fresh,current){
     if(!Array.isArray(fresh))return fresh;
     current=Array.isArray(current)?current:[];
+
     const byId=new Map(current.map(function(c){return [String(c.id||''),c];}));
+    const nameCounts=new Map();
+
+    current.forEach(function(c){
+      const key=chantierKey(c&&c.nom);
+      if(key)nameCounts.set(key,(nameCounts.get(key)||0)+1);
+    });
+
     const byName=new Map();
     current.forEach(function(c){
       const key=chantierKey(c&&c.nom);
-      if(key&&!byName.has(key))byName.set(key,c);
+      if(key&&nameCounts.get(key)===1)byName.set(key,c);
     });
+
     fresh.forEach(function(c){
       const previous=byId.get(String(c.id||''))||byName.get(chantierKey(c.nom));
       if(!previous)return;
@@ -255,7 +264,7 @@
 
       if(!metaJson.meta||!metaJson.meta.tabs){
         metaSupported=false;
-        lastFull=Date.now();
+        await fullRefreshInBackground();
         return;
       }
 
@@ -285,6 +294,12 @@
       }
 
     }catch(err){
+      if(metaSupported===null&&window.__yayaCachedBoot){
+        try{
+          await fullRefreshInBackground();
+          metaSupported=false;
+        }catch(_fallbackErr){}
+      }
       if(!(err&&err.name==='AbortError'))console.warn('Synchronisation Yaya en arrière-plan ignorée :',err);
     }finally{
       busy=false;
