@@ -1,11 +1,18 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierWriteSafetyInstalled)return;
+  if(window.__yayaChantierWriteSafetyV2Installed)return;
+  window.__yayaChantierWriteSafetyV2Installed=true;
   window.__yayaChantierWriteSafetyInstalled=true;
 
   let pendingDeleteId='';
   let authorizedDelete={id:'',expires:0};
+  let busy=false;
+
+  const PERSISTED_FIELDS=[
+    'id','nom','numero','montantDevisHT','statut','notes',
+    'montantMarcheHT','modeSuivi','dateDemarrage','dateSignature'
+  ];
 
   function getIdFromDeleteButton(btn){
     if(!btn)return '';
@@ -60,9 +67,38 @@
   window.addEventListener('pointerup',observeDeleteConfirmation,true);
   window.addEventListener('click',observeDeleteConfirmation,true);
 
+  function canonical(c){
+    c=c||{};
+    const o={};
+    PERSISTED_FIELDS.forEach(function(k){
+      if(k==='montantDevisHT'||k==='montantMarcheHT'){
+        o[k]=Number(c[k])||0;
+      }else{
+        o[k]=String(c[k]==null?'':c[k]).trim();
+      }
+    });
+    return JSON.stringify(o);
+  }
+
   function copyRecord(v){
-    if(!v||typeof v!=='object')return v;
-    return Object.assign({},v);
+    return v&&typeof v==='object'?Object.assign({},v):v;
+  }
+
+  async function freshServer(){
+    const fresh=await window.apiGet(true);
+    if(!fresh||!Array.isArray(fresh.chantiers)){
+      throw new Error('liste chantiers serveur invalide');
+    }
+    return fresh;
+  }
+
+  function replaceLocalFromFresh(fresh){
+    try{
+      if(typeof S==='undefined'||!S||!fresh)return;
+      if(Array.isArray(fresh.chantiers))S.chantiers=fresh.chantiers.map(copyRecord);
+      if(Array.isArray(fresh.achats))S.achats=fresh.achats;
+      if(Array.isArray(fresh.avenants))S.avenants=fresh.avenants;
+    }catch(e){}
   }
 
   function installApiGuard(){
@@ -70,7 +106,7 @@
       setTimeout(installApiGuard,120);
       return;
     }
-    if(window.apiPost.__yayaChantierWriteSafety)return;
+    if(window.apiPost.__yayaChantierWriteSafetyV2)return;
 
     const originalApiPost=window.apiPost;
 
@@ -79,78 +115,103 @@
         return originalApiPost(action,data);
       }
 
-      let fresh;
-      try{
-        fresh=await window.apiGet(true);
-      }catch(err){
-        console.error('Sécurité écriture chantiers : lecture serveur impossible',err);
-        try{if(typeof toast==='function')toast('Enregistrement bloqué : impossible de vérifier les chantiers sur le serveur',true);}catch(e){}
+      if(busy){
+        console.warn('Sécurité Yaya : écriture chantiers déjà en cours.');
         return false;
       }
 
-      const server=Array.isArray(fresh&&fresh.chantiers)?fresh.chantiers:[];
-      const serverById=new Map();
-      server.forEach(function(c){
-        const id=String(c&&c.id||'').trim();
-        if(id&&!serverById.has(id))serverById.set(id,c);
-      });
-
-      const outgoing=[];
-      const outgoingIds=new Set();
-
-      data.forEach(function(c){
-        const id=String(c&&c.id||'').trim();
-        if(!id){
-          outgoing.push(copyRecord(c));
-          return;
-        }
-        if(outgoingIds.has(id))return;
-        outgoingIds.add(id);
-        const current=serverById.get(id);
-        outgoing.push(current?Object.assign({},current,c):copyRecord(c));
-      });
-
-      const allowedId=(authorizedDelete.expires>Date.now())?String(authorizedDelete.id||''):'';
-      let restored=0;
-
-      server.forEach(function(c){
-        const id=String(c&&c.id||'').trim();
-        if(!id||outgoingIds.has(id))return;
-        if(allowedId&&id===allowedId)return;
-        outgoing.push(copyRecord(c));
-        outgoingIds.add(id);
-        restored++;
-      });
-
-      authorizedDelete={id:'',expires:0};
-      pendingDeleteId='';
-
-      if(restored>0){
-        console.warn('Sécurité Yaya : '+restored+' chantier(s) serveur absent(s) du cache local ont été préservés.');
-      }
-
+      busy=true;
       try{
-        if(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers)){
-          S.chantiers=outgoing.map(copyRecord);
-        }
-      }catch(e){}
+        const fresh=await freshServer();
+        const server=fresh.chantiers;
+        const serverById=new Map();
+        server.forEach(function(c){
+          const id=String(c&&c.id||'').trim();
+          if(id&&!serverById.has(id))serverById.set(id,c);
+        });
 
-      const ok=await originalApiPost(action,outgoing);
-      if(!ok)return false;
+        const incomingById=new Map();
+        data.forEach(function(c){
+          const id=String(c&&c.id||'').trim();
+          if(!id){
+            console.warn('Sécurité Yaya : chantier sans identifiant ignoré.',c);
+            return;
+          }
+          if(!incomingById.has(id))incomingById.set(id,c);
+        });
 
-      try{
-        const after=await window.apiGet(true);
-        if(after&&Array.isArray(after.chantiers)&&typeof S!=='undefined'&&S){
-          S.chantiers=after.chantiers;
+        const added=[];
+        const changed=[];
+        incomingById.forEach(function(c,id){
+          const old=serverById.get(id);
+          if(!old)added.push(c);
+          else if(canonical(old)!==canonical(c))changed.push(c);
+        });
+
+        const removed=[];
+        serverById.forEach(function(c,id){
+          if(!incomingById.has(id))removed.push(c);
+        });
+
+        const allowedId=(authorizedDelete.expires>Date.now())
+          ?String(authorizedDelete.id||'').trim()
+          :'';
+
+        if(removed.length){
+          const unauthorized=removed.filter(function(c){
+            return !allowedId||String(c.id)!==allowedId;
+          });
+          if(unauthorized.length){
+            console.warn(
+              'Sécurité Yaya : suppression implicite bloquée pour',
+              unauthorized.map(function(c){return c.id+':'+c.nom;})
+            );
+          }
         }
-      }catch(e){
-        console.warn('Sécurité Yaya : relecture après enregistrement impossible',e);
+
+        let ok=true;
+
+        if(allowedId&&removed.some(function(c){return String(c.id)===allowedId;})){
+          ok=!!(await originalApiPost('deleteChantier',{id:allowedId}))&&ok;
+        }
+
+        for(const c of added){
+          ok=!!(await originalApiPost('addChantier',copyRecord(c)))&&ok;
+        }
+
+        for(const c of changed){
+          ok=!!(await originalApiPost('updateChantier',copyRecord(c)))&&ok;
+        }
+
+        authorizedDelete={id:'',expires:0};
+        pendingDeleteId='';
+
+        if(!ok)throw new Error('une écriture chantier a échoué');
+
+        const after=await freshServer();
+        replaceLocalFromFresh(after);
+
+        try{
+          if(typeof render==='function')render();
+          window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));
+        }catch(e){}
+
+        return true;
+      }catch(err){
+        console.error('Sécurité écriture chantiers :',err);
+        try{
+          if(typeof toast==='function'){
+            toast('Enregistrement chantier bloqué : '+String(err&&err.message||err),true);
+          }
+        }catch(e){}
+        return false;
+      }finally{
+        busy=false;
       }
-
-      return true;
     }
 
     guardedApiPost.__yayaChantierWriteSafety=true;
+    guardedApiPost.__yayaChantierWriteSafetyV2=true;
     guardedApiPost.__yayaOriginalApiPost=originalApiPost;
     window.apiPost=guardedApiPost;
   }
