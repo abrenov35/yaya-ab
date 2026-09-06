@@ -29,38 +29,6 @@ jobs:
           git checkout main
           git pull --ff-only origin main
 
-      - name: Activate secure Planning bridge
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          status = Path('chantier-planning-status-fix.js')
-          status.write_text(r'''(function(){
-  'use strict';
-
-  // Empêche l'ancienne passerelle chantier-auto-planning-create.js de s'installer.
-  window.__yayaAutoPlanningCreateInstalled=true;
-
-  if(document.querySelector('script[data-yaya-planning-bridge-v1]'))return;
-  const script=document.createElement('script');
-  script.src='planning-bridge.js?v=bridge-1';
-  script.async=false;
-  script.setAttribute('data-yaya-planning-bridge-v1','1');
-  document.head.appendChild(script);
-})();
-''', encoding='utf-8')
-
-          index = Path('index.html')
-          text = index.read_text(encoding='utf-8')
-          old = 'chantier-planning-status-fix.js?v=planningstatus-4'
-          new = 'chantier-planning-status-fix.js?v=planningstatus-5'
-          if old in text:
-              text = text.replace(old, new)
-          elif new not in text:
-              raise SystemExit('Loader Planning status introuvable dans index.html')
-          index.write_text(text, encoding='utf-8')
-          PY
-
       - name: Increment visible Yaya version
         run: |
           python3 - <<'PY'
@@ -78,10 +46,10 @@ jobs:
           print(f'Yaya {current} -> {new_version}')
           PY
 
-      - name: Commit & push
+      - name: Commit & push version
         run: |
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
-          git add chantier-planning-status-fix.js index.html version.txt
-          git commit -m "Sécurise la passerelle Yaya vers Planning" || echo "No change"
+          git add version.txt
+          git commit -m "Bump Yaya visible version" || echo "No change"
           git push
