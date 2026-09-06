@@ -159,3 +159,13 @@
   s.dataset.yayaMainQuoteDeleteFix='1';
   document.head.appendChild(s);
 })();
+
+/* Ajuste les documents dans les modales et rend le premier clic = agrandissement. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-piece-display-fix="1"]'))return;
+  const s=document.createElement('script');
+  s.src='piece-preview-display-fix.js?v=displayfix-'+Date.now();
+  s.dataset.yayaPieceDisplayFix='1';
+  document.head.appendChild(s);
+})();
