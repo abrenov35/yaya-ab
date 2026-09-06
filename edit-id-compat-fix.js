@@ -101,3 +101,96 @@
   setTimeout(install,500);
   window.addEventListener('yaya:data-refreshed',install);
 })();
+
+/* =========================================================
+   CORRECTIF ENREGISTREMENT MODALE DOCUMENT
+   - un seul clic
+   - pas de seconde confirmation bloquante
+   - verrou temporaire pendant l'enregistrement
+========================================================= */
+(function(){
+  'use strict';
+
+  let saveInFlight=null;
+
+  function resolveDocumentId(id){
+    try{
+      const found=(S&&Array.isArray(S.documents)?S.documents:[])
+        .find(function(x){return String(x&&x.id)===String(id);});
+      return found?found.id:id;
+    }catch(e){
+      return id;
+    }
+  }
+
+  function findEditSaveButton(id){
+    const root=document.getElementById('modalRoot');
+    if(!root)return null;
+    return Array.from(root.querySelectorAll('button')).find(function(btn){
+      const oc=String(btn.getAttribute('onclick')||'');
+      return /saveDocumentEdit\s*\(/.test(oc) && (!id || oc.includes(String(id)));
+    }) || Array.from(root.querySelectorAll('button')).find(function(btn){
+      return /^Enregistrer$/i.test(String(btn.textContent||'').trim());
+    }) || null;
+  }
+
+  function setBusy(btn,busy){
+    if(!btn)return;
+    if(busy){
+      if(!btn.dataset.yayaOriginalText)btn.dataset.yayaOriginalText=btn.textContent||'Enregistrer';
+      btn.disabled=true;
+      btn.setAttribute('aria-busy','true');
+      btn.style.opacity='.7';
+      btn.style.cursor='wait';
+      btn.textContent='Enregistrement…';
+    }else{
+      btn.disabled=false;
+      btn.removeAttribute('aria-busy');
+      btn.style.opacity='';
+      btn.style.cursor='';
+      btn.textContent=btn.dataset.yayaOriginalText||'Enregistrer';
+    }
+  }
+
+  async function directSaveDocumentEdit(id){
+    const cleanId=resolveDocumentId(id);
+    if(saveInFlight)return saveInFlight;
+
+    const btn=findEditSaveButton(cleanId);
+    setBusy(btn,true);
+
+    saveInFlight=(async function(){
+      try{
+        if(typeof window.appliquerModificationDocument!=='function'){
+          throw new Error('Fonction de sauvegarde document indisponible');
+        }
+        await window.appliquerModificationDocument(cleanId);
+      }catch(err){
+        console.error('Enregistrement document impossible',err);
+        if(typeof toast==='function')toast('Enregistrement impossible',true);
+        setBusy(btn,false);
+        throw err;
+      }finally{
+        saveInFlight=null;
+        setTimeout(function(){
+          if(btn && btn.isConnected)setBusy(btn,false);
+        },0);
+      }
+    })();
+
+    return saveInFlight;
+  }
+
+  directSaveDocumentEdit.__yayaLooseIdWrapped=true;
+  directSaveDocumentEdit.__yayaDirectDocumentSave=true;
+
+  function installDirectSave(){
+    window.saveDocumentEdit=directSaveDocumentEdit;
+    try{saveDocumentEdit=directSaveDocumentEdit;}catch(e){}
+  }
+
+  installDirectSave();
+  setTimeout(installDirectSave,120);
+  setTimeout(installDirectSave,600);
+  window.addEventListener('yaya:data-refreshed',installDirectSave);
+})();
