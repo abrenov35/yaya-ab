@@ -144,3 +144,13 @@
     install();
   }
 })();
+
+/* Recharge le correctif d'édition document sans cache. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-doc-edit-save-fix="1"]'))return;
+  const s=document.createElement('script');
+  s.src='edit-id-compat-fix.js?v=doc-edit-save-'+Date.now();
+  s.dataset.yayaDocEditSaveFix='1';
+  document.head.appendChild(s);
+})();
