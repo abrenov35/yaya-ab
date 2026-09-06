@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierWriteSafetyV5Installed)return;
+  if(window.__yayaChantierWriteSafetyV6Installed)return;
+  window.__yayaChantierWriteSafetyV6Installed=true;
   window.__yayaChantierWriteSafetyV5Installed=true;
   window.__yayaChantierWriteSafetyV4Installed=true;
   window.__yayaChantierWriteSafetyV3Installed=true;
@@ -11,6 +12,8 @@
   let pendingDeleteId='';
   let authorizedDelete={id:'',expires:0};
   let busy=false;
+
+  const SIGNATURE_MARKER_RE=/\s*\[\[YAYA_SIG:(\d{4}-\d{2})\]\]\s*/g;
 
   const PERSISTED_FIELDS=[
     'id','nom','numero','montantDevisHT','statut','notes',
@@ -81,23 +84,44 @@
   }
 
   function signatureStorage(value){
-    const s=String(value==null?'':value).trim();
+    const s=signatureMonth(value);
     if(/^\d{4}-\d{2}$/.test(s))return s+'-01';
     return s;
+  }
+
+  function signatureFromNotes(notes){
+    const s=String(notes==null?'':notes);
+    const m=s.match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
+    return m&&m[1]?m[1]:'';
+  }
+
+  function cleanNotes(notes){
+    return String(notes==null?'':notes)
+      .replace(SIGNATURE_MARKER_RE,'\n')
+      .replace(/\n{3,}/g,'\n\n')
+      .trim();
+  }
+
+  function notesWithSignature(notes,signature){
+    const clean=cleanNotes(notes);
+    const sig=signatureMonth(signature);
+    if(!sig)return clean;
+    return (clean?clean+'\n':'')+'[[YAYA_SIG:'+sig+']]';
   }
 
   function normalizedIncoming(value){
     const c=copyRecord(value)||{};
 
-    // La modale historique écrivait dateDemarrageEstime alors que la feuille
-    // Yaya persiste la colonne dateDemarrage.
+    const fallbackSignature=signatureFromNotes(c.notes);
+    c.notes=cleanNotes(c.notes);
+
     if(Object.prototype.hasOwnProperty.call(c,'dateDemarrageEstime')){
       c.dateDemarrage=String(c.dateDemarrageEstime||'').trim();
+    }else if(c.dateDemarrage&&!c.dateDemarrageEstime){
+      c.dateDemarrageEstime=String(c.dateDemarrage||'').trim();
     }
 
-    if(Object.prototype.hasOwnProperty.call(c,'dateSignature')){
-      c.dateSignature=String(c.dateSignature||'').trim();
-    }
+    c.dateSignature=String(c.dateSignature||fallbackSignature||'').trim();
 
     return c;
   }
@@ -125,13 +149,44 @@
     return fresh;
   }
 
+  function cacheFreshState(fresh){
+    try{
+      if(!fresh||typeof fresh!=='object'||typeof S==='undefined'||!S)return;
+      const cached=Object.assign({},fresh);
+      if(Array.isArray(S.chantiers))cached.chantiers=S.chantiers.map(copyRecord);
+      if(Array.isArray(S.achats))cached.achats=S.achats;
+      if(Array.isArray(S.avenants))cached.avenants=S.avenants;
+      localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+    }catch(e){}
+  }
+
   function replaceLocalFromFresh(fresh){
     try{
       if(typeof S==='undefined'||!S||!fresh)return;
-      if(Array.isArray(fresh.chantiers))S.chantiers=fresh.chantiers.map(copyRecord);
+      if(Array.isArray(fresh.chantiers)){
+        S.chantiers=fresh.chantiers.map(function(c){
+          return normalizedIncoming(c);
+        });
+      }
       if(Array.isArray(fresh.achats))S.achats=fresh.achats;
       if(Array.isArray(fresh.avenants))S.avenants=fresh.avenants;
+      cacheFreshState(fresh);
     }catch(e){}
+  }
+
+  function hydrateCurrentState(){
+    try{
+      if(typeof S==='undefined'||!S||!Array.isArray(S.chantiers))return false;
+      let changed=false;
+      S.chantiers=S.chantiers.map(function(raw){
+        const beforeSig=signatureMonth(raw&&raw.dateSignature);
+        const beforeNotes=String(raw&&raw.notes||'');
+        const row=normalizedIncoming(raw);
+        if(beforeSig!==signatureMonth(row.dateSignature)||beforeNotes!==String(row.notes||''))changed=true;
+        return row;
+      });
+      return changed;
+    }catch(e){return false;}
   }
 
   function mergeSafeServerList(server,incomingById,allowedDeleteId){
@@ -155,6 +210,9 @@
           merged[k]=String(incoming[k]==null?'':incoming[k]).trim();
         }
       });
+
+      merged.notes=notesWithSignature(merged.notes,incoming.dateSignature);
+
       return merged;
     }).filter(Boolean);
   }
@@ -166,10 +224,12 @@
       if(id&&!byId.has(id))byId.set(id,c);
     });
 
-    for(const wanted of changed){
+    for(const wantedRaw of changed){
+      const wanted=normalizedIncoming(wantedRaw);
       const id=String(wanted&&wanted.id||'').trim();
-      const stored=byId.get(id);
-      if(!stored)throw new Error('chantier '+id+' absent après enregistrement');
+      const storedRaw=byId.get(id);
+      if(!storedRaw)throw new Error('chantier '+id+' absent après enregistrement');
+      const stored=normalizedIncoming(storedRaw);
 
       const wantedSignature=signatureMonth(wanted.dateSignature);
       const storedSignature=signatureMonth(stored.dateSignature);
@@ -192,7 +252,7 @@
       setTimeout(installApiGuard,120);
       return;
     }
-    if(window.apiPost.__yayaChantierWriteSafetyV5)return;
+    if(window.apiPost.__yayaChantierWriteSafetyV6)return;
 
     const originalApiPost=window.apiPost;
 
@@ -301,12 +361,6 @@
           ok=!!(await originalApiPost('deleteChantier',{id:allowedId}))&&ok;
         }
 
-        /*
-          Important : updateChantier ne conservait pas la colonne dateSignature.
-          On repart donc de la liste serveur fraîche, on ne modifie que les
-          champs autorisés, puis on utilise le setChantiers historique. Aucun
-          chantier inconnu n'est ajouté ou supprimé implicitement.
-        */
         if(changed.length){
           const safeList=mergeSafeServerList(
             server,
@@ -349,8 +403,17 @@
     guardedApiPost.__yayaChantierWriteSafetyV3=true;
     guardedApiPost.__yayaChantierWriteSafetyV4=true;
     guardedApiPost.__yayaChantierWriteSafetyV5=true;
+    guardedApiPost.__yayaChantierWriteSafetyV6=true;
     guardedApiPost.__yayaOriginalApiPost=originalApiPost;
     window.apiPost=guardedApiPost;
+
+    const hydrated=hydrateCurrentState();
+    if(hydrated){
+      try{
+        if(typeof render==='function')render();
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(S));
+      }catch(e){}
+    }
   }
 
   installApiGuard();
