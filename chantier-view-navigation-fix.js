@@ -266,3 +266,15 @@
   s.dataset.yayaHomeWhiteGrey='1';
   document.head.appendChild(s);
 })();
+
+/* =========================================================
+   OUVERTURE FICHE CHANTIER -> MARCHE PAR DEFAUT
+========================================================= */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-default-marche="1"]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-default-marche.js?v=default-marche-'+Date.now();
+  s.dataset.yayaDefaultMarche='1';
+  document.head.appendChild(s);
+})();
