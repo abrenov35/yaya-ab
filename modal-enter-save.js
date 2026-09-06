@@ -85,3 +85,47 @@
     btn.click();
   },true);
 })();
+
+/* Centre uniquement la modale du bloc-note chantier. */
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-note-modal-center-style';
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      .overlay.yaya-note-overlay-centered{
+        align-items:center!important;
+        justify-content:center!important;
+        padding:18px!important;
+      }
+      .overlay.yaya-note-overlay-centered .modal{
+        margin:auto!important;
+      }
+      @media(max-width:640px){
+        .overlay.yaya-note-overlay-centered{
+          align-items:center!important;
+          padding:14px!important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function centerNoteModal(){
+    const textarea=document.querySelector('.yaya-note-modal-textarea');
+    if(!textarea)return;
+    const overlay=textarea.closest('.overlay');
+    if(overlay)overlay.classList.add('yaya-note-overlay-centered');
+  }
+
+  installStyle();
+  centerNoteModal();
+
+  new MutationObserver(function(){
+    centerNoteModal();
+  }).observe(document.documentElement,{childList:true,subtree:true});
+})();
