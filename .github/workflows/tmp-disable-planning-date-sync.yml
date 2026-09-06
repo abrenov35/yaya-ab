@@ -21,7 +21,7 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text()
-          old=r'''\\n    setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);'''
+          old='setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);'
           if s.count(old)!=1:
               raise SystemExit(f'Appel Planning attendu introuvable ou multiple: {s.count(old)}')
           p.write_text(s.replace(old,'',1))
