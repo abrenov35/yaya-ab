@@ -67,3 +67,96 @@
     openConfirm(id);
   },true);
 })();
+
+/*
+ * Devis principal : le marqueur de suppression peut être renvoyé par le serveur
+ * avec le marqueur de date de signature [[YAYA_SIG:...]]. Les anciens scripts
+ * testaient une égalité stricte et considéraient alors le devis comme non supprimé.
+ * On normalise l'état local avant les décorateurs Marché pour que la suppression
+ * reste stable après actualisation automatique.
+ */
+(function(){
+  'use strict';
+
+  if(window.__yayaMainQuoteDeletePersistFixInstalled)return;
+  window.__yayaMainQuoteDeletePersistFixInstalled=true;
+
+  const DELETED='__YAYA_DEVIS_INITIAL_SUPPRIME__';
+  const SIG_RE=/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/;
+
+  function normalizeDeletedMainQuotes(){
+    try{
+      if(typeof S==='undefined'||!S||!Array.isArray(S.chantiers))return false;
+      let changed=false;
+
+      S.chantiers.forEach(function(c){
+        if(!c)return;
+        const notes=String(c.notes||'');
+        if(!notes.includes(DELETED))return;
+        if((Number(c.montantDevisHT)||0)!==0)return;
+
+        const sig=notes.match(SIG_RE);
+        if(sig&&sig[1]&&!String(c.dateSignature||'').trim()){
+          c.dateSignature=sig[1];
+          changed=true;
+        }
+
+        if(notes!==DELETED){
+          c.notes=DELETED;
+          changed=true;
+        }
+      });
+
+      return changed;
+    }catch(e){
+      return false;
+    }
+  }
+
+  function forceHiddenRows(){
+    try{
+      document.querySelectorAll('#pane-chantiers .yaya-detail-market-row').forEach(function(row){
+        const edit=row.querySelector('.yaya-detail-document-edit[data-kind="main"]');
+        if(!edit)return;
+        const id=String(edit.dataset.rowId||'');
+        const c=(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))
+          ?S.chantiers.find(function(x){return String(x&&x.id)===id;})
+          :null;
+        if(!c)return;
+
+        const deleted=String(c.notes||'').includes(DELETED)&&!(Number(c.montantDevisHT)||0);
+        if(deleted){
+          row.dataset.yayaInitialDeleted='1';
+          row.style.setProperty('display','none','important');
+        }
+      });
+    }catch(e){}
+  }
+
+  let scheduled=false;
+  function apply(){
+    normalizeDeletedMainQuotes();
+    forceHiddenRows();
+  }
+
+  function schedule(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(function(){
+      scheduled=false;
+      apply();
+    });
+  }
+
+  apply();
+
+  window.addEventListener('yaya:data-refreshed',function(){
+    normalizeDeletedMainQuotes();
+    schedule();
+  });
+
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+
+  setTimeout(apply,50);
+  setTimeout(apply,250);
+})();
