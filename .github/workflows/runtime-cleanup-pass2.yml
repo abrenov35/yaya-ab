@@ -1,0 +1,141 @@
+name: Runtime cleanup pass 2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/runtime-cleanup-pass2.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: yaya-runtime-cleanup-pass2
+  cancel-in-progress: false
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Sync latest main
+        run: |
+          git fetch origin main
+          git checkout main
+          git pull --ff-only origin main
+
+      - name: Remove obsolete Planning layer and duplicate refresh
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          # 1) planning-toolbar-link.js : ne charge plus l'ancienne passerelle chantier-auto-planning-create.js
+          p = Path('planning-toolbar-link.js')
+          text = p.read_text(encoding='utf-8')
+          old = r'''
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-auto-planning-create]'))return;
+  const script=document.createElement('script');
+  script.src='chantier-auto-planning-create.js?v=autoplanning-5';
+  script.async=false;
+  script.setAttribute('data-yaya-auto-planning-create','1');
+  document.head.appendChild(script);
+})();
+'''
+          if old not in text:
+              raise SystemExit('Bloc ancienne passerelle Planning introuvable')
+          text = text.replace(old, '\n')
+          p.write_text(text, encoding='utf-8')
+
+          # 2) yaya-auto-refresh.js : sécurise le mode meta et les doublons de nom
+          p = Path('yaya-auto-refresh.js')
+          text = p.read_text(encoding='utf-8')
+
+          old = r'''    const byName=new Map();
+    current.forEach(function(c){
+      const key=chantierKey(c&&c.nom);
+      if(key&&!byName.has(key))byName.set(key,c);
+    });
+    fresh.forEach(function(c){
+      const previous=byId.get(String(c.id||''))||byName.get(chantierKey(c.nom));
+'''
+          new = r'''    const nameCounts=new Map();
+    current.forEach(function(c){
+      const key=chantierKey(c&&c.nom);
+      if(key)nameCounts.set(key,(nameCounts.get(key)||0)+1);
+    });
+    const byName=new Map();
+    current.forEach(function(c){
+      const key=chantierKey(c&&c.nom);
+      if(key&&nameCounts.get(key)===1)byName.set(key,c);
+    });
+    fresh.forEach(function(c){
+      const previous=byId.get(String(c.id||''))||byName.get(chantierKey(c.nom));
+'''
+          if old not in text:
+              raise SystemExit('Bloc preservePlanningData introuvable')
+          text = text.replace(old, new)
+
+          old = r'''      if(!metaJson.meta||!metaJson.meta.tabs){
+        metaSupported=false;
+        lastFull=Date.now();
+        return;
+      }
+'''
+          new = r'''      if(!metaJson.meta||!metaJson.meta.tabs){
+        metaSupported=false;
+        await fullRefreshInBackground();
+        return;
+      }
+'''
+          if old not in text:
+              raise SystemExit('Bloc fallback meta introuvable')
+          text = text.replace(old, new)
+
+          old = r'''    }catch(err){
+      if(!(err&&err.name==='AbortError'))console.warn('Synchronisation Yaya en arrière-plan ignorée :',err);
+    }finally{
+'''
+          new = r'''    }catch(err){
+      if(metaSupported===null&&window.__yayaCachedBoot){
+        try{
+          await fullRefreshInBackground();
+          metaSupported=false;
+        }catch(_fallbackErr){}
+      }
+      if(!(err&&err.name==='AbortError'))console.warn('Synchronisation Yaya en arrière-plan ignorée :',err);
+    }finally{
+'''
+          if old not in text:
+              raise SystemExit('Bloc catch smart refresh introuvable')
+          text = text.replace(old, new)
+          p.write_text(text, encoding='utf-8')
+
+          # 3) index.html : un seul rafraîchisseur et cache-busting des scripts modifiés
+          p = Path('index.html')
+          text = p.read_text(encoding='utf-8')
+          replacements = {
+            'planning-toolbar-link.js?v=planning-link-5':'planning-toolbar-link.js?v=planning-link-6',
+            'yaya-auto-refresh.js?v=autorefresh-7':'yaya-auto-refresh.js?v=autorefresh-8',
+            '    \'<script src="yaya-force-fresh-chantiers.js?v=freshchantiers-2"><\\\\/script>\'+\n':''
+          }
+          for old, new in replacements.items():
+              if old not in text:
+                  raise SystemExit(f'Point de nettoyage introuvable: {old}')
+              text = text.replace(old, new, 1)
+          p.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Commit and push
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git add planning-toolbar-link.js yaya-auto-refresh.js index.html
+          git diff --cached --quiet && exit 0
+          git commit -m "Nettoie passerelle Planning et rafraîchissement Yaya"
+          git pull --rebase origin main
+          git push origin main
