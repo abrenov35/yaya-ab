@@ -75,3 +75,14 @@
   s.setAttribute('data-yaya-modal-outside-lock','1');
   document.head.appendChild(s);
 })();
+
+/* Raccourci global : Entrée déclenche Enregistrer dans la modale active. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-modal-enter-save="1"]'))return;
+  const s=document.createElement('script');
+  s.src='modal-enter-save.js?v=enter-save-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-modal-enter-save','1');
+  document.head.appendChild(s);
+})();
