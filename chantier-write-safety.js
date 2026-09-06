@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierWriteSafetyV3Installed)return;
+  if(window.__yayaChantierWriteSafetyV4Installed)return;
+  window.__yayaChantierWriteSafetyV4Installed=true;
   window.__yayaChantierWriteSafetyV3Installed=true;
   window.__yayaChantierWriteSafetyV2Installed=true;
   window.__yayaChantierWriteSafetyInstalled=true;
@@ -107,13 +108,11 @@
       setTimeout(installApiGuard,120);
       return;
     }
-    if(window.apiPost.__yayaChantierWriteSafetyV3)return;
+    if(window.apiPost.__yayaChantierWriteSafetyV4)return;
 
     const originalApiPost=window.apiPost;
 
     async function guardedApiPost(action,data){
-      // Depuis l'app Yaya, la création de chantier n'est plus autorisée.
-      // Les nouveaux chantiers doivent venir de la passerelle dédiée.
       if(action==='addChantier'){
         console.warn('Sécurité Yaya : ajout chantier local bloqué.',data);
         try{
@@ -150,20 +149,36 @@
             console.warn('Sécurité Yaya : chantier sans identifiant ignoré.',c);
             return;
           }
-          if(!incomingById.has(id))incomingById.set(id,c);
+          if(!incomingById.has(id))incomingById.set(id,copyRecord(c));
         });
 
         const added=[];
         const changed=[];
         incomingById.forEach(function(c,id){
           const old=serverById.get(id);
-          if(!old)added.push(c);
-          else if(canonical(old)!==canonical(c))changed.push(c);
+          if(!old){
+            added.push(c);
+            return;
+          }
+
+          const serverMarket=Number(old.montantMarcheHT)||0;
+          const incomingMarket=Number(c.montantMarcheHT)||0;
+
+          if(serverMarket>0&&incomingMarket===0){
+            c=copyRecord(c);
+            c.montantMarcheHT=serverMarket;
+            incomingById.set(id,c);
+            console.warn(
+              'Sécurité Yaya : remise à zéro du marché bloquée pour',
+              id,
+              old.nom,
+              serverMarket
+            );
+          }
+
+          if(canonical(old)!==canonical(c))changed.push(c);
         });
 
-        // IMPORTANT : un chantier absent du serveur est considéré comme supprimé
-        // ou non encore créé par la passerelle. Une vieille copie locale n'a donc
-        // jamais le droit de le réintroduire via setChantiers.
         if(added.length){
           console.warn(
             'Sécurité Yaya : réintroduction de chantier bloquée pour',
@@ -197,9 +212,6 @@
         if(allowedId&&removed.some(function(c){return String(c.id)===allowedId;})){
           ok=!!(await originalApiPost('deleteChantier',{id:allowedId}))&&ok;
         }
-
-        // Aucun ajout depuis une liste locale.
-        // Les entrées absentes du serveur sont volontairement ignorées ici.
 
         for(const c of changed){
           ok=!!(await originalApiPost('updateChantier',copyRecord(c)))&&ok;
@@ -235,6 +247,7 @@
     guardedApiPost.__yayaChantierWriteSafety=true;
     guardedApiPost.__yayaChantierWriteSafetyV2=true;
     guardedApiPost.__yayaChantierWriteSafetyV3=true;
+    guardedApiPost.__yayaChantierWriteSafetyV4=true;
     guardedApiPost.__yayaOriginalApiPost=originalApiPost;
     window.apiPost=guardedApiPost;
   }
