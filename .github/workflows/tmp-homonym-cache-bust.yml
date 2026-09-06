@@ -1,0 +1,38 @@
+name: Cache-bust passerelle homonymes
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-homonym-cache-bust.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Remplace uniquement la version Planning
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text()
+          old = 'chantier-planning-status-fix.js?v=planningstatus-6'
+          new = 'chantier-planning-status-fix.js?v=planningstatus-7'
+          if old not in s:
+              raise SystemExit('Version planningstatus-6 introuvable')
+          if s.count(old) != 1:
+              raise SystemExit(f'Occurrence inattendue: {s.count(old)}')
+          p.write_text(s.replace(old, new, 1))
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Active la passerelle homonymes v3'
+          git push
