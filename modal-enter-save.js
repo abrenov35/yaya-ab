@@ -129,3 +129,13 @@
     centerNoteModal();
   }).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+/* Charge le centrage dédié de la modale de lecture des mails. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-mail-read-center="1"]'))return;
+  const s=document.createElement('script');
+  s.src='mail-read-modal-center.js?v=mailcenter-'+Date.now();
+  s.dataset.yayaMailReadCenter='1';
+  document.head.appendChild(s);
+})();
