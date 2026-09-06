@@ -64,3 +64,14 @@
 
   install();
 })();
+
+/* Protection globale : un clic hors d'une modale ne la ferme jamais. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-modal-outside-lock="1"]'))return;
+  const s=document.createElement('script');
+  s.src='modal-outside-click-lock.js?v=outside-lock-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-modal-outside-lock','1');
+  document.head.appendChild(s);
+})();
