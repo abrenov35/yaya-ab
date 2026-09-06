@@ -86,7 +86,7 @@
 
   function applyBlueActionStyle(el){
     if(!el||!el.style)return;
-    const palette={background:'#FFFFFF',color:'#003D7A',border:'#C8D6E4'};
+    const palette={background:'#FFFFFF',color:'#003D7A',border:'#003D7A'};
     el.style.setProperty('background',palette.background,'important');
     el.style.setProperty('color',palette.color,'important');
     el.style.setProperty('border','1px solid '+palette.border,'important');
