@@ -1,11 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaPiecePreviewDisplayFixInstalled)return;
+  if(window.__yayaPiecePreviewDisplayFixV3Installed)return;
+  window.__yayaPiecePreviewDisplayFixV3Installed=true;
   window.__yayaPiecePreviewDisplayFixInstalled=true;
 
   const ROOT_ID='modalRoot';
-  const STYLE_ID='yaya-piece-preview-display-fix-v2';
+  const STYLE_ID='yaya-piece-preview-display-fix-v3';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -95,12 +96,40 @@
     };
   }
 
-  function rememberNormal(modal){
-    if(!modal||modal.dataset.yayaDisplayNormalSaved==='1')return;
+  function contentReady(modal){
+    if(!modal)return false;
+
+    const img=modal.querySelector('.piece-image-stage img,.piece-drive-pages-stage img');
+    if(img){
+      return !!(img.complete&&img.naturalWidth>20&&img.naturalHeight>20);
+    }
+
+    const canvas=modal.querySelector('.piece-pdf-page canvas');
+    if(canvas){
+      return canvas.width>20&&canvas.height>20;
+    }
+
+    const frame=modal.querySelector('.yaya-drive-fit-frame');
+    if(frame){
+      const r=frame.getBoundingClientRect();
+      return r.width>120&&r.height>120;
+    }
+
+    return false;
+  }
+
+  function rememberNormal(modal,force){
+    if(!modal||modal.dataset.yayaPreviewFullscreen==='1')return false;
+    if(!force&&modal.dataset.yayaDisplayNormalSaved==='1')return true;
+    if(!contentReady(modal))return false;
+
     const r=modal.getBoundingClientRect();
+    if(r.width<280||r.height<260)return false;
+
     modal.dataset.yayaDisplayNormalSaved='1';
-    modal.dataset.yayaDisplayNormalWidth=String(Math.round(r.width||0));
-    modal.dataset.yayaDisplayNormalHeight=String(Math.round(r.height||0));
+    modal.dataset.yayaDisplayNormalWidth=String(Math.round(r.width));
+    modal.dataset.yayaDisplayNormalHeight=String(Math.round(r.height));
+    return true;
   }
 
   function applyGeometry(modal){
@@ -128,8 +157,14 @@
     }else{
       const savedW=Number(modal.dataset.yayaDisplayNormalWidth)||0;
       const savedH=Number(modal.dataset.yayaDisplayNormalHeight)||0;
-      if(savedW>0)modal.style.setProperty('width',Math.min(savedW,Math.max(320,vw-24))+'px','important');
-      if(savedH>0)modal.style.setProperty('height',Math.min(savedH,g.height)+'px','important');
+
+      if(savedW>0){
+        modal.style.setProperty('width',Math.min(savedW,Math.max(320,vw-24))+'px','important');
+      }
+      if(savedH>0){
+        modal.style.setProperty('height',Math.min(savedH,g.height)+'px','important');
+      }
+
       modal.style.setProperty('max-width','calc(100vw - 24px)','important');
       modal.style.setProperty('max-height',g.height+'px','important');
       modal.style.setProperty('margin','0 auto','important');
@@ -152,10 +187,33 @@
     },90);
   }
 
+  function settleNormal(modal){
+    if(!modal||!modal.isConnected)return;
+    if(modal.dataset.yayaPreviewFullscreen==='1')return;
+
+    const runs=[45,110,220,420];
+    runs.forEach(function(delay,index){
+      setTimeout(function(){
+        if(!modal.isConnected||modal.dataset.yayaPreviewFullscreen==='1')return;
+
+        applyGeometry(modal);
+
+        if(contentReady(modal)&&index>=1){
+          // À ce stade le lecteur historique a déjà eu le temps de calculer
+          // la bonne taille à partir du document réel. On mémorise cette taille,
+          // puis on la réapplique immédiatement : la 1re ouverture devient donc
+          // identique aux suivantes.
+          rememberNormal(modal,true);
+          applyGeometry(modal);
+        }
+      },delay);
+    });
+  }
+
   function togglePreview(modal){
     if(!modal||modal.dataset.yayaPreviewTransition==='1')return;
 
-    rememberNormal(modal);
+    rememberNormal(modal,false);
     const next=modal.dataset.yayaPreviewFullscreen!=='1';
     modal.dataset.yayaPreviewTransition='1';
     modal.dataset.yayaPreviewFullscreen=next?'1':'0';
@@ -169,12 +227,11 @@
   }
 
   function bind(){
-    if(document.documentElement.dataset.yayaDisplayFixBound==='1')return;
-    document.documentElement.dataset.yayaDisplayFixBound='1';
+    if(document.documentElement.dataset.yayaDisplayFixBoundV3==='1')return;
+    document.documentElement.dataset.yayaDisplayFixBoundV3='1';
 
-    // Le correctif historique piece-preview-size-patch.js possède déjà un handler
-    // de clic sur #modalRoot. On intercepte donc le clic au niveau document,
-    // avant ce handler, afin qu'un clic ne déclenche qu'un seul agrandissement.
+    // L'ancien lecteur possède déjà un handler de clic. On intercepte avant lui
+    // pour qu'un seul clic ne déclenche qu'un seul agrandissement.
     document.addEventListener('click',function(e){
       if(e.button!=null&&e.button!==0)return;
       const target=e.target&&e.target.closest
@@ -195,9 +252,12 @@
   function applyAll(){
     const root=document.getElementById(ROOT_ID);
     if(!root)return;
+
     root.querySelectorAll('.piece-preview-modal').forEach(function(modal){
-      rememberNormal(modal);
       applyGeometry(modal);
+      if(contentReady(modal)&&modal.dataset.yayaDisplayNormalSaved!=='1'){
+        settleNormal(modal);
+      }
     });
   }
 
@@ -208,8 +268,18 @@
 
     const root=document.getElementById(ROOT_ID);
     if(root){
+      root.addEventListener('load',function(e){
+        const target=e.target;
+        if(!target||!target.matches||!target.matches('.piece-image-stage img,.piece-drive-pages-stage img'))return;
+        const modal=target.closest('.piece-preview-modal');
+        if(modal)settleNormal(modal);
+      },true);
+
       new MutationObserver(function(){
-        setTimeout(applyAll,0);
+        requestAnimationFrame(function(){
+          applyAll();
+          root.querySelectorAll('.piece-preview-modal').forEach(settleNormal);
+        });
       }).observe(root,{childList:true,subtree:true});
     }
 
