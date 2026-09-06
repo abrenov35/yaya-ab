@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Yaya v205.5 — AB RENOV 35</title>
+  <title>Yaya v205.6 — AB RENOV 35</title>
 </head>
 
 <body>
@@ -258,7 +258,6 @@
   source=source.replaceAll('x=>x.id===id','x=>String(x.id)===String(id)');
   source=source.replace('    await synchroniserDatesPlanning();\\n    syncMsg("✓ connecté");\\n    render();','    syncMsg("✓ connecté");\\n    render();\\n    ');`;
 
-
   if(!base.includes(sourceLoader)){
     throw new Error(
       'Point insertion retry API introuvable'
@@ -286,7 +285,7 @@
     '<script src="dropbox-preview-fix.js?v=dropbox-2"><\\/script>'+
     '<script src="chantier-edit-patch.js?v=chantieredit-4"><\\/script>'+
     '<script src="chantier-write-safety.js?v=writeguard-2"><\\/script>'+
-    '<script src="chantier-delete-confirm-fix.js?v=deletechantier-4"><\\/script>'+
+    '<script src="chantier-delete-confirm-fix.js?v=deletechantier-5"><\\/script>'+
     '<script src="chantier-toolbar-style.js?v=toolbar-5"><\\/script>'+
     '<script src="evolution-ca-2026-patch.js?v=evo2026-2"><\\/script>'+
     '<script src="charges-page-cleanup.js?v=charges-2"><\\/script>'+
@@ -304,6 +303,7 @@
     '<script src="fiche-inter-same-tab.js?v=inline-3"><\\/script>'+
     '<script src="planning-toolbar-link.js?v=planning-link-6"><\\/script>'+
     '<script src="yaya-auto-refresh.js?v=autorefresh-8"><\\/script>'+
+    '<script src="yaya-force-fresh-chantiers.js?v=fresh-2"><\\/script>'+
     '<script src="delete-confirm-preserve-files.js?v=deletepreserve-1"><\\/script>'+
     '<script src="document-save-lock.js?v=doclock-1"><\\/script>'+
     '<script src="chantier-detail-section-tabs-mail-wrapper.js?v=detailtabs-native-commandes-3"><\\/script>'+
