@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-note-modal-center-fix-v2';
+  const STYLE_ID='yaya-note-modal-center-fix-v3';
+  const OFFSET_PX=120;
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -15,23 +16,11 @@
       }
       #modalRoot .overlay.yaya-note-overlay-centered > .modal{
         margin:auto!important;
+        transform:translateY(${OFFSET_PX}px)!important;
         transition:transform .12s ease!important;
       }
     `;
     document.head.appendChild(style);
-  }
-
-  function visible(el){
-    if(!el||!el.isConnected)return false;
-    const s=getComputedStyle(el);
-    return s.display!=='none'&&s.visibility!=='hidden';
-  }
-
-  function workspaceTop(){
-    const header=document.querySelector('.hdr');
-    if(!header||!visible(header))return 0;
-    const r=header.getBoundingClientRect();
-    return Math.max(0,Math.min(window.innerHeight,Math.round(r.bottom)));
   }
 
   function centerNoteModal(){
@@ -50,12 +39,8 @@
     if(!modal)return;
 
     modal.style.setProperty('margin','auto','important');
-
-    /* Centre visuel de la zone réellement disponible sous la barre Yaya. */
-    const top=workspaceTop();
-    const offset=Math.round(top/2);
-    modal.style.setProperty('transform','translateY('+offset+'px)','important');
-    modal.dataset.yayaVisualCenterOffset=String(offset);
+    modal.style.setProperty('transform','translateY('+OFFSET_PX+'px)','important');
+    modal.dataset.yayaVisualCenterOffset=String(OFFSET_PX);
   }
 
   installStyle();
