@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierWriteSafetyV2Installed)return;
+  if(window.__yayaChantierWriteSafetyV3Installed)return;
+  window.__yayaChantierWriteSafetyV3Installed=true;
   window.__yayaChantierWriteSafetyV2Installed=true;
   window.__yayaChantierWriteSafetyInstalled=true;
 
@@ -106,11 +107,23 @@
       setTimeout(installApiGuard,120);
       return;
     }
-    if(window.apiPost.__yayaChantierWriteSafetyV2)return;
+    if(window.apiPost.__yayaChantierWriteSafetyV3)return;
 
     const originalApiPost=window.apiPost;
 
     async function guardedApiPost(action,data){
+      // Depuis l'app Yaya, la création de chantier n'est plus autorisée.
+      // Les nouveaux chantiers doivent venir de la passerelle dédiée.
+      if(action==='addChantier'){
+        console.warn('Sécurité Yaya : ajout chantier local bloqué.',data);
+        try{
+          const fresh=await freshServer();
+          replaceLocalFromFresh(fresh);
+          if(typeof render==='function')render();
+        }catch(e){}
+        return false;
+      }
+
       if(action!=='setChantiers'||!Array.isArray(data)){
         return originalApiPost(action,data);
       }
@@ -148,6 +161,16 @@
           else if(canonical(old)!==canonical(c))changed.push(c);
         });
 
+        // IMPORTANT : un chantier absent du serveur est considéré comme supprimé
+        // ou non encore créé par la passerelle. Une vieille copie locale n'a donc
+        // jamais le droit de le réintroduire via setChantiers.
+        if(added.length){
+          console.warn(
+            'Sécurité Yaya : réintroduction de chantier bloquée pour',
+            added.map(function(c){return String(c.id||'')+':'+String(c.nom||'');})
+          );
+        }
+
         const removed=[];
         serverById.forEach(function(c,id){
           if(!incomingById.has(id))removed.push(c);
@@ -175,9 +198,8 @@
           ok=!!(await originalApiPost('deleteChantier',{id:allowedId}))&&ok;
         }
 
-        for(const c of added){
-          ok=!!(await originalApiPost('addChantier',copyRecord(c)))&&ok;
-        }
+        // Aucun ajout depuis une liste locale.
+        // Les entrées absentes du serveur sont volontairement ignorées ici.
 
         for(const c of changed){
           ok=!!(await originalApiPost('updateChantier',copyRecord(c)))&&ok;
@@ -212,6 +234,7 @@
 
     guardedApiPost.__yayaChantierWriteSafety=true;
     guardedApiPost.__yayaChantierWriteSafetyV2=true;
+    guardedApiPost.__yayaChantierWriteSafetyV3=true;
     guardedApiPost.__yayaOriginalApiPost=originalApiPost;
     window.apiPost=guardedApiPost;
   }
