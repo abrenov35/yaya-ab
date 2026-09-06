@@ -149,3 +149,13 @@
   s.dataset.yayaPieceToolbarSafe='1';
   document.head.appendChild(s);
 })();
+
+/* Stabilise la suppression du devis principal après les refresh automatiques. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-main-quote-delete-fix="1"]'))return;
+  const s=document.createElement('script');
+  s.src='devis-main-delete-persist-fix.js?v=maindelete-'+Date.now();
+  s.dataset.yayaMainQuoteDeleteFix='1';
+  document.head.appendChild(s);
+})();
