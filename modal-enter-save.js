@@ -1,0 +1,73 @@
+(function(){
+  'use strict';
+
+  if(window.__yayaModalEnterSaveInstalled)return;
+  window.__yayaModalEnterSaveInstalled=true;
+
+  function visible(el){
+    if(!el || !el.isConnected)return false;
+    const s=getComputedStyle(el);
+    return s.display!=='none' && s.visibility!=='hidden' && s.opacity!=='0';
+  }
+
+  function topModal(){
+    const candidates=[...document.querySelectorAll('.overlay .modal,[role="dialog"],.yaya-devis-fast-modal')]
+      .filter(visible);
+    return candidates.length?candidates[candidates.length-1]:null;
+  }
+
+  function saveButton(modal){
+    if(!modal)return null;
+    const buttons=[...modal.querySelectorAll('button,input[type="submit"],input[type="button"]')]
+      .filter(function(btn){
+        return visible(btn) && !btn.disabled && btn.getAttribute('aria-disabled')!=='true';
+      });
+
+    // Priorité au bouton explicitement marqué, puis à « Enregistrer ».
+    let btn=buttons.find(b=>b.matches('[data-yaya-enter-save="1"]'));
+    if(btn)return btn;
+
+    btn=buttons.find(function(b){
+      return /^\s*Enregistrer(?:\s*…|\.\.\.)?\s*$/i.test(String(b.textContent||b.value||''));
+    });
+    if(btn)return btn;
+
+    // Compatibilité avec les anciennes modales dont l'action est dans onclick.
+    btn=buttons.find(function(b){
+      const oc=String(b.getAttribute('onclick')||'');
+      return /\b(save|enregistr|sauvegard)\w*\s*\(/i.test(oc);
+    });
+    if(btn)return btn;
+
+    // Dernier recours : submit natif, sans jamais sélectionner une action de suppression.
+    return buttons.find(function(b){
+      const txt=String(b.textContent||b.value||'').trim();
+      return b.matches('input[type="submit"],button[type="submit"]') && !/supprim|effac|archiv/i.test(txt);
+    })||null;
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key!=='Enter' || e.defaultPrevented || e.repeat || e.isComposing)return;
+    if(e.ctrlKey || e.altKey || e.metaKey || e.shiftKey)return;
+
+    const target=e.target;
+
+    // Conserver les retours à la ligne et le comportement natif des listes/boutons.
+    if(target && target.closest){
+      if(target.closest('textarea,[contenteditable="true"],select,button,a,[role="button"]'))return;
+    }
+
+    const modal=topModal();
+    if(!modal)return;
+
+    // Ne jamais lancer une action destructive par Enter.
+    const btn=saveButton(modal);
+    if(!btn)return;
+    const label=String(btn.textContent||btn.value||'').trim();
+    if(/supprim|effac|archiv/i.test(label))return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    btn.click();
+  },true);
+})();
