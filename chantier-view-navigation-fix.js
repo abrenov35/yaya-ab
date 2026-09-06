@@ -254,3 +254,15 @@
     console.warn('Garde chantier fantôme :',e);
   }
 })();
+
+/* =========================================================
+   CHARGE LE THEME BLANC / GRIS DE LA PAGE CHANTIERS
+========================================================= */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-home-white-grey="1"]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-home-white-grey.js?v=home-grey-'+Date.now();
+  s.dataset.yayaHomeWhiteGrey='1';
+  document.head.appendChild(s);
+})();
