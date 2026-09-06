@@ -1,0 +1,36 @@
+name: Désactive la relecture Planning au démarrage
+
+on:
+  push:
+    paths:
+      - '.github/workflows/tmp-disable-planning-date-sync.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Supprime uniquement l'appel Planning de démarrage
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text()
+          old='''  source=source.replace('    await synchroniserDatesPlanning();\\n    syncMsg("✓ connecté");\\n    render();','    syncMsg("✓ connecté");\\n    render();\\n    setTimeout(function(){synchroniserDatesPlanning().then(function(){try{render();}catch(e){}});},0);');'''
+          new='''  source=source.replace('    await synchroniserDatesPlanning();\\n    syncMsg("✓ connecté");\\n    render();','    syncMsg("✓ connecté");\\n    render();');'''
+          if s.count(old)!=1:
+              raise SystemExit(f'Bloc attendu introuvable ou multiple: {s.count(old)}')
+          p.write_text(s.replace(old,new,1))
+          PY
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'Supprime la relecture Planning des dates au démarrage'
+          git push
