@@ -139,3 +139,13 @@
   s.dataset.yayaMailReadCenter='1';
   document.head.appendChild(s);
 })();
+
+/* Garde le bouton Fermer visible sur les aperçus devis / pièces. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-piece-toolbar-safe="1"]'))return;
+  const s=document.createElement('script');
+  s.src='piece-preview-toolbar-safe.js?v=piecetoolbar-'+Date.now();
+  s.dataset.yayaPieceToolbarSafe='1';
+  document.head.appendChild(s);
+})();
