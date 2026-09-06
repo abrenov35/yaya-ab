@@ -48,17 +48,31 @@
 
   document.addEventListener('keydown',function(e){
     if(e.key!=='Enter' || e.defaultPrevented || e.repeat || e.isComposing)return;
-    if(e.ctrlKey || e.altKey || e.metaKey || e.shiftKey)return;
+    if(e.ctrlKey || e.altKey || e.metaKey)return;
 
     const target=e.target;
+    const modal=topModal();
+    if(!modal)return;
 
-    // Conserver les retours à la ligne et le comportement natif des listes/boutons.
+    // Bloc-note chantier : Entrée = Enregistrer. Maj+Entrée conserve un retour à la ligne.
+    if(target && target.closest && target.closest('.yaya-note-modal-textarea')){
+      if(e.shiftKey)return;
+      const btn=saveButton(modal);
+      if(!btn)return;
+      const label=String(btn.textContent||btn.value||'').trim();
+      if(/supprim|effac|archiv/i.test(label))return;
+      e.preventDefault();
+      e.stopPropagation();
+      btn.click();
+      return;
+    }
+
+    if(e.shiftKey)return;
+
+    // Conserver les retours à la ligne et le comportement natif des autres listes/boutons.
     if(target && target.closest){
       if(target.closest('textarea,[contenteditable="true"],select,button,a,[role="button"]'))return;
     }
-
-    const modal=topModal();
-    if(!modal)return;
 
     // Ne jamais lancer une action destructive par Enter.
     const btn=saveButton(modal);
