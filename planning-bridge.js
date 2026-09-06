@@ -1,12 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaPlanningBridgeV1)return;
+  if(window.__yayaPlanningBridgeV2)return;
+  window.__yayaPlanningBridgeV2=true;
   window.__yayaPlanningBridgeV1=true;
 
   const HIDDEN_GANTT_COLOR='#9CA3AF';
   const SYNC_TIMEOUT_MS=18000;
-  const STYLE_ID='yaya-planning-bridge-style-v1';
 
   function normalizeName(value){
     return String(value||'')
@@ -135,77 +135,26 @@
     return {planningId:planningId,planningName:planningName};
   }
 
-  function installStyle(){
-    if(document.getElementById(STYLE_ID))return;
-    const style=document.createElement('style');
-    style.id=STYLE_ID;
-    style.textContent='\n      .yaya-planning-box{display:none!important}\n      .yaya-chantier-edit-cancel{min-height:42px!important;min-width:78px!important;touch-action:manipulation!important;pointer-events:auto!important}\n    ';
-    document.head.appendChild(style);
-  }
-
-  window.cancelExistingChantierEdit=function(event){
-    if(event){
-      try{event.preventDefault();}catch(e){}
-      try{event.stopPropagation();}catch(e){}
-    }
-    try{
-      const root=document.getElementById('modalRoot');
-      if(root){root.innerHTML='';return false;}
-    }catch(e){}
-    try{if(typeof closeModal==='function')closeModal();}catch(e){}
-    return false;
-  };
-
-  function cleanupModal(){
+  function cleanupCreateModal(){
     const planningToggle=document.getElementById('chPlanningToggle');
     if(planningToggle&&planningToggle.parentElement){
       planningToggle.parentElement.style.setProperty('display','none','important');
     }
-
-    document.querySelectorAll('.yaya-planning-box').forEach(function(box){
-      box.style.setProperty('display','none','important');
-    });
 
     const demarrage=document.getElementById('chDemarrage');
     if(demarrage){
       const bloc=demarrage.closest('label')||demarrage.parentElement;
       if(bloc)bloc.style.setProperty('display','none','important');
     }
-
-    const modal=document.querySelector('.yaya-chantier-edit-modal');
-    if(modal){
-      Array.from(modal.querySelectorAll('.mfoot button')).forEach(function(btn){
-        const text=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-        if(text!=='annuler')return;
-        btn.id='editChCancel';
-        btn.classList.add('yaya-chantier-edit-cancel');
-        btn.type='button';
-        btn.setAttribute('onclick','return cancelExistingChantierEdit(event)');
-      });
-    }
   }
 
-  function observeModals(){
-    installStyle();
-    cleanupModal();
-
-    function attach(){
-      const root=document.getElementById('modalRoot');
-      if(!root){setTimeout(attach,120);return;}
-      if(root.dataset.yayaPlanningBridgeObserved==='1')return;
-      root.dataset.yayaPlanningBridgeObserved='1';
-      new MutationObserver(cleanupModal).observe(root,{childList:true,subtree:true});
-    }
-    attach();
-  }
-
-  async function confirmCreatedOnYaya(localId){
-    try{
-      if(typeof apiGet!=='function')return null;
-      const fresh=await apiGet(true);
-      const list=Array.isArray(fresh&&fresh.chantiers)?fresh.chantiers:[];
-      return list.find(function(c){return String(c&&c.id)===String(localId);})||null;
-    }catch(e){return null;}
+  function observeCreateModal(){
+    cleanupCreateModal();
+    const root=document.getElementById('modalRoot');
+    if(!root){setTimeout(observeCreateModal,120);return;}
+    if(root.dataset.yayaPlanningBridgeV2Observed==='1')return;
+    root.dataset.yayaPlanningBridgeV2Observed='1';
+    new MutationObserver(cleanupCreateModal).observe(root,{childList:true,subtree:true});
   }
 
   function makeAutomaticAdd(){
@@ -259,10 +208,7 @@
 
         if(typeof toast==='function')toast('Chantier créé dans Yaya ✓');
 
-        const confirmed=await confirmCreatedOnYaya(chantier.id);
-        const stable=confirmed||chantier;
-
-        ensurePlanning(stable)
+        ensurePlanning(chantier)
           .then(function(){
             if(typeof toast==='function')toast('Chantier créé dans Yaya et Planning ✓');
           })
@@ -293,6 +239,6 @@
     window.addChantier=makeAutomaticAdd();
   }
 
-  observeModals();
+  observeCreateModal();
   installAutomaticAdd();
 })();
