@@ -29,7 +29,7 @@ jobs:
           git checkout main
           git pull --ff-only origin main
 
-      - name: Increment visible Yaya version
+      - name: Increment and synchronize visible Yaya version
         run: |
           python3 - <<'PY'
           from pathlib import Path
@@ -43,6 +43,26 @@ jobs:
 
           new_version = f'{int(m.group(1))}.{int(m.group(2)) + 1}'
           p.write_text(new_version + '\n', encoding='utf-8')
+
+          # Ancien fichier conservé uniquement pour compatibilité : même numéro.
+          Path('VERSION.txt').write_text('v' + new_version + '\n', encoding='utf-8')
+
+          # Toutes les pages HTML portent désormais exactement la même version.
+          for filename in ('index.html', 'index-production-base.html', 'index-legacy.html'):
+              path = Path(filename)
+              if not path.exists():
+                  continue
+              text = path.read_text(encoding='utf-8')
+              text, count = re.subn(
+                  r'<title>Yaya v[^<]+ — AB RENOV 35</title>',
+                  f'<title>Yaya v{new_version} — AB RENOV 35</title>',
+                  text,
+                  count=1,
+                  flags=re.I,
+              )
+              if count:
+                  path.write_text(text, encoding='utf-8')
+
           print(f'Yaya {current} -> {new_version}')
           PY
 
@@ -50,6 +70,6 @@ jobs:
         run: |
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
-          git add version.txt
+          git add version.txt VERSION.txt index.html index-production-base.html index-legacy.html
           git commit -m "Bump Yaya visible version" || echo "No change"
           git push
