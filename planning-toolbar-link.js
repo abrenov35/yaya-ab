@@ -282,13 +282,3 @@
   script.setAttribute('data-yaya-landscape-toolbar-fix','1');
   document.head.appendChild(script);
 })();
-
-(function(){
-  'use strict';
-  if(document.querySelector('script[data-yaya-auto-planning-create]'))return;
-  const script=document.createElement('script');
-  script.src='chantier-auto-planning-create.js?v=autoplanning-5';
-  script.async=false;
-  script.setAttribute('data-yaya-auto-planning-create','1');
-  document.head.appendChild(script);
-})();
