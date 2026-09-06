@@ -1,12 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaPiecePreviewDisplayFixV3Installed)return;
-  window.__yayaPiecePreviewDisplayFixV3Installed=true;
+  if(window.__yayaPiecePreviewDisplayFixV4Installed)return;
+  window.__yayaPiecePreviewDisplayFixV4Installed=true;
   window.__yayaPiecePreviewDisplayFixInstalled=true;
 
   const ROOT_ID='modalRoot';
-  const STYLE_ID='yaya-piece-preview-display-fix-v3';
+  const STYLE_ID='yaya-piece-preview-display-fix-v4';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -118,17 +118,73 @@
     return false;
   }
 
+  function contentRatio(modal){
+    if(!modal)return 0;
+
+    const img=modal.querySelector('.piece-image-stage img,.piece-drive-pages-stage img');
+    if(img&&img.naturalWidth>20&&img.naturalHeight>20){
+      return Math.max(.35,Math.min(2.8,img.naturalWidth/img.naturalHeight));
+    }
+
+    const canvas=modal.querySelector('.piece-pdf-page canvas');
+    if(canvas&&canvas.width>20&&canvas.height>20){
+      return Math.max(.35,Math.min(2.8,canvas.width/canvas.height));
+    }
+
+    const frame=modal.querySelector('.yaya-drive-fit-frame');
+    if(frame){
+      const r=frame.getBoundingClientRect();
+      if(r.width>120&&r.height>120){
+        return Math.max(.35,Math.min(2.8,r.width/r.height));
+      }
+    }
+
+    return 0;
+  }
+
+  function normalGeometryFromContent(modal){
+    if(!modal||!contentReady(modal))return null;
+
+    const ratio=contentRatio(modal);
+    if(!ratio)return null;
+
+    const g=availableGeometry();
+    const vw=Math.max(320,window.innerWidth||document.documentElement.clientWidth||0);
+    const maxW=Math.max(320,Math.min(900,vw-24));
+    const maxH=Math.max(360,Math.min(840,g.height));
+    const head=modal.querySelector('.piece-preview-head');
+    const headH=Math.max(30,Math.ceil(head&&head.getBoundingClientRect().height||34));
+    const stageH=Math.max(300,maxH-headH-18);
+
+    let width=Math.round(stageH*ratio+24);
+    let height=maxH;
+
+    if(ratio>1.12){
+      width=Math.max(620,Math.min(maxW,width));
+      height=Math.min(maxH,Math.round((width-24)/ratio+headH+18));
+    }else{
+      width=Math.max(500,Math.min(maxW,width));
+    }
+
+    return {
+      width:Math.round(width),
+      height:Math.round(height),
+      ratio:ratio
+    };
+  }
+
   function rememberNormal(modal,force){
     if(!modal||modal.dataset.yayaPreviewFullscreen==='1')return false;
-    if(!force&&modal.dataset.yayaDisplayNormalSaved==='1')return true;
-    if(!contentReady(modal))return false;
+    if(!force&&modal.dataset.yayaDisplayNormalSource==='content-v4')return true;
 
-    const r=modal.getBoundingClientRect();
-    if(r.width<280||r.height<260)return false;
+    const wanted=normalGeometryFromContent(modal);
+    if(!wanted)return false;
 
     modal.dataset.yayaDisplayNormalSaved='1';
-    modal.dataset.yayaDisplayNormalWidth=String(Math.round(r.width));
-    modal.dataset.yayaDisplayNormalHeight=String(Math.round(r.height));
+    modal.dataset.yayaDisplayNormalSource='content-v4';
+    modal.dataset.yayaDisplayNormalWidth=String(wanted.width);
+    modal.dataset.yayaDisplayNormalHeight=String(wanted.height);
+    modal.dataset.yayaDisplayContentRatio=String(wanted.ratio.toFixed(4));
     return true;
   }
 
@@ -155,6 +211,10 @@
       modal.style.setProperty('max-height',g.height+'px','important');
       modal.style.setProperty('margin','0 auto','important');
     }else{
+      if(contentReady(modal)&&modal.dataset.yayaDisplayNormalSource!=='content-v4'){
+        rememberNormal(modal,true);
+      }
+
       const savedW=Number(modal.dataset.yayaDisplayNormalWidth)||0;
       const savedH=Number(modal.dataset.yayaDisplayNormalHeight)||0;
 
@@ -191,21 +251,11 @@
     if(!modal||!modal.isConnected)return;
     if(modal.dataset.yayaPreviewFullscreen==='1')return;
 
-    const runs=[45,110,220,420];
-    runs.forEach(function(delay,index){
+    [0,45,110,220,420,800].forEach(function(delay){
       setTimeout(function(){
         if(!modal.isConnected||modal.dataset.yayaPreviewFullscreen==='1')return;
-
+        if(contentReady(modal))rememberNormal(modal,true);
         applyGeometry(modal);
-
-        if(contentReady(modal)&&index>=1){
-          // À ce stade le lecteur historique a déjà eu le temps de calculer
-          // la bonne taille à partir du document réel. On mémorise cette taille,
-          // puis on la réapplique immédiatement : la 1re ouverture devient donc
-          // identique aux suivantes.
-          rememberNormal(modal,true);
-          applyGeometry(modal);
-        }
       },delay);
     });
   }
@@ -227,11 +277,9 @@
   }
 
   function bind(){
-    if(document.documentElement.dataset.yayaDisplayFixBoundV3==='1')return;
-    document.documentElement.dataset.yayaDisplayFixBoundV3='1';
+    if(document.documentElement.dataset.yayaDisplayFixBoundV4==='1')return;
+    document.documentElement.dataset.yayaDisplayFixBoundV4='1';
 
-    // L'ancien lecteur possède déjà un handler de clic. On intercepte avant lui
-    // pour qu'un seul clic ne déclenche qu'un seul agrandissement.
     document.addEventListener('click',function(e){
       if(e.button!=null&&e.button!==0)return;
       const target=e.target&&e.target.closest
@@ -254,10 +302,8 @@
     if(!root)return;
 
     root.querySelectorAll('.piece-preview-modal').forEach(function(modal){
+      if(contentReady(modal))rememberNormal(modal,true);
       applyGeometry(modal);
-      if(contentReady(modal)&&modal.dataset.yayaDisplayNormalSaved!=='1'){
-        settleNormal(modal);
-      }
     });
   }
 
