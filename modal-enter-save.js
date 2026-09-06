@@ -140,16 +140,6 @@
   document.head.appendChild(s);
 })();
 
-/* Garde le bouton Fermer visible sur les aperçus devis / pièces. */
-(function(){
-  'use strict';
-  if(document.querySelector('script[data-yaya-piece-toolbar-safe="1"]'))return;
-  const s=document.createElement('script');
-  s.src='piece-preview-toolbar-safe.js?v=piecetoolbar-'+Date.now();
-  s.dataset.yayaPieceToolbarSafe='1';
-  document.head.appendChild(s);
-})();
-
 /* Stabilise la suppression du devis principal après les refresh automatiques. */
 (function(){
   'use strict';
@@ -160,7 +150,7 @@
   document.head.appendChild(s);
 })();
 
-/* Ajuste les documents dans les modales et rend le premier clic = agrandissement. */
+/* Ouvre les pièces directement dans l'affichage agrandi et adapte la modale au téléphone. */
 (function(){
   'use strict';
   if(document.querySelector('script[data-yaya-piece-display-fix="1"]'))return;
