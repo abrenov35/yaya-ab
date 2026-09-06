@@ -6,11 +6,14 @@
 
   function getRoot(){return document.getElementById(ROOT_ID);}
   function isFullscreen(modal){return modal&&modal.dataset.yayaPreviewFullscreen==='1';}
+  function delegated(){return !!window.__yayaPiecePreviewDisplayFixInstalled;}
 
   function requestPdfRedraw(modal,delay){
+    if(delegated())return;
     if(!modal||typeof modal.__yayaRedrawPdf!=='function')return;
     clearTimeout(redrawTimer);
     redrawTimer=setTimeout(function(){
+      if(delegated())return;
       if(modal&&typeof modal.__yayaRedrawPdf==='function')modal.__yayaRedrawPdf(0);
     },Number(delay)||100);
   }
@@ -73,24 +76,22 @@
   }
 
   function applyModalGeometry(modal){
+    if(delegated())return false;
     if(!modal)return false;
 
     const full=isFullscreen(modal);
     const viewportW=Math.max(320,window.innerWidth);
     const viewportH=Math.max(320,window.innerHeight);
-
-    // Sur téléphone, l'aperçu reste plein écran pour conserver une bonne lisibilité.
     const mobile=viewportW<=640;
     const normal=normalGeometry(modal,viewportW,viewportH);
     const large=largeGeometry(viewportW,viewportH);
 
     const wantedW=mobile
-      ? Math.max(312,viewportW-8)
-      : (full?large.width:normal.width);
-
+      ?Math.max(312,viewportW-8)
+      :(full?large.width:normal.width);
     const wantedH=mobile
-      ? Math.max(312,viewportH-8)
-      : (full?large.height:normal.height);
+      ?Math.max(312,viewportH-8)
+      :(full?large.height:normal.height);
 
     const oldW=Math.round(modal.getBoundingClientRect().width||0);
     const oldH=Math.round(modal.getBoundingClientRect().height||0);
@@ -151,6 +152,7 @@
   }
 
   function fitCurrentModal(redrawIfChanged){
+    if(delegated())return;
     const root=getRoot();
     if(!root)return;
     const modal=root.querySelector('.piece-preview-modal');
@@ -160,6 +162,7 @@
   }
 
   function toggleFullscreen(modal,force){
+    if(delegated())return;
     if(!modal||modal.dataset.yayaPreviewTransition==='1')return;
 
     const next=typeof force==='boolean'?force:!isFullscreen(modal);
@@ -206,6 +209,7 @@
     root.dataset.yayaPreviewInteractions='1';
 
     root.addEventListener('click',function(e){
+      if(delegated())return;
       const target=e.target&&e.target.closest?e.target.closest('.piece-pdf-page,.piece-image-stage img,.piece-drive-pages-stage img,.yaya-drive-zoom-hit'):null;
       if(!target)return;
       const modal=target.closest('.piece-preview-modal');
@@ -218,12 +222,14 @@
     root.addEventListener('wheel',handleWheel,{capture:true,passive:false});
 
     root.addEventListener('load',function(e){
+      if(delegated())return;
       if(e.target&&e.target.matches&&e.target.matches('.piece-image-stage img')){
         setTimeout(function(){fitCurrentModal(true);},30);
       }
     },true);
 
     root.addEventListener('keydown',function(e){
+      if(delegated())return;
       const target=e.target&&e.target.closest?e.target.closest('.yaya-drive-zoom-hit'):null;
       if(!target||!(e.key==='Enter'||e.key===' '))return;
       const modal=target.closest('.piece-preview-modal');
@@ -233,6 +239,7 @@
     });
 
     window.addEventListener('keydown',function(e){
+      if(delegated())return;
       if(e.key!=='Escape')return;
       const modal=root.querySelector('.piece-preview-modal');
       if(modal&&isFullscreen(modal)){
@@ -248,8 +255,10 @@
 
     let fitTimer=0;
     new MutationObserver(function(){
+      if(delegated())return;
       clearTimeout(fitTimer);
       fitTimer=setTimeout(function(){
+        if(delegated())return;
         const modal=root.querySelector('.piece-preview-modal');
         if(!modal)return;
         fitCurrentModal(true);
@@ -258,6 +267,7 @@
 
     let windowTimer=0;
     window.addEventListener('resize',function(){
+      if(delegated())return;
       clearTimeout(windowTimer);
       windowTimer=setTimeout(function(){fitCurrentModal(true);},180);
     },{passive:true});
