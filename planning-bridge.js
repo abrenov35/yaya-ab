@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaPlanningBridgeV2)return;
+  if(window.__yayaPlanningBridgeV3)return;
+  window.__yayaPlanningBridgeV3=true;
   window.__yayaPlanningBridgeV2=true;
   window.__yayaPlanningBridgeV1=true;
 
@@ -69,29 +70,30 @@
     return '[YAYA_ID:'+String(localId||'').trim()+']';
   }
 
-  function matchByIdentity(list,localId,name){
+  function matchByIdentity(list,localId){
     const marker=markerFor(localId);
     const byMarker=(list||[]).filter(function(p){
       return String(p&&p.description||'').indexOf(marker)!==-1;
     });
     if(byMarker.length===1)return byMarker[0];
     if(byMarker.length>1)throw new Error('Plusieurs chantiers Planning portent le même identifiant Yaya');
-
-    const wanted=normalizeName(name);
-    if(!wanted)return null;
-    const exact=(list||[]).filter(function(p){return normalizeName(p&&p.nom)===wanted;});
-    if(exact.length===1)return exact[0];
-    if(exact.length>1)throw new Error('Plusieurs chantiers Planning portent ce nom');
     return null;
+  }
+
+  function countSameName(list,name){
+    const wanted=normalizeName(name);
+    if(!wanted)return 0;
+    return (list||[]).filter(function(p){return normalizeName(p&&p.nom)===wanted;}).length;
   }
 
   async function ensurePlanning(localChantier){
     if(!localChantier||!localChantier.id||!localChantier.nom)return null;
 
     const first=planningList(await jsonpPlanning({action:'getChantiers'}));
-    let existing=matchByIdentity(first,localChantier.id,localChantier.nom);
+    let existing=matchByIdentity(first,localChantier.id);
     let planningId=existing&&existing.id?String(existing.id):'';
     let planningName=existing&&existing.nom?String(existing.nom):String(localChantier.nom);
+    const homonymCount=existing?0:countSameName(first,localChantier.nom);
 
     if(!planningId){
       const date=String(localChantier.dateDemarrageEstime||localChantier.dateDebut||'');
@@ -114,13 +116,13 @@
 
       if(!planningId){
         const second=planningList(await jsonpPlanning({action:'getChantiers'}));
-        existing=matchByIdentity(second,localChantier.id,localChantier.nom);
+        existing=matchByIdentity(second,localChantier.id);
         planningId=existing&&existing.id?String(existing.id):'';
         planningName=existing&&existing.nom?String(existing.nom):planningName;
       }
     }
 
-    if(!planningId)throw new Error('Identifiant Planning introuvable');
+    if(!planningId)throw new Error('Identifiant Planning introuvable après création');
 
     localChantier.planningPresent=true;
     localChantier.sourcePlanningId=planningId;
@@ -132,7 +134,7 @@
       }));
     }catch(e){}
 
-    return {planningId:planningId,planningName:planningName};
+    return {planningId:planningId,planningName:planningName,homonymCount:homonymCount};
   }
 
   function cleanupCreateModal(){
@@ -152,8 +154,8 @@
     cleanupCreateModal();
     const root=document.getElementById('modalRoot');
     if(!root){setTimeout(observeCreateModal,120);return;}
-    if(root.dataset.yayaPlanningBridgeV2Observed==='1')return;
-    root.dataset.yayaPlanningBridgeV2Observed='1';
+    if(root.dataset.yayaPlanningBridgeV3Observed==='1')return;
+    root.dataset.yayaPlanningBridgeV3Observed='1';
     new MutationObserver(cleanupCreateModal).observe(root,{childList:true,subtree:true});
   }
 
@@ -209,12 +211,20 @@
         if(typeof toast==='function')toast('Chantier créé dans Yaya ✓');
 
         ensurePlanning(chantier)
-          .then(function(){
-            if(typeof toast==='function')toast('Chantier créé dans Yaya et Planning ✓');
+          .then(function(link){
+            if(typeof toast!=='function')return;
+            if(link&&link.homonymCount>0){
+              toast('Chantier créé dans Yaya et Planning — homonyme séparé ✓');
+            }else{
+              toast('Chantier créé dans Yaya et Planning ✓');
+            }
           })
           .catch(function(err){
             console.error('Passerelle Yaya -> Planning :',err);
-            if(typeof toast==='function')toast('Chantier créé dans Yaya — Planning à synchroniser',true);
+            if(typeof toast==='function'){
+              const raison=String(err&&err.message?err.message:'erreur inconnue');
+              toast('Chantier créé dans Yaya — Planning non synchronisé : '+raison,true);
+            }
           });
       }catch(err){
         try{S.chantiers=S.chantiers.filter(function(c){return String(c.id)!==String(chantier.id);});}catch(e){}
