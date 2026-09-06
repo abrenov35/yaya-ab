@@ -95,7 +95,10 @@
 
   function findTarget(){
     return currentChantiers().find(function(c){
-      return String(c&&c.id||'').trim().toUpperCase()===requestedId;
+      return c &&
+        String(c.id||'').trim() &&
+        String(c.nom||'').trim() &&
+        String(c.id||'').trim().toUpperCase()===requestedId;
     })||null;
   }
 
@@ -174,4 +177,80 @@
   },15000);
 
   window.addEventListener('yaya:data-refreshed',attempt);
+})();
+
+/* =========================================================
+   GARDE ANTI-CHANTIER FANTOME
+   Un chantier sans nom OU sans identifiant ne doit jamais
+   apparaitre ni pouvoir etre ouvert depuis la page Chantiers.
+========================================================= */
+(function(){
+  'use strict';
+
+  if(typeof renderChantiers!=='function')return;
+
+  const renderChantiersOriginal=renderChantiers;
+
+  function chantierValide(c){
+    return !!(
+      c &&
+      String(c.id||'').trim() &&
+      String(c.nom||'').trim()
+    );
+  }
+
+  renderChantiers=function(){
+    let listeOriginale=null;
+    let focusOriginal=null;
+    let focusInvalide=false;
+
+    try{
+      if(typeof S!=='undefined' && S && Array.isArray(S.chantiers)){
+        listeOriginale=S.chantiers;
+
+        try{
+          if(typeof focusChantier!=='undefined' && focusChantier){
+            focusOriginal=focusChantier;
+            const cible=listeOriginale.find(function(c){
+              return String(c&&c.id||'')===String(focusChantier);
+            });
+            if(!chantierValide(cible)){
+              focusInvalide=true;
+              focusChantier=null;
+              try{
+                if(typeof expChantiers!=='undefined' && expChantiers && typeof expChantiers.delete==='function'){
+                  expChantiers.delete(String(focusOriginal));
+                }
+              }catch(_){}
+            }
+          }
+        }catch(_){}
+
+        S.chantiers=listeOriginale.filter(chantierValide);
+      }
+
+      return renderChantiersOriginal.apply(this,arguments);
+    }finally{
+      if(listeOriginale && typeof S!=='undefined' && S){
+        S.chantiers=listeOriginale;
+      }
+
+      if(focusInvalide){
+        try{
+          const url=new URL(window.location.href);
+          if(url.searchParams.has('chantier')){
+            url.searchParams.delete('chantier');
+            history.replaceState(null,'',url.pathname+(url.search||'')+(url.hash||'#chantiers'));
+          }
+        }catch(_){}
+      }
+    }
+  };
+
+  // Nettoie immédiatement une éventuelle ligne fantôme déjà affichée.
+  try{
+    if(document.getElementById('pane-chantiers'))renderChantiers();
+  }catch(e){
+    console.warn('Garde chantier fantôme :',e);
+  }
 })();
