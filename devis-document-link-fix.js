@@ -209,9 +209,19 @@
   document.head.appendChild(s);
 })();
 
-// Pour le devis 1, affiche l'objet / lot comme libellé au lieu de « Devis principal ».
+// Marché : plus de Devis 1 / Devis 2 / Devis 3 visibles.
+// Chaque ligne affiche uniquement son libellé, sa description et sa date.
 (function(){
   'use strict';
+
+  function unpackMeta(value){
+    const raw=String(value||'').trim();
+    const match=raw.match(/\s*\[\[YAYA_DESC:([^\]]*)\]\]\s*$/);
+    if(!match)return {label:raw,description:''};
+    let description='';
+    try{description=decodeURIComponent(match[1]||'');}catch(e){description=String(match[1]||'');}
+    return {label:raw.slice(0,match.index).trim(),description:description};
+  }
 
   function chantierById(id){
     try{
@@ -221,29 +231,74 @@
     }catch(e){return null;}
   }
 
-  function apply(){
-    document.querySelectorAll('#pane-chantiers .yaya-detail-market-row').forEach(function(row){
-      const edit=row.querySelector('.yaya-detail-document-edit[data-kind="main"]');
-      const strong=row.querySelector('strong');
-      if(!edit||!strong)return;
+  function avenantById(id){
+    try{
+      return Array.isArray(S&&S.avenants)
+        ?S.avenants.find(function(v){return String(v&&v.id)===String(id);})||null
+        :null;
+    }catch(e){return null;}
+  }
 
-      const c=chantierById(edit.dataset.rowId||'');
-      if(!c)return;
+  function textNodeOf(strong){
+    if(!strong)return null;
+    for(const node of strong.childNodes){
+      if(node.nodeType===Node.TEXT_NODE)return node;
+    }
+    return null;
+  }
 
-      const objet=String(c.numero||'').trim();
-      if(!objet)return;
+  function applyRow(row){
+    const edit=row.querySelector('.yaya-detail-document-edit[data-kind][data-row-id]');
+    const strong=row.querySelector('strong');
+    if(!edit||!strong)return;
 
-      let textNode=null;
-      for(const node of strong.childNodes){
-        if(node.nodeType===Node.TEXT_NODE){textNode=node;break;}
+    const kind=String(edit.dataset.kind||'');
+    const id=String(edit.dataset.rowId||'');
+    let meta={label:'',description:''};
+
+    if(kind==='main'){
+      const c=chantierById(id);if(!c)return;
+      meta=unpackMeta(c.numero||'');
+    }else{
+      const v=avenantById(id);if(!v)return;
+      meta=unpackMeta(v.libelle||'');
+    }
+
+    const label=meta.label||'Devis';
+    const description=String(meta.description||'').trim();
+    const node=textNodeOf(strong);
+    const currentLabel=String(node&&node.nodeValue||'').trim();
+    const currentDescription=String(strong.querySelector('.yaya-market-description')&&strong.querySelector('.yaya-market-description').textContent||'').trim();
+
+    if(currentLabel!==label){
+      if(node)node.nodeValue=label;
+      else strong.insertBefore(document.createTextNode(label),strong.firstChild);
+    }
+
+    strong.querySelectorAll('small:not(.yaya-history-date):not(.yaya-market-description)').forEach(function(small){small.remove();});
+
+    let desc=strong.querySelector('.yaya-market-description');
+    if(description){
+      if(!desc){
+        desc=document.createElement('small');
+        desc.className='yaya-market-description';
+        const date=strong.querySelector('.yaya-history-date');
+        if(date)strong.insertBefore(desc,date);else strong.appendChild(desc);
       }
-      if(textNode)textNode.nodeValue=objet;
-      else strong.insertBefore(document.createTextNode(objet),strong.firstChild);
+      if(currentDescription!==description)desc.textContent=description;
+    }else if(desc){
+      desc.remove();
+    }
 
-      strong.querySelectorAll('small').forEach(function(small){
-        if(String(small.textContent||'').trim()==='N° '+objet)small.remove();
-      });
-    });
+    const type=row.querySelector('.yaya-detail-charge-hours');
+    if(type){
+      type.style.setProperty('display','none','important');
+      type.setAttribute('aria-hidden','true');
+    }
+  }
+
+  function apply(){
+    document.querySelectorAll('#pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row').forEach(applyRow);
   }
 
   let scheduled=false;
@@ -257,6 +312,6 @@
   }
 
   schedule();
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();
