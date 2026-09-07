@@ -5,6 +5,15 @@
   window.__yayaChantierModalContextLockV1=true;
 
   function currentChantierId(){
+    // Ne jamais réutiliser un ancien focusChantier lorsqu'on a quitté la page Chantiers.
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return '';
+    try{
+      if(window.getComputedStyle(pane).display==='none')return '';
+    }catch(e){
+      if(pane.style&&pane.style.display==='none')return '';
+    }
+
     try{
       if(typeof focusChantier!=='undefined' && focusChantier){
         return String(focusChantier);
