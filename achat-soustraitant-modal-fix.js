@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaAchatSousTraitantSingleFieldV3)return;
-  window.__yayaAchatSousTraitantSingleFieldV3=true;
+  if(window.__yayaAchatSousTraitantSingleFieldV4)return;
+  window.__yayaAchatSousTraitantSingleFieldV4=true;
 
   function isSousTraitant(type){
     return String(type||'').trim()==='Facture sous-traitant';
@@ -18,6 +18,14 @@
     if(!el)return;
     el.style.removeProperty('display');
     el.removeAttribute('aria-hidden');
+  }
+
+  function toastSafe(message,isError){
+    try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
+  }
+
+  function renderSafe(){
+    try{if(typeof render==='function')render();}catch(e){}
   }
 
   function hideOpenAIWarning(modal){
@@ -60,8 +68,7 @@
       }
     }
 
-    const modal=type.closest('.modal');
-    hideOpenAIWarning(modal);
+    hideOpenAIWarning(type.closest('.modal'));
   }
 
   function prepareBeforeSave(){
@@ -80,12 +87,101 @@
     }
   }
 
-  function achatsLength(){
+  function value(id){
+    const el=document.getElementById(id);
+    return el?String(el.value||'').trim():'';
+  }
+
+  function rollbackAchat(id){
     try{
-      return (typeof S!=='undefined'&&S&&Array.isArray(S.achats))?S.achats.length:0;
-    }catch(e){
-      return 0;
+      if(typeof S==='undefined'||!S||!Array.isArray(S.achats))return;
+      S.achats=S.achats.filter(function(a){return String(a&&a.id)!==String(id);});
+      renderSafe();
+    }catch(e){}
+  }
+
+  function saveWithoutPageSwitch(){
+    const chantierId=value('acCh');
+    const typeDoc=value('acType');
+    const fournisseur=value('acFour');
+    const designation=isSousTraitant(typeDoc)?'':value('acDes');
+    const date=value('acDate');
+    const montantRaw=value('acMt').replace(/\s/g,'').replace(',','.');
+    const montantHT=Number(montantRaw)||0;
+    const sousTraitant=isSousTraitant(typeDoc)?fournisseur:'';
+
+    if(!chantierId){toastSafe('Choisis le chantier de rattachement',true);return false;}
+    if(!fournisseur){
+      const el=document.getElementById('acFour');
+      if(el)el.focus();
+      toastSafe(isSousTraitant(typeDoc)?'Indique le sous-traitant':'Indique le fournisseur',true);
+      return false;
     }
+    if(!montantHT){toastSafe('Indique le montant HT',true);return false;}
+
+    try{
+      const doublon=(typeof S!=='undefined'&&S&&Array.isArray(S.achats))
+        ?S.achats.find(function(a){
+          return String(a&&a.fournisseur||'').toLowerCase()===fournisseur.toLowerCase()
+            && Number(a&&a.montantHT||0)===montantHT
+            && String(a&&a.date||'')===date;
+        })
+        :null;
+      if(doublon && !window.confirm('Doublon probable : '+fournisseur+' — '+montantHT+' € au '+date+' existe déjà. Enregistrer quand même ?')){
+        return false;
+      }
+    }catch(e){}
+
+    let lien='';
+    try{lien=String(achatLien||'');}catch(e){}
+
+    const row={
+      id:(typeof uid==='function'?uid():(Date.now().toString(36)+Math.random().toString(36).slice(2,8))),
+      chantierId:chantierId,
+      typeDoc:typeDoc,
+      fournisseur:fournisseur,
+      designation:designation,
+      date:date,
+      montantHT:montantHT,
+      sousTraitant:sousTraitant,
+      lien:lien,
+      statutValidation:'VALIDEE',
+      origine:'MANUELLE'
+    };
+
+    try{
+      if(typeof S==='undefined'||!S)return false;
+      if(!Array.isArray(S.achats))S.achats=[];
+      S.achats.push(row);
+    }catch(e){
+      toastSafe('Impossible d’ajouter la dépense',true);
+      return false;
+    }
+
+    try{achatLien='';}catch(e){}
+
+    // IMPORTANT : ne jamais faire tab='achats'. On reste exactement sur la page
+    // depuis laquelle la dépense a été créée, donc aucun écran intermédiaire.
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
+    renderSafe();
+    toastSafe('Achat enregistré ✓');
+
+    Promise.resolve()
+      .then(function(){
+        return (typeof apiPost==='function')?apiPost('addAchat',row):false;
+      })
+      .then(function(ok){
+        if(ok)return;
+        rollbackAchat(row.id);
+        toastSafe('La dépense n’a pas été enregistrée sur le serveur',true);
+      })
+      .catch(function(err){
+        console.error('Yaya — enregistrement achat :',err);
+        rollbackAchat(row.id);
+        toastSafe('La dépense n’a pas été enregistrée sur le serveur',true);
+      });
+
+    return true;
   }
 
   function patchModal(){
@@ -96,18 +192,18 @@
     const modal=type.closest('.modal');
     if(!modal)return;
 
-    if(!type.__yayaSousTraitantChange){
+    if(!type.__yayaSousTraitantChangeV4){
       type.addEventListener('change',syncSousTraitantField);
-      type.__yayaSousTraitantChange=true;
+      type.__yayaSousTraitantChangeV4=true;
     }
 
-    if(!fournisseur.__yayaSousTraitantInput){
+    if(!fournisseur.__yayaSousTraitantInputV4){
       fournisseur.addEventListener('input',function(){
         if(!isSousTraitant(type.value))return;
         const st=document.getElementById('acST');
         if(st)st.value=String(fournisseur.value||'').trim();
       });
-      fournisseur.__yayaSousTraitantInput=true;
+      fournisseur.__yayaSousTraitantInputV4=true;
     }
 
     syncSousTraitantField();
@@ -118,60 +214,18 @@
       const onclick=String(b.getAttribute('onclick')||'');
       return /^Enregistrer$/i.test(txt)||/addAchat/.test(onclick);
     });
-    if(!save||save.__yayaAchatSaveSingleFieldV3)return;
+    if(!save||save.__yayaAchatSaveNoSwitchV4)return;
 
+    // Neutralise complètement l'ancien addAchat(), qui faisait tab='achats'; render()
+    // avant l'écriture réseau et provoquait l'écran parasite visible par l'utilisateur.
     save.removeAttribute('onclick');
-    save.__yayaAchatSaveSingleFieldV3=true;
+    save.__yayaAchatSaveNoSwitchV4=true;
     save.addEventListener('click',function(e){
       e.preventDefault();
       e.stopPropagation();
-
-      const chantier=document.getElementById('acCh');
-      const fournisseurNow=document.getElementById('acFour');
-      const montant=document.getElementById('acMt');
-      const typeNow=document.getElementById('acType');
-
-      if(!chantier||!chantier.value){
-        if(typeof toast==='function')toast('Choisis le chantier de rattachement',true);
-        return;
-      }
-
-      const nom=String(fournisseurNow&&fournisseurNow.value||'').trim();
-      if(!nom){
-        if(fournisseurNow)fournisseurNow.focus();
-        if(typeof toast==='function')toast(isSousTraitant(typeNow&&typeNow.value)?'Indique le sous-traitant':'Indique le fournisseur',true);
-        return;
-      }
-
-      if(!montant||!(Number(montant.value)||0)){
-        if(typeof toast==='function')toast('Indique le montant HT',true);
-        return;
-      }
-
+      e.stopImmediatePropagation();
       prepareBeforeSave();
-
-      const before=achatsLength();
-      let result=null;
-      try{
-        result=(typeof addAchat==='function')?addAchat():null;
-      }catch(err){
-        if(typeof toast==='function')toast(String(err&&err.message||err),true);
-        return;
-      }
-
-      // addAchat ajoute la ligne dans S.achats avant son premier await.
-      // On peut donc fermer la modale immédiatement sans attendre l'écriture réseau.
-      const after=achatsLength();
-      if(after>before && typeof closeModal==='function'){
-        closeModal();
-      }
-
-      if(result&&typeof result.then==='function'){
-        result.catch(function(err){
-          console.error('Yaya — enregistrement achat :',err);
-          if(typeof toast==='function')toast(String(err&&err.message||err),true);
-        });
-      }
+      saveWithoutPageSwitch();
     },true);
   }
 
@@ -188,10 +242,6 @@
   obs.observe(document.documentElement,{childList:true,subtree:true,characterData:true});
   document.addEventListener('change',function(e){
     if(e.target&&e.target.id==='acType')syncSousTraitantField();
-  },true);
-  document.addEventListener('click',function(e){
-    const btn=e.target&&e.target.closest?e.target.closest('button'):null;
-    if(btn&&document.getElementById('acType'))prepareBeforeSave();
   },true);
 
   setTimeout(patchModal,0);
