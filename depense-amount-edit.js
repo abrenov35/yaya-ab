@@ -1,12 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDepenseAmountEditV4)return;
-  window.__yayaDepenseAmountEditV4=true;
+  if(window.__yayaDepenseAmountEditV5)return;
+  window.__yayaDepenseAmountEditV5=true;
 
-  const STYLE_ID='yaya-depense-amount-edit-style-v4';
+  const STYLE_ID='yaya-depense-amount-edit-style-v5';
 
   function installStyle(){
+    ['yaya-depense-amount-edit-style-v4'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
     let style=document.getElementById(STYLE_ID);
     if(style)return;
     style=document.createElement('style');
@@ -29,7 +30,10 @@
       #pane-chantiers .yaya-detail-expenses-pane button[aria-label="Modifier"],
       #pane-chantiers .ligD button[onclick*="editAchat"],
       #pane-chantiers .ligD button[title="Modifier"],
-      #pane-chantiers .ligD button[aria-label="Modifier"]{
+      #pane-chantiers .ligD button[aria-label="Modifier"],
+      #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-charge-view,
+      #pane-chantiers .yaya-detail-expenses-pane button[title="Voir"],
+      #pane-chantiers .yaya-detail-expenses-pane button[aria-label="Voir"]{
         display:none!important;
       }
     `;
@@ -39,6 +43,13 @@
   function extractId(raw){
     const m=String(raw||'').match(/(?:editMontantAchat|editAchat)\(['\"]([^'\"]+)['\"]\)/);
     return m&&m[1]?String(m[1]):'';
+  }
+
+  function hideButton(btn){
+    if(!btn)return;
+    btn.style.setProperty('display','none','important');
+    btn.setAttribute('aria-hidden','true');
+    btn.tabIndex=-1;
   }
 
   function hidePencils(row){
@@ -52,10 +63,7 @@
         || /modifier/i.test(title)
         || /modifier/i.test(aria)
         || /^(?:✏️?|✎|🖉)$/u.test(text);
-      if(!isEdit)return;
-      btn.style.setProperty('display','none','important');
-      btn.setAttribute('aria-hidden','true');
-      btn.tabIndex=-1;
+      if(isEdit)hideButton(btn);
     });
   }
 
@@ -103,18 +111,6 @@
     })||null;
   }
 
-  function idForNativeRow(row){
-    let id=String(row.dataset&&row.dataset.achatId||'').trim();
-    if(id)return id;
-    const holder=row.querySelector('[data-achat-id]');
-    if(holder)id=String(holder.dataset.achatId||'').trim();
-    if(id)return id;
-    const edit=Array.from(row.querySelectorAll('[onclick]')).find(function(el){
-      return /editAchat\s*\(/.test(String(el.getAttribute('onclick')||''));
-    });
-    return edit?extractId(edit.getAttribute('onclick')||''):'';
-  }
-
   function patchNativeRows(){
     document.querySelectorAll('#pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row').forEach(function(row){
       const amount=row.querySelector('.yaya-detail-charge-cost');
@@ -130,6 +126,7 @@
       if(view){
         prepareViewTarget(supplier);
         prepareViewTarget(type);
+        hideButton(view);
       }else{
         [supplier,type].forEach(function(el){
           if(!el)return;
@@ -142,6 +139,18 @@
       }
       hidePencils(row);
     });
+  }
+
+  function idForNativeRow(row){
+    let id=String(row.dataset&&row.dataset.achatId||'').trim();
+    if(id)return id;
+    const holder=row.querySelector('[data-achat-id]');
+    if(holder)id=String(holder.dataset.achatId||'').trim();
+    if(id)return id;
+    const edit=Array.from(row.querySelectorAll('[onclick]')).find(function(el){
+      return /editAchat\s*\(/.test(String(el.getAttribute('onclick')||''));
+    });
+    return edit?extractId(edit.getAttribute('onclick')||''):'';
   }
 
   function patchLegacyRows(){
@@ -171,6 +180,7 @@
           if(el===amount)return;
           if(index<=2)prepareViewTarget(el);
         });
+        if(view.tagName==='BUTTON')hideButton(view);
       }
       hidePencils(row);
     });
