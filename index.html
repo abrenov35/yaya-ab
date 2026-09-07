@@ -4,13 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Yaya v205.284 — AB RENOV 35</title>
+  <style>
+    html{background:#f4f6f8}
+    body{visibility:hidden!important}
+  </style>
 </head>
 
 <body>
-
-<div style="font-family:system-ui;padding:24px">
-  Chargement de Yaya…
-</div>
 
 <script>
 (async()=>{
@@ -273,7 +273,7 @@
 
 
   const marker=
-    "patch+'</body>'";
+    "patch+reveal+'</body>'";
 
 
   const replacement=
@@ -338,7 +338,7 @@
     '<script src="devis-delete-confirm.js?v=devisconfirm-1"><\\/script>'+
     '<script src="devis-no-ai-upload.js?v=noai-fast-8"><\\/script>'+
     '<script src="devis-document-link-fix.js?v=linkfix-9"><\\/script>'+
-    "</body>'";
+    "'+reveal+'</body>'";
 
 
   if(!base.includes(marker)){
@@ -362,6 +362,7 @@
 
 })().catch(e=>{
 
+  document.body.style.setProperty('visibility','visible','important');
   document.body.innerHTML=
     '<pre style="padding:20px;color:#b42318">'+
     'Erreur chargement Yaya : '+

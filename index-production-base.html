@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Yaya v205.284 — AB RENOV 35</title></head><body><div style="font-family:system-ui;padding:24px">Chargement de Yaya…</div><script>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Yaya v205.284 — AB RENOV 35</title><style>html{background:#f4f6f8}body{visibility:hidden!important}</style></head><body><script>
 (async()=>{
   const source=await fetch('index-legacy.html?v=marcheht-6',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});
   const patch=`<script src="yaya-sections-patch.js?v=sectionspatch-1"><\/script><script>
@@ -259,7 +259,44 @@
   install();
 })();
 <\/script>`;
-  const out=source.includes('</body>')?source.replace('</body>',patch+'</body>'):source+patch;
+  const cloak='<style id="yayaBootCloak">html{background:#f4f6f8}body{visibility:hidden!important}</style>';
+  const reveal=`<script>
+(function(){
+  let revealed=false;
+  let attempts=0;
+  function ready(){
+    if(!document.querySelector('.hdr'))return false;
+    try{
+      if(typeof focusChantier!=='undefined'&&focusChantier){
+        return !!document.querySelector('#pane-chantiers .yaya-detail-section-tabs');
+      }
+    }catch(e){}
+    return true;
+  }
+  function show(){
+    if(revealed)return;
+    attempts++;
+    if(!ready()&&attempts<60){setTimeout(show,25);return;}
+    revealed=true;
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        const style=document.getElementById('yayaBootCloak');
+        if(style)style.remove();
+      });
+    });
+  }
+  if(document.readyState==='complete')setTimeout(show,0);
+  else window.addEventListener('load',function(){setTimeout(show,0);},{once:true});
+  setTimeout(function(){
+    if(revealed)return;
+    revealed=true;
+    const style=document.getElementById('yayaBootCloak');
+    if(style)style.remove();
+  },2500);
+})();
+<\/script>`;
+  let prepared=source.includes('</head>')?source.replace('</head>',cloak+'</head>'):cloak+source;
+  const out=prepared.includes('</body>')?prepared.replace('</body>',patch+reveal+'</body>'):prepared+patch+reveal;
   document.open();document.write(out);document.close();
-})().catch(e=>{document.body.innerHTML='<pre style="padding:20px;color:#b42318">Erreur chargement Yaya : '+String(e)+'</pre>';});
+})().catch(e=>{document.body.style.setProperty('visibility','visible','important');document.body.innerHTML='<pre style="padding:20px;color:#b42318">Erreur chargement Yaya : '+String(e)+'</pre>';});
 </script></body></html>
