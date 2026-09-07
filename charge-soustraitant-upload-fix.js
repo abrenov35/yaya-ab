@@ -214,3 +214,14 @@
   s.setAttribute('data-yaya-depense-upload-noai','1');
   document.head.appendChild(s);
 })();
+
+/* Commandes / Dépenses / Charges : croix rouge à la place des corbeilles. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-finance-delete-x="1"]'))return;
+  const s=document.createElement('script');
+  s.src='finance-delete-x.js?v=finance-delete-x-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-finance-delete-x','1');
+  document.head.appendChild(s);
+})();
