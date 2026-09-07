@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaAchatSousTraitantSingleFieldV4)return;
-  window.__yayaAchatSousTraitantSingleFieldV4=true;
+  if(window.__yayaAchatSousTraitantSingleFieldV5)return;
+  window.__yayaAchatSousTraitantSingleFieldV5=true;
 
   function isSousTraitant(type){
     return String(type||'').trim()==='Facture sous-traitant';
@@ -56,12 +56,20 @@
         st.value=String(fournisseur.value||'').trim();
         hide(st);
       }
-      if(designation)hide(designation);
+      if(designation){
+        designation.placeholder='Description';
+        designation.setAttribute('aria-label','Description');
+        show(designation);
+      }
     }else{
       fournisseur.placeholder='Fournisseur';
       fournisseur.setAttribute('aria-label','Fournisseur');
       fournisseur.required=true;
-      if(designation)show(designation);
+      if(designation){
+        designation.placeholder='Désignation';
+        designation.setAttribute('aria-label','Désignation');
+        show(designation);
+      }
       if(st){
         st.value='';
         hide(st);
@@ -74,14 +82,12 @@
   function prepareBeforeSave(){
     const type=document.getElementById('acType');
     const fournisseur=document.getElementById('acFour');
-    const designation=document.getElementById('acDes');
     const st=document.getElementById('acST');
     if(!type||!fournisseur)return;
 
     if(isSousTraitant(type.value)){
       const nom=String(fournisseur.value||'').trim();
       if(st)st.value=nom;
-      if(designation)designation.value='';
     }else if(st){
       st.value='';
     }
@@ -104,7 +110,7 @@
     const chantierId=value('acCh');
     const typeDoc=value('acType');
     const fournisseur=value('acFour');
-    const designation=isSousTraitant(typeDoc)?'':value('acDes');
+    const designation=value('acDes');
     const date=value('acDate');
     const montantRaw=value('acMt').replace(/\s/g,'').replace(',','.');
     const montantHT=Number(montantRaw)||0;
@@ -160,8 +166,6 @@
 
     try{achatLien='';}catch(e){}
 
-    // IMPORTANT : ne jamais faire tab='achats'. On reste exactement sur la page
-    // depuis laquelle la dépense a été créée, donc aucun écran intermédiaire.
     try{if(typeof closeModal==='function')closeModal();}catch(e){}
     renderSafe();
     toastSafe('Achat enregistré ✓');
@@ -192,18 +196,18 @@
     const modal=type.closest('.modal');
     if(!modal)return;
 
-    if(!type.__yayaSousTraitantChangeV4){
+    if(!type.__yayaSousTraitantChangeV5){
       type.addEventListener('change',syncSousTraitantField);
-      type.__yayaSousTraitantChangeV4=true;
+      type.__yayaSousTraitantChangeV5=true;
     }
 
-    if(!fournisseur.__yayaSousTraitantInputV4){
+    if(!fournisseur.__yayaSousTraitantInputV5){
       fournisseur.addEventListener('input',function(){
         if(!isSousTraitant(type.value))return;
         const st=document.getElementById('acST');
         if(st)st.value=String(fournisseur.value||'').trim();
       });
-      fournisseur.__yayaSousTraitantInputV4=true;
+      fournisseur.__yayaSousTraitantInputV5=true;
     }
 
     syncSousTraitantField();
@@ -214,12 +218,10 @@
       const onclick=String(b.getAttribute('onclick')||'');
       return /^Enregistrer$/i.test(txt)||/addAchat/.test(onclick);
     });
-    if(!save||save.__yayaAchatSaveNoSwitchV4)return;
+    if(!save||save.__yayaAchatSaveNoSwitchV5)return;
 
-    // Neutralise complètement l'ancien addAchat(), qui faisait tab='achats'; render()
-    // avant l'écriture réseau et provoquait l'écran parasite visible par l'utilisateur.
     save.removeAttribute('onclick');
-    save.__yayaAchatSaveNoSwitchV4=true;
+    save.__yayaAchatSaveNoSwitchV5=true;
     save.addEventListener('click',function(e){
       e.preventDefault();
       e.stopPropagation();
