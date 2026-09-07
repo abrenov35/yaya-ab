@@ -3,11 +3,35 @@
 
   let currentSave=null;
 
-  function findSaveButton(){
+  function documentModal(){
     const root=document.getElementById('modalRoot');
     if(!root)return null;
-    return Array.from(root.querySelectorAll('button')).find(function(btn){
-      return /saveDocument\s*\(/.test(String(btn.getAttribute('onclick')||''));
+    return Array.from(root.querySelectorAll('.modal')).find(function(item){
+      return !!(item.querySelector('#docFile')||item.querySelector('#docCh')||item.querySelector('#docType')||item.querySelector('#docSujet')||item.querySelector('#docTitre'));
+    })||null;
+  }
+
+  function cleanOpenAIWarning(){
+    const modal=documentModal();
+    if(!modal)return;
+
+    Array.from(modal.querySelectorAll('div,span,p,small,label')).forEach(function(el){
+      if(el.children&&el.children.length)return;
+      const txt=String(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt)){
+        el.style.setProperty('display','none','important');
+        el.setAttribute('aria-hidden','true');
+      }
+    });
+  }
+
+  function findSaveButton(){
+    const modal=documentModal();
+    if(!modal)return null;
+    return Array.from(modal.querySelectorAll('button')).find(function(btn){
+      const txt=String(btn.textContent||'').trim();
+      const onclick=String(btn.getAttribute('onclick')||'');
+      return /saveDocument\s*\(/.test(onclick)||/^Enregistrer$/i.test(txt)||/^Enregistrement/i.test(txt);
     })||null;
   }
 
@@ -30,7 +54,57 @@
     }
   }
 
+  function captureContext(){
+    let tabValue='';
+    let focus='';
+    try{tabValue=String(typeof tab!=='undefined'?tab:'');}catch(e){}
+    try{focus=String(typeof focusChantier!=='undefined'&&focusChantier?focusChantier:'');}catch(e){}
+
+    let section='';
+    try{
+      const active=document.querySelector('#pane-chantiers .yaya-detail-section-tab.on[data-section]');
+      if(active)section=String(active.dataset.section||'');
+    }catch(e){}
+
+    return {
+      tab:tabValue,
+      focus:focus,
+      section:section,
+      scrollY:window.scrollY||0
+    };
+  }
+
+  function restoreContext(ctx){
+    if(!ctx||ctx.tab!=='chantiers'||!ctx.focus)return;
+
+    try{tab='chantiers';}catch(e){}
+    try{focusChantier=ctx.focus;}catch(e){}
+
+    try{
+      if(typeof render==='function')render();
+    }catch(e){}
+
+    try{
+      if(typeof window.yayaSetDirectUrl==='function')window.yayaSetDirectUrl(ctx.focus);
+    }catch(e){}
+
+    requestAnimationFrame(function(){
+      try{
+        if(ctx.section){
+          const buttons=Array.from(document.querySelectorAll('#pane-chantiers .yaya-detail-section-tab[data-section="'+ctx.section+'"]'));
+          const button=buttons.find(function(el){
+            try{return window.getComputedStyle(el).display!=='none';}catch(e){return true;}
+          });
+          if(button&&!button.classList.contains('on'))button.click();
+        }
+      }catch(e){}
+      try{window.scrollTo(0,ctx.scrollY||0);}catch(e){}
+    });
+  }
+
   function install(){
+    cleanOpenAIWarning();
+
     if(typeof window.saveDocument!=='function'){
       setTimeout(install,120);
       return;
@@ -41,6 +115,7 @@
     const wrapped=function(){
       if(currentSave)return currentSave;
 
+      const context=captureContext();
       setBusy(true);
       let p;
       try{
@@ -50,10 +125,15 @@
         throw err;
       }
 
-      currentSave=p.finally(function(){
+      currentSave=p.then(function(result){
+        // Le saveDocument historique bascule vers la page globale Documents après succès.
+        // Si l'ajout vient d'une fiche chantier, on restaure immédiatement la fiche et
+        // sa section active avant que le navigateur n'ait le temps de peindre cet écran.
+        restoreContext(context);
+        return result;
+      }).finally(function(){
         currentSave=null;
-        // Si une validation a empêché la fermeture de la modale, rendre le bouton utilisable.
-        setTimeout(function(){setBusy(false);},0);
+        setTimeout(function(){setBusy(false);cleanOpenAIWarning();},0);
       });
       return currentSave;
     };
@@ -62,7 +142,17 @@
     window.saveDocument=wrapped;
   }
 
+  function observeModal(){
+    const root=document.getElementById('modalRoot');
+    if(!root){setTimeout(observeModal,150);return;}
+    cleanOpenAIWarning();
+    new MutationObserver(function(){
+      cleanOpenAIWarning();
+    }).observe(root,{childList:true,subtree:true,characterData:true});
+  }
+
   install();
+  observeModal();
 })();
 
 /* Protection globale : un clic hors d'une modale ne la ferme jamais. */
