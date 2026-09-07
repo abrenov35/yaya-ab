@@ -70,7 +70,7 @@
     try{list=Array.isArray(S&&S.chantiers)?S.chantiers.slice():[];}catch(e){}
     list=list.filter(function(c){return c&&c.id&&!String(c.id).startsWith('__');});
     list.sort(function(a,b){return String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'});});
-    let html='<option value="">＋ Nouveau chantier</option>';
+    let html='<option value="">— Choisir un chantier —</option>';
     list.forEach(function(c){
       const id=String(c.id||'');
       const nom=String(c.nom||'Chantier');
