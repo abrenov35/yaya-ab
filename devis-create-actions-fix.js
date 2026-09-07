@@ -1,9 +1,10 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-devis-create-actions-fix-v1';
+  const STYLE_ID='yaya-devis-create-actions-fix-v2';
 
   function installStyle(){
+    ['yaya-devis-create-actions-fix-v1'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -40,12 +41,41 @@
         border-color:#1d7f49!important;
         color:#fff!important;
       }
+      .yaya-devis-description-row textarea{
+        width:100%!important;
+        min-height:72px!important;
+        padding:9px 11px!important;
+        border:1px solid rgba(22,45,73,.25)!important;
+        border-radius:7px!important;
+        background:#fff!important;
+        color:var(--navy,#162d49)!important;
+        font:inherit!important;
+        resize:vertical!important;
+      }
     `;
     document.head.appendChild(style);
   }
 
   function getRoot(){
     return document.getElementById('modalRoot');
+  }
+
+  function ensureDescription(modal){
+    if(!modal)return;
+    const lib=modal.querySelector('#avLib');
+    if(!lib)return;
+
+    lib.placeholder='Libellé du devis';
+    const current=String(lib.value||'').trim();
+    if(/^Devis\s+\d+$/i.test(current))lib.value='';
+
+    if(modal.querySelector('#avDesc'))return;
+    const row=document.createElement('div');
+    row.className='mrow yaya-devis-description-row';
+    row.innerHTML='<textarea class="msel" id="avDesc" autocomplete="off" placeholder="Description du devis"></textarea>';
+    const libRow=lib.closest('.mrow');
+    if(libRow)libRow.insertAdjacentElement('afterend',row);
+    else lib.insertAdjacentElement('afterend',row);
   }
 
   function patch(){
@@ -62,6 +92,7 @@
     if(!modal)return;
 
     modal.classList.add('yaya-devis-create-patched');
+    ensureDescription(modal);
 
     let buttons=[...modal.querySelectorAll('button')];
     const paste=buttons.find(function(button){
@@ -131,8 +162,9 @@
   else document.addEventListener('DOMContentLoaded',install,{once:true});
 })();
 
-// Devis 2+ : l'interface est libérée immédiatement. L'écriture et son contrôle
-// continuent en arrière-plan, en file d'attente pour éviter les écrasements.
+// Les devis ajoutés sont enregistrés immédiatement dans l'interface, puis
+// persistés en arrière-plan. Le numéro d'ordre reste purement technique :
+// il n'est plus utilisé comme libellé utilisateur.
 (function(){
   'use strict';
 
@@ -146,6 +178,14 @@
 
   function toastSafe(message,isError){
     try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
+  }
+
+  function packMeta(label,description){
+    const cleanLabel=String(label||'').trim();
+    const cleanDescription=String(description||'').trim();
+    return cleanDescription
+      ?cleanLabel+' [[YAYA_DESC:'+encodeURIComponent(cleanDescription)+']]'
+      :cleanLabel;
   }
 
   function persistState(){
@@ -204,13 +244,13 @@
     }catch(e){}
   }
 
-  async function persistRow(row,numero){
+  async function persistRow(row){
     let base=await freshAvenants();
 
     const already=base.find(function(v){return sameQuote(v,row);});
     if(already){
       reconcileExisting(row,already);
-      toastSafe('Devis '+numero+' enregistré ✓');
+      toastSafe('Devis enregistré ✓');
       return;
     }
 
@@ -234,7 +274,7 @@
     if(!confirmed)throw new Error('Enregistrement non confirmé par le serveur');
 
     persistState();
-    toastSafe('Devis '+numero+' enregistré ✓');
+    toastSafe('Devis enregistré ✓');
   }
 
   function saveBackground(cid){
@@ -252,7 +292,10 @@
     if(!montantHT){toastSafe('Indique le montant HT du devis',true);return;}
 
     const libInput=document.getElementById('avLib');
-    const libelle=String(libInput&&libInput.value||'').trim()||('Devis '+numero);
+    const descInput=document.getElementById('avDesc');
+    const label=String(libInput&&libInput.value||'').trim();
+    if(!label){toastSafe('Indique un libellé pour le devis',true);if(libInput)libInput.focus();return;}
+    const libelle=packMeta(label,String(descInput&&descInput.value||''));
 
     let lien='';
     try{lien=String(avenantLien||'');}catch(e){}
@@ -266,20 +309,19 @@
       lien:lien
     };
 
-    // Immédiat : le devis apparaît et la modale se ferme. Yaya reste utilisable.
     addLocal(row);
     try{avenantLien='';devisNumeroExtrait='';}catch(e){}
     try{if(typeof closeModal==='function')closeModal();}catch(e){}
-    toastSafe('Devis '+numero+' pris en compte — enregistrement en arrière-plan…');
+    toastSafe('Devis pris en compte — enregistrement en arrière-plan…');
 
     queue=queue
       .catch(function(){})
       .then(function(){return wait(0);})
-      .then(function(){return persistRow(row,numero);})
+      .then(function(){return persistRow(row);})
       .catch(function(e){
-        console.error('Yaya — enregistrement devis '+numero+' non confirmé :',e);
+        console.error('Yaya — enregistrement devis non confirmé :',e);
         removeLocal(row.id);
-        toastSafe('Devis '+numero+' non enregistré — réessaie. ('+String(e&&e.message||e)+')',true);
+        toastSafe('Devis non enregistré — réessaie. ('+String(e&&e.message||e)+')',true);
       });
 
     return Promise.resolve(true);
