@@ -149,3 +149,14 @@
 
   setTimeout(patch,0);
 })();
+
+/* Commandes : le montant ouvre la modification et le crayon reste masqué. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-commande-amount-edit="1"]'))return;
+  const s=document.createElement('script');
+  s.src='commande-amount-edit.js?v=commande-amount-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-commande-amount-edit','1');
+  document.head.appendChild(s);
+})();
