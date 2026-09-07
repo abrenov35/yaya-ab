@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-archive-style-v5';
+  const STYLE_ID='yaya-chantier-edit-archive-style-v6';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -37,7 +37,7 @@
         z-index:40000!important;
         pointer-events:auto!important;
       }
-      #pane-chantiers .yaya-edit-chantier-btn{
+      .yaya-edit-chantier-btn{
         display:none!important;
       }
       .hdr .tabs #yayaCreateChantierBtn{
@@ -130,14 +130,11 @@
   }
 
   function removeLegacyEditButtons(){
-    const pane=document.getElementById('pane-chantiers');
-    if(!pane)return;
-
-    pane.querySelectorAll('.yaya-edit-chantier-btn').forEach(function(btn){
+    document.querySelectorAll('.yaya-edit-chantier-btn').forEach(function(btn){
       btn.remove();
     });
 
-    pane.querySelectorAll('button').forEach(function(btn){
+    document.querySelectorAll('button').forEach(function(btn){
       const txt=String(btn.textContent||'').replace(/\s+/g,' ').trim();
       if(txt==='✏️ Modifier chantier'||txt==='Modifier chantier'){
         btn.remove();
