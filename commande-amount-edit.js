@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaCommandeAmountEditV2)return;
-  window.__yayaCommandeAmountEditV2=true;
+  if(window.__yayaCommandeAmountEditV3)return;
+  window.__yayaCommandeAmountEditV3=true;
 
-  const STYLE_ID='yaya-commande-amount-edit-v2';
+  const STYLE_ID='yaya-commande-amount-edit-v3';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -12,6 +12,9 @@
     style.id=STYLE_ID;
     style.textContent=`
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-edit{
+        display:none!important;
+      }
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-view{
         display:none!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost{
@@ -30,7 +33,7 @@
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-commande-actions{
         width:auto!important;
-        min-width:68px!important;
+        min-width:32px!important;
       }
     `;
     document.head.appendChild(style);
