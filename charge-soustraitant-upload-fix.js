@@ -192,3 +192,14 @@
   s.setAttribute('data-yaya-document-type-edit','1');
   document.head.appendChild(s);
 })();
+
+/* Mail : l'objet ouvre la modification et le crayon reste masqué. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-mail-subject-edit="1"]'))return;
+  const s=document.createElement('script');
+  s.src='mail-subject-edit.js?v=mail-subject-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-mail-subject-edit','1');
+  document.head.appendChild(s);
+})();
