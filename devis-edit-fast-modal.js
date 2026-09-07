@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-devis-edit-fast-style-v1';
+  const STYLE_ID='yaya-devis-edit-fast-style-v2';
+  ['yaya-devis-edit-fast-style-v1'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -70,7 +71,8 @@
         font-weight:750!important;
         letter-spacing:.015em!important;
       }
-      .yaya-devis-fast-field input{
+      .yaya-devis-fast-field input,
+      .yaya-devis-fast-field textarea{
         width:100%!important;
         min-height:44px!important;
         padding:9px 12px!important;
@@ -78,9 +80,15 @@
         border-radius:8px!important;
         background:#fff!important;
         color:#374151!important;
+        font-family:inherit!important;
         font-size:15px!important;
         font-weight:500!important;
         box-shadow:none!important;
+      }
+      .yaya-devis-fast-field textarea{
+        min-height:74px!important;
+        resize:vertical!important;
+        line-height:1.35!important;
       }
       .yaya-devis-fast-amount{
         position:relative!important;
@@ -164,7 +172,8 @@
         .yaya-devis-fast-head{margin-bottom:13px!important;}
         .yaya-devis-fast-head h5{position:static!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;font-size:18px!important;}
         .yaya-devis-fast-fields{gap:10px!important;}
-        .yaya-devis-fast-field input{min-height:42px!important;font-size:16px!important;}
+        .yaya-devis-fast-field input,.yaya-devis-fast-field textarea{font-size:16px!important;}
+        .yaya-devis-fast-field input{min-height:42px!important;}
         .yaya-devis-fast-foot{margin-top:15px!important;}
       }
     `;
@@ -175,6 +184,23 @@
     return String(v==null?'':v).replace(/[&<>"']/g,function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
+  }
+
+  function unpackMeta(value){
+    const raw=String(value||'').trim();
+    const match=raw.match(/\s*\[\[YAYA_DESC:([^\]]*)\]\]\s*$/);
+    if(!match)return {label:raw,description:''};
+    let description='';
+    try{description=decodeURIComponent(match[1]||'');}catch(e){description=String(match[1]||'');}
+    return {label:raw.slice(0,match.index).trim(),description:description};
+  }
+
+  function packMeta(label,description){
+    const cleanLabel=String(label||'').trim();
+    const cleanDescription=String(description||'').trim();
+    return cleanDescription
+      ?cleanLabel+' [[YAYA_DESC:'+encodeURIComponent(cleanDescription)+']]'
+      :cleanLabel;
   }
 
   function list(name){
@@ -209,13 +235,17 @@
   function openDevis(id){
     const c=chantier(id);if(!c)return;
     const root=document.getElementById('modalRoot');if(!root)return;
+    const meta=unpackMeta(c.numero||'');
+    const label=meta.label||'Devis';
     root.innerHTML=''
       +'<div class="overlay yaya-devis-fast-overlay" id="yayaFastOverlay">'
       +'<div class="modal yaya-devis-fast-modal" role="dialog" aria-modal="true" aria-labelledby="yayaFastTitle">'
       +'<div class="yaya-devis-fast-head"><h5 id="yayaFastTitle">Modifier le devis</h5><button type="button" class="yaya-devis-fast-close" id="yayaFastClose" aria-label="Fermer">×</button></div>'
+      +'<input type="hidden" id="edNom" value="'+esc(c.nom||'')+'">'
+      +'<input type="hidden" id="edNum" value="'+esc(c.numero||'')+'">'
       +'<div class="yaya-devis-fast-fields">'
-      +'<label class="yaya-devis-fast-field">Client / chantier<input id="edNom" autocomplete="off" value="'+esc(c.nom||'')+'"></label>'
-      +'<label class="yaya-devis-fast-field">Objet / lot<input id="edNum" autocomplete="off" value="'+esc(c.numero||'')+'"></label>'
+      +'<label class="yaya-devis-fast-field">Libellé<input id="edDevisLib" autocomplete="off" value="'+esc(label)+'" placeholder="Ex. Salle de bain"></label>'
+      +'<label class="yaya-devis-fast-field">Description<textarea id="edDevisDesc" autocomplete="off" placeholder="Description du devis">'+esc(meta.description)+'</textarea></label>'
       +'<label class="yaya-devis-fast-field">Montant HT<div class="yaya-devis-fast-amount"><input id="edMt" type="number" inputmode="decimal" min="0" step="0.01" value="'+esc(Number(c.montantDevisHT)||'')+'"><span class="yaya-devis-fast-suffix">€ HT</span></div></label>'
       +'</div>'
       +pieceHtml(c.notes,'Voir le devis')
@@ -236,22 +266,23 @@
 
   async function saveDevis(id){
     const c=chantier(id);if(!c)return;
-    const nom=document.getElementById('edNom');
-    const numero=document.getElementById('edNum');
+    const libelle=document.getElementById('edDevisLib');
+    const description=document.getElementById('edDevisDesc');
     const montant=document.getElementById('edMt');
-    if(!nom||!numero||!montant)return;
-    const name=nom.value.trim();
-    if(!name){toastSafe('Le nom ne peut pas être vide',true);nom.focus();return;}
+    if(!libelle||!description||!montant)return;
+    const label=libelle.value.trim();
+    if(!label){toastSafe('Indique un libellé',true);libelle.focus();return;}
     const amount=Number(String(montant.value||'0').replace(',','.'))||0;
-    const before={nom:c.nom,numero:c.numero,montantDevisHT:c.montantDevisHT};
-    c.nom=name;c.numero=numero.value.trim();c.montantDevisHT=amount;
+    const before={numero:c.numero,montantDevisHT:c.montantDevisHT};
+    c.numero=packMeta(label,description.value);
+    c.montantDevisHT=amount;
     closeSafe();renderSafe();
     try{
       const ok=typeof apiPost==='function'?await apiPost('setChantiers',S.chantiers):false;
       if(ok)toastSafe('Devis modifié ✓');
       else throw new Error('Enregistrement impossible');
     }catch(e){
-      c.nom=before.nom;c.numero=before.numero;c.montantDevisHT=before.montantDevisHT;
+      c.numero=before.numero;c.montantDevisHT=before.montantDevisHT;
       renderSafe();toastSafe('La modification du devis a échoué',true);
     }
   }
@@ -259,12 +290,15 @@
   function openAvenant(id){
     const v=avenant(id);if(!v)return;
     const root=document.getElementById('modalRoot');if(!root)return;
+    const meta=unpackMeta(v.libelle||'');
+    const label=meta.label||'Devis';
     root.innerHTML=''
       +'<div class="overlay yaya-devis-fast-overlay" id="yayaFastOverlay">'
       +'<div class="modal yaya-devis-fast-modal" role="dialog" aria-modal="true" aria-labelledby="yayaFastTitle">'
       +'<div class="yaya-devis-fast-head"><h5 id="yayaFastTitle">Modifier le devis</h5><button type="button" class="yaya-devis-fast-close" id="yayaFastClose" aria-label="Fermer">×</button></div>'
       +'<div class="yaya-devis-fast-fields">'
-      +'<label class="yaya-devis-fast-field">Objet / lot<input id="eavLib" autocomplete="off" value="'+esc(v.libelle||'')+'"></label>'
+      +'<label class="yaya-devis-fast-field">Libellé<input id="eavLib" autocomplete="off" value="'+esc(label)+'" placeholder="Ex. Cuisine"></label>'
+      +'<label class="yaya-devis-fast-field">Description<textarea id="eavDesc" autocomplete="off" placeholder="Description du devis">'+esc(meta.description)+'</textarea></label>'
       +'<label class="yaya-devis-fast-field">Montant HT<div class="yaya-devis-fast-amount"><input id="eavMt" type="number" inputmode="decimal" min="0" step="0.01" value="'+esc(Number(v.montantHT)||'')+'"><span class="yaya-devis-fast-suffix">€ HT</span></div></label>'
       +'</div>'
       +pieceHtml(v.lien,'Voir le devis')
@@ -286,13 +320,15 @@
   async function saveAvenant(id){
     const v=avenant(id);if(!v)return;
     const lib=document.getElementById('eavLib');
+    const desc=document.getElementById('eavDesc');
     const montant=document.getElementById('eavMt');
-    if(!lib||!montant)return;
+    if(!lib||!desc||!montant)return;
     const label=lib.value.trim();
     if(!label){toastSafe('Indique un libellé',true);lib.focus();return;}
     const amount=Number(String(montant.value||'0').replace(',','.'))||0;
     const before={libelle:v.libelle,montantHT:v.montantHT};
-    v.libelle=label;v.montantHT=amount;
+    v.libelle=packMeta(label,desc.value);
+    v.montantHT=amount;
     closeSafe();renderSafe();
     try{
       const ok=typeof apiPost==='function'?await apiPost('setAvenants',S.avenants):false;
