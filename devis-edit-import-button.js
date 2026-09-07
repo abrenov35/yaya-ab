@@ -172,3 +172,78 @@
   schedule();
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+/* Marché : le montant devient l'accès à la modification ; le crayon reste masqué
+   dans le DOM afin de conserver tous les gestionnaires de contexte existants. */
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-market-amount-edit-v1';
+
+  function ensureStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #pane-chantiers .yaya-detail-market-row .yaya-detail-document-edit{
+        display:none!important;
+      }
+      #pane-chantiers .yaya-detail-market-row .yaya-detail-charge-cost[data-yaya-market-edit="1"]{
+        cursor:pointer!important;
+        border-radius:6px!important;
+        padding:5px 7px!important;
+        margin:-5px -7px!important;
+        transition:background .12s ease,color .12s ease!important;
+      }
+      #pane-chantiers .yaya-detail-market-row .yaya-detail-charge-cost[data-yaya-market-edit="1"]:hover,
+      #pane-chantiers .yaya-detail-market-row .yaya-detail-charge-cost[data-yaya-market-edit="1"]:focus-visible{
+        background:#eef6ff!important;
+        color:#0f4f8d!important;
+        outline:none!important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function bindRow(row){
+    if(!row)return;
+    const edit=row.querySelector('.yaya-detail-document-edit[data-kind][data-row-id]');
+    const amount=row.querySelector('.yaya-detail-charge-cost');
+    if(!edit||!amount)return;
+
+    amount.dataset.yayaMarketEdit='1';
+    amount.setAttribute('role','button');
+    amount.setAttribute('tabindex','0');
+    amount.setAttribute('title','Modifier ce devis');
+    amount.setAttribute('aria-label','Modifier ce devis');
+
+    if(amount.dataset.yayaMarketEditBound==='1')return;
+    amount.dataset.yayaMarketEditBound='1';
+
+    function openEdit(event){
+      if(event){event.preventDefault();event.stopPropagation();}
+      const currentEdit=row.querySelector('.yaya-detail-document-edit[data-kind][data-row-id]');
+      if(currentEdit)currentEdit.click();
+    }
+
+    amount.addEventListener('click',openEdit);
+    amount.addEventListener('keydown',function(event){
+      if(event.key==='Enter'||event.key===' '){openEdit(event);}
+    });
+  }
+
+  function apply(){
+    ensureStyle();
+    document.querySelectorAll('#pane-chantiers .yaya-detail-market-row').forEach(bindRow);
+  }
+
+  let raf=0;
+  function schedule(){
+    if(raf)return;
+    raf=requestAnimationFrame(function(){raf=0;apply();});
+  }
+
+  apply();
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',schedule);
+})();
