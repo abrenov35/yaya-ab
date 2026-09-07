@@ -185,3 +185,31 @@
   s.setAttribute('data-yaya-modal-upload-global-lock','1');
   document.head.appendChild(s);
 })();
+
+/* Fiche inter : ouverture obligatoire dans un nouvel onglet, même si une ancienne
+   version du script inline est encore présente dans le cache du navigateur. */
+(function(){
+  'use strict';
+  if(window.__yayaFicheInterNewTabForceV1)return;
+  window.__yayaFicheInterNewTabForceV1=true;
+
+  function patch(){
+    const link=document.querySelector('.fiche-inter-tab');
+    if(!link)return;
+    link.setAttribute('target','_blank');
+    link.setAttribute('rel','noopener noreferrer');
+  }
+
+  document.addEventListener('click',function(e){
+    const link=e.target&&e.target.closest?e.target.closest('.fiche-inter-tab'):null;
+    if(!link)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const href=link.getAttribute('href')||'https://abrenov35.github.io/docs-chantier-ab/';
+    window.open(href,'_blank','noopener');
+  },true);
+
+  patch();
+  new MutationObserver(patch).observe(document.documentElement,{childList:true,subtree:true});
+})();
