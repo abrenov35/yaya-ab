@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-drive-fullpage-fallback-v1';
+  const STYLE_ID='yaya-drive-fullpage-fallback-v2';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -36,7 +36,7 @@
         width:100%!important;
         overflow:hidden!important;
         border-radius:8px!important;
-        background:#111!important;
+        background:#fff!important;
       }
       #modalRoot iframe.yaya-drive-fit-frame{
         position:absolute!important;
@@ -44,29 +44,39 @@
         border:0!important;
         border-radius:0!important;
         transform-origin:0 0!important;
-        background:#111!important;
+        background:#fff!important;
       }
       @media(max-width:640px){
-        #modalRoot .yaya-drive-fit-overlay{padding:4px!important;}
+        #modalRoot .yaya-drive-fit-overlay{
+          padding:0!important;
+          background:#fff!important;
+        }
         #modalRoot .yaya-drive-fit-modal{
-          width:calc(100vw - 8px)!important;
-          height:calc(100dvh - 8px)!important;
+          width:100vw!important;
+          height:100dvh!important;
           max-width:none!important;
           max-height:none!important;
-          padding:5px!important;
-          border-radius:8px!important;
+          padding:4px!important;
+          border-radius:0!important;
+          box-shadow:none!important;
         }
-        #modalRoot .yaya-drive-fit-modal > h5{min-height:29px!important;margin-bottom:3px!important;}
+        #modalRoot .yaya-drive-fit-modal > h5{
+          min-height:29px!important;
+          margin-bottom:3px!important;
+        }
+        #modalRoot .yaya-drive-fit-stage{
+          border-radius:0!important;
+        }
       }
       @media(max-height:520px) and (orientation:landscape){
-        #modalRoot .yaya-drive-fit-overlay{padding:2px!important;}
+        #modalRoot .yaya-drive-fit-overlay{padding:0!important;}
         #modalRoot .yaya-drive-fit-modal{
-          width:calc(100vw - 4px)!important;
-          height:calc(100dvh - 4px)!important;
+          width:100vw!important;
+          height:100dvh!important;
           max-width:none!important;
           max-height:none!important;
-          padding:3px!important;
-          border-radius:6px!important;
+          padding:2px!important;
+          border-radius:0!important;
         }
         #modalRoot .yaya-drive-fit-modal > h5{min-height:25px!important;margin-bottom:2px!important;font-size:13px!important;}
       }
@@ -93,13 +103,12 @@
     let scale=(h-8)/Math.max(1,logicalPageHeight+chromeAllowance);
     scale=Math.min(0.72,Math.max(0.24,scale));
 
+    const logicalWidth=Math.ceil(w/scale);
     const logicalHeight=Math.ceil(h/scale);
-    const visibleWidth=w*scale;
-    const left=Math.max(0,(w-visibleWidth)/2);
 
-    frame.style.setProperty('width',w+'px','important');
+    frame.style.setProperty('width',logicalWidth+'px','important');
     frame.style.setProperty('height',logicalHeight+'px','important');
-    frame.style.setProperty('left',left+'px','important');
+    frame.style.setProperty('left','0','important');
     frame.style.setProperty('top','0','important');
     frame.style.setProperty('transform','scale('+scale+')','important');
     frame.style.setProperty('transform-origin','0 0','important');
