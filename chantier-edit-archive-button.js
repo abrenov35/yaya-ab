@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-archive-style-v2';
+  const STYLE_ID='yaya-chantier-edit-archive-style-v3';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -33,6 +33,10 @@
         background:#ffefd2!important;
         border-color:#d8953b!important;
       }
+      #yaya-archive-warning{
+        z-index:40000!important;
+        pointer-events:auto!important;
+      }
       @media(max-width:640px){
         .yaya-chantier-edit-modal .mfoot{
           grid-template-columns:minmax(0,1.35fr) minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr)!important;
@@ -55,6 +59,21 @@
     return match&&match[1]?match[1]:'';
   }
 
+  function elevateArchiveWarning(){
+    const warning=document.getElementById('yaya-archive-warning');
+    if(!warning)return false;
+
+    if(warning.parentNode!==document.body){
+      document.body.appendChild(warning);
+    }
+
+    warning.style.setProperty('position','fixed','important');
+    warning.style.setProperty('inset','0','important');
+    warning.style.setProperty('z-index','40000','important');
+    warning.style.setProperty('pointer-events','auto','important');
+    return true;
+  }
+
   function decorateModal(){
     const modal=document.querySelector('.yaya-chantier-edit-modal');
     if(!modal||modal.dataset.archiveButtonReady==='1')return;
@@ -75,8 +94,15 @@
       archive.type='button';
       archive.className='btn2 yaya-archive-chantier-modal-btn';
       archive.textContent='Archiver chantier';
-      archive.addEventListener('click',function(){
-        if(typeof window.archiverChantier==='function')window.archiverChantier(cid);
+      archive.addEventListener('click',function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        if(typeof window.archiverChantier!=='function')return;
+
+        window.archiverChantier(cid);
+        elevateArchiveWarning();
+        requestAnimationFrame(elevateArchiveWarning);
+        setTimeout(elevateArchiveWarning,40);
       });
     }
 
