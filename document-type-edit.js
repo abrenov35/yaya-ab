@@ -1,13 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDocumentTypeEditV2)return;
-  window.__yayaDocumentTypeEditV2=true;
+  if(window.__yayaDocumentTypeEditV3)return;
+  window.__yayaDocumentTypeEditV3=true;
 
-  const STYLE_ID='yaya-document-type-edit-style-v2';
+  const STYLE_ID='yaya-document-type-edit-style-v3';
 
   function installStyle(){
-    ['yaya-document-type-edit-style-v1'].forEach(function(id){
+    ['yaya-document-type-edit-style-v1','yaya-document-type-edit-style-v2'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
@@ -25,8 +25,23 @@
         text-decoration:underline!important;
         text-underline-offset:3px!important;
       }
-      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-edit{
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-edit,
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-view{
         display:none!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-delete{
+        margin-left:8px!important;
+        color:#d92d20!important;
+        border-color:#f1a8a1!important;
+        background:#fff7f6!important;
+        font-weight:700!important;
+        font-size:0!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-delete::before{
+        content:'×'!important;
+        font-size:20px!important;
+        line-height:1!important;
+        color:#d92d20!important;
       }
     `;
     document.head.appendChild(style);
@@ -57,6 +72,8 @@
 
     document.querySelectorAll('#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row').forEach(function(row){
       const edit=row.querySelector('.yaya-detail-document-edit[data-doc-id]');
+      const view=row.querySelector('.yaya-detail-document-view');
+      const del=row.querySelector('.yaya-detail-document-delete');
       const type=row.querySelector('.yaya-detail-charge-hours');
       const id=String(edit&&edit.dataset.docId||'').trim();
 
@@ -72,6 +89,15 @@
       if(edit){
         edit.style.setProperty('display','none','important');
         edit.setAttribute('aria-hidden','true');
+      }
+      if(view){
+        view.style.setProperty('display','none','important');
+        view.setAttribute('aria-hidden','true');
+        view.tabIndex=-1;
+      }
+      if(del){
+        del.setAttribute('title','Supprimer');
+        del.setAttribute('aria-label','Supprimer');
       }
 
       prepareViewText(row);
