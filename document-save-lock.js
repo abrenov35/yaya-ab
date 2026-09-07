@@ -15,10 +15,10 @@
     const modal=documentModal();
     if(!modal)return;
 
-    Array.from(modal.querySelectorAll('div,span,p,small,label')).forEach(function(el){
-      if(el.children&&el.children.length)return;
+    Array.from(modal.querySelectorAll('.note,.hint,div,span,p,small,label')).forEach(function(el){
+      if(el.querySelector&&el.querySelector('input,select,textarea,button'))return;
       const txt=String(el.textContent||'').replace(/\s+/g,' ').trim();
-      if(/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt)){
+      if(txt && txt.length<280 && (/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt))){
         el.style.setProperty('display','none','important');
         el.setAttribute('aria-hidden','true');
       }
@@ -90,13 +90,12 @@
 
     requestAnimationFrame(function(){
       try{
-        if(ctx.section){
-          const buttons=Array.from(document.querySelectorAll('#pane-chantiers .yaya-detail-section-tab[data-section="'+ctx.section+'"]'));
-          const button=buttons.find(function(el){
-            try{return window.getComputedStyle(el).display!=='none';}catch(e){return true;}
-          });
-          if(button&&!button.classList.contains('on'))button.click();
-        }
+        const section=ctx.section||'documents';
+        const buttons=Array.from(document.querySelectorAll('#pane-chantiers .yaya-detail-section-tab[data-section="'+section+'"]'));
+        const button=buttons.find(function(el){
+          try{return window.getComputedStyle(el).display!=='none';}catch(e){return true;}
+        });
+        if(button&&!button.classList.contains('on'))button.click();
       }catch(e){}
       try{window.scrollTo(0,ctx.scrollY||0);}catch(e){}
     });
@@ -126,10 +125,14 @@
       }
 
       currentSave=p.then(function(result){
-        // Le saveDocument historique bascule vers la page globale Documents après succès.
-        // Si l'ajout vient d'une fiche chantier, on restaure immédiatement la fiche et
-        // sa section active avant que le navigateur n'ait le temps de peindre cet écran.
-        restoreContext(context);
+        let currentTab='';
+        try{currentTab=String(typeof tab!=='undefined'?tab:'');}catch(e){}
+
+        // Le saveDocument historique met tab='documents' uniquement après une sauvegarde
+        // réussie. On restaure donc la fiche chantier seulement dans ce cas.
+        if(context.tab==='chantiers'&&context.focus&&currentTab==='documents'){
+          restoreContext(context);
+        }
         return result;
       }).finally(function(){
         currentSave=null;
@@ -139,6 +142,7 @@
     };
 
     wrapped.__yayaSingleSubmit=true;
+    wrapped.__yayaStayInChantier=true;
     window.saveDocument=wrapped;
   }
 
