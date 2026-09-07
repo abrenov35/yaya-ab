@@ -28,6 +28,30 @@
     return true;
   }
 
+  function unpackQuoteMeta(value){
+    const raw=String(value||'').trim();
+    const match=raw.match(/\s*\[\[YAYA_DESC:([^\]]*)\]\]\s*$/);
+    if(!match)return {label:raw,description:''};
+    let description='';
+    try{description=decodeURIComponent(match[1]||'');}catch(e){description=String(match[1]||'');}
+    return {label:raw.slice(0,match.index).trim(),description:description};
+  }
+
+  function packQuoteMeta(label,description){
+    const cleanLabel=String(label||'').trim();
+    const cleanDescription=String(description||'').trim();
+    return cleanDescription
+      ?cleanLabel+' [[YAYA_DESC:'+encodeURIComponent(cleanDescription)+']]'
+      :cleanLabel;
+  }
+
+  function safeHtml(value){
+    if(typeof esc==='function')return esc(value||'');
+    return String(value||'').replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
   function openAvenantEditor(id){
     try{
       const v=collection('avenants').find(x=>String(x&&x.id)===String(id));
@@ -38,9 +62,11 @@
       const root=document.getElementById('modalRoot');
       if(!root)return;
       const cleanId=String(v.id);
+      const meta=unpackQuoteMeta(v.libelle||'');
       const hasPJ=v.lien&&String(v.lien).startsWith('http');
-      const safeLien=typeof esc==='function'?esc(v.lien||''):String(v.lien||'');
-      const safeLib=typeof esc==='function'?esc(v.libelle||''):String(v.libelle||'');
+      const safeLien=safeHtml(v.lien||'');
+      const safeLib=safeHtml(meta.label||'');
+      const safeDesc=safeHtml(meta.description||'');
       const pjInner=hasPJ
         ? '<span style="font-size:12px;color:#555">PJ : </span>'
           +'<button type="button" onclick="voirPiece(\''+safeLien+'\')" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:8px;border:1px solid rgba(201,162,75,.6);background:rgba(201,162,75,.12);color:#7d630e;cursor:pointer">VOIR</button> '
@@ -49,8 +75,9 @@
 
       root.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">'
         +'<h5>Modifier le devis<button type="button" onclick="closeModal()" style="margin-left:8px;padding:6px 16px;border-radius:10px;border:1.5px solid #ddd;background:#fff;color:#555;font-size:13px;font-weight:600;cursor:pointer">Fermer</button></h5>'
-        +'<div class="mrow"><input class="msel" id="eavLib" value="'+safeLib+'" placeholder="Libellé du devis"></div>'
-        +'<div class="mrow"><input class="mnum" id="eavMt" type="number" value="'+(Number(v.montantHT)||'')+'" placeholder="Montant HT €" style="width:140px"></div>'
+        +'<div class="mrow" style="display:grid;gap:5px"><label style="font-size:11.5px;font-weight:700;color:#596579">Libellé</label><input class="msel" id="eavLib" value="'+safeLib+'" placeholder="Libellé du devis"></div>'
+        +'<div class="mrow" style="display:grid;gap:5px"><label style="font-size:11.5px;font-weight:700;color:#596579">Description</label><textarea class="msel" id="eavDesc" placeholder="Description du devis" style="min-height:72px;resize:vertical">'+safeDesc+'</textarea></div>'
+        +'<div class="mrow" style="display:grid;gap:5px"><label style="font-size:11.5px;font-weight:700;color:#596579">Montant HT</label><input class="mnum" id="eavMt" type="number" value="'+(Number(v.montantHT)||'')+'" placeholder="Montant HT €" style="width:140px"></div>'
         +'<div id="pj-zone" style="margin-bottom:8px;padding:8px 12px;border:1.5px dashed #ddd;border-radius:10px">'+pjInner+'</div>'
         +'<div class="mfoot"><button class="btnp go" type="button" onclick="yayaSaveAvenantDirect(\''+cleanId+'\')">Enregistrer</button><button class="btn2" type="button" onclick="closeModal()">Annuler</button></div>'
         +'</div></div>';
@@ -64,10 +91,11 @@
     const v=collection('avenants').find(x=>String(x&&x.id)===String(id));
     if(!v)return;
     const libEl=document.getElementById('eavLib');
+    const descEl=document.getElementById('eavDesc');
     const mtEl=document.getElementById('eavMt');
     const lib=libEl?libEl.value.trim():'';
-    if(!lib){if(typeof toast==='function')toast('Indique un libellé',true);return;}
-    v.libelle=lib;
+    if(!lib){if(typeof toast==='function')toast('Indique un libellé',true);if(libEl)libEl.focus();return;}
+    v.libelle=packQuoteMeta(lib,descEl?descEl.value:'');
     v.montantHT=Number(mtEl&&mtEl.value)||0;
     if(typeof closeModal==='function')closeModal();
     if(typeof render==='function')render();
