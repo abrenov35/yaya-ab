@@ -213,3 +213,14 @@
   patch();
   new MutationObserver(patch).observe(document.documentElement,{childList:true,subtree:true});
 })();
+
+/* Charge sous-traitant : titre dédié + archivage de la pièce sans appel OpenAI. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-charge-soustraitant-upload-fix="1"]'))return;
+  const s=document.createElement('script');
+  s.src='charge-soustraitant-upload-fix.js?v=charge-st-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-charge-soustraitant-upload-fix','1');
+  document.head.appendChild(s);
+})();
