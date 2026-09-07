@@ -1,19 +1,37 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChargeSectionTabAlignmentV1)return;
-  window.__yayaChargeSectionTabAlignmentV1=true;
+  if(window.__yayaChargeSectionTabAlignmentV2)return;
+  window.__yayaChargeSectionTabAlignmentV2=true;
+
+  const SECTIONS=['marche','commandes','depenses','charges','documents','mail'];
+
+  function sectionPane(card,key){
+    const map={
+      marche:'.yaya-detail-markets-pane',
+      commandes:'.yaya-detail-commandes-pane',
+      depenses:'.yaya-detail-expenses-pane',
+      charges:'.yaya-detail-charges-pane',
+      documents:'.yaya-detail-documents-pane',
+      mail:'.yaya-detail-mails-pane'
+    };
+    const selector=map[key];
+    return selector?card.querySelector(':scope > '+selector):null;
+  }
 
   function clear(card){
-    const action=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="charges"]');
-    const rows=card.querySelectorAll(':scope > .yaya-detail-charges-pane .yaya-detail-charge-row');
-    if(action){
-      action.style.removeProperty('padding-left');
-      action.style.removeProperty('padding-right');
-    }
-    rows.forEach(function(row){
-      row.style.removeProperty('padding-left');
-      row.style.removeProperty('padding-right');
+    SECTIONS.forEach(function(key){
+      const action=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="'+key+'"]');
+      if(action){
+        action.style.removeProperty('padding-left');
+        action.style.removeProperty('padding-right');
+      }
+      const pane=sectionPane(card,key);
+      if(!pane)return;
+      pane.querySelectorAll(':scope > .yaya-detail-charge-row,:scope > .yaya-detail-document-row,:scope > .yaya-detail-commande-row').forEach(function(row){
+        row.style.removeProperty('padding-left');
+        row.style.removeProperty('padding-right');
+      });
     });
   }
 
@@ -24,7 +42,8 @@
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(!tabs)return;
     const first=tabs.querySelector('.yaya-detail-section-tab[data-section="marche"]')||tabs.querySelector('.yaya-detail-section-tab');
-    const last=tabs.querySelector('.yaya-detail-section-tab[data-section="mail"]')||Array.from(tabs.querySelectorAll('.yaya-detail-section-tab')).pop();
+    const allTabs=Array.from(tabs.querySelectorAll('.yaya-detail-section-tab'));
+    const last=tabs.querySelector('.yaya-detail-section-tab[data-section="mail"]')||allTabs[allTabs.length-1];
     if(!first||!last)return;
 
     const cardRect=card.getBoundingClientRect();
@@ -35,17 +54,21 @@
     const left=Math.max(0,Math.round(firstRect.left-cardRect.left));
     const right=Math.max(0,Math.round(cardRect.right-lastRect.right));
 
-    const action=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="charges"]');
-    if(action){
-      action.style.setProperty('padding-left',left+'px','important');
-      action.style.setProperty('padding-right',right+'px','important');
-      action.style.setProperty('box-sizing','border-box','important');
-    }
+    SECTIONS.forEach(function(key){
+      const action=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="'+key+'"]');
+      if(action){
+        action.style.setProperty('padding-left',left+'px','important');
+        action.style.setProperty('padding-right',right+'px','important');
+        action.style.setProperty('box-sizing','border-box','important');
+      }
 
-    card.querySelectorAll(':scope > .yaya-detail-charges-pane .yaya-detail-charge-row').forEach(function(row){
-      row.style.setProperty('padding-left',left+'px','important');
-      row.style.setProperty('padding-right',right+'px','important');
-      row.style.setProperty('box-sizing','border-box','important');
+      const pane=sectionPane(card,key);
+      if(!pane)return;
+      pane.querySelectorAll(':scope > .yaya-detail-charge-row,:scope > .yaya-detail-document-row,:scope > .yaya-detail-commande-row').forEach(function(row){
+        row.style.setProperty('padding-left',left+'px','important');
+        row.style.setProperty('padding-right',right+'px','important');
+        row.style.setProperty('box-sizing','border-box','important');
+      });
     });
   }
 
@@ -62,6 +85,8 @@
   }
 
   schedule();
+  setTimeout(schedule,150);
+  setTimeout(schedule,700);
   window.addEventListener('resize',schedule,{passive:true});
   window.addEventListener('yaya:data-refreshed',schedule);
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
