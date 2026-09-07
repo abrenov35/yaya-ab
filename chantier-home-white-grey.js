@@ -44,6 +44,58 @@
 
       /* Nettoyage des cartes internes éventuelles */
       #pane-chantiers .yaya-chantier-home-row .card{
+      /* =========================================================
+   SUPPRIMER LE BOUTON OEIL DANS LA LISTE CHANTIERS
+   Le nom du chantier reste l'accès d'ouverture.
+========================================================= */
+(function(){
+  'use strict';
+
+  function removeEyes(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+
+    const rows=Array.from(pane.children||[]);
+    rows.forEach(function(row){
+      const top=row && row.querySelector ? row.querySelector('.top') : null;
+      if(!top)return;
+
+      Array.from(top.querySelectorAll('button,[onclick]')).forEach(function(el){
+        const code=String(el.getAttribute('onclick')||'');
+        const txt=String(el.textContent||'').trim();
+
+        if(/toggleChantier\(/.test(code) || txt==='👁️' || txt==='👁'){
+          try{ el.remove(); }catch(_){}
+        }
+      });
+    });
+  }
+
+  function install(){
+    removeEyes();
+
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane){
+      setTimeout(install,150);
+      return;
+    }
+
+    let raf=0;
+    new MutationObserver(function(){
+      if(raf)return;
+      raf=requestAnimationFrame(function(){
+        raf=0;
+        removeEyes();
+      });
+    }).observe(pane,{childList:true,subtree:true});
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',install,{once:true});
+  }else{
+    install();
+  }
+})();
         background:transparent !important;
         box-shadow:none !important;
         border:none !important;
