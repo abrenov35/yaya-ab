@@ -118,13 +118,3 @@
   script.async=false;
   document.head.appendChild(script);
 })();
-
-(function(){
-  'use strict';
-  if(window.__yayaCommandeActionLoaderV1)return;
-  window.__yayaCommandeActionLoaderV1=true;
-  const script=document.createElement('script');
-  script.src='commande-add-action.js?v=commandeaction-1';
-  script.async=false;
-  document.head.appendChild(script);
-})();
