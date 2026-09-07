@@ -16,17 +16,17 @@
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-detail-charge-cost{
         cursor:pointer!important;
-        text-decoration:underline!important;
-        text-decoration-style:dotted!important;
-        text-underline-offset:3px!important;
+        text-decoration:none!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-detail-charge-cost:hover{
         opacity:.72!important;
+        text-decoration:none!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-detail-charge-cost:focus{
         outline:2px solid #9eb8d2!important;
         outline-offset:2px!important;
         border-radius:4px!important;
+        text-decoration:none!important;
       }
     `;
     document.head.appendChild(style);
