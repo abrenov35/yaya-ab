@@ -253,7 +253,9 @@
       btn.id='yayaCreateChantierBtn';
       btn.type='button';
     }
-    btn.textContent='➕ Ajouter un chantier';
+    btn.textContent='🛠️ Gérer chantier';
+    btn.title='Ajouter ou modifier un chantier';
+    btn.setAttribute('aria-label','Gérer chantier');
     return btn;
   }
 
