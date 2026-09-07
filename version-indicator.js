@@ -103,3 +103,14 @@
   s.setAttribute('data-yaya-upload-auto-save-v1','1');
   document.head.appendChild(s);
 })();
+
+// Marché : le montant du devis devient l'accès de modification et le crayon disparaît.
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-devis-amount-click-edit-v1]'))return;
+  const s=document.createElement('script');
+  s.src='devis-amount-click-edit.js?v=amount-edit-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-devis-amount-click-edit-v1','1');
+  document.head.appendChild(s);
+})();
