@@ -1,41 +1,34 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-market-view-link-fix-v3';
+  const STYLE_ID='yaya-market-view-link-fix-v4';
   const DELETED='__YAYA_DEVIS_INITIAL_SUPPRIME__';
 
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers .yaya-detail-market-row .yaya-detail-document-view{
-        display:inline-flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        width:28px!important;
-        min-width:28px!important;
-        max-width:28px!important;
-        height:28px!important;
-        min-height:28px!important;
-        padding:0!important;
-        margin:0!important;
-        border:1px solid #a9c8e8!important;
-        border-radius:7px!important;
-        background:#f3f8fd!important;
-        color:#174d7d!important;
-        font-size:15px!important;
-        line-height:1!important;
-        opacity:1!important;
-        visibility:visible!important;
-        cursor:pointer!important;
+      #pane-chantiers .yaya-detail-market-row{
+        grid-template-columns:minmax(120px,1fr) 90px 110px 28px 28px!important;
       }
-      #pane-chantiers .yaya-detail-market-row .yaya-detail-document-view::before,
-      #pane-chantiers .yaya-detail-market-row .yaya-detail-document-view::after{
-        content:none!important;
+      #pane-chantiers .yaya-detail-market-row .yaya-detail-document-view{
         display:none!important;
       }
-      #pane-chantiers .yaya-detail-market-row .yaya-detail-document-view[data-yaya-market-deleted="1"]{
-        visibility:hidden!important;
+      #pane-chantiers .yaya-detail-market-row > .yaya-market-title-link{
+        color:#174d7d!important;
+        cursor:pointer!important;
+        text-decoration:none!important;
+        border-radius:4px!important;
+        outline:none!important;
+      }
+      #pane-chantiers .yaya-detail-market-row > .yaya-market-title-link:hover{
+        text-decoration:underline!important;
+      }
+      #pane-chantiers .yaya-detail-market-row > .yaya-market-title-link:focus-visible{
+        outline:2px solid #8db7df!important;
+        outline-offset:2px!important;
+      }
+      #pane-chantiers .yaya-detail-market-row > .yaya-market-title-link[data-yaya-market-deleted="1"]{
         pointer-events:none!important;
       }
       .yaya-market-no-piece-overlay{
@@ -49,6 +42,13 @@
       .yaya-market-no-piece-box h3{margin:0 0 8px;font-size:19px}
       .yaya-market-no-piece-box p{margin:0 0 18px;color:#68778a;font-size:13px;line-height:1.45}
       .yaya-market-no-piece-box button{min-width:120px;min-height:40px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:750}
+      @media(max-width:640px){
+        #pane-chantiers .yaya-detail-market-row{
+          grid-template-columns:minmax(90px,1fr) 68px 88px 28px 28px!important;
+          gap:8px!important;
+          padding:7px 9px!important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -135,10 +135,26 @@
     overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
   }
 
+  function openRow(row,title,edit,view){
+    const kind=String(edit&&edit.dataset.kind||'');
+    const id=String(edit&&edit.dataset.rowId||'');
+    const current=String((view&&view.dataset&&view.dataset.lien)||title.dataset.yayaMarketLinkUrl||'');
+    const url=resolveLink(kind,id,current,row&&row.textContent||'');
+    if(url){
+      title.dataset.yayaMarketLinkUrl=url;
+      if(view&&view.dataset)view.dataset.lien=url;
+      if(typeof voirPiece==='function')voirPiece(url);
+      else window.open(url,'_blank','noopener');
+    }else{
+      noPieceModal();
+    }
+  }
+
   function fixRow(row){
     const view=row.querySelector('.yaya-detail-document-view');
     const edit=row.querySelector('.yaya-detail-document-edit');
-    if(!view||!edit)return;
+    const title=row.querySelector(':scope > strong');
+    if(!edit||!title)return;
 
     const kind=String(edit.dataset.kind||'');
     const rowId=String(edit.dataset.rowId||'');
@@ -150,35 +166,53 @@
       }
     }catch(e){}
 
-    view.dataset.yayaMarketDeleted=deleted?'1':'0';
+    title.classList.add('yaya-market-title-link');
+    title.dataset.yayaMarketDeleted=deleted?'1':'0';
     if(deleted)return;
 
-    const lien=resolveLink(kind,rowId,view.dataset.lien||'',row.textContent||'');
-    view.dataset.lien=lien;
-    view.dataset.yayaMarketLink=lien?'1':'0';
-    view.disabled=false;
-    view.removeAttribute('disabled');
-    view.textContent='👁';
-    view.title=lien?'Voir le devis':'Voir le devis';
-    view.setAttribute('aria-label','Voir le devis');
+    const current=String(view&&view.dataset&&view.dataset.lien||title.dataset.yayaMarketLinkUrl||'');
+    const lien=resolveLink(kind,rowId,current,row.textContent||'');
+    title.dataset.yayaMarketLinkUrl=lien;
+    title.dataset.yayaMarketLink=lien?'1':'0';
+    title.title='Voir le devis';
+    title.setAttribute('role','link');
+    title.setAttribute('tabindex','0');
+    title.setAttribute('aria-label','Voir le devis');
 
-    if(!view._yayaMarketLinkFixBound){
-      view._yayaMarketLinkFixBound=true;
-      view.addEventListener('click',function(e){
+    if(view){
+      view.dataset.yayaMarketDeleted=deleted?'1':'0';
+      view.dataset.lien=lien;
+      view.dataset.yayaMarketLink=lien?'1':'0';
+      view.disabled=false;
+      view.removeAttribute('disabled');
+      view.textContent='👁';
+      view.title='Voir le devis';
+      view.setAttribute('aria-label','Voir le devis');
+
+      if(!view._yayaMarketLinkFixBound){
+        view._yayaMarketLinkFixBound=true;
+        view.addEventListener('click',function(e){
+          e.preventDefault();
+          e.stopPropagation();
+          openRow(row,title,edit,view);
+        },true);
+      }
+    }
+
+    if(!title._yayaMarketTitleLinkBound){
+      title._yayaMarketTitleLinkBound=true;
+      title.addEventListener('click',function(e){
         e.preventDefault();
         e.stopPropagation();
-        const rowNow=view.closest('.yaya-detail-market-row');
-        const editNow=rowNow&&rowNow.querySelector('.yaya-detail-document-edit');
-        const kindNow=String(editNow&&editNow.dataset.kind||'');
-        const idNow=String(editNow&&editNow.dataset.rowId||'');
-        const url=resolveLink(kindNow,idNow,view.dataset.lien||'',rowNow&&rowNow.textContent||'');
-        if(url){
-          view.dataset.lien=url;
-          if(typeof voirPiece==='function')voirPiece(url);
-          else window.open(url,'_blank','noopener');
-        }else{
-          noPieceModal();
-        }
+        const currentRow=title.closest('.yaya-detail-market-row');
+        openRow(currentRow,title,currentRow&&currentRow.querySelector('.yaya-detail-document-edit'),currentRow&&currentRow.querySelector('.yaya-detail-document-view'));
+      },true);
+      title.addEventListener('keydown',function(e){
+        if(e.key!=='Enter'&&e.key!==' ')return;
+        e.preventDefault();
+        e.stopPropagation();
+        const currentRow=title.closest('.yaya-detail-market-row');
+        openRow(currentRow,title,currentRow&&currentRow.querySelector('.yaya-detail-document-edit'),currentRow&&currentRow.querySelector('.yaya-detail-document-view'));
       },true);
     }
   }
