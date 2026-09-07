@@ -317,3 +317,13 @@
   installDirectDocumentEditSave();
   apply();
 })();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-document-missing-attachment-warning="1"]'))return;
+  const s=document.createElement('script');
+  s.src='document-missing-attachment-warning.js?v=missing-pj-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-document-missing-attachment-warning','1');
+  document.head.appendChild(s);
+})();
