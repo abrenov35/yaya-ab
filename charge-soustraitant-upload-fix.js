@@ -181,3 +181,14 @@
   s.setAttribute('data-yaya-charge-amount-edit','1');
   document.head.appendChild(s);
 })();
+
+/* Documents : le type ouvre la modification et le crayon reste masqué. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-document-type-edit="1"]'))return;
+  const s=document.createElement('script');
+  s.src='document-type-edit.js?v=document-type-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-document-type-edit','1');
+  document.head.appendChild(s);
+})();
