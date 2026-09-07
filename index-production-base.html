@@ -201,6 +201,9 @@
         planningPresent:!!doublon,
         sourcePlanningId:doublon&&doublon.id?String(doublon.id):''
       };
+      if(typeof window.yayaAuthorizeChantierCreate==='function'){
+        window.yayaAuthorizeChantierCreate(chantier);
+      }
       S.chantiers.push(chantier);
       expChantiers.clear();
       tab='chantiers';

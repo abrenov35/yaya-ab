@@ -10,6 +10,7 @@
   window.__yayaChantierWriteSafetyInstalled=true;
 
   let pendingDeleteId='';
+  let authorizedCreate={id:'',expires:0};
   let authorizedDelete={id:'',expires:0};
   let busy=false;
 
@@ -72,6 +73,13 @@
 
   window.addEventListener('pointerup',observeDeleteConfirmation,true);
   window.addEventListener('click',observeDeleteConfirmation,true);
+
+  window.yayaAuthorizeChantierCreate=function(chantier){
+    const id=String(chantier&&chantier.id||'').trim();
+    if(!id)return false;
+    authorizedCreate={id:id,expires:Date.now()+60000};
+    return true;
+  };
 
   function copyRecord(v){
     return v&&typeof v==='object'?Object.assign({},v):v;
@@ -324,10 +332,20 @@
           if(canonical(old)!==canonical(c))changed.push(c);
         });
 
-        if(added.length){
+        const allowedCreateId=(authorizedCreate.expires>Date.now())
+          ?String(authorizedCreate.id||'').trim()
+          :'';
+        const allowedAddition=added.find(function(c){
+          return allowedCreateId&&String(c&&c.id||'').trim()===allowedCreateId;
+        })||null;
+        const unauthorizedAdditions=added.filter(function(c){
+          return !allowedAddition||String(c&&c.id||'').trim()!==String(allowedAddition.id||'').trim();
+        });
+
+        if(unauthorizedAdditions.length){
           console.warn(
             'Sécurité Yaya : réintroduction de chantier bloquée pour',
-            added.map(function(c){return String(c.id||'')+':'+String(c.nom||'');})
+            unauthorizedAdditions.map(function(c){return String(c.id||'')+':'+String(c.nom||'');})
           );
         }
 
@@ -361,22 +379,29 @@
           ok=!!(await originalApiPost('deleteChantier',{id:allowedId}))&&ok;
         }
 
-        if(changed.length){
+        if(changed.length||allowedAddition){
           const safeList=mergeSafeServerList(
             server,
             incomingById,
             deleteAllowed?allowedId:''
           );
+          if(allowedAddition)safeList.push(copyRecord(allowedAddition));
           ok=!!(await originalApiPost('setChantiers',safeList))&&ok;
         }
 
+        authorizedCreate={id:'',expires:0};
         authorizedDelete={id:'',expires:0};
         pendingDeleteId='';
 
         if(!ok)throw new Error('une écriture chantier a échoué');
+        if(unauthorizedAdditions.length){
+          throw new Error('création chantier non autorisée');
+        }
 
         const after=await freshServer();
-        if(changed.length)verifyPersisted(after,changed);
+        const expected=changed.slice();
+        if(allowedAddition)expected.push(allowedAddition);
+        if(expected.length)verifyPersisted(after,expected);
         replaceLocalFromFresh(after);
 
         try{
@@ -394,6 +419,7 @@
         }catch(e){}
         return false;
       }finally{
+        authorizedCreate={id:'',expires:0};
         busy=false;
       }
     }
