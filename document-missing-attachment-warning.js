@@ -55,3 +55,14 @@
   if(document.body)install();
   else document.addEventListener('DOMContentLoaded',install,{once:true});
 })();
+
+/* Charge / facture sous-traitant : recharge toujours la version qui affiche Description. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achat-st-description="1"]'))return;
+  const s=document.createElement('script');
+  s.src='achat-soustraitant-modal-fix.js?v=description-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achat-st-description','1');
+  document.head.appendChild(s);
+})();
