@@ -203,3 +203,14 @@
   s.setAttribute('data-yaya-mail-subject-edit','1');
   document.head.appendChild(s);
 })();
+
+/* Dépenses : upload direct de la pièce jointe, sans dépendre de l'analyse OpenAI. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-depense-upload-noai="1"]'))return;
+  const s=document.createElement('script');
+  s.src='depense-upload-noai-fix.js?v=depense-upload-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-depense-upload-noai','1');
+  document.head.appendChild(s);
+})();
