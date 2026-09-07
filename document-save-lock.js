@@ -128,8 +128,6 @@
         let currentTab='';
         try{currentTab=String(typeof tab!=='undefined'?tab:'');}catch(e){}
 
-        // Le saveDocument historique met tab='documents' uniquement après une sauvegarde
-        // réussie. On restaure donc la fiche chantier seulement dans ce cas.
         if(context.tab==='chantiers'&&context.focus&&currentTab==='documents'){
           restoreContext(context);
         }
@@ -253,4 +251,67 @@
   if(root){
     new MutationObserver(clean).observe(root,{childList:true,subtree:true,characterData:true});
   }
+})();
+
+/* Modification document : un seul clic sur Enregistrer, sans seconde confirmation. */
+(function(){
+  'use strict';
+  let busy=false;
+
+  function installDirectDocumentEditSave(){
+    if(
+      typeof window.saveDocumentEdit!=='function' ||
+      typeof window.appliquerModificationDocument!=='function' ||
+      typeof window.changementsDocument!=='function'
+    ){
+      setTimeout(installDirectDocumentEditSave,120);
+      return;
+    }
+    if(window.saveDocumentEdit.__yayaDirectSave)return;
+
+    const direct=async function(id){
+      if(busy)return;
+
+      const changement=window.changementsDocument(id);
+      if(!changement)return;
+      if(!changement.messages.length){
+        if(typeof window.toast==='function')window.toast('Aucune modification à enregistrer');
+        return;
+      }
+
+      if(typeof window.fermerConfirmationDocument==='function'){
+        window.fermerConfirmationDocument();
+      }
+
+      const root=document.getElementById('modalRoot');
+      const modal=root?Array.from(root.querySelectorAll('.modal')).find(function(item){
+        return !!item.querySelector('#edDocSujet,#edDocTitre,#edDocType,#edDocCh');
+      }):null;
+      const btn=modal?Array.from(modal.querySelectorAll('button')).find(function(button){
+        return /^Enregistrer$/i.test(String(button.textContent||'').trim()) || /saveDocumentEdit/.test(String(button.getAttribute('onclick')||''));
+      }):null;
+
+      busy=true;
+      if(btn){
+        btn.disabled=true;
+        btn.dataset.yayaOriginalText=btn.textContent||'Enregistrer';
+        btn.textContent='Enregistrement…';
+      }
+
+      try{
+        await window.appliquerModificationDocument(id);
+      }finally{
+        busy=false;
+        if(btn&&btn.isConnected){
+          btn.disabled=false;
+          btn.textContent=btn.dataset.yayaOriginalText||'Enregistrer';
+        }
+      }
+    };
+
+    direct.__yayaDirectSave=true;
+    window.saveDocumentEdit=direct;
+  }
+
+  installDirectDocumentEditSave();
 })();
