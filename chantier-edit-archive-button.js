@@ -67,7 +67,7 @@
       .yaya-chantier-edit-modal .mfoot,
       .yaya-manage-create-modal .mfoot{
         display:grid!important;
-        grid-template-columns:repeat(5,minmax(0,1fr))!important;
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
         gap:7px!important;
         align-items:stretch!important;
       }
@@ -77,22 +77,18 @@
         white-space:nowrap!important;font-size:10.5px!important;line-height:1.15!important;font-weight:750!important;
         opacity:1!important;cursor:pointer!important;
       }
-      .yaya-manage-import-btn{
-        background:#eef6ff!important;border:1px solid #8db8e6!important;color:#0b5fa5!important;
-      }
       .yaya-delete-chantier-modal-btn{
         background:#fff1f0!important;border:1px solid #e6a09a!important;color:#b42318!important;
       }
       .yaya-archive-chantier-modal-btn{
         background:#fff7e8!important;border:1px solid #efb86f!important;color:#9a4d00!important;
       }
-      .yaya-manage-import-btn:hover{background:#deefff!important;}
       .yaya-delete-chantier-modal-btn:hover{background:#fee4e2!important;}
       .yaya-archive-chantier-modal-btn:hover{background:#ffefd2!important;}
 
       @media(max-width:640px){
         .hdr .tabs #yayaCreateChantierBtn{min-width:auto!important;padding-left:10px!important;padding-right:10px!important;}
-        .yaya-chantier-edit-modal .mfoot,.yaya-manage-create-modal .mfoot{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:5px!important;}
+        .yaya-chantier-edit-modal .mfoot,.yaya-manage-create-modal .mfoot{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:5px!important;}
         .yaya-chantier-edit-modal .mfoot>button,.yaya-manage-create-modal .mfoot>button{padding:9px 3px!important;font-size:9.5px!important;letter-spacing:-.01em!important;}
       }
     `;
@@ -254,12 +250,6 @@
     });
   }
 
-  function importButton(cid){
-    return makeButton('📎 Importer','yaya-manage-import-btn',function(){
-      if(typeof window.openDocumentModal==='function')window.openDocumentModal(cid);
-    });
-  }
-
   function decorateEditModal(modal){
     if(!modal||modal.dataset.yayaManageReady==='1')return;
     const cid=extractCid(modal);if(!cid)return;
@@ -275,15 +265,9 @@
     const cancel=foot.querySelector('#editChCancel');
     if(!del||!save||!cancel)return;
     del.textContent='Supprimer';save.textContent='Enregistrer';cancel.textContent='Annuler';
-    let importer=modal.querySelector('.yaya-chantier-import-btn');
-    if(importer){
-      importer.removeAttribute('onclick');
-      importer.onclick=function(){if(typeof window.openDocumentModal==='function')window.openDocumentModal(cid);};
-      importer.classList.add('yaya-manage-import-btn');importer.textContent='📎 Importer';
-    }else importer=importButton(cid);
     let archive=foot.querySelector('.yaya-archive-chantier-modal-btn');
     if(!archive)archive=archiveButton(cid);else archive.textContent='Archiver';
-    foot.replaceChildren(importer,del,archive,cancel,save);
+    foot.replaceChildren(del,archive,cancel,save);
     modal.dataset.yayaManageReady='1';
   }
 
@@ -300,10 +284,6 @@
     if(!cancel)return;
     create.textContent='Créer le chantier';
 
-    const importer=makeButton('📎 Importer','yaya-manage-import-btn',function(){
-      const id=requireExisting('importer une pièce');
-      if(id&&typeof window.openDocumentModal==='function')window.openDocumentModal(id);
-    });
     const supprimer=makeButton('Supprimer','yaya-delete-chantier-modal-btn',function(){
       const id=requireExisting('supprimer');
       if(id&&typeof window.deleteExistingChantier==='function')window.deleteExistingChantier(id);
@@ -317,7 +297,7 @@
       }
     });
 
-    foot.replaceChildren(importer,supprimer,archiver,cancel,create);
+    foot.replaceChildren(supprimer,archiver,cancel,create);
     modal.dataset.yayaManageReady='1';
   }
 
