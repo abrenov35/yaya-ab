@@ -16,11 +16,11 @@
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost{
         cursor:pointer!important;
-        text-decoration:underline dotted rgba(28,43,72,.42)!important;
-        text-underline-offset:3px!important;
+        text-decoration:none!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost:hover{
         color:#0f4f8d!important;
+        text-decoration:none!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane [data-yaya-commande-view-text="1"]{
         cursor:pointer!important;
