@@ -9,6 +9,9 @@
       #pane-chantiers button[onclick="fermerFocus()"]{
         display:none!important;
       }
+      #pane-chantiers .chantier-fin-toolbar > .chantier-archive-btn{
+        display:none!important;
+      }
       #pane-chantiers .chantier-fin-toolbar{
         display:flex!important;
         align-items:center!important;
