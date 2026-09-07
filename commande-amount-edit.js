@@ -1,13 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaCommandeAmountEditV8)return;
-  window.__yayaCommandeAmountEditV8=true;
+  if(window.__yayaCommandeAmountEditV9)return;
+  window.__yayaCommandeAmountEditV9=true;
 
-  const STYLE_ID='yaya-commande-amount-edit-v8';
+  const STYLE_ID='yaya-commande-amount-edit-v9';
 
   function installStyle(){
-    ['yaya-commande-amount-edit-v4','yaya-commande-amount-edit-v5','yaya-commande-amount-edit-v6','yaya-commande-amount-edit-v7'].forEach(function(id){
+    ['yaya-commande-amount-edit-v4','yaya-commande-amount-edit-v5','yaya-commande-amount-edit-v6','yaya-commande-amount-edit-v7','yaya-commande-amount-edit-v8'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
@@ -29,8 +29,7 @@
         color:#718096!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row > strong > .yaya-history-date{
-        display:block!important;
-        margin-top:2px!important;
+        display:none!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-edit,
       #pane-chantiers .yaya-detail-commandes-pane button.yaya-detail-commande-edit,
@@ -45,6 +44,10 @@
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-hours{
         justify-self:end!important;
         text-align:right!important;
+        color:#718096!important;
+        font-size:11.5px!important;
+        font-weight:500!important;
+        white-space:nowrap!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost{
         justify-self:end!important;
@@ -112,7 +115,7 @@
       }
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
-          grid-template-columns:minmax(0,1fr) 72px 70px 40px!important;
+          grid-template-columns:minmax(0,1fr) 76px 70px 40px!important;
           column-gap:7px!important;
         }
         #pane-chantiers .yaya-detail-commandes-pane .yaya-commande-actions{
@@ -150,6 +153,21 @@
     el.setAttribute('aria-label','Voir la commande');
   }
 
+  function moveDateToMiddle(row){
+    if(!row)return;
+    const middle=row.querySelector('.yaya-detail-charge-hours');
+    if(!middle)return;
+    const dateEl=row.querySelector('strong .yaya-history-date');
+    const dateText=String(dateEl&&dateEl.textContent||middle.dataset.yayaCommandeDate||'').trim();
+    if(dateText){
+      middle.textContent=dateText;
+      middle.dataset.yayaCommandeDate=dateText;
+    }else if(/^Commande$/i.test(String(middle.textContent||'').trim())){
+      middle.textContent='';
+    }
+    if(dateEl)dateEl.remove();
+  }
+
   function patch(){
     installStyle();
     document.querySelectorAll('#pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row').forEach(function(row){
@@ -158,6 +176,7 @@
       const view=row.querySelector('.yaya-detail-commande-view');
       const del=row.querySelector('.yaya-detail-commande-delete,button[title*="Supprimer"],button[aria-label*="Supprimer"]');
 
+      moveDateToMiddle(row);
       hideAction(edit);
       hideAction(view);
       prepareDelete(del);
