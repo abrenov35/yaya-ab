@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaCommandeAmountEditV4)return;
-  window.__yayaCommandeAmountEditV4=true;
+  if(window.__yayaCommandeAmountEditV5)return;
+  window.__yayaCommandeAmountEditV5=true;
 
-  const STYLE_ID='yaya-commande-amount-edit-v4';
+  const STYLE_ID='yaya-commande-amount-edit-v5';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -14,10 +14,11 @@
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-edit,
       #pane-chantiers .yaya-detail-commandes-pane button.yaya-detail-commande-edit,
       #pane-chantiers .yaya-detail-commandes-pane button[title="Modifier"].yaya-detail-commande-edit,
-      #pane-chantiers .yaya-detail-commandes-pane button[aria-label="Modifier"].yaya-detail-commande-edit{
-        display:none!important;
-      }
-      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-view{
+      #pane-chantiers .yaya-detail-commandes-pane button[aria-label="Modifier"].yaya-detail-commande-edit,
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-view,
+      #pane-chantiers .yaya-detail-commandes-pane button.yaya-detail-commande-view,
+      #pane-chantiers .yaya-detail-commandes-pane button[title="Voir"].yaya-detail-commande-view,
+      #pane-chantiers .yaya-detail-commandes-pane button[aria-label="Voir"].yaya-detail-commande-view{
         display:none!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost{
@@ -42,6 +43,13 @@
     document.head.appendChild(style);
   }
 
+  function hideAction(btn){
+    if(!btn)return;
+    btn.style.setProperty('display','none','important');
+    btn.setAttribute('aria-hidden','true');
+    btn.tabIndex=-1;
+  }
+
   function prepareViewText(el,row){
     if(!el||!row)return;
     const view=row.querySelector('.yaya-detail-commande-view:not(:disabled)');
@@ -58,12 +66,10 @@
     document.querySelectorAll('#pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row').forEach(function(row){
       const amount=row.querySelector('.yaya-detail-charge-cost');
       const edit=row.querySelector('.yaya-detail-commande-edit');
+      const view=row.querySelector('.yaya-detail-commande-view');
 
-      if(edit){
-        edit.style.setProperty('display','none','important');
-        edit.setAttribute('aria-hidden','true');
-        edit.tabIndex=-1;
-      }
+      hideAction(edit);
+      hideAction(view);
 
       if(amount&&edit){
         amount.setAttribute('role','button');
@@ -73,7 +79,7 @@
         amount.dataset.commandeId=String(edit.dataset.commandeId||row.dataset.commandeId||'');
       }
 
-      // Les zones texte ouvrent la visualisation de la pièce jointe.
+      // Les zones texte ouvrent la visualisation de la pièce jointe via le bouton masqué.
       prepareViewText(row.querySelector('strong'),row);
       prepareViewText(row.querySelector('.yaya-detail-charge-hours'),row);
     });
