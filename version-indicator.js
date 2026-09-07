@@ -115,6 +115,17 @@
   document.head.appendChild(s);
 })();
 
+// Charges : aligne libellé / détail et pousse la date à droite de la zone texte.
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-charge-layout-inline-v1]'))return;
+  const s=document.createElement('script');
+  s.src='charge-layout-inline.js?v=charge-layout-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-charge-layout-inline-v1','1');
+  document.head.appendChild(s);
+})();
+
 // Accès discret à l'extranet chantiers depuis le bloc de marque Yaya / AB RENOV 35.
 (function(){
   'use strict';
