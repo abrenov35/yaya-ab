@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-archive-style-v4';
+  const STYLE_ID='yaya-chantier-edit-archive-style-v5';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -129,6 +129,22 @@
     }
   }
 
+  function removeLegacyEditButtons(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+
+    pane.querySelectorAll('.yaya-edit-chantier-btn').forEach(function(btn){
+      btn.remove();
+    });
+
+    pane.querySelectorAll('button').forEach(function(btn){
+      const txt=String(btn.textContent||'').replace(/\s+/g,' ').trim();
+      if(txt==='✏️ Modifier chantier'||txt==='Modifier chantier'){
+        btn.remove();
+      }
+    });
+  }
+
   function syncManageToolbar(){
     const btn=document.getElementById('yayaCreateChantierBtn');
     if(!btn)return false;
@@ -137,6 +153,7 @@
     }
     btn.title='Ajouter ou modifier un chantier';
     btn.setAttribute('aria-label','Gérer chantier');
+    removeLegacyEditButtons();
     return true;
   }
 
@@ -184,12 +201,17 @@
 
   const root=document.getElementById('modalRoot')||document.documentElement;
   const observer=new MutationObserver(function(){
+    removeLegacyEditButtons();
     if(document.querySelector('.yaya-chantier-edit-modal:not([data-archive-button-ready="1"])')){
       decorateModal();
     }
   });
   observer.observe(root,{childList:true,subtree:true});
 
+  removeLegacyEditButtons();
+  setTimeout(removeLegacyEditButtons,0);
+  setTimeout(removeLegacyEditButtons,250);
+  setTimeout(removeLegacyEditButtons,800);
   setTimeout(decorateModal,0);
   installToolbarObserver();
   setTimeout(syncManageToolbar,250);
