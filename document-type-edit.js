@@ -1,27 +1,55 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDocumentTypeEditV1)return;
-  window.__yayaDocumentTypeEditV1=true;
+  if(window.__yayaDocumentTypeEditV2)return;
+  window.__yayaDocumentTypeEditV2=true;
 
-  const STYLE_ID='yaya-document-type-edit-style-v1';
+  const STYLE_ID='yaya-document-type-edit-style-v2';
 
   function installStyle(){
+    ['yaya-document-type-edit-style-v1'].forEach(function(id){
+      const old=document.getElementById(id);if(old)old.remove();
+    });
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours[data-yaya-document-edit="1"]{
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours[data-yaya-document-edit="1"],
+      #pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]{
         cursor:pointer!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours[data-yaya-document-edit="1"]:hover{
         opacity:.72!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]:hover{
+        text-decoration:underline!important;
+        text-underline-offset:3px!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-edit{
         display:none!important;
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function prepareViewText(row){
+    const text=row.querySelector('strong');
+    const view=row.querySelector('.yaya-detail-document-view');
+    if(!text)return;
+
+    if(view && !view.disabled){
+      text.dataset.yayaDocumentViewText='1';
+      text.setAttribute('role','button');
+      text.setAttribute('tabindex','0');
+      text.setAttribute('title','Voir le document');
+      text.setAttribute('aria-label','Voir le document');
+    }else{
+      delete text.dataset.yayaDocumentViewText;
+      text.removeAttribute('role');
+      text.removeAttribute('tabindex');
+      text.removeAttribute('aria-label');
+      text.removeAttribute('title');
+    }
   }
 
   function patch(){
@@ -31,29 +59,36 @@
       const edit=row.querySelector('.yaya-detail-document-edit[data-doc-id]');
       const type=row.querySelector('.yaya-detail-charge-hours');
       const id=String(edit&&edit.dataset.docId||'').trim();
-      if(!type||!id)return;
 
-      type.dataset.yayaDocumentEdit='1';
-      type.dataset.docId=id;
-      type.setAttribute('role','button');
-      type.setAttribute('tabindex','0');
-      type.setAttribute('title','Modifier le document');
-      type.setAttribute('aria-label','Modifier le document');
+      if(type&&id){
+        type.dataset.yayaDocumentEdit='1';
+        type.dataset.docId=id;
+        type.setAttribute('role','button');
+        type.setAttribute('tabindex','0');
+        type.setAttribute('title','Modifier le document');
+        type.setAttribute('aria-label','Modifier le document');
+      }
 
-      edit.style.setProperty('display','none','important');
-      edit.setAttribute('aria-hidden','true');
+      if(edit){
+        edit.style.setProperty('display','none','important');
+        edit.setAttribute('aria-hidden','true');
+      }
+
+      prepareViewText(row);
     });
+  }
+
+  function stop(event){
+    if(!event)return;
+    event.preventDefault();
+    event.stopPropagation();
+    if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
   }
 
   function openEdit(type,event){
     const id=String(type&&type.dataset&&type.dataset.docId||'').trim();
     if(!id)return;
-
-    if(event){
-      event.preventDefault();
-      event.stopPropagation();
-      if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
-    }
+    stop(event);
 
     try{
       if(typeof window.editDocument==='function'){
@@ -66,11 +101,24 @@
     }
   }
 
+  function openView(text,event){
+    const row=text&&text.closest?text.closest('.yaya-detail-document-row'):null;
+    const view=row?row.querySelector('.yaya-detail-document-view'):null;
+    if(!view||view.disabled)return;
+    stop(event);
+    try{view.click();}catch(e){}
+  }
+
   document.addEventListener('click',function(event){
     const type=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours[data-yaya-document-edit="1"]')
       :null;
-    if(type)openEdit(type,event);
+    if(type){openEdit(type,event);return;}
+
+    const text=event.target&&event.target.closest
+      ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]')
+      :null;
+    if(text)openView(text,event);
   },true);
 
   document.addEventListener('keydown',function(event){
@@ -78,7 +126,12 @@
     const type=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours[data-yaya-document-edit="1"]')
       :null;
-    if(type)openEdit(type,event);
+    if(type){openEdit(type,event);return;}
+
+    const text=event.target&&event.target.closest
+      ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]')
+      :null;
+    if(text)openView(text,event);
   },true);
 
   let raf=0;
