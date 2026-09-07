@@ -108,3 +108,14 @@
   s.setAttribute('data-yaya-note-modal-center-fix','1');
   document.head.appendChild(s);
 })();
+
+/* Verrouillage de la modale achat pendant l'import d'un PDF / d'une photo. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achat-upload-lock="1"]'))return;
+  const s=document.createElement('script');
+  s.src='achat-upload-lock.js?v=upload-lock-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achat-upload-lock','1');
+  document.head.appendChild(s);
+})();
