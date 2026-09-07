@@ -154,3 +154,14 @@
     }).observe(root,{childList:true,subtree:true,characterData:true});
   }
 })();
+
+/* Charge toujours la dernière version du verrou de contexte chantier. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-chantier-modal-context-lock="1"]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-modal-context-lock.js?v=context-lock-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-chantier-modal-context-lock','1');
+  document.head.appendChild(s);
+})();
