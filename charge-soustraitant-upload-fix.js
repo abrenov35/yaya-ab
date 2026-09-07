@@ -81,7 +81,6 @@
       const base64=await readBase64(file);
       if(!base64)throw new Error('Document vide ou illisible');
 
-      // Archivage pur : aucune dépendance à OPENAI_API_KEY.
       const response=await fetch(url,{
         method:'POST',
         cache:'no-store',
@@ -169,5 +168,16 @@
   s.src='depense-amount-edit.js?v=depense-amount-'+Date.now();
   s.async=false;
   s.setAttribute('data-yaya-depense-amount-edit','1');
+  document.head.appendChild(s);
+})();
+
+/* Charges sous-traitant : le montant ouvre la modification et le crayon reste masqué. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-charge-amount-edit="1"]'))return;
+  const s=document.createElement('script');
+  s.src='charge-amount-edit.js?v=charge-amount-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-charge-amount-edit','1');
   document.head.appendChild(s);
 })();
