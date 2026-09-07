@@ -1,13 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisAmountClickEditV4)return;
-  window.__yayaDevisAmountClickEditV4=true;
+  if(window.__yayaDevisAmountClickEditV5)return;
+  window.__yayaDevisAmountClickEditV5=true;
 
-  const STYLE_ID='yaya-devis-amount-click-edit-style-v4';
+  const STYLE_ID='yaya-devis-amount-click-edit-style-v5';
 
   function installStyle(){
-    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3'].forEach(function(id){
+    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3','yaya-devis-amount-click-edit-style-v4'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
@@ -34,6 +34,32 @@
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > strong{
         grid-column:1!important;
         min-width:0!important;
+        display:flex!important;
+        align-items:baseline!important;
+        gap:8px!important;
+        flex-wrap:wrap!important;
+        line-height:1.25!important;
+      }
+      #pane-chantiers .yaya-detail-markets-pane .yaya-market-label{
+        color:#1c2b48!important;
+        font-size:13px!important;
+        font-weight:750!important;
+      }
+      #pane-chantiers .yaya-detail-markets-pane .yaya-market-description{
+        display:inline!important;
+        margin:0!important;
+        color:#596579!important;
+        font-size:12px!important;
+        font-weight:500!important;
+        white-space:normal!important;
+      }
+      #pane-chantiers .yaya-detail-markets-pane .yaya-market-inline-date{
+        display:inline!important;
+        margin:0!important;
+        color:#718096!important;
+        font-size:10px!important;
+        font-weight:500!important;
+        white-space:nowrap!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-cost{
         grid-column:2!important;
@@ -93,16 +119,6 @@
         background:#ffeded!important;
         border-color:#eb8383!important;
       }
-      #pane-chantiers .yaya-detail-markets-pane .yaya-market-description{
-        display:block!important;
-        margin-top:2px!important;
-        color:#718096!important;
-        font-size:11px!important;
-        font-weight:500!important;
-        white-space:normal!important;
-        overflow:visible!important;
-        text-overflow:clip!important;
-      }
 
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
@@ -110,9 +126,27 @@
           column-gap:7px!important;
           padding:7px 8px!important;
         }
+        #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > strong{
+          gap:5px 7px!important;
+        }
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function escapeHtml(value){
+    return String(value==null?'':value).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function unpackMeta(value){
+    const raw=String(value||'').trim();
+    const match=raw.match(/\s*\[\[YAYA_DESC:([^\]]*)\]\]\s*$/);
+    if(!match)return {label:raw,description:''};
+    let description='';
+    try{description=decodeURIComponent(match[1]||'');}catch(e){description=String(match[1]||'');}
+    return {label:raw.slice(0,match.index).trim(),description:description};
   }
 
   function contextFromRow(row){
@@ -123,6 +157,49 @@
     const kind=String(edit.dataset.kind||'').trim();
     if(!id)return null;
     return {id:id,kind:kind};
+  }
+
+  function quoteMetaFromContext(ctx,strong){
+    let raw='';
+    try{
+      if(ctx&&typeof S!=='undefined'&&S){
+        if(ctx.kind==='main'&&Array.isArray(S.chantiers)){
+          const c=S.chantiers.find(function(x){return String(x&&x.id)===String(ctx.id);});
+          if(c)raw=String(c.numero||'');
+        }else if(Array.isArray(S.avenants)){
+          const v=S.avenants.find(function(x){return String(x&&x.id)===String(ctx.id);});
+          if(v)raw=String(v.libelle||'');
+        }
+      }
+    }catch(e){}
+
+    if(!raw&&strong){
+      raw=String(strong.childNodes&&strong.childNodes[0]&&strong.childNodes[0].nodeType===Node.TEXT_NODE
+        ?strong.childNodes[0].nodeValue
+        :strong.textContent||'').trim();
+    }
+    return unpackMeta(raw);
+  }
+
+  function normalizeMarketText(row){
+    const strong=row.querySelector('strong');
+    const ctx=contextFromRow(row);
+    if(!strong||!ctx)return;
+
+    const existingDate=strong.querySelector('.yaya-history-date,.yaya-market-inline-date');
+    const date=String(existingDate&&existingDate.textContent||'').trim();
+    const meta=quoteMetaFromContext(ctx,strong);
+    const label=String(meta.label||'Devis').trim()||'Devis';
+    const description=String(meta.description||'').trim();
+
+    const signature=[label,description,date].join('|');
+    if(strong.dataset.yayaMarketInlineSignature===signature)return;
+
+    strong.innerHTML=''
+      +'<span class="yaya-market-label">'+escapeHtml(label)+'</span>'
+      +(description?'<span class="yaya-market-description">'+escapeHtml(description)+'</span>':'')
+      +(date?'<span class="yaya-market-inline-date">'+escapeHtml(date)+'</span>':'');
+    strong.dataset.yayaMarketInlineSignature=signature;
   }
 
   function openEdit(row){
@@ -140,6 +217,7 @@
   function decorate(){
     installStyle();
     document.querySelectorAll('#pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row').forEach(function(row){
+      normalizeMarketText(row);
       const amount=row.querySelector('.yaya-detail-charge-cost');
       const edit=row.querySelector('.yaya-detail-document-edit');
       const view=row.querySelector('.yaya-detail-document-view');
