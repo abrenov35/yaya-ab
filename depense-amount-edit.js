@@ -1,13 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDepenseAmountEditV6)return;
-  window.__yayaDepenseAmountEditV6=true;
+  if(window.__yayaDepenseAmountEditV7)return;
+  window.__yayaDepenseAmountEditV7=true;
 
-  const STYLE_ID='yaya-depense-amount-edit-style-v6';
+  const STYLE_ID='yaya-depense-amount-edit-style-v7';
 
   function installStyle(){
-    ['yaya-depense-amount-edit-style-v4','yaya-depense-amount-edit-style-v5'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-depense-amount-edit-style-v4','yaya-depense-amount-edit-style-v5','yaya-depense-amount-edit-style-v6'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
     let style=document.getElementById(STYLE_ID);
     if(style)return;
     style=document.createElement('style');
@@ -45,7 +45,8 @@
       }
       #pane-chantiers .yaya-detail-expenses-pane .yaya-depense-inline-date{
         display:inline!important;
-        margin:0!important;
+        margin:0 0 0 auto!important;
+        padding-left:14px!important;
         color:#7a8798!important;
         font-size:10.5px!important;
         font-weight:500!important;
@@ -83,6 +84,9 @@
         }
         #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row > strong{
           gap:4px 8px!important;
+        }
+        #pane-chantiers .yaya-detail-expenses-pane .yaya-depense-inline-date{
+          padding-left:8px!important;
         }
       }
     `;
