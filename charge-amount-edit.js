@@ -18,9 +18,10 @@
         cursor:pointer!important;
       }
       #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-edit="1"],
-      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"]{
-        text-decoration:underline dotted rgba(28,43,72,.42)!important;
-        text-underline-offset:3px!important;
+      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"],
+      #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-edit="1"]:hover,
+      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"]:hover{
+        text-decoration:none!important;
       }
       #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-edit="1"]:hover,
       #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"]:hover{
