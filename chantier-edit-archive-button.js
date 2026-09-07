@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-archive-style-v3';
+  const STYLE_ID='yaya-chantier-edit-archive-style-v4';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -37,6 +37,12 @@
         z-index:40000!important;
         pointer-events:auto!important;
       }
+      #pane-chantiers .yaya-edit-chantier-btn{
+        display:none!important;
+      }
+      .hdr .tabs #yayaCreateChantierBtn{
+        min-width:142px!important;
+      }
       @media(max-width:640px){
         .yaya-chantier-edit-modal .mfoot{
           grid-template-columns:minmax(0,1.35fr) minmax(0,1.15fr) minmax(0,1fr) minmax(0,.9fr)!important;
@@ -46,6 +52,11 @@
           padding:9px 3px!important;
           font-size:9.5px!important;
           letter-spacing:-.01em!important;
+        }
+        .hdr .tabs #yayaCreateChantierBtn{
+          min-width:auto!important;
+          padding-left:10px!important;
+          padding-right:10px!important;
         }
       }
     `;
@@ -110,6 +121,65 @@
     modal.dataset.archiveButtonReady='1';
   }
 
+  function currentChantierId(){
+    try{
+      return String(focusChantier||'').trim();
+    }catch(e){
+      return '';
+    }
+  }
+
+  function syncManageToolbar(){
+    const btn=document.getElementById('yayaCreateChantierBtn');
+    if(!btn)return false;
+    btn.textContent='🛠️ Gérer chantier';
+    btn.title='Ajouter ou modifier un chantier';
+    btn.setAttribute('aria-label','Gérer chantier');
+    return true;
+  }
+
+  function manageChantier(){
+    const cid=currentChantierId();
+    if(cid&&typeof window.openExistingChantierModal==='function'){
+      window.openExistingChantierModal(cid);
+      return;
+    }
+    if(typeof window.openChantierModal==='function'){
+      window.openChantierModal();
+    }
+  }
+
+  document.addEventListener('click',function(event){
+    const btn=event.target&&event.target.closest
+      ?event.target.closest('#yayaCreateChantierBtn')
+      :null;
+    if(!btn)return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if(typeof event.stopImmediatePropagation==='function'){
+      event.stopImmediatePropagation();
+    }
+    manageChantier();
+  },true);
+
+  function installToolbarObserver(){
+    const header=document.querySelector('.hdr');
+    if(!header){
+      setTimeout(installToolbarObserver,120);
+      return;
+    }
+    if(header.dataset.yayaManageToolbarObserved==='1'){
+      syncManageToolbar();
+      return;
+    }
+    header.dataset.yayaManageToolbarObserved='1';
+    new MutationObserver(function(){
+      syncManageToolbar();
+    }).observe(header,{childList:true,subtree:true});
+    syncManageToolbar();
+  }
+
   const root=document.getElementById('modalRoot')||document.documentElement;
   const observer=new MutationObserver(function(){
     if(document.querySelector('.yaya-chantier-edit-modal:not([data-archive-button-ready="1"])')){
@@ -117,5 +187,9 @@
     }
   });
   observer.observe(root,{childList:true,subtree:true});
+
   setTimeout(decorateModal,0);
+  installToolbarObserver();
+  setTimeout(syncManageToolbar,250);
+  setTimeout(syncManageToolbar,800);
 })();
