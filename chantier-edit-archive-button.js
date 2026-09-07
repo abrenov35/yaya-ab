@@ -1,7 +1,10 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-manage-modal-style-v3';
+  const STYLE_ID='yaya-chantier-manage-modal-style-v4';
+  ['yaya-chantier-manage-modal-style-v3'].forEach(function(id){
+    const old=document.getElementById(id);if(old)old.remove();
+  });
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -22,12 +25,20 @@
       }
       .yaya-manage-selector label{font-size:12px!important;font-weight:800!important;color:#29496d!important;}
       .yaya-manage-selector select{width:100%!important;min-width:0!important;background:#fff!important;}
+      .yaya-manage-selector-help{
+        display:block!important;
+        margin-top:1px!important;
+        color:#6d7d91!important;
+        font-size:10.5px!important;
+        font-weight:500!important;
+        line-height:1.35!important;
+      }
       .yaya-manage-new-separator{
         display:grid!important;
         grid-template-columns:1fr auto 1fr!important;
         align-items:center!important;
         gap:10px!important;
-        margin:5px 0 2px!important;
+        margin:8px 0 4px!important;
         color:#7a8796!important;
         font-size:10px!important;
         font-weight:800!important;
@@ -39,12 +50,17 @@
         height:1px!important;
         background:#d7dee8!important;
       }
-      .yaya-manage-new-title{
+      .yaya-manage-new-title,
+      .yaya-manage-edit-title{
         margin:2px 0 0!important;
         padding:0!important;
         color:#162d49!important;
         font-size:13px!important;
         font-weight:800!important;
+      }
+      .yaya-manage-edit-title{
+        margin:5px 0 2px!important;
+        padding-top:3px!important;
       }
       .yaya-chantier-edit-modal .yaya-chantier-import-row{display:none!important;}
 
@@ -113,19 +129,32 @@
     return html;
   }
 
-  function setUnifiedTitle(modal){
+  function setModalTitle(modal,text){
     const h5=modal&&modal.querySelector('h5');
     if(!h5)return;
     let done=false;
     h5.childNodes.forEach(function(node){
-      if(!done&&node.nodeType===Node.TEXT_NODE){node.nodeValue='Ajouter / modifier un chantier';done=true;}
+      if(!done&&node.nodeType===Node.TEXT_NODE){node.nodeValue=text;done=true;}
     });
-    if(!done)h5.insertBefore(document.createTextNode('Ajouter / modifier un chantier'),h5.firstChild||null);
+    if(!done)h5.insertBefore(document.createTextNode(text),h5.firstChild||null);
   }
 
   function setSelectorLabel(modal,text){
     const label=modal&&modal.querySelector('.yaya-manage-selector label');
     if(label)label.textContent=text;
+  }
+
+  function setSelectorHelp(modal,text){
+    const wrap=modal&&modal.querySelector('.yaya-manage-selector');
+    if(!wrap)return;
+    let help=wrap.querySelector('.yaya-manage-selector-help');
+    if(!help){
+      help=document.createElement('span');
+      help.className='yaya-manage-selector-help';
+      const select=wrap.querySelector('#yayaManageChantierSelect');
+      if(select)select.insertAdjacentElement('afterend',help);else wrap.appendChild(help);
+    }
+    help.textContent=text;
   }
 
   function addSelector(modal,selectedId){
@@ -134,7 +163,7 @@
     if(!wrap){
       wrap=document.createElement('div');
       wrap.className='yaya-manage-selector';
-      wrap.innerHTML='<label for="yayaManageChantierSelect">Chantier</label><select class="inp" id="yayaManageChantierSelect"></select>';
+      wrap.innerHTML='<label for="yayaManageChantierSelect">Chantier</label><select class="inp" id="yayaManageChantierSelect"></select><span class="yaya-manage-selector-help"></span>';
       const h5=modal.querySelector('h5');
       if(h5&&h5.nextSibling)modal.insertBefore(wrap,h5.nextSibling);else if(h5)modal.appendChild(wrap);else modal.insertBefore(wrap,modal.firstChild||null);
     }
@@ -151,8 +180,20 @@
     };
   }
 
+  function addEditSectionTitle(modal){
+    const nom=modal&&modal.querySelector('#editChNom');
+    const nomLabel=nom&&nom.closest('label');
+    const parent=nomLabel&&nomLabel.parentElement;
+    if(!parent||modal.querySelector('.yaya-manage-edit-title'))return;
+    const title=document.createElement('div');
+    title.className='yaya-manage-edit-title';
+    title.textContent='2. Modifier les informations du chantier';
+    parent.insertBefore(title,nomLabel);
+  }
+
   function separateCreateOptions(modal){
-    setSelectorLabel(modal,'Modifier un chantier existant');
+    setSelectorLabel(modal,'Vous voulez plutôt modifier un chantier existant ?');
+    setSelectorHelp(modal,'Choisissez-le ici : la modale basculera automatiquement en mode modification.');
     const nom=document.getElementById('chNom');
     const nomLabel=nom&&nom.closest('label');
     const parent=nomLabel&&nomLabel.parentElement;
@@ -161,13 +202,13 @@
     if(!modal.querySelector('.yaya-manage-new-separator')){
       const sep=document.createElement('div');
       sep.className='yaya-manage-new-separator';
-      sep.textContent='ou';
+      sep.textContent='OU';
       parent.insertBefore(sep,nomLabel);
     }
     if(!modal.querySelector('.yaya-manage-new-title')){
       const title=document.createElement('div');
       title.className='yaya-manage-new-title';
-      title.textContent='Ajouter un nouveau chantier';
+      title.textContent='Nouveau chantier à créer';
       parent.insertBefore(title,nomLabel);
     }
   }
@@ -223,7 +264,11 @@
     if(!modal||modal.dataset.yayaManageReady==='1')return;
     const cid=extractCid(modal);if(!cid)return;
     modal.classList.add('yaya-manage-modal');
-    setUnifiedTitle(modal);addSelector(modal,cid);setSelectorLabel(modal,'Chantier à modifier');
+    setModalTitle(modal,'Modifier un chantier existant');
+    addSelector(modal,cid);
+    setSelectorLabel(modal,'1. Choisir le chantier à modifier');
+    setSelectorHelp(modal,'Le chantier sélectionné ici est celui qui sera modifié. Choisissez-en un autre pour changer de chantier.');
+    addEditSectionTitle(modal);
     const foot=modal.querySelector('.mfoot');if(!foot)return;
     const del=foot.querySelector('.yaya-delete-chantier-modal-btn');
     const save=foot.querySelector('#editChSave');
@@ -245,7 +290,9 @@
   function decorateCreateModal(modal){
     if(!modal||modal.dataset.yayaManageReady==='1'||!modal.querySelector('#chCreateBtn'))return;
     modal.classList.add('yaya-manage-create-modal','yaya-manage-modal');
-    setUnifiedTitle(modal);addSelector(modal,'');separateCreateOptions(modal);
+    setModalTitle(modal,'Créer un nouveau chantier');
+    addSelector(modal,'');
+    separateCreateOptions(modal);
     const foot=modal.querySelector('.mfoot');
     const create=modal.querySelector('#chCreateBtn');
     if(!foot||!create)return;
