@@ -13,3 +13,14 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',clean,{once:true});
   else clean();
 })();
+
+/* Charge le correctif Achat / Facture sous-traitant : un seul champ texte. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achat-st-single-field="1"]'))return;
+  const s=document.createElement('script');
+  s.src='achat-soustraitant-modal-fix.js?v=single-field-2-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achat-st-single-field','1');
+  document.head.appendChild(s);
+})();
