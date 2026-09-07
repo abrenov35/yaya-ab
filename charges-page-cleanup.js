@@ -61,19 +61,30 @@
         border-color:#83b2df!important;
         box-shadow:0 2px 5px rgba(22,45,73,.17)!important;
       }
+      #pane-chantiers .yaya-detail-section-action-row[data-section="charges"]{
+        display:none!important;
+      }
     `;
     document.head.appendChild(style);
   }
 
   function clean(){
     const pane=document.getElementById('pane-achats');
-    if(!pane)return;
-    pane.querySelectorAll('button').forEach(btn=>{
-      const txt=(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-      if(txt.includes('ajouter un achat')||txt.includes('ajouter une charge')){
-        btn.remove();
-      }
-    });
+    if(pane){
+      pane.querySelectorAll('button').forEach(btn=>{
+        const txt=(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
+        if(txt.includes('ajouter un achat')||txt.includes('ajouter une charge')){
+          btn.remove();
+        }
+      });
+    }
+
+    const chantierPane=document.getElementById('pane-chantiers');
+    if(chantierPane){
+      chantierPane.querySelectorAll('.yaya-detail-section-action-row[data-section="charges"]').forEach(row=>{
+        row.style.setProperty('display','none','important');
+      });
+    }
   }
 
   installStyle();
