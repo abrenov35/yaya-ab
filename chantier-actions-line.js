@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-actions-line-v9';
+  const STYLE_ID='yaya-chantier-actions-line-v10';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -64,6 +64,22 @@
     setTimeout(preselect,120);
   };
 
+  function addCommandButton(toolbar){
+    if(!toolbar||toolbar.querySelector('.chantier-command-btn'))return;
+    const toolbarButtons=[...toolbar.querySelectorAll('button')];
+    const devisBtn=toolbarButtons.find(b=>String(b.getAttribute('onclick')||'').includes('openAvenant'));
+    if(!devisBtn)return;
+
+    const command=document.createElement('button');
+    command.type='button';
+    command.className='btn2 chantier-command-btn';
+    command.textContent='＋ Commande';
+    command.title='Commande — raccordement à venir';
+
+    if(devisBtn.nextSibling)toolbar.insertBefore(command,devisBtn.nextSibling);
+    else toolbar.appendChild(command);
+  }
+
   function addExpenseButton(toolbar){
     if(!toolbar||toolbar.querySelector('.chantier-expense-btn'))return;
     const toolbarButtons=[...toolbar.querySelectorAll('button')];
@@ -104,7 +120,7 @@
     const controls=[...toolbar.children].filter(function(el){
       return el && (el.tagName==='BUTTON' || el.tagName==='A');
     });
-    controls.slice(0,3).forEach(applyBlueActionStyle);
+    controls.slice(0,4).forEach(applyBlueActionStyle);
   }
 
   function isDeleteButton(button){
@@ -123,6 +139,7 @@
 
   function cleanToolbar(toolbar){
     if(!toolbar)return;
+    addCommandButton(toolbar);
     addExpenseButton(toolbar);
     styleLeftActionButtons(toolbar);
   }
