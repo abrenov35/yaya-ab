@@ -1,14 +1,14 @@
 (function(){
   'use strict';
 
-  if(window.__yayaMailSubjectEditV4)return;
-  window.__yayaMailSubjectEditV4=true;
+  if(window.__yayaMailSubjectEditV5)return;
+  window.__yayaMailSubjectEditV5=true;
 
-  const STYLE_ID='yaya-mail-subject-edit-style-v4';
+  const STYLE_ID='yaya-mail-subject-edit-style-v5';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
-    ['yaya-mail-subject-edit-style-v1','yaya-mail-subject-edit-style-v2','yaya-mail-subject-edit-style-v3'].forEach(function(id){
+    ['yaya-mail-subject-edit-style-v1','yaya-mail-subject-edit-style-v2','yaya-mail-subject-edit-style-v3','yaya-mail-subject-edit-style-v4'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     const style=document.createElement('style');
@@ -23,8 +23,23 @@
         text-decoration:underline!important;
         text-underline-offset:3px!important;
       }
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-edit{
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-edit,
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-view{
         display:none!important;
+      }
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-delete{
+        margin-left:8px!important;
+        color:#d92d20!important;
+        border-color:#f1a8a1!important;
+        background:#fff7f6!important;
+        font-weight:700!important;
+        font-size:0!important;
+      }
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-delete::before{
+        content:'×'!important;
+        font-size:20px!important;
+        line-height:1!important;
+        color:#d92d20!important;
       }
       #modalRoot .modal[data-yaya-mail-edit-modal="1"] #edDocType,
       #modalRoot .modal[data-yaya-mail-edit-modal="1"] .mrow[data-yaya-mail-type-row="1"]{
@@ -40,6 +55,7 @@
     const sender=row.querySelector('.yaya-mail-sender');
     const edit=row.querySelector('.yaya-detail-document-edit[data-mail-id]');
     const view=row.querySelector('.yaya-detail-document-view[data-mail-id]');
+    const del=row.querySelector('.yaya-detail-document-delete');
     const id=String((edit&&edit.dataset.mailId)||(view&&view.dataset.mailId)||'').trim();
     if(!subject||!id)return;
 
@@ -62,6 +78,15 @@
     if(edit){
       edit.style.setProperty('display','none','important');
       edit.setAttribute('aria-hidden','true');
+    }
+    if(view){
+      view.style.setProperty('display','none','important');
+      view.setAttribute('aria-hidden','true');
+      view.tabIndex=-1;
+    }
+    if(del){
+      del.setAttribute('title','Supprimer');
+      del.setAttribute('aria-label','Supprimer');
     }
   }
 
