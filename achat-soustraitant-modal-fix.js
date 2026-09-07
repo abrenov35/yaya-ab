@@ -248,3 +248,17 @@
 
   setTimeout(patchModal,0);
 })();
+
+/* Recharge sans cache les correctifs Documents : l'ancien code contient deux #docLien. */
+(function(){
+  'use strict';
+  if(window.__yayaDocumentAttachmentBootstrapV2)return;
+  window.__yayaDocumentAttachmentBootstrapV2=true;
+
+  ['document-upload-noai-fix.js','document-missing-attachment-warning.js'].forEach(function(src){
+    const s=document.createElement('script');
+    s.src=src+'?v=attachment-fix-2-'+Date.now();
+    s.async=false;
+    document.head.appendChild(s);
+  });
+})();
