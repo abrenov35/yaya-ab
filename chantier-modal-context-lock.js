@@ -106,6 +106,25 @@
     }
   }
 
+  function cleanDocumentWarning(){
+    const docFile=document.getElementById('docFile');
+    const docSujet=document.getElementById('docSujet');
+    const docType=document.getElementById('docType');
+    const anchor=docFile||docSujet||docType;
+    if(!anchor)return;
+
+    const modal=anchor.closest('.modal');
+    if(!modal)return;
+
+    Array.from(modal.querySelectorAll('div,span,p,small,label')).forEach(function(el){
+      if(el.children&&el.children.length)return;
+      const txt=String(el.textContent||'').replace(/\s+/g,' ').trim();
+      if(/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt)){
+        hide(el);
+      }
+    });
+  }
+
   function lockDocumentContext(contextId){
     // Création document depuis la fiche chantier.
     const docCh=document.getElementById('docCh');
@@ -119,6 +138,8 @@
       const id=String(edDocCh.dataset.yayaLockedChantierId||edDocCh.value||'');
       if(id)lockSelect(edDocCh,id,edDocCh.closest('.mrow')||edDocCh);
     }
+
+    cleanDocumentWarning();
   }
 
   function lockCommandeContext(contextId){
