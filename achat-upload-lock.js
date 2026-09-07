@@ -123,15 +123,12 @@
     seenProgress=false;
     startEtatWatch();
 
-    // L'ancien code renseigne le statut juste après l'événement change.
     setTimeout(function(){
       const etat=document.getElementById('achatEtat');
       if(etat && isProgressText(etat.textContent))seenProgress=true;
     },0);
   },true);
 
-  // Verrou secondaire : même si un autre patch réactive un bouton pendant l'upload,
-  // aucun clic n'est accepté tant que l'import est en cours.
   document.addEventListener('click',function(e){
     const btn=e.target&&e.target.closest?e.target.closest('button'):null;
     if(!btn)return;
@@ -141,7 +138,6 @@
     e.stopImmediatePropagation();
   },true);
 
-  // Si l'import est lancé autrement (ex. collage), le texte d'état déclenche aussi le verrou.
   const root=document.getElementById('modalRoot');
   if(root){
     new MutationObserver(function(){
@@ -163,5 +159,17 @@
   s.src='chantier-modal-context-lock.js?v=context-lock-'+Date.now();
   s.async=false;
   s.setAttribute('data-yaya-chantier-modal-context-lock','1');
+  document.head.appendChild(s);
+})();
+
+/* Correctif dédié commande : si la modale est ouverte depuis une fiche chantier,
+   le chantier est déjà présélectionné et le champ ne doit pas être proposé. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-commande-chantier-context-fix="1"]'))return;
+  const s=document.createElement('script');
+  s.src='commande-chantier-context-fix.js?v=commande-context-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-commande-chantier-context-fix','1');
   document.head.appendChild(s);
 })();
