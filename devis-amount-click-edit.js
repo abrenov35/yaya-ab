@@ -1,13 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisAmountClickEditV5)return;
-  window.__yayaDevisAmountClickEditV5=true;
+  if(window.__yayaDevisAmountClickEditV6)return;
+  window.__yayaDevisAmountClickEditV6=true;
 
-  const STYLE_ID='yaya-devis-amount-click-edit-style-v5';
+  const STYLE_ID='yaya-devis-amount-click-edit-style-v6';
 
   function installStyle(){
-    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3','yaya-devis-amount-click-edit-style-v4'].forEach(function(id){
+    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3','yaya-devis-amount-click-edit-style-v4','yaya-devis-amount-click-edit-style-v5'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
@@ -24,26 +24,29 @@
         display:grid!important;
         grid-template-columns:minmax(0,1fr) 90px 46px!important;
         align-items:center!important;
-        column-gap:12px!important;
+        column-gap:14px!important;
         width:100%!important;
-        min-height:46px!important;
-        padding:7px 10px!important;
+        min-height:54px!important;
+        padding:9px 12px!important;
         margin:0!important;
         box-sizing:border-box!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > strong{
         grid-column:1!important;
         min-width:0!important;
+        min-height:30px!important;
         display:flex!important;
-        align-items:baseline!important;
-        gap:8px!important;
+        align-items:center!important;
+        gap:5px 12px!important;
         flex-wrap:wrap!important;
-        line-height:1.25!important;
+        line-height:1.3!important;
+        font-size:0!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-market-label{
         color:#1c2b48!important;
-        font-size:13px!important;
-        font-weight:750!important;
+        font-size:13.5px!important;
+        font-weight:800!important;
+        line-height:1.3!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-market-description{
         display:inline!important;
@@ -51,14 +54,16 @@
         color:#596579!important;
         font-size:12px!important;
         font-weight:500!important;
+        line-height:1.3!important;
         white-space:normal!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-market-inline-date{
         display:inline!important;
         margin:0!important;
-        color:#718096!important;
-        font-size:10px!important;
+        color:#7a8798!important;
+        font-size:10.5px!important;
         font-weight:500!important;
+        line-height:1.3!important;
         white-space:nowrap!important;
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-cost{
@@ -69,11 +74,11 @@
         cursor:pointer!important;
         text-decoration:none!important;
       }
-      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-cost:hover{
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-charge-cost:hover{
         opacity:.72!important;
         text-decoration:none!important;
       }
-      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-cost:focus{
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-charge-cost:focus{
         outline:2px solid #9eb8d2!important;
         outline-offset:2px!important;
         border-radius:4px!important;
@@ -123,11 +128,12 @@
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
           grid-template-columns:minmax(0,1fr) 72px 38px!important;
-          column-gap:7px!important;
-          padding:7px 8px!important;
+          column-gap:8px!important;
+          min-height:52px!important;
+          padding:8px 9px!important;
         }
         #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > strong{
-          gap:5px 7px!important;
+          gap:4px 8px!important;
         }
       }
     `;
@@ -193,7 +199,14 @@
     const description=String(meta.description||'').trim();
 
     const signature=[label,description,date].join('|');
-    if(strong.dataset.yayaMarketInlineSignature===signature)return;
+    const labels=strong.querySelectorAll(':scope > .yaya-market-label');
+    const descriptions=strong.querySelectorAll(':scope > .yaya-market-description');
+    const dates=strong.querySelectorAll(':scope > .yaya-market-inline-date');
+    const structureOk=labels.length===1
+      && descriptions.length===(description?1:0)
+      && dates.length===(date?1:0);
+
+    if(strong.dataset.yayaMarketInlineSignature===signature&&structureOk)return;
 
     strong.innerHTML=''
       +'<span class="yaya-market-label">'+escapeHtml(label)+'</span>'
