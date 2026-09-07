@@ -5,7 +5,7 @@
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
-    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      #pane-chantiers button[onclick*="delChantier"],#pane-chantiers .chantier-delete-btn{display:none!important;}\n      .yaya-edit-chantier-btn{display:none!important;}\n      .yaya-delete-chantier-modal-btn{margin-right:auto!important;background:#fff1f0!important;border:1px solid #e6a09a!important;color:#b42318!important;font-weight:750!important;}\n      .yaya-delete-chantier-modal-btn:hover{background:#fee4e2!important;border-color:#cf6d64!important;}\n      .yaya-signature-fields{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:8px;}\n      .yaya-signature-fields .inp{width:100%!important;min-width:0!important;background:#fff!important;}\n      .yaya-chantier-import-row{display:flex;justify-content:flex-start;margin-top:14px;}\n      .yaya-chantier-import-btn{min-width:120px;font-weight:700!important;}\n      @media(max-width:640px){.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}.yaya-delete-chantier-modal-btn{width:100%!important;margin:0 0 8px!important}.yaya-chantier-edit-modal .mfoot{flex-wrap:wrap!important}.yaya-signature-fields{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}.yaya-chantier-import-btn{width:100%!important;}}\n    ';
+    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      #pane-chantiers button[onclick*="delChantier"],#pane-chantiers .chantier-delete-btn{display:none!important;}\n      .yaya-edit-chantier-btn{display:none!important;}\n      .yaya-chantier-name-edit-link{cursor:pointer!important;}\n      .yaya-chantier-name-edit-link:hover{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px;}\n      .yaya-chantier-name-edit-link:focus-visible{outline:2px solid #24436B;outline-offset:2px;border-radius:3px;}\n      .yaya-delete-chantier-modal-btn{margin-right:auto!important;background:#fff1f0!important;border:1px solid #e6a09a!important;color:#b42318!important;font-weight:750!important;}\n      .yaya-delete-chantier-modal-btn:hover{background:#fee4e2!important;border-color:#cf6d64!important;}\n      .yaya-signature-fields{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:8px;}\n      .yaya-signature-fields .inp{width:100%!important;min-width:0!important;background:#fff!important;}\n      .yaya-chantier-import-row{display:flex;justify-content:flex-start;margin-top:14px;}\n      .yaya-chantier-import-btn{min-width:120px;font-weight:700!important;}\n      @media(max-width:640px){.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}.yaya-delete-chantier-modal-btn{width:100%!important;margin:0 0 8px!important}.yaya-chantier-edit-modal .mfoot{flex-wrap:wrap!important}.yaya-signature-fields{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}.yaya-chantier-import-btn{width:100%!important;}}\n    ';
     document.head.appendChild(style);
   }
 
@@ -150,11 +150,89 @@
     });
   }
 
+  function normalizeText(v){
+    return String(v==null?'':v).replace(/\s+/g,' ').trim();
+  }
+
+  function chantierNameMap(){
+    const map=new Map();
+    const duplicates=new Set();
+    S.chantiers.forEach(function(c){
+      const name=normalizeText(c&&c.nom);
+      if(!name)return;
+      if(map.has(name))duplicates.add(name);
+      else map.set(name,String(c.id));
+    });
+    duplicates.forEach(function(name){map.delete(name);});
+    return map;
+  }
+
+  function openNameLink(cid){
+    if(typeof window.openExistingChantierModal==='function'){
+      window.openExistingChantierModal(cid);
+    }
+  }
+
+  function makeChantierNamesClickable(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+    const names=chantierNameMap();
+    if(!names.size)return;
+
+    const walker=document.createTreeWalker(
+      pane,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode:function(node){
+          const parent=node&&node.parentElement;
+          if(!parent)return NodeFilter.FILTER_REJECT;
+          if(parent.closest('.overlay,#modalRoot,button,a,input,select,option,textarea,script,style,.yaya-chantier-name-edit-link')){
+            return NodeFilter.FILTER_REJECT;
+          }
+          const text=normalizeText(node.nodeValue);
+          return names.has(text)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
+        }
+      }
+    );
+
+    const nodes=[];
+    while(walker.nextNode())nodes.push(walker.currentNode);
+
+    nodes.forEach(function(node){
+      const name=normalizeText(node.nodeValue);
+      const cid=names.get(name);
+      if(!cid||!node.parentNode)return;
+
+      const link=document.createElement('span');
+      link.className='yaya-chantier-name-edit-link';
+      link.dataset.chantierId=cid;
+      link.setAttribute('role','button');
+      link.setAttribute('tabindex','0');
+      link.setAttribute('title','Modifier le chantier');
+      link.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        openNameLink(cid);
+      });
+      link.addEventListener('keydown',function(e){
+        if(e.key==='Enter'||e.key===' '){
+          e.preventDefault();
+          e.stopPropagation();
+          openNameLink(cid);
+        }
+      });
+
+      node.parentNode.insertBefore(link,node);
+      link.appendChild(node);
+    });
+  }
+
   function decorateCards(){
     if(!ready())return;
     const pane=document.getElementById('pane-chantiers');if(!pane)return;
     pane.querySelectorAll('button[onclick*="delChantier"],.chantier-delete-btn').forEach(btn=>btn.remove());
     removeLegacyEditButtons();
+    makeChantierNamesClickable();
   }
 
   function install(){
