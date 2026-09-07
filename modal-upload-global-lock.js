@@ -1,17 +1,19 @@
 (function(){
   'use strict';
 
-  if(window.__yayaModalUploadGlobalLockV1)return;
-  window.__yayaModalUploadGlobalLockV1=true;
+  if(window.__yayaModalUploadGlobalLockV2)return;
+  window.__yayaModalUploadGlobalLockV2=true;
 
   const SUCCESS_CLASS='yaya-upload-success-banner';
   const timers=new WeakMap();
   const observers=new WeakMap();
 
   function installStyle(){
-    if(document.getElementById('yaya-modal-upload-global-lock-style-v1'))return;
+    if(document.getElementById('yaya-modal-upload-global-lock-style-v2'))return;
+    const old=document.getElementById('yaya-modal-upload-global-lock-style-v1');
+    if(old)old.remove();
     const style=document.createElement('style');
-    style.id='yaya-modal-upload-global-lock-style-v1';
+    style.id='yaya-modal-upload-global-lock-style-v2';
     style.textContent=`
       .${SUCCESS_CLASS}{
         display:block!important;
@@ -39,17 +41,34 @@
     if(!modal)return null;
     return Array.from(modal.querySelectorAll('button')).find(function(btn){
       const text=String(btn.textContent||'').trim();
-      return /Importer|Déposer|Ajouter une pièce|Remplacer/i.test(text)
+      return /Importer|Déposer|Ajouter une pièce|Remplacer|Pièce importée/i.test(text)
         || btn.classList.contains('yaya-commande-create-import')
+        || btn.classList.contains('yaya-achat-import-btn')
         || btn.id==='yayaDevisEditImportBtn';
     })||null;
+  }
+
+  function baselineDisabled(btn){
+    // achat-upload-lock.js peut avoir déjà désactivé le bouton avant ce verrou global.
+    // Dans ce cas on récupère son véritable état initial au lieu de mémoriser "disabled".
+    if(btn.dataset.yayaUploadLockSaved==='1'){
+      return btn.dataset.yayaUploadWasDisabled==='1';
+    }
+    return !!btn.disabled;
+  }
+
+  function baselineText(btn){
+    if(btn.dataset.yayaUploadLockSaved==='1'&&btn.dataset.yayaUploadOriginalText){
+      return btn.dataset.yayaUploadOriginalText;
+    }
+    return btn.textContent||'';
   }
 
   function rememberButton(btn){
     if(btn.dataset.yayaGlobalUploadSaved==='1')return;
     btn.dataset.yayaGlobalUploadSaved='1';
-    btn.dataset.yayaGlobalUploadDisabled=btn.disabled?'1':'0';
-    btn.dataset.yayaGlobalUploadText=btn.textContent||'';
+    btn.dataset.yayaGlobalUploadDisabled=baselineDisabled(btn)?'1':'0';
+    btn.dataset.yayaGlobalUploadText=baselineText(btn);
   }
 
   function lock(modal){
@@ -57,6 +76,7 @@
     installStyle();
     modal.classList.add('yaya-upload-modal-busy');
     modal.dataset.yayaUploadBusy='1';
+
     modal.querySelectorAll('button').forEach(function(btn){
       rememberButton(btn);
       btn.disabled=true;
@@ -64,6 +84,7 @@
       btn.style.setProperty('pointer-events','none','important');
       btn.style.setProperty('opacity','.62','important');
     });
+
     const imp=importButton(modal);
     if(imp)imp.textContent='⏳ Import en cours…';
 
@@ -72,8 +93,46 @@
     timers.set(modal,setTimeout(function(){unlock(modal,false);},90000));
   }
 
+  function releaseLegacyAchatLock(modal){
+    if(!modal)return;
+
+    // Deux verrous existaient sur Achat/Charge. Ils pouvaient se mémoriser
+    // mutuellement comme "déjà désactivés" et laisser toute la modale figée.
+    modal.dataset.yayaAchatUploadBusy='0';
+
+    modal.querySelectorAll('button[data-yaya-upload-lock-saved="1"]').forEach(function(btn){
+      btn.disabled=btn.dataset.yayaUploadWasDisabled==='1';
+      btn.removeAttribute('aria-busy');
+      btn.style.removeProperty('pointer-events');
+      btn.style.removeProperty('opacity');
+      btn.style.removeProperty('cursor');
+      if(btn.dataset.yayaUploadOriginalText){
+        btn.textContent=btn.dataset.yayaUploadOriginalText;
+      }
+      delete btn.dataset.yayaUploadLockSaved;
+      delete btn.dataset.yayaUploadWasDisabled;
+      delete btn.dataset.yayaUploadOriginalText;
+    });
+  }
+
+  function restoreGlobalButtons(modal){
+    modal.querySelectorAll('button[data-yaya-global-upload-saved="1"]').forEach(function(btn){
+      btn.disabled=btn.dataset.yayaGlobalUploadDisabled==='1';
+      btn.removeAttribute('aria-busy');
+      btn.style.removeProperty('pointer-events');
+      btn.style.removeProperty('opacity');
+      btn.style.removeProperty('cursor');
+      const original=btn.dataset.yayaGlobalUploadText||'';
+      if(original)btn.textContent=original;
+      delete btn.dataset.yayaGlobalUploadSaved;
+      delete btn.dataset.yayaGlobalUploadDisabled;
+      delete btn.dataset.yayaGlobalUploadText;
+    });
+  }
+
   function unlock(modal,success){
     if(!modal)return;
+
     const old=timers.get(modal);
     if(old)clearTimeout(old);
     timers.delete(modal);
@@ -81,22 +140,18 @@
     modal.classList.remove('yaya-upload-modal-busy');
     modal.dataset.yayaUploadBusy='0';
 
-    modal.querySelectorAll('button[data-yaya-global-upload-saved="1"]').forEach(function(btn){
-      btn.disabled=btn.dataset.yayaGlobalUploadDisabled==='1';
-      btn.removeAttribute('aria-busy');
-      btn.style.removeProperty('pointer-events');
-      btn.style.removeProperty('opacity');
-      const original=btn.dataset.yayaGlobalUploadText||'';
-      if(original)btn.textContent=original;
-      delete btn.dataset.yayaGlobalUploadSaved;
-      delete btn.dataset.yayaGlobalUploadDisabled;
-      delete btn.dataset.yayaGlobalUploadText;
-    });
+    // Libère d'abord l'ancien verrou Achat/Charge puis restaure l'état réel initial.
+    releaseLegacyAchatLock(modal);
+    restoreGlobalButtons(modal);
 
     if(success){
       const imp=importButton(modal);
       if(imp){
         imp.disabled=false;
+        imp.removeAttribute('aria-busy');
+        imp.style.removeProperty('pointer-events');
+        imp.style.removeProperty('opacity');
+        imp.style.removeProperty('cursor');
         imp.textContent='✓ Pièce importée';
       }
       showSuccess(modal);
@@ -109,7 +164,7 @@
     if(!banner){
       banner=document.createElement('div');
       banner.className=SUCCESS_CLASS;
-      const footer=modal.querySelector('.yaya-devis-fast-foot,.yaya-commande-create-actions,.yaya-devis-create-actions,.mfoot');
+      const footer=modal.querySelector('.yaya-devis-fast-foot,.yaya-commande-create-actions,.yaya-devis-create-actions,.yaya-document-create-actions,.yaya-achat-create-actions-fixed,.mfoot');
       if(footer)footer.insertAdjacentElement('beforebegin',banner);
       else{
         const actions=Array.from(modal.children).find(function(el){
@@ -134,8 +189,8 @@
 
   function successText(text){
     const t=String(text||'').replace(/\s+/g,' ').trim();
-    return /✓/.test(t) && !/non archivée|impossible|erreur|réessai/i.test(t)
-      || /(?:archivé|importé|pièce jointe enregistrée|document analysé)/i.test(t) && !/non archivée|impossible|erreur/i.test(t);
+    return (/✓/.test(t) && !/non archivée|impossible|erreur|réessai/i.test(t))
+      || (/(?:archivé|importé|pièce jointe enregistrée|document analysé)/i.test(t) && !/non archivée|impossible|erreur/i.test(t));
   }
 
   function finalErrorText(text){
@@ -149,6 +204,14 @@
     if(old){try{old.disconnect();}catch(e){}}
 
     let sawProgress=progressText(status.textContent);
+    let observer=null;
+
+    const finish=function(success){
+      unlock(modal,success);
+      if(observer){try{observer.disconnect();}catch(e){}}
+      observers.delete(modal);
+    };
+
     const check=function(){
       const text=String(status.textContent||'').trim();
       if(progressText(text)){
@@ -157,18 +220,11 @@
         return;
       }
       if(!sawProgress||!text)return;
-      if(successText(text)){
-        unlock(modal,true);
-        observer.disconnect();
-        observers.delete(modal);
-      }else if(finalErrorText(text)){
-        unlock(modal,false);
-        observer.disconnect();
-        observers.delete(modal);
-      }
+      if(successText(text))finish(true);
+      else if(finalErrorText(text))finish(false);
     };
 
-    const observer=new MutationObserver(check);
+    observer=new MutationObserver(check);
     observers.set(modal,observer);
     observer.observe(status,{childList:true,subtree:true,characterData:true,attributes:true});
     check();
@@ -189,8 +245,7 @@
     const cfg=knownUpload(input);
     if(!cfg)return;
     const file=input.files&&input.files[0];
-    if(!file)return;
-    if(file.size>8*1024*1024)return;
+    if(!file||file.size>8*1024*1024)return;
 
     const modal=modalFor(input);
     if(!modal)return;
@@ -207,6 +262,11 @@
     if(state==='start')lock(modal);
     else if(state==='success')unlock(modal,true);
     else if(state==='error')unlock(modal,false);
+  });
+
+  // Nettoie un éventuel état figé laissé par V1 au rechargement du script.
+  document.querySelectorAll('.yaya-upload-modal-busy,[data-yaya-upload-busy="1"]').forEach(function(modal){
+    unlock(modal,false);
   });
 
   installStyle();
