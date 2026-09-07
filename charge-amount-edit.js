@@ -1,12 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChargeAmountEditV3)return;
-  window.__yayaChargeAmountEditV3=true;
+  if(window.__yayaChargeAmountEditV4)return;
+  window.__yayaChargeAmountEditV4=true;
 
-  const STYLE_ID='yaya-charge-amount-edit-style-v3';
+  const STYLE_ID='yaya-charge-amount-edit-style-v4';
 
   function installStyle(){
+    ['yaya-charge-amount-edit-style-v3'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -39,7 +40,10 @@
       #pane-chantiers .yaya-charge-legacy-row .charge-edit-btn,
       #pane-chantiers .yaya-charge-legacy-row button[onclick*="editAchat"],
       #pane-chantiers .yaya-charge-legacy-row button[title*="Modifier"],
-      #pane-chantiers .yaya-charge-legacy-row button[aria-label*="Modifier"]{
+      #pane-chantiers .yaya-charge-legacy-row button[aria-label*="Modifier"],
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-view,
+      #pane-chantiers .yaya-detail-charges-pane button[title="Voir"],
+      #pane-chantiers .yaya-detail-charges-pane button[aria-label="Voir"]{
         display:none!important;
       }
     `;
@@ -49,6 +53,13 @@
   function extractId(raw){
     const m=String(raw||'').match(/editAchat\(['\"]([^'\"]+)['\"]\)/);
     return m&&m[1]?String(m[1]):'';
+  }
+
+  function hideButton(btn){
+    if(!btn)return;
+    btn.style.setProperty('display','none','important');
+    btn.setAttribute('aria-hidden','true');
+    btn.setAttribute('tabindex','-1');
   }
 
   function prepareAmount(amount,id){
@@ -88,9 +99,7 @@
     if(!row)return;
     row.querySelectorAll('.yaya-detail-charge-edit,.charge-edit-btn,button[onclick*="editAchat"],button[title*="Modifier"],button[aria-label*="Modifier"]').forEach(function(btn){
       if(btn.classList.contains('yaya-detail-charge-view')||/voir/i.test(String(btn.getAttribute('title')||'')))return;
-      btn.style.setProperty('display','none','important');
-      btn.setAttribute('aria-hidden','true');
-      btn.setAttribute('tabindex','-1');
+      hideButton(btn);
     });
   }
 
@@ -137,6 +146,7 @@
       if(view){
         prepareViewTarget(supplier);
         prepareViewTarget(type);
+        hideButton(view);
       }else{
         clearViewTarget(supplier);
         clearViewTarget(type);
@@ -170,8 +180,10 @@
 
       const view=legacyViewTarget(row);
       const viewTargets=Array.from(row.querySelectorAll('.charge-fournisseur,.charge-designation,.badge.b-df,.des,.yaya-detail-charge-hours,.badge.b-doc'));
-      if(view)viewTargets.forEach(prepareViewTarget);
-      else viewTargets.forEach(clearViewTarget);
+      if(view){
+        viewTargets.forEach(prepareViewTarget);
+        if(view.tagName==='BUTTON')hideButton(view);
+      }else viewTargets.forEach(clearViewTarget);
 
       hideEditButtons(row);
     });
