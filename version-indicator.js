@@ -92,3 +92,14 @@
     .then(function(v){v=String(v||'').trim();if(/^\d+\.\d+$/.test(v))show(v);})
     .catch(function(){});
 })();
+
+// Après un upload réussi, la modale concernée s'enregistre automatiquement.
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-upload-auto-save-v1]'))return;
+  const s=document.createElement('script');
+  s.src='upload-auto-save.js?v=autosave-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-upload-auto-save-v1','1');
+  document.head.appendChild(s);
+})();
