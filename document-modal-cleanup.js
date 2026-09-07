@@ -34,3 +34,14 @@
     new MutationObserver(clean).observe(root,{childList:true,subtree:true,characterData:true});
   }
 })();
+
+/* Recharge sans cache la version centrée de l'avertissement de pièce jointe. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-centered-warning-loader="1"]'))return;
+  const s=document.createElement('script');
+  s.src='document-missing-attachment-warning.js?v=centered-warning-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-centered-warning-loader','1');
+  document.head.appendChild(s);
+})();
