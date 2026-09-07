@@ -1,14 +1,14 @@
 (function(){
   'use strict';
 
-  if(window.__yayaMailSubjectEditV2)return;
-  window.__yayaMailSubjectEditV2=true;
+  if(window.__yayaMailSubjectEditV3)return;
+  window.__yayaMailSubjectEditV3=true;
 
-  const STYLE_ID='yaya-mail-subject-edit-style-v2';
+  const STYLE_ID='yaya-mail-subject-edit-style-v3';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
-    ['yaya-mail-subject-edit-style-v1'].forEach(function(id){
+    ['yaya-mail-subject-edit-style-v1','yaya-mail-subject-edit-style-v2'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     const style=document.createElement('style');
@@ -24,6 +24,10 @@
         text-underline-offset:3px!important;
       }
       #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-edit{
+        display:none!important;
+      }
+      #modalRoot .modal[data-yaya-mail-edit-modal="1"] #edDocType,
+      #modalRoot .modal[data-yaya-mail-edit-modal="1"] .mrow[data-yaya-mail-type-row="1"]{
         display:none!important;
       }
     `;
@@ -121,9 +125,28 @@
     }
   }
 
+  function patchMailEditModal(){
+    const type=document.getElementById('edDocType');
+    if(!type)return;
+    if(String(type.value||'').trim().toUpperCase()!=='MAIL')return;
+
+    const modal=type.closest('.modal');
+    if(!modal)return;
+    modal.dataset.yayaMailEditModal='1';
+
+    const row=type.closest('.mrow');
+    if(row){
+      row.dataset.yayaMailTypeRow='1';
+      row.style.setProperty('display','none','important');
+    }else{
+      type.style.setProperty('display','none','important');
+    }
+  }
+
   function patch(){
     installStyle();
     document.querySelectorAll('#pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row').forEach(prepare);
+    patchMailEditModal();
   }
 
   function stop(event){
@@ -141,9 +164,13 @@
     try{
       if(typeof window.editDocument==='function'){
         window.editDocument(id);
+        setTimeout(patchMailEditModal,0);
         return;
       }
-      if(typeof editDocument==='function')editDocument(id);
+      if(typeof editDocument==='function'){
+        editDocument(id);
+        setTimeout(patchMailEditModal,0);
+      }
     }catch(err){
       try{if(typeof toast==='function')toast('Modification du mail indisponible',true);}catch(e){}
     }
