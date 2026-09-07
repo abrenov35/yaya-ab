@@ -35,18 +35,22 @@
 
   function syncEmpty(pane){
     if(!pane)return;
-    const visible=[...pane.querySelectorAll('.yaya-detail-market-row')].filter(r=>r.dataset.yayaInitialDeleted!=='1');
+    const visible=[...pane.querySelectorAll('.yaya-detail-market-row')].filter(function(r){
+      if(r.dataset.yayaInitialDeleted==='1')return false;
+      if(r.hidden)return false;
+      if(String(r.style&&r.style.display||'').toLowerCase()==='none')return false;
+      return true;
+    });
     pane.dataset.empty=visible.length?'0':'1';
     const card=pane.closest('.card');
     const empty=card&&card.querySelector(':scope > .yaya-detail-empty-pane[data-section="marche"]');
     if(empty){empty.dataset.empty=visible.length?'0':'1';if(!visible.length)empty.textContent='Aucun devis';}
 
-    // Le compteur Marché doit refléter uniquement les devis réellement visibles.
-    // Un devis principal supprimé reste techniquement dans le DOM pour conserver
-    // le marqueur de suppression, mais il ne doit plus être compté.
+    // Le compteur Marché reflète toujours les lignes réellement présentes/visibles
+    // dans la section, et non un ancien compteur issu du rendu source.
     const tab=card&&card.querySelector(':scope > .yaya-detail-section-tabs .yaya-detail-section-tab[data-section="marche"]');
     const count=tab&&tab.querySelector('small');
-    if(count)count.textContent=String(visible.length);
+    if(count&&count.textContent!==String(visible.length))count.textContent=String(visible.length);
   }
 
   function confirmDelete(c){
@@ -96,6 +100,10 @@
       }
       syncEmpty(row.closest('.yaya-detail-markets-pane'));
     });
+
+    // Même quand le devis 1 supprimé n'est plus rendu du tout dans le DOM,
+    // recalculer le compteur sur toutes les sections Marché.
+    document.querySelectorAll('#pane-chantiers .yaya-detail-markets-pane').forEach(syncEmpty);
   }
 
   let currentQuote={kind:'',id:''};
