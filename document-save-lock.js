@@ -119,3 +119,14 @@
   s.setAttribute('data-yaya-achat-upload-lock','1');
   document.head.appendChild(s);
 })();
+
+/* Dans une fiche chantier, les modales héritent du chantier courant et ne proposent plus de le changer. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-chantier-modal-context-lock="1"]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-modal-context-lock.js?v=context-lock-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-chantier-modal-context-lock','1');
+  document.head.appendChild(s);
+})();
