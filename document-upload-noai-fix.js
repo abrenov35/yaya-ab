@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDocumentUploadNoAiFixV1)return;
-  window.__yayaDocumentUploadNoAiFixV1=true;
+  if(window.__yayaDocumentUploadNoAiFixV2)return;
+  window.__yayaDocumentUploadNoAiFixV2=true;
 
   const MAX_FILE_SIZE=8*1024*1024;
   const UPLOAD_TIMEOUT=30000;
@@ -16,8 +16,44 @@
     try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
   }
 
+  function documentModal(){
+    const root=document.getElementById('modalRoot');
+    if(!root)return null;
+    return Array.from(root.querySelectorAll('.modal')).find(function(modal){
+      return !!(modal.querySelector('#docFile')&&modal.querySelector('#docEtat'));
+    })||null;
+  }
+
+  function normalizeLinkInputs(modal){
+    if(!modal)return null;
+    const links=Array.from(modal.querySelectorAll('input#docLien'));
+    if(!links.length){
+      const input=document.createElement('input');
+      input.type='hidden';
+      input.id='docLien';
+      modal.appendChild(input);
+      return input;
+    }
+
+    const keep=links[0];
+    const current=links.map(function(el){return String(el.value||'').trim();}).find(Boolean)||String(modal.dataset.yayaAttachmentLien||'').trim();
+    if(current)keep.value=current;
+    links.slice(1).forEach(function(el){el.remove();});
+    return keep;
+  }
+
+  function setDocumentLink(lien){
+    const value=String(lien||'').trim();
+    const modal=documentModal();
+    if(!modal)return;
+    const input=normalizeLinkInputs(modal);
+    if(input)input.value=value;
+    modal.dataset.yayaAttachmentLien=value;
+  }
+
   function setState(state,message){
-    const etat=document.getElementById('docEtat');
+    const modal=documentModal();
+    const etat=modal?modal.querySelector('#docEtat'):document.getElementById('docEtat');
     if(!etat)return;
     etat.dataset.yayaUploadState=state||'';
     etat.textContent=message||'';
@@ -103,16 +139,15 @@
       return;
     }
 
-    const lienInput=document.getElementById('docLien');
-    if(lienInput)lienInput.value='';
+    setDocumentLink('');
     setState('progress','⏳ Import de la pièce jointe en cours…');
 
     try{
       const lien=await archive(file);
-      const freshLien=document.getElementById('docLien');
-      if(freshLien)freshLien.value=lien;
+      setDocumentLink(lien);
 
-      const titre=document.getElementById('docTitre');
+      const modal=documentModal();
+      const titre=modal?modal.querySelector('#docTitre'):document.getElementById('docTitre');
       if(titre&&!String(titre.value||'').trim()){
         titre.value=String(file.name||'Document').replace(/\.[^.]+$/,'').trim()||'Document';
       }
@@ -123,8 +158,7 @@
       }catch(e){}
     }catch(err){
       const message=String(err&&err.message||err);
-      const failedLien=document.getElementById('docLien');
-      if(failedLien)failedLien.value='';
+      setDocumentLink('');
       setState('error','⚠ '+message);
       toastSafe(message,true);
       try{
@@ -138,6 +172,22 @@
     if(input)input.value='';
     if(file)traiterDocumentSansIA(file);
   }
+
+  function normalizeCurrentModal(){
+    const modal=documentModal();
+    if(modal)normalizeLinkInputs(modal);
+  }
+
+  window.addEventListener('yaya:document-upload-state',function(e){
+    const detail=e&&e.detail||{};
+    if(detail.state==='success'&&detail.lien)setDocumentLink(detail.lien);
+  });
+
+  const root=document.getElementById('modalRoot');
+  if(root){
+    new MutationObserver(normalizeCurrentModal).observe(root,{childList:true,subtree:true});
+  }
+  normalizeCurrentModal();
 
   window.lireDocument=lireDocumentSansIA;
   window.traiterDocument=traiterDocumentSansIA;
