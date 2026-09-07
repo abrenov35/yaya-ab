@@ -1,13 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisAmountClickEditV6)return;
-  window.__yayaDevisAmountClickEditV6=true;
+  if(window.__yayaDevisAmountClickEditV7)return;
+  window.__yayaDevisAmountClickEditV7=true;
 
-  const STYLE_ID='yaya-devis-amount-click-edit-style-v6';
+  const STYLE_ID='yaya-devis-amount-click-edit-style-v7';
 
   function installStyle(){
-    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3','yaya-devis-amount-click-edit-style-v4','yaya-devis-amount-click-edit-style-v5'].forEach(function(id){
+    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3','yaya-devis-amount-click-edit-style-v4','yaya-devis-amount-click-edit-style-v5','yaya-devis-amount-click-edit-style-v6'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
@@ -59,7 +59,8 @@
       }
       #pane-chantiers .yaya-detail-markets-pane .yaya-market-inline-date{
         display:inline!important;
-        margin:0!important;
+        margin:0 0 0 auto!important;
+        padding-left:14px!important;
         color:#7a8798!important;
         font-size:10.5px!important;
         font-weight:500!important;
@@ -135,6 +136,9 @@
         #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > strong{
           gap:4px 8px!important;
         }
+        #pane-chantiers .yaya-detail-markets-pane .yaya-market-inline-date{
+          padding-left:8px!important;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -142,7 +146,7 @@
 
   function escapeHtml(value){
     return String(value==null?'':value).replace(/[&<>"']/g,function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot',"'":'&#39;'}[c];
     });
   }
 
