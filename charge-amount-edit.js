@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChargeAmountEditV2)return;
-  window.__yayaChargeAmountEditV2=true;
+  if(window.__yayaChargeAmountEditV3)return;
+  window.__yayaChargeAmountEditV3=true;
 
-  const STYLE_ID='yaya-charge-amount-edit-style-v2';
+  const STYLE_ID='yaya-charge-amount-edit-style-v3';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -12,14 +12,23 @@
     style.id=STYLE_ID;
     style.textContent=`
       #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-edit="1"],
-      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"]{
+      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"],
+      #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-view="1"],
+      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-view="1"]{
         cursor:pointer!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-edit="1"],
+      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"]{
         text-decoration:underline dotted rgba(28,43,72,.42)!important;
         text-underline-offset:3px!important;
       }
       #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-edit="1"]:hover,
       #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-edit="1"]:hover{
         color:#8a5200!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane [data-yaya-charge-view="1"]:hover,
+      #pane-chantiers .yaya-charge-legacy-row [data-yaya-charge-view="1"]:hover{
+        opacity:.72!important;
       }
       #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-edit,
       #pane-chantiers .yaya-detail-charges-pane .charge-edit-btn,
@@ -52,18 +61,56 @@
     if(amount.hasAttribute('onclick')){
       amount.dataset.yayaOldOnclick=amount.getAttribute('onclick')||'';
       amount.removeAttribute('onclick');
+      try{amount.onclick=null;}catch(e){}
     }
+  }
+
+  function prepareViewTarget(el){
+    if(!el)return;
+    el.dataset.yayaChargeView='1';
+    el.setAttribute('role','button');
+    el.setAttribute('tabindex','0');
+    el.setAttribute('title','Voir la pièce jointe');
+    el.setAttribute('aria-label','Voir la pièce jointe');
+  }
+
+  function clearViewTarget(el){
+    if(!el)return;
+    delete el.dataset.yayaChargeView;
+    el.removeAttribute('role');
+    el.removeAttribute('tabindex');
+    el.removeAttribute('title');
+    el.removeAttribute('aria-label');
   }
 
   function hideEditButtons(row){
     if(!row)return;
     row.querySelectorAll('.yaya-detail-charge-edit,.charge-edit-btn,button[onclick*="editAchat"],button[title*="Modifier"],button[aria-label*="Modifier"]').forEach(function(btn){
-      // Ne masque jamais le bouton de visualisation de la pièce.
       if(btn.classList.contains('yaya-detail-charge-view')||/voir/i.test(String(btn.getAttribute('title')||'')))return;
       btn.style.setProperty('display','none','important');
       btn.setAttribute('aria-hidden','true');
       btn.setAttribute('tabindex','-1');
     });
+  }
+
+  function nativeViewButton(row){
+    if(!row)return null;
+    const btn=row.querySelector('.yaya-detail-charge-view[data-achat-id],.yaya-detail-charge-view[data-lien]');
+    if(!btn||btn.disabled)return null;
+    const lien=String(btn.dataset&&btn.dataset.lien||'').trim();
+    if(!lien||!/^https?:/i.test(lien))return null;
+    return btn;
+  }
+
+  function legacyViewTarget(row){
+    if(!row)return null;
+    return Array.from(row.querySelectorAll('.yaya-detail-charge-view,button,a,[onclick]')).find(function(el){
+      if(el.disabled)return false;
+      const onclick=String(el.getAttribute&&el.getAttribute('onclick')||'');
+      const href=String(el.getAttribute&&el.getAttribute('href')||'');
+      const lien=String(el.dataset&&el.dataset.lien||'');
+      return /voirPiece\s*\(/.test(onclick)||/^https?:/i.test(href)||/^https?:/i.test(lien);
+    })||null;
   }
 
   function patchNativeRows(){
@@ -76,12 +123,22 @@
         row.dataset.achatId=id;
         prepareAmount(amount,id);
       }else if(amount){
-        // Charge issue des heures salariés : pas de facture modifiable.
         amount.removeAttribute('data-yaya-charge-edit');
         amount.removeAttribute('role');
         amount.removeAttribute('tabindex');
         amount.removeAttribute('title');
         amount.removeAttribute('aria-label');
+      }
+
+      const view=nativeViewButton(row);
+      const supplier=row.querySelector('strong');
+      const type=row.querySelector('.yaya-detail-charge-hours');
+      if(view){
+        prepareViewTarget(supplier);
+        prepareViewTarget(type);
+      }else{
+        clearViewTarget(supplier);
+        clearViewTarget(type);
       }
 
       hideEditButtons(row);
@@ -95,7 +152,6 @@
 
       const row=edit.closest('.achligne,.ligR,.charge-ligne,.charge-row,.controle-row,.yaya-detail-charge-row');
       if(!row)return;
-      // Exclut explicitement les lignes de Dépenses.
       if(row.classList.contains('ligD')||row.classList.contains('yaya-detail-expense-row'))return;
 
       row.classList.add('yaya-charge-legacy-row');
@@ -110,6 +166,12 @@
         })||null;
       }
       if(amount)prepareAmount(amount,id);
+
+      const view=legacyViewTarget(row);
+      const viewTargets=Array.from(row.querySelectorAll('.charge-fournisseur,.charge-designation,.badge.b-df,.des,.yaya-detail-charge-hours,.badge.b-doc'));
+      if(view)viewTargets.forEach(prepareViewTarget);
+      else viewTargets.forEach(clearViewTarget);
+
       hideEditButtons(row);
     });
   }
@@ -141,11 +203,33 @@
     }
   }
 
+  function openViewFromText(target,event){
+    const row=target&&target.closest?target.closest('.yaya-detail-charge-row,.yaya-charge-legacy-row,.ligR,.charge-ligne,.charge-row,.controle-row'):null;
+    if(!row)return;
+
+    const view=row.classList.contains('yaya-detail-charge-row')&&row.closest('.yaya-detail-charges-pane')
+      ?nativeViewButton(row)
+      :legacyViewTarget(row);
+    if(!view)return;
+
+    if(event){
+      event.preventDefault();
+      event.stopPropagation();
+      if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
+    }
+    try{view.click();}catch(e){}
+  }
+
   document.addEventListener('click',function(event){
     const amount=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers [data-yaya-charge-edit="1"]')
       :null;
-    if(amount)openEditFromAmount(amount,event);
+    if(amount){openEditFromAmount(amount,event);return;}
+
+    const viewTarget=event.target&&event.target.closest
+      ?event.target.closest('#pane-chantiers [data-yaya-charge-view="1"]')
+      :null;
+    if(viewTarget)openViewFromText(viewTarget,event);
   },true);
 
   document.addEventListener('keydown',function(event){
@@ -153,7 +237,12 @@
     const amount=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers [data-yaya-charge-edit="1"]')
       :null;
-    if(amount)openEditFromAmount(amount,event);
+    if(amount){openEditFromAmount(amount,event);return;}
+
+    const viewTarget=event.target&&event.target.closest
+      ?event.target.closest('#pane-chantiers [data-yaya-charge-view="1"]')
+      :null;
+    if(viewTarget)openViewFromText(viewTarget,event);
   },true);
 
   let raf=0;
