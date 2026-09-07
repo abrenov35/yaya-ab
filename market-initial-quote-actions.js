@@ -31,7 +31,7 @@
   function toastSafe(msg,err){try{if(typeof toast==='function')toast(msg,!!err);}catch(e){}}
   function renderSafe(){try{if(typeof render==='function')render();}catch(e){}}
   function http(value){const s=String(value||'').trim();return /^https?:\/\//i.test(s)?s:'';}
-  function isDeleted(c){return !!c&&String(c.notes||'')===DELETED&&!(Number(c.montantDevisHT)||0);}
+  function isDeleted(c){return !!c&&String(c.notes||'').includes(DELETED)&&!(Number(c.montantDevisHT)||0);}
 
   function syncEmpty(pane){
     if(!pane)return;
@@ -40,6 +40,13 @@
     const card=pane.closest('.card');
     const empty=card&&card.querySelector(':scope > .yaya-detail-empty-pane[data-section="marche"]');
     if(empty){empty.dataset.empty=visible.length?'0':'1';if(!visible.length)empty.textContent='Aucun devis';}
+
+    // Le compteur Marché doit refléter uniquement les devis réellement visibles.
+    // Un devis principal supprimé reste techniquement dans le DOM pour conserver
+    // le marqueur de suppression, mais il ne doit plus être compté.
+    const tab=card&&card.querySelector(':scope > .yaya-detail-section-tabs .yaya-detail-section-tab[data-section="marche"]');
+    const count=tab&&tab.querySelector('small');
+    if(count)count.textContent=String(visible.length);
   }
 
   function confirmDelete(c){
