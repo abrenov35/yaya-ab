@@ -34,6 +34,10 @@
     const modal=getModal();
     if(!modal)return;
 
+    const alreadyBusy=modal.dataset.yayaAchatUploadBusy==='1';
+    if(busy && alreadyBusy)return;
+    if(!busy && !alreadyBusy)return;
+
     modal.dataset.yayaAchatUploadBusy=busy?'1':'0';
 
     Array.from(modal.querySelectorAll('button')).forEach(function(btn){
@@ -48,7 +52,9 @@
         btn.style.setProperty('opacity','.55','important');
         btn.style.setProperty('cursor','wait','important');
         btn.style.setProperty('pointer-events','none','important');
-        if(isImportButton(btn))btn.textContent='Import en cours…';
+        if(isImportButton(btn) && btn.textContent!=='Import en cours…'){
+          btn.textContent='Import en cours…';
+        }
       }else if(btn.dataset.yayaUploadLockSaved==='1'){
         btn.disabled=btn.dataset.yayaUploadWasDisabled==='1';
         btn.removeAttribute('aria-busy');
@@ -143,7 +149,7 @@
       if(!etat)return;
       if(isProgressText(etat.textContent)){
         setBusy(true);
-        startEtatWatch();
+        if(!etatObserver)startEtatWatch();
       }
     }).observe(root,{childList:true,subtree:true,characterData:true});
   }
