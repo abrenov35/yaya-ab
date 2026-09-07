@@ -1,19 +1,21 @@
 (function(){
   'use strict';
 
-  if(window.__yayaModalUploadGlobalLockV2)return;
-  window.__yayaModalUploadGlobalLockV2=true;
+  if(window.__yayaModalUploadGlobalLockV3)return;
+  window.__yayaModalUploadGlobalLockV3=true;
 
   const SUCCESS_CLASS='yaya-upload-success-banner';
+  const PROGRESS_ID='yaya-upload-progress-overlay';
   const timers=new WeakMap();
   const observers=new WeakMap();
 
   function installStyle(){
-    if(document.getElementById('yaya-modal-upload-global-lock-style-v2'))return;
-    const old=document.getElementById('yaya-modal-upload-global-lock-style-v1');
-    if(old)old.remove();
+    if(document.getElementById('yaya-modal-upload-global-lock-style-v3'))return;
+    ['yaya-modal-upload-global-lock-style-v1','yaya-modal-upload-global-lock-style-v2'].forEach(function(id){
+      const old=document.getElementById(id);if(old)old.remove();
+    });
     const style=document.createElement('style');
-    style.id='yaya-modal-upload-global-lock-style-v2';
+    style.id='yaya-modal-upload-global-lock-style-v3';
     style.textContent=`
       .${SUCCESS_CLASS}{
         display:block!important;
@@ -28,8 +30,85 @@
         line-height:1.3!important;
       }
       .yaya-upload-modal-busy button{cursor:wait!important}
+      #${PROGRESS_ID}{
+        position:fixed!important;
+        inset:0!important;
+        z-index:250000!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        padding:18px!important;
+        background:rgba(22,45,73,.28)!important;
+        pointer-events:none!important;
+      }
+      #${PROGRESS_ID} .yaya-upload-progress-box{
+        width:min(390px,calc(100vw - 36px))!important;
+        min-height:150px!important;
+        display:flex!important;
+        flex-direction:column!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:12px!important;
+        padding:24px 22px!important;
+        border:1px solid #d8e0ea!important;
+        border-radius:15px!important;
+        background:#fff!important;
+        box-shadow:0 18px 55px rgba(0,0,0,.26)!important;
+        color:#162d49!important;
+        text-align:center!important;
+      }
+      #${PROGRESS_ID} .yaya-upload-progress-hourglass{
+        display:block!important;
+        font-size:36px!important;
+        line-height:1!important;
+        transform-origin:center!important;
+        animation:yayaUploadHourglass 1.25s ease-in-out infinite!important;
+      }
+      #${PROGRESS_ID} .yaya-upload-progress-title{
+        font-size:16px!important;
+        font-weight:800!important;
+        line-height:1.3!important;
+      }
+      #${PROGRESS_ID} .yaya-upload-progress-sub{
+        font-size:12px!important;
+        color:#748296!important;
+        line-height:1.35!important;
+      }
+      @keyframes yayaUploadHourglass{
+        0%,38%{transform:rotate(0deg)}
+        58%,100%{transform:rotate(180deg)}
+      }
+      @media(max-width:640px){
+        #${PROGRESS_ID} .yaya-upload-progress-box{min-height:136px!important;padding:20px 18px!important}
+        #${PROGRESS_ID} .yaya-upload-progress-hourglass{font-size:32px!important}
+        #${PROGRESS_ID} .yaya-upload-progress-title{font-size:15px!important}
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function showProgressModal(){
+    installStyle();
+    let overlay=document.getElementById(PROGRESS_ID);
+    if(!overlay){
+      overlay=document.createElement('div');
+      overlay.id=PROGRESS_ID;
+      overlay.setAttribute('role','status');
+      overlay.setAttribute('aria-live','polite');
+      overlay.innerHTML=''
+        +'<div class="yaya-upload-progress-box">'
+        +'<span class="yaya-upload-progress-hourglass" aria-hidden="true">⏳</span>'
+        +'<div class="yaya-upload-progress-title">Analyse du document en cours…</div>'
+        +'<div class="yaya-upload-progress-sub">La pièce est en cours de traitement et d’archivage.</div>'
+        +'</div>';
+      document.body.appendChild(overlay);
+    }
+    overlay.style.setProperty('display','flex','important');
+  }
+
+  function hideProgressModal(){
+    const overlay=document.getElementById(PROGRESS_ID);
+    if(overlay)overlay.remove();
   }
 
   function modalFor(node){
@@ -49,8 +128,6 @@
   }
 
   function baselineDisabled(btn){
-    // achat-upload-lock.js peut avoir déjà désactivé le bouton avant ce verrou global.
-    // Dans ce cas on récupère son véritable état initial au lieu de mémoriser "disabled".
     if(btn.dataset.yayaUploadLockSaved==='1'){
       return btn.dataset.yayaUploadWasDisabled==='1';
     }
@@ -74,6 +151,7 @@
   function lock(modal){
     if(!modal)return;
     installStyle();
+    showProgressModal();
     modal.classList.add('yaya-upload-modal-busy');
     modal.dataset.yayaUploadBusy='1';
 
@@ -86,7 +164,7 @@
     });
 
     const imp=importButton(modal);
-    if(imp)imp.textContent='⏳ Import en cours…';
+    if(imp)imp.textContent='Import en cours…';
 
     const old=timers.get(modal);
     if(old)clearTimeout(old);
@@ -95,9 +173,6 @@
 
   function releaseLegacyAchatLock(modal){
     if(!modal)return;
-
-    // Deux verrous existaient sur Achat/Charge. Ils pouvaient se mémoriser
-    // mutuellement comme "déjà désactivés" et laisser toute la modale figée.
     modal.dataset.yayaAchatUploadBusy='0';
 
     modal.querySelectorAll('button[data-yaya-upload-lock-saved="1"]').forEach(function(btn){
@@ -131,7 +206,7 @@
   }
 
   function unlock(modal,success){
-    if(!modal)return;
+    if(!modal){hideProgressModal();return;}
 
     const old=timers.get(modal);
     if(old)clearTimeout(old);
@@ -140,9 +215,9 @@
     modal.classList.remove('yaya-upload-modal-busy');
     modal.dataset.yayaUploadBusy='0';
 
-    // Libère d'abord l'ancien verrou Achat/Charge puis restaure l'état réel initial.
     releaseLegacyAchatLock(modal);
     restoreGlobalButtons(modal);
+    hideProgressModal();
 
     if(success){
       const imp=importButton(modal);
@@ -181,6 +256,7 @@
     const t=String(text||'').replace(/\s+/g,' ').trim();
     return /^⏳/.test(t)
       || /lecture .* en cours/i.test(t)
+      || /analyse .* en cours/i.test(t)
       || /import(?:ation)? .* en cours/i.test(t)
       || /import de .*…/i.test(t)
       || /téléchargement .* en cours/i.test(t)
@@ -190,7 +266,7 @@
   function successText(text){
     const t=String(text||'').replace(/\s+/g,' ').trim();
     return (/✓/.test(t) && !/non archivée|impossible|erreur|réessai/i.test(t))
-      || (/(?:archivé|importé|pièce jointe enregistrée|document analysé)/i.test(t) && !/non archivée|impossible|erreur/i.test(t));
+      || (/(?:archivé|importé|pièce jointe enregistrée|document analysé|document lu|capture lue)/i.test(t) && !/non archivée|impossible|erreur/i.test(t));
   }
 
   function finalErrorText(text){
@@ -264,10 +340,9 @@
     else if(state==='error')unlock(modal,false);
   });
 
-  // Nettoie un éventuel état figé laissé par V1 au rechargement du script.
   document.querySelectorAll('.yaya-upload-modal-busy,[data-yaya-upload-busy="1"]').forEach(function(modal){
     unlock(modal,false);
   });
-
+  hideProgressModal();
   installStyle();
 })();
