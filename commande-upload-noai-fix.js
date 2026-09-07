@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaCommandeUploadNoAiFixV2)return;
-  window.__yayaCommandeUploadNoAiFixV2=true;
+  if(window.__yayaCommandeUploadNoAiFixV3)return;
+  window.__yayaCommandeUploadNoAiFixV3=true;
 
   const nativeFetch=window.fetch.bind(window);
 
@@ -26,16 +26,17 @@
   };
 
   const style=document.createElement('style');
-  style.id='yaya-commande-mobile-portrait-fixed-v2';
+  style.id='yaya-commande-mobile-portrait-fixed-v3';
   style.textContent=`
     @media(max-width:760px) and (orientation:portrait){
       html:root .yaya-commande-create-overlay{
         position:fixed!important;
         top:var(--yaya-visible-top,0px)!important;
-        left:0!important;
-        right:0!important;
+        left:var(--yaya-commande-visible-left,0px)!important;
+        right:auto!important;
         bottom:auto!important;
-        width:100%!important;
+        width:var(--yaya-commande-visible-width,100vw)!important;
+        max-width:var(--yaya-commande-visible-width,100vw)!important;
         height:var(--yaya-visible-height,100dvh)!important;
         min-height:0!important;
         padding:8px!important;
@@ -44,12 +45,13 @@
         align-items:flex-start!important;
         justify-content:center!important;
         overflow:hidden!important;
+        overflow-x:hidden!important;
         overscroll-behavior:contain!important;
       }
 
       html:root .yaya-commande-create-overlay .yaya-commande-create-modal{
-        width:min(520px,100%)!important;
-        max-width:100%!important;
+        width:100%!important;
+        max-width:520px!important;
         height:auto!important;
         max-height:calc(100% - 8px)!important;
         min-height:0!important;
@@ -94,6 +96,13 @@
     return document.querySelector('.yaya-commande-create-overlay .yaya-commande-create-modal');
   }
 
+  function syncCommandeViewport(){
+    const root=document.documentElement;
+    const vv=window.visualViewport;
+    root.style.setProperty('--yaya-commande-visible-left',(vv?vv.offsetLeft:0)+'px');
+    root.style.setProperty('--yaya-commande-visible-width',(vv?vv.width:window.innerWidth)+'px');
+  }
+
   function keepCommandeFieldVisible(){
     const field=document.activeElement;
     if(!field||!field.closest||!field.closest('.yaya-commande-create-overlay'))return;
@@ -117,14 +126,21 @@
 
   document.addEventListener('focusin',function(e){
     if(!e.target||!e.target.closest||!e.target.closest('.yaya-commande-create-overlay'))return;
+    syncCommandeViewport();
     keepCommandeFieldVisible();
-    setTimeout(keepCommandeFieldVisible,120);
-    setTimeout(keepCommandeFieldVisible,360);
+    setTimeout(function(){syncCommandeViewport();keepCommandeFieldVisible();},120);
+    setTimeout(function(){syncCommandeViewport();keepCommandeFieldVisible();},360);
   },true);
+
+  syncCommandeViewport();
 
   if(window.visualViewport){
     window.visualViewport.addEventListener('resize',function(){
+      syncCommandeViewport();
       if(commandeModal())setTimeout(keepCommandeFieldVisible,30);
+    },{passive:true});
+    window.visualViewport.addEventListener('scroll',function(){
+      syncCommandeViewport();
     },{passive:true});
   }
 })();
