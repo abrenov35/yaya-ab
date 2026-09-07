@@ -34,6 +34,12 @@
     el.setAttribute('aria-hidden','true');
   }
 
+  function show(el){
+    if(!el)return;
+    el.style.removeProperty('display');
+    el.removeAttribute('aria-hidden');
+  }
+
   function optionExists(select,id){
     if(!select||!id)return false;
     return Array.from(select.options||[]).some(function(option){
@@ -64,22 +70,25 @@
     });
   }
 
-  function hideDevisIdentityFields(){
-    // Ajouter un devis 2+ : le libellé « Devis X » reste automatique.
-    const avLib=document.getElementById('avLib');
-    if(avLib)hide(avLib.closest('.mrow')||avLib);
+  function lockDevisContext(){
+    // IMPORTANT : dans une fiche chantier, on masque uniquement l'identité du CHANTIER.
+    // L'intitulé/libellé du devis doit rester modifiable à l'ajout comme à la modification.
 
-    // Modifier le devis principal : cette modale ne doit jamais renommer le chantier
-    // ni modifier son numéro. Seul le montant du devis reste modifiable ici.
+    // Ajouter un devis 2+ : conserver le champ "Libellé du devis" (avLib).
+    const avLib=document.getElementById('avLib');
+    if(avLib)show(avLib.closest('.mrow')||avLib);
+
+    // Modifier le devis principal : ne pas proposer de renommer le chantier.
     const edNom=document.getElementById('edNom');
     if(edNom)hide(edNom.closest('.yaya-devis-fast-field')||edNom.closest('.mrow')||edNom);
 
+    // L'intitulé / objet du devis reste disponible.
     const edNum=document.getElementById('edNum');
-    if(edNum)hide(edNum.closest('.yaya-devis-fast-field')||edNum.closest('.mrow')||edNum);
+    if(edNum)show(edNum.closest('.yaya-devis-fast-field')||edNum.closest('.mrow')||edNum);
 
-    // Modifier un devis 2+ : son libellé est conservé sans être proposé à la saisie.
+    // Modifier un devis 2+ : conserver le champ libellé (eavLib).
     const eavLib=document.getElementById('eavLib');
-    if(eavLib)hide(eavLib.closest('.yaya-devis-fast-field')||eavLib.closest('.mrow')||eavLib);
+    if(eavLib)show(eavLib.closest('.yaya-devis-fast-field')||eavLib.closest('.mrow')||eavLib);
   }
 
   function lockAchatChargeContext(contextId){
@@ -130,7 +139,7 @@
   function apply(){
     const contextId=currentChantierId();
 
-    hideDevisIdentityFields();
+    lockDevisContext();
     lockAchatChargeContext(contextId);
     lockDocumentContext(contextId);
     lockCommandeContext(contextId);
