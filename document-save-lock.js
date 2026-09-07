@@ -130,3 +130,33 @@
   s.setAttribute('data-yaya-chantier-modal-context-lock','1');
   document.head.appendChild(s);
 })();
+
+/* La modale achat ne doit jamais afficher l'alerte technique OPENAI_API_KEY. */
+(function(){
+  'use strict';
+
+  function clean(){
+    const root=document.getElementById('modalRoot');
+    if(!root)return;
+
+    const modal=Array.from(root.querySelectorAll('.modal')).find(function(item){
+      return !!(item.querySelector('#acType')||item.querySelector('#achatFile'));
+    });
+    if(!modal)return;
+
+    Array.from(modal.querySelectorAll('div,span,p,small,label')).forEach(function(el){
+      if(el.children&&el.children.length)return;
+      const txt=String(el.textContent||'').trim();
+      if(/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt)){
+        el.style.setProperty('display','none','important');
+        el.setAttribute('aria-hidden','true');
+      }
+    });
+  }
+
+  clean();
+  const root=document.getElementById('modalRoot');
+  if(root){
+    new MutationObserver(clean).observe(root,{childList:true,subtree:true,characterData:true});
+  }
+})();
