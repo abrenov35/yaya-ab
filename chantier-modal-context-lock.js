@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierModalContextLockV2)return;
-  window.__yayaChantierModalContextLockV2=true;
+  if(window.__yayaChantierModalContextLockV3)return;
+  window.__yayaChantierModalContextLockV3=true;
 
   function currentChantierId(){
     const pane=document.getElementById('pane-chantiers');
@@ -126,16 +126,17 @@
     const docFile=document.getElementById('docFile');
     const docSujet=document.getElementById('docSujet');
     const docType=document.getElementById('docType');
-    const anchor=docFile||docSujet||docType;
+    const docTitre=document.getElementById('docTitre');
+    const anchor=docFile||docSujet||docType||docTitre;
     if(!anchor)return;
 
     const modal=anchor.closest('.modal');
     if(!modal)return;
 
-    Array.from(modal.querySelectorAll('div,span,p,small,label')).forEach(function(el){
-      if(el.children&&el.children.length)return;
+    Array.from(modal.querySelectorAll('.note,.hint,div,span,p,small,label')).forEach(function(el){
+      if(el.querySelector&&el.querySelector('input,select,textarea,button'))return;
       const txt=String(el.textContent||'').replace(/\s+/g,' ').trim();
-      if(/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt)){
+      if(txt && txt.length<280 && (/Clé\s+OpenAI\s+absente/i.test(txt)||/OPENAI_API_KEY/i.test(txt))){
         hide(el);
       }
     });
@@ -169,6 +170,63 @@
     }
   }
 
+  function restoreDetailSection(section,scrollY){
+    requestAnimationFrame(function(){
+      try{
+        if(section){
+          const buttons=Array.from(document.querySelectorAll('#pane-chantiers .yaya-detail-section-tab[data-section="'+section+'"]'));
+          const button=buttons.find(function(el){
+            try{return window.getComputedStyle(el).display!=='none';}catch(e){return true;}
+          });
+          if(button&&!button.classList.contains('on'))button.click();
+        }
+      }catch(e){}
+      try{window.scrollTo(0,scrollY||0);}catch(e){}
+    });
+  }
+
+  function installDocumentSaveContextGuard(){
+    if(typeof window.saveDocument!=='function'){
+      setTimeout(installDocumentSaveContextGuard,120);
+      return;
+    }
+    if(window.saveDocument.__yayaStayInChantier)return;
+
+    const original=window.saveDocument;
+    const wrapped=function(){
+      const chantierId=currentChantierId();
+      const section=activeDetailSection();
+      const scrollY=window.scrollY||0;
+
+      let result;
+      try{
+        result=original.apply(this,arguments);
+      }catch(err){
+        throw err;
+      }
+
+      return Promise.resolve(result).then(function(value){
+        // Le code historique bascule vers la page globale Documents uniquement après
+        // une sauvegarde réussie. On ne restaure donc la fiche que dans ce cas précis.
+        let currentTab='';
+        try{currentTab=String(typeof tab!=='undefined'?tab:'');}catch(e){}
+
+        if(chantierId && currentTab==='documents'){
+          try{tab='chantiers';}catch(e){}
+          try{focusChantier=chantierId;}catch(e){}
+          try{if(typeof render==='function')render();}catch(e){}
+          try{if(typeof window.yayaSetDirectUrl==='function')window.yayaSetDirectUrl(chantierId);}catch(e){}
+          restoreDetailSection(section||'documents',scrollY);
+        }
+        return value;
+      });
+    };
+
+    wrapped.__yayaStayInChantier=true;
+    wrapped.__yayaSingleSubmit=!!original.__yayaSingleSubmit;
+    window.saveDocument=wrapped;
+  }
+
   function apply(){
     const contextId=currentChantierId();
 
@@ -177,6 +235,7 @@
     lockDocumentContext(contextId);
     lockCommandeContext(contextId);
     enforceLockedSelects(document);
+    cleanDocumentWarning();
   }
 
   let raf=0;
@@ -193,10 +252,13 @@
 
   document.addEventListener('click',function(){
     enforceLockedSelects(document);
+    cleanDocumentWarning();
   },true);
   document.addEventListener('change',function(){
     enforceLockedSelects(document);
+    cleanDocumentWarning();
   },true);
 
+  installDocumentSaveContextGuard();
   apply();
 })();
