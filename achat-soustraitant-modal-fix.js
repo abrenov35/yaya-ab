@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaAchatSousTraitantSingleFieldV2)return;
-  window.__yayaAchatSousTraitantSingleFieldV2=true;
+  if(window.__yayaAchatSousTraitantSingleFieldV3)return;
+  window.__yayaAchatSousTraitantSingleFieldV3=true;
 
   function isSousTraitant(type){
     return String(type||'').trim()==='Facture sous-traitant';
@@ -74,10 +74,17 @@
     if(isSousTraitant(type.value)){
       const nom=String(fournisseur.value||'').trim();
       if(st)st.value=nom;
-      // Une facture sous-traitant ne propose qu'un seul champ texte : le nom du sous-traitant.
       if(designation)designation.value='';
     }else if(st){
       st.value='';
+    }
+  }
+
+  function achatsLength(){
+    try{
+      return (typeof S!=='undefined'&&S&&Array.isArray(S.achats))?S.achats.length:0;
+    }catch(e){
+      return 0;
     }
   }
 
@@ -111,11 +118,11 @@
       const onclick=String(b.getAttribute('onclick')||'');
       return /^Enregistrer$/i.test(txt)||/addAchat/.test(onclick);
     });
-    if(!save||save.__yayaAchatSaveSingleField)return;
+    if(!save||save.__yayaAchatSaveSingleFieldV3)return;
 
     save.removeAttribute('onclick');
-    save.__yayaAchatSaveSingleField=true;
-    save.addEventListener('click',async function(e){
+    save.__yayaAchatSaveSingleFieldV3=true;
+    save.addEventListener('click',function(e){
       e.preventDefault();
       e.stopPropagation();
 
@@ -143,20 +150,28 @@
 
       prepareBeforeSave();
 
-      let before=0;
-      try{before=(window.S&&Array.isArray(S.achats))?S.achats.length:0;}catch(_e){}
-
+      const before=achatsLength();
+      let result=null;
       try{
-        const r=(typeof addAchat==='function')?addAchat():null;
-        if(r&&typeof r.then==='function')await r;
+        result=(typeof addAchat==='function')?addAchat():null;
       }catch(err){
         if(typeof toast==='function')toast(String(err&&err.message||err),true);
         return;
       }
 
-      let after=before;
-      try{after=(window.S&&Array.isArray(S.achats))?S.achats.length:before;}catch(_e){}
-      if(after>before && typeof closeModal==='function')closeModal();
+      // addAchat ajoute la ligne dans S.achats avant son premier await.
+      // On peut donc fermer la modale immédiatement sans attendre l'écriture réseau.
+      const after=achatsLength();
+      if(after>before && typeof closeModal==='function'){
+        closeModal();
+      }
+
+      if(result&&typeof result.then==='function'){
+        result.catch(function(err){
+          console.error('Yaya — enregistrement achat :',err);
+          if(typeof toast==='function')toast(String(err&&err.message||err),true);
+        });
+      }
     },true);
   }
 
