@@ -154,3 +154,133 @@
   s.dataset.yayaDocEditSaveFix='1';
   document.head.appendChild(s);
 })();
+
+/* =========================================================
+   NOM DU CHANTIER CLIQUABLE
+   Test : on conserve le bouton oeil existant à droite.
+========================================================= */
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-chantier-name-link-style-v1';
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #pane-chantiers .yaya-chantier-name-link{
+        cursor:pointer!important;
+        text-decoration:none!important;
+      }
+      #pane-chantiers .yaya-chantier-name-link:hover,
+      #pane-chantiers .yaya-chantier-name-link:focus-visible{
+        text-decoration:underline!important;
+        text-underline-offset:3px!important;
+      }
+      #pane-chantiers .yaya-chantier-name-link:focus-visible{
+        outline:2px solid rgba(24,95,165,.35)!important;
+        outline-offset:3px!important;
+        border-radius:3px!important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function getToggleId(row){
+    if(!row || !row.querySelectorAll)return '';
+    const elements=row.querySelectorAll('[onclick]');
+    for(const el of elements){
+      const code=String(el.getAttribute('onclick')||'');
+      const m=code.match(/toggleChantier\(\s*['\"]([^'\"]+)['\"]\s*\)/);
+      if(m && m[1])return String(m[1]);
+    }
+    return '';
+  }
+
+  function getNameElement(row){
+    const top=row && row.querySelector ? row.querySelector('.top') : null;
+    if(!top)return null;
+    for(const child of Array.from(top.children||[])){
+      if(child.tagName==='B')return child;
+    }
+    return null;
+  }
+
+  function apply(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+
+    const rows=Array.from(pane.children||[]);
+    rows.forEach(function(row){
+      const id=getToggleId(row);
+      if(!id)return;
+
+      const name=getNameElement(row);
+      if(!name)return;
+
+      name.classList.add('yaya-chantier-name-link');
+      name.setAttribute('role','link');
+      name.setAttribute('tabindex','0');
+      name.setAttribute('title','Ouvrir le chantier');
+      name.dataset.yayaChantierId=id;
+
+      if(name.dataset.yayaChantierLinkBound==='1')return;
+      name.dataset.yayaChantierLinkBound='1';
+
+      function openChantier(ev){
+        if(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+        }
+        const chantierId=String(name.dataset.yayaChantierId||'');
+        if(!chantierId)return;
+
+        try{
+          if(typeof focusChantier!=='undefined' && String(focusChantier||'')===chantierId){
+            return;
+          }
+        }catch(_){}
+
+        try{
+          if(typeof toggleChantier==='function')toggleChantier(chantierId);
+        }catch(err){
+          console.warn('Ouverture chantier par le nom :',err);
+        }
+      }
+
+      name.addEventListener('click',openChantier);
+      name.addEventListener('keydown',function(ev){
+        if(ev.key==='Enter' || ev.key===' '){
+          openChantier(ev);
+        }
+      });
+    });
+  }
+
+  function install(){
+    installStyle();
+    apply();
+
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane){
+      setTimeout(install,150);
+      return;
+    }
+
+    let raf=0;
+    new MutationObserver(function(){
+      if(raf)return;
+      raf=requestAnimationFrame(function(){
+        raf=0;
+        apply();
+      });
+    }).observe(pane,{childList:true,subtree:true});
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',install,{once:true});
+  }else{
+    install();
+  }
+})();
