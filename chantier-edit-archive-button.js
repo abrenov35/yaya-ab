@@ -132,7 +132,9 @@
   function syncManageToolbar(){
     const btn=document.getElementById('yayaCreateChantierBtn');
     if(!btn)return false;
-    btn.textContent='🛠️ Gérer chantier';
+    if(String(btn.textContent||'').trim()!=='🛠️ Gérer chantier'){
+      btn.textContent='🛠️ Gérer chantier';
+    }
     btn.title='Ajouter ou modifier un chantier';
     btn.setAttribute('aria-label','Gérer chantier');
     return true;
