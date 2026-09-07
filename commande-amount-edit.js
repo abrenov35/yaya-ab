@@ -1,17 +1,20 @@
 (function(){
   'use strict';
 
-  if(window.__yayaCommandeAmountEditV3)return;
-  window.__yayaCommandeAmountEditV3=true;
+  if(window.__yayaCommandeAmountEditV4)return;
+  window.__yayaCommandeAmountEditV4=true;
 
-  const STYLE_ID='yaya-commande-amount-edit-v3';
+  const STYLE_ID='yaya-commande-amount-edit-v4';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-edit{
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-edit,
+      #pane-chantiers .yaya-detail-commandes-pane button.yaya-detail-commande-edit,
+      #pane-chantiers .yaya-detail-commandes-pane button[title="Modifier"].yaya-detail-commande-edit,
+      #pane-chantiers .yaya-detail-commandes-pane button[aria-label="Modifier"].yaya-detail-commande-edit{
         display:none!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-view{
@@ -55,6 +58,12 @@
     document.querySelectorAll('#pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row').forEach(function(row){
       const amount=row.querySelector('.yaya-detail-charge-cost');
       const edit=row.querySelector('.yaya-detail-commande-edit');
+
+      if(edit){
+        edit.style.setProperty('display','none','important');
+        edit.setAttribute('aria-hidden','true');
+        edit.tabIndex=-1;
+      }
 
       if(amount&&edit){
         amount.setAttribute('role','button');
