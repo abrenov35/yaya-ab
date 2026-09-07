@@ -6,6 +6,8 @@
 
   const MAX_FILE_SIZE=8*1024*1024;
   const inFlight=new Map();
+  const previousTraiter=typeof window.traiterAchat==='function'?window.traiterAchat:null;
+  const previousLire=typeof window.lireAchat==='function'?window.lireAchat:null;
 
   function isSousTraitant(){
     const type=document.getElementById('acType');
@@ -69,8 +71,6 @@
   function saveLink(lien){
     const value=String(lien||'').trim();
     if(!value)return;
-    // achatLien est un `let` global du code historique : l'affectation non qualifiée
-    // est indispensable. window.achatLien est aussi alimenté pour les correctifs récents.
     try{achatLien=value;}catch(e){}
     try{window.achatLien=value;}catch(e){}
     const modal=modalAchat();
@@ -90,8 +90,6 @@
     field('acDate',data.date);
     field('acMt',data.montant_ht);
 
-    // Le chantier courant reste prioritaire. On ne change la sélection que si aucun
-    // chantier n'est déjà verrouillé/sélectionné dans la modale.
     const ch=document.getElementById('acCh');
     if(ch&&!String(ch.value||'').trim()&&data.reference_chantier){
       try{
@@ -141,8 +139,6 @@
       if(!base64)throw new Error('Document vide ou illisible');
 
       let extracted={};
-      // On conserve l'extraction des informations quand elle fonctionne, mais elle
-      // n'est plus responsable de l'archivage de la pièce.
       try{
         extracted=await post('extraireAchat',{
           filename:file.name,
@@ -154,8 +150,6 @@
         console.warn('Yaya — extraction dépense ignorée, archivage direct utilisé :',err);
       }
 
-      // Garantie forte : même si extraireAchat échoue ou ne renvoie aucun lien,
-      // la pièce est archivée par la route d'archivage simple.
       const lien=await guaranteeArchive(file,base64,extracted);
       saveLink(lien);
 
@@ -179,32 +173,28 @@
 
   function traiterPatched(file){
     if(isSousTraitant()){
-      // Le correctif dédié Charges sous-traitant reste propriétaire de ce flux.
-      try{
-        const st=document.querySelector('script[data-yaya-charge-soustraitant-upload-fix="1"]');
-        void st;
-      }catch(e){}
+      if(previousTraiter)return previousTraiter(file);
       return false;
     }
     return uploadDepense(file);
   }
 
   function lirePatched(input){
+    if(isSousTraitant()){
+      if(previousLire)return previousLire(input);
+      return false;
+    }
     const file=input&&input.files&&input.files[0];
     try{if(input)input.value='';}catch(e){}
     if(!file)return;
     return uploadDepense(file);
   }
 
-  // Les appels directs (collage / anciens onclick) utilisent désormais le flux fiable.
   window.traiterAchat=traiterPatched;
   window.lireAchat=lirePatched;
   try{traiterAchat=traiterPatched;}catch(e){}
   try{lireAchat=lirePatched;}catch(e){}
 
-  // Point clé : on intercepte le changement AVANT le onchange historique
-  // `lireAchat(this)`. Cela empêche l'ancien extraireAchat de courir en parallèle
-  // et surtout d'écraser achatLien avec une valeur vide après notre archivage.
   document.addEventListener('change',function(event){
     const input=event.target;
     if(!input||input.id!=='achatFile'||isSousTraitant())return;
