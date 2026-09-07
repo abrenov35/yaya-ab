@@ -157,7 +157,6 @@
 
 /* =========================================================
    NOM DU CHANTIER CLIQUABLE
-   Test : on conserve le bouton oeil existant à droite.
 ========================================================= */
 (function(){
   'use strict';
@@ -225,36 +224,50 @@
       name.setAttribute('title','Ouvrir le chantier');
       name.dataset.yayaChantierId=id;
 
-      if(name.dataset.yayaChantierLinkBound==='1')return;
-      name.dataset.yayaChantierLinkBound='1';
+      if(name.dataset.yayaChantierLinkBound!=='1'){
+        name.dataset.yayaChantierLinkBound='1';
 
-      function openChantier(ev){
-        if(ev){
-          ev.preventDefault();
-          ev.stopPropagation();
-        }
-        const chantierId=String(name.dataset.yayaChantierId||'');
-        if(!chantierId)return;
-
-        try{
-          if(typeof focusChantier!=='undefined' && String(focusChantier||'')===chantierId){
-            return;
+        function openChantier(ev){
+          if(ev){
+            ev.preventDefault();
+            ev.stopPropagation();
           }
-        }catch(_){}
+          const chantierId=String(name.dataset.yayaChantierId||'');
+          if(!chantierId)return;
 
-        try{
-          if(typeof toggleChantier==='function')toggleChantier(chantierId);
-        }catch(err){
-          console.warn('Ouverture chantier par le nom :',err);
+          try{
+            if(typeof focusChantier!=='undefined' && String(focusChantier||'')===chantierId){
+              return;
+            }
+          }catch(_){}
+
+          try{
+            if(typeof toggleChantier==='function')toggleChantier(chantierId);
+          }catch(err){
+            console.warn('Ouverture chantier par le nom :',err);
+          }
         }
+
+        name.addEventListener('click',openChantier);
+        name.addEventListener('keydown',function(ev){
+          if(ev.key==='Enter' || ev.key===' '){
+            openChantier(ev);
+          }
+        });
       }
 
-      name.addEventListener('click',openChantier);
-      name.addEventListener('keydown',function(ev){
-        if(ev.key==='Enter' || ev.key===' '){
-          openChantier(ev);
-        }
-      });
+      /* Une fois le nom lié, l'ancien bouton œil devient inutile. */
+      const top=row.querySelector('.top');
+      if(top){
+        Array.from(top.querySelectorAll('[onclick]')).forEach(function(el){
+          const code=String(el.getAttribute('onclick')||'');
+          const txt=String(el.textContent||'').trim();
+          const title=String(el.getAttribute('title')||'').toLowerCase();
+          if(/toggleChantier\(/.test(code) && (txt==='👁️' || txt==='👁' || title.includes('voir') || title.includes('ouvrir'))){
+            el.remove();
+          }
+        });
+      }
     });
   }
 
