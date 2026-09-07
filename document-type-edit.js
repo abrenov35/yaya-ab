@@ -1,19 +1,60 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDocumentTypeEditV3)return;
-  window.__yayaDocumentTypeEditV3=true;
+  if(window.__yayaDocumentTypeEditV4)return;
+  window.__yayaDocumentTypeEditV4=true;
 
-  const STYLE_ID='yaya-document-type-edit-style-v3';
+  const STYLE_ID='yaya-document-type-edit-style-v4';
 
   function installStyle(){
-    ['yaya-document-type-edit-style-v1','yaya-document-type-edit-style-v2'].forEach(function(id){
+    ['yaya-document-type-edit-style-v1','yaya-document-type-edit-style-v2','yaya-document-type-edit-style-v3'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) 120px 100px 44px!important;
+        align-items:center!important;
+        column-gap:14px!important;
+        min-height:54px!important;
+        padding:9px 12px!important;
+        box-sizing:border-box!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row > strong{
+        min-width:0!important;
+        display:flex!important;
+        align-items:center!important;
+        gap:5px 12px!important;
+        flex-wrap:wrap!important;
+        line-height:1.3!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row > strong > small{
+        display:inline!important;
+        margin:0!important;
+        color:#596579!important;
+        font-size:12px!important;
+        font-weight:500!important;
+        line-height:1.3!important;
+        white-space:normal!important;
+        overflow:visible!important;
+        text-overflow:clip!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours{
+        justify-self:end!important;
+        text-align:right!important;
+        white-space:nowrap!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-cost{
+        justify-self:end!important;
+        text-align:right!important;
+        color:#7a8798!important;
+        font-size:10.5px!important;
+        font-weight:500!important;
+        white-space:nowrap!important;
+      }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours[data-yaya-document-edit="1"],
       #pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]{
         cursor:pointer!important;
@@ -22,26 +63,52 @@
         opacity:.72!important;
       }
       #pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]:hover{
-        text-decoration:underline!important;
-        text-underline-offset:3px!important;
+        opacity:.72!important;
+        text-decoration:none!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-edit,
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-view{
         display:none!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-delete{
-        margin-left:8px!important;
+        grid-column:4!important;
+        justify-self:center!important;
+        align-self:center!important;
+        width:30px!important;
+        min-width:30px!important;
+        max-width:30px!important;
+        height:30px!important;
+        min-height:30px!important;
+        max-height:30px!important;
+        padding:0!important;
+        margin:0!important;
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
         color:#d92d20!important;
-        border-color:#f1a8a1!important;
+        border:1px solid #f1a8a1!important;
+        border-radius:8px!important;
         background:#fff7f6!important;
         font-weight:700!important;
         font-size:0!important;
+        line-height:1!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-delete::before{
         content:'×'!important;
         font-size:20px!important;
         line-height:1!important;
         color:#d92d20!important;
+      }
+      @media(max-width:640px){
+        #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
+          grid-template-columns:minmax(0,1fr) 88px 74px 38px!important;
+          column-gap:8px!important;
+          min-height:52px!important;
+          padding:8px 9px!important;
+        }
+        #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row > strong{
+          gap:4px 8px!important;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -96,6 +163,7 @@
         view.tabIndex=-1;
       }
       if(del){
+        del.textContent='×';
         del.setAttribute('title','Supprimer');
         del.setAttribute('aria-label','Supprimer');
       }
