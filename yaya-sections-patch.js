@@ -4,6 +4,117 @@
 /* ═══════════════════════════════════════════════════════════════ */
 
 (function(){
+  // Évite l'affichage fugace d'une page chantier partiellement rendue au démarrage.
+  // Un écran de chargement neutre reste au-dessus de l'application jusqu'au premier
+  // rendu réellement exploitable, puis disparaît sans modifier le fonctionnement.
+  function installStableBootScreen(){
+    if(document.getElementById('yayaStableBootScreen'))return;
+
+    const style=document.createElement('style');
+    style.id='yaya-stable-boot-style';
+    style.textContent=`
+      #yayaStableBootScreen{
+        position:fixed!important;
+        inset:0!important;
+        z-index:999999!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        flex-direction:column!important;
+        gap:12px!important;
+        background:#f4f6f8!important;
+        color:#162d49!important;
+        visibility:visible!important;
+        opacity:1!important;
+        transition:opacity .12s ease!important;
+        pointer-events:auto!important;
+      }
+      #yayaStableBootScreen .yaya-stable-boot-spinner{
+        width:32px!important;
+        height:32px!important;
+        border:4px solid rgba(22,45,73,.14)!important;
+        border-top-color:#c9a227!important;
+        border-radius:50%!important;
+        animation:yayaStableBootSpin .8s linear infinite!important;
+      }
+      #yayaStableBootScreen .yaya-stable-boot-label{
+        font-size:13px!important;
+        font-weight:650!important;
+        letter-spacing:.01em!important;
+      }
+      @keyframes yayaStableBootSpin{to{transform:rotate(360deg)}}
+    `;
+    document.head.appendChild(style);
+
+    const screen=document.createElement('div');
+    screen.id='yayaStableBootScreen';
+    screen.setAttribute('aria-live','polite');
+    screen.innerHTML='<div class="yaya-stable-boot-spinner"></div><div class="yaya-stable-boot-label">Chargement Yaya…</div>';
+    document.body.appendChild(screen);
+
+    let removed=false;
+    function appReady(){
+      const loader=document.getElementById('loader');
+      if(loader){
+        try{if(getComputedStyle(loader).display!=='none')return false;}catch(e){return false;}
+      }
+
+      let chantiers=null;
+      try{
+        if(typeof S==='undefined'||!S||!Array.isArray(S.chantiers))return false;
+        chantiers=S.chantiers;
+      }catch(e){return false;}
+
+      const pane=document.getElementById('pane-chantiers');
+      if(!pane)return false;
+
+      try{
+        if(typeof focusChantier!=='undefined'&&focusChantier){
+          return !!pane.querySelector('.yaya-detail-section-tabs');
+        }
+      }catch(e){}
+
+      if(chantiers.length===0)return true;
+      return !!pane.querySelector('.card');
+    }
+
+    function revealWhenReady(){
+      if(removed||!appReady())return;
+      removed=true;
+      requestAnimationFrame(function(){
+        requestAnimationFrame(function(){
+          screen.style.setProperty('opacity','0','important');
+          screen.style.setProperty('pointer-events','none','important');
+          setTimeout(function(){
+            screen.remove();
+            const bootStyle=document.getElementById('yaya-stable-boot-style');
+            if(bootStyle)bootStyle.remove();
+          },140);
+        });
+      });
+    }
+
+    const observer=new MutationObserver(revealWhenReady);
+    observer.observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['style','class']});
+    const timer=setInterval(revealWhenReady,50);
+
+    // Sécurité : ne jamais laisser l'écran de démarrage bloqué en cas d'erreur imprévue.
+    setTimeout(function(){
+      if(!removed){
+        removed=true;
+        screen.remove();
+        const bootStyle=document.getElementById('yaya-stable-boot-style');
+        if(bootStyle)bootStyle.remove();
+      }
+      observer.disconnect();
+      clearInterval(timer);
+    },6000);
+
+    revealWhenReady();
+  }
+
+  installStableBootScreen();
+
   // Attendre que le DOM soit prêt
   function ensureStylesAndStructure(){
     // 1. Injecter le CSS
