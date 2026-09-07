@@ -1,24 +1,28 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisAmountClickEditV3)return;
-  window.__yayaDevisAmountClickEditV3=true;
+  if(window.__yayaDevisAmountClickEditV4)return;
+  window.__yayaDevisAmountClickEditV4=true;
 
-  const STYLE_ID='yaya-devis-amount-click-edit-style-v3';
+  const STYLE_ID='yaya-devis-amount-click-edit-style-v4';
 
   function installStyle(){
-    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2'].forEach(function(id){
+    ['yaya-devis-amount-click-edit-style-v1','yaya-devis-amount-click-edit-style-v2','yaya-devis-amount-click-edit-style-v3'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-document-edit{display:none!important;}
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-document-edit,
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-document-view,
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-hours{
+        display:none!important;
+      }
 
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
         display:grid!important;
-        grid-template-columns:minmax(0,1fr) 120px 90px 46px!important;
+        grid-template-columns:minmax(0,1fr) 90px 46px!important;
         align-items:center!important;
         column-gap:12px!important;
         width:100%!important;
@@ -31,14 +35,8 @@
         grid-column:1!important;
         min-width:0!important;
       }
-      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-hours{
-        grid-column:2!important;
-        justify-self:end!important;
-        text-align:right!important;
-        min-width:0!important;
-      }
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-charge-cost{
-        grid-column:3!important;
+        grid-column:2!important;
         justify-self:end!important;
         text-align:right!important;
         min-width:0!important;
@@ -58,7 +56,7 @@
 
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-document-delete,
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-initial-devis-delete{
-        grid-column:4!important;
+        grid-column:3!important;
         justify-self:center!important;
         align-self:center!important;
         width:30px!important;
@@ -95,10 +93,20 @@
         background:#ffeded!important;
         border-color:#eb8383!important;
       }
+      #pane-chantiers .yaya-detail-markets-pane .yaya-market-description{
+        display:block!important;
+        margin-top:2px!important;
+        color:#718096!important;
+        font-size:11px!important;
+        font-weight:500!important;
+        white-space:normal!important;
+        overflow:visible!important;
+        text-overflow:clip!important;
+      }
 
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
-          grid-template-columns:minmax(0,1fr) 84px 72px 38px!important;
+          grid-template-columns:minmax(0,1fr) 72px 38px!important;
           column-gap:7px!important;
           padding:7px 8px!important;
         }
@@ -134,7 +142,11 @@
     document.querySelectorAll('#pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row').forEach(function(row){
       const amount=row.querySelector('.yaya-detail-charge-cost');
       const edit=row.querySelector('.yaya-detail-document-edit');
+      const view=row.querySelector('.yaya-detail-document-view');
+      const type=row.querySelector('.yaya-detail-charge-hours');
       if(edit){edit.setAttribute('aria-hidden','true');edit.tabIndex=-1;}
+      if(view){view.setAttribute('aria-hidden','true');view.tabIndex=-1;}
+      if(type){type.setAttribute('aria-hidden','true');}
       const del=row.querySelector('.yaya-detail-document-delete');
       if(del){del.setAttribute('title','Supprimer');del.setAttribute('aria-label','Supprimer');}
       if(!amount||!contextFromRow(row))return;
