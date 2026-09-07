@@ -1,19 +1,24 @@
 (function(){
   'use strict';
 
-  if(window.__yayaCommandeAmountEditV6)return;
-  window.__yayaCommandeAmountEditV6=true;
+  if(window.__yayaCommandeAmountEditV7)return;
+  window.__yayaCommandeAmountEditV7=true;
 
-  const STYLE_ID='yaya-commande-amount-edit-v6';
+  const STYLE_ID='yaya-commande-amount-edit-v7';
 
   function installStyle(){
-    ['yaya-commande-amount-edit-v5','yaya-commande-amount-edit-v4'].forEach(function(id){
+    ['yaya-commande-amount-edit-v4','yaya-commande-amount-edit-v5','yaya-commande-amount-edit-v6'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
+        grid-template-columns:minmax(0,1fr) 105px 90px 44px!important;
+        align-items:center!important;
+        column-gap:10px!important;
+      }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-edit,
       #pane-chantiers .yaya-detail-commandes-pane button.yaya-detail-commande-edit,
       #pane-chantiers .yaya-detail-commandes-pane button[title="Modifier"].yaya-detail-commande-edit,
@@ -24,7 +29,13 @@
       #pane-chantiers .yaya-detail-commandes-pane button[aria-label="Voir"].yaya-detail-commande-view{
         display:none!important;
       }
+      #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-hours{
+        justify-self:end!important;
+        text-align:right!important;
+      }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost{
+        justify-self:end!important;
+        text-align:right!important;
         cursor:pointer!important;
         text-decoration:none!important;
       }
@@ -39,20 +50,31 @@
         color:#0f4f8d!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-commande-actions{
-        width:auto!important;
-        min-width:32px!important;
+        grid-column:4!important;
+        width:44px!important;
+        min-width:44px!important;
+        margin:0!important;
+        padding:0!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        gap:0!important;
       }
       #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-delete,
       #pane-chantiers .yaya-detail-commandes-pane [data-yaya-commande-delete-x="1"]{
         width:30px!important;
         min-width:30px!important;
+        max-width:30px!important;
         height:30px!important;
         min-height:30px!important;
+        max-height:30px!important;
         padding:0!important;
-        margin-left:8px!important;
+        margin:0!important;
         display:inline-flex!important;
         align-items:center!important;
         justify-content:center!important;
+        justify-self:center!important;
+        align-self:center!important;
         border:1px solid #f3a0a0!important;
         border-radius:8px!important;
         background:#fff7f7!important;
@@ -74,6 +96,16 @@
       #pane-chantiers .yaya-detail-commandes-pane [data-yaya-commande-delete-x="1"]::after{
         content:none!important;
         display:none!important;
+      }
+      @media(max-width:640px){
+        #pane-chantiers .yaya-detail-commandes-pane .yaya-detail-commande-row{
+          grid-template-columns:minmax(0,1fr) 72px 70px 40px!important;
+          column-gap:7px!important;
+        }
+        #pane-chantiers .yaya-detail-commandes-pane .yaya-commande-actions{
+          width:40px!important;
+          min-width:40px!important;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -125,7 +157,6 @@
         amount.dataset.commandeId=String(edit.dataset.commandeId||row.dataset.commandeId||'');
       }
 
-      // Les zones texte ouvrent la visualisation de la pièce jointe via le bouton masqué.
       prepareViewText(row.querySelector('strong'),row);
       prepareViewText(row.querySelector('.yaya-detail-charge-hours'),row);
     });
@@ -158,10 +189,7 @@
     const amount=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost')
       :null;
-    if(amount){
-      openFromAmount(amount,event);
-      return;
-    }
+    if(amount){openFromAmount(amount,event);return;}
 
     const text=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers .yaya-detail-commandes-pane [data-yaya-commande-view-text="1"]')
@@ -175,10 +203,7 @@
     const amount=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers .yaya-detail-commandes-pane .yaya-detail-charge-cost')
       :null;
-    if(amount){
-      openFromAmount(amount,event);
-      return;
-    }
+    if(amount){openFromAmount(amount,event);return;}
 
     const text=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers .yaya-detail-commandes-pane [data-yaya-commande-view-text="1"]')
@@ -190,10 +215,7 @@
   function schedule(){
     if(scheduled)return;
     scheduled=true;
-    requestAnimationFrame(function(){
-      scheduled=false;
-      patch();
-    });
+    requestAnimationFrame(function(){scheduled=false;patch();});
   }
 
   schedule();
