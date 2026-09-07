@@ -173,3 +173,15 @@
   s.setAttribute('data-yaya-commande-chantier-context-fix','1');
   document.head.appendChild(s);
 })();
+
+/* Verrou global : pendant n'importe quel import de pièce dans les modales
+   Devis, Achat/Charge, Document et Commande, toutes les actions sont bloquées. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-modal-upload-global-lock="1"]'))return;
+  const s=document.createElement('script');
+  s.src='modal-upload-global-lock.js?v=global-upload-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-modal-upload-global-lock','1');
+  document.head.appendChild(s);
+})();
