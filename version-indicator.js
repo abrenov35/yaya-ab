@@ -114,3 +114,37 @@
   s.setAttribute('data-yaya-devis-amount-click-edit-v1','1');
   document.head.appendChild(s);
 })();
+
+// Accès discret à l'extranet chantiers depuis le bloc de marque Yaya / AB RENOV 35.
+(function(){
+  'use strict';
+  const TARGET='https://abrenov35.ovh/chantiers';
+
+  function install(){
+    const brand=document.querySelector('.hdr .brand');
+    if(!brand){setTimeout(install,120);return;}
+    if(brand.dataset.yayaChantiersLink==='1')return;
+    brand.dataset.yayaChantiersLink='1';
+    brand.setAttribute('role','link');
+    brand.setAttribute('tabindex','0');
+    brand.setAttribute('aria-label','Ouvrir les chantiers AB RENOV 35 dans un nouvel onglet');
+
+    function open(){
+      const w=window.open(TARGET,'_blank','noopener,noreferrer');
+      if(w)w.opener=null;
+    }
+
+    brand.addEventListener('click',function(event){
+      if(event.target&&event.target.closest&&event.target.closest('button,a,input,select,textarea'))return;
+      open();
+    });
+    brand.addEventListener('keydown',function(event){
+      if(event.key!=='Enter'&&event.key!==' ')return;
+      event.preventDefault();
+      open();
+    });
+  }
+
+  install();
+  window.addEventListener('yaya:data-refreshed',install);
+})();
