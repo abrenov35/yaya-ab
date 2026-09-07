@@ -168,8 +168,14 @@
   }
 
   function openNameLink(cid){
-    if(typeof window.openExistingChantierModal==='function'){
-      window.openExistingChantierModal(cid);
+    const id=String(cid||'');
+    if(!id)return;
+    try{
+      if(typeof toggleChantier==='function'){
+        toggleChantier(id);
+      }
+    }catch(e){
+      console.warn('Ouverture fiche chantier impossible :',e);
     }
   }
 
@@ -208,7 +214,7 @@
       link.dataset.chantierId=cid;
       link.setAttribute('role','button');
       link.setAttribute('tabindex','0');
-      link.setAttribute('title','Modifier le chantier');
+      link.setAttribute('title','Ouvrir le chantier');
       link.addEventListener('click',function(e){
         e.preventDefault();
         e.stopPropagation();
