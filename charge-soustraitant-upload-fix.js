@@ -225,3 +225,14 @@
   s.setAttribute('data-yaya-finance-delete-x','1');
   document.head.appendChild(s);
 })();
+
+/* Charges : aligne le titre, le contenu et le bouton Ajouter sur les bornes Marché / Mail. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-charge-section-tab-alignment="1"]'))return;
+  const s=document.createElement('script');
+  s.src='charge-section-tab-alignment.js?v=charge-align-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-charge-section-tab-alignment','1');
+  document.head.appendChild(s);
+})();
