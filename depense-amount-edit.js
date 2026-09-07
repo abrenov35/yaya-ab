@@ -1,18 +1,57 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDepenseAmountEditV5)return;
-  window.__yayaDepenseAmountEditV5=true;
+  if(window.__yayaDepenseAmountEditV6)return;
+  window.__yayaDepenseAmountEditV6=true;
 
-  const STYLE_ID='yaya-depense-amount-edit-style-v5';
+  const STYLE_ID='yaya-depense-amount-edit-style-v6';
 
   function installStyle(){
-    ['yaya-depense-amount-edit-style-v4'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-depense-amount-edit-style-v4','yaya-depense-amount-edit-style-v5'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
     let style=document.getElementById(STYLE_ID);
     if(style)return;
     style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row{
+        min-height:54px!important;
+        padding:9px 12px!important;
+        column-gap:14px!important;
+        align-items:center!important;
+      }
+      #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row > strong{
+        min-width:0!important;
+        display:flex!important;
+        align-items:center!important;
+        gap:5px 12px!important;
+        flex-wrap:wrap!important;
+        line-height:1.3!important;
+        font-size:0!important;
+      }
+      #pane-chantiers .yaya-detail-expenses-pane .yaya-depense-supplier{
+        color:#1c2b48!important;
+        font-size:13.5px!important;
+        font-weight:800!important;
+        line-height:1.3!important;
+      }
+      #pane-chantiers .yaya-detail-expenses-pane .yaya-depense-description{
+        display:inline!important;
+        margin:0!important;
+        color:#596579!important;
+        font-size:12px!important;
+        font-weight:500!important;
+        line-height:1.3!important;
+        white-space:normal!important;
+      }
+      #pane-chantiers .yaya-detail-expenses-pane .yaya-depense-inline-date{
+        display:inline!important;
+        margin:0!important;
+        color:#7a8798!important;
+        font-size:10.5px!important;
+        font-weight:500!important;
+        line-height:1.3!important;
+        white-space:nowrap!important;
+      }
       #pane-chantiers .yaya-detail-expenses-pane [data-yaya-depense-edit="1"],
       #pane-chantiers .ligD [data-yaya-depense-edit="1"],
       #pane-chantiers .yaya-detail-expenses-pane [data-yaya-depense-view="1"],
@@ -36,13 +75,43 @@
       #pane-chantiers .yaya-detail-expenses-pane button[aria-label="Voir"]{
         display:none!important;
       }
+      @media(max-width:640px){
+        #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row{
+          min-height:52px!important;
+          padding:8px 9px!important;
+          column-gap:8px!important;
+        }
+        #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row > strong{
+          gap:4px 8px!important;
+        }
+      }
     `;
     document.head.appendChild(style);
+  }
+
+  function escapeHtml(value){
+    return String(value==null?'':value).replace(/[&<>"']/g,function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
   }
 
   function extractId(raw){
     const m=String(raw||'').match(/(?:editMontantAchat|editAchat)\(['\"]([^'\"]+)['\"]\)/);
     return m&&m[1]?String(m[1]):'';
+  }
+
+  function expenseById(id){
+    try{
+      return typeof S!=='undefined'&&S&&Array.isArray(S.achats)
+        ?S.achats.find(function(x){return String(x&&x.id)===String(id);})||null
+        :null;
+    }catch(e){return null;}
+  }
+
+  function dateFr(value){
+    const raw=String(value||'').slice(0,10);
+    const m=raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    return m?m[3]+'/'+m[2]+'/'+m[1]:raw;
   }
 
   function hideButton(btn){
@@ -111,6 +180,41 @@
     })||null;
   }
 
+  function idForNativeRow(row){
+    let id=String(row.dataset&&row.dataset.achatId||'').trim();
+    if(id)return id;
+    const holder=row.querySelector('[data-achat-id]');
+    if(holder)id=String(holder.dataset.achatId||'').trim();
+    if(id)return id;
+    const edit=Array.from(row.querySelectorAll('[onclick]')).find(function(el){
+      return /editAchat\s*\(/.test(String(el.getAttribute('onclick')||''));
+    });
+    return edit?extractId(edit.getAttribute('onclick')||''):'';
+  }
+
+  function normalizeNativeText(row,id){
+    const strong=row.querySelector('strong');
+    if(!strong||!id)return;
+    const data=expenseById(id);
+    if(!data)return;
+
+    const supplier=String(data.fournisseur||data.sousTraitant||'Fournisseur').trim()||'Fournisseur';
+    const description=String(data.designation||'').trim();
+    const date=dateFr(data.date||'');
+    const signature=[supplier,description,date].join('|');
+
+    if(strong.dataset.yayaDepenseInlineSignature===signature
+      && strong.querySelectorAll(':scope > .yaya-depense-supplier').length===1
+      && strong.querySelectorAll(':scope > .yaya-depense-description').length===(description?1:0)
+      && strong.querySelectorAll(':scope > .yaya-depense-inline-date').length===(date?1:0))return;
+
+    strong.innerHTML=''
+      +'<span class="yaya-depense-supplier">'+escapeHtml(supplier)+'</span>'
+      +(description?'<span class="yaya-depense-description">'+escapeHtml(description)+'</span>':'')
+      +(date?'<span class="yaya-depense-inline-date">'+escapeHtml(date)+'</span>':'');
+    strong.dataset.yayaDepenseInlineSignature=signature;
+  }
+
   function patchNativeRows(){
     document.querySelectorAll('#pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-row').forEach(function(row){
       const amount=row.querySelector('.yaya-detail-charge-cost');
@@ -119,6 +223,8 @@
         row.dataset.achatId=id;
         prepareAmount(amount,id);
       }
+
+      normalizeNativeText(row,id);
 
       const view=nativeViewButton(row);
       const supplier=row.querySelector('strong');
@@ -139,18 +245,6 @@
       }
       hidePencils(row);
     });
-  }
-
-  function idForNativeRow(row){
-    let id=String(row.dataset&&row.dataset.achatId||'').trim();
-    if(id)return id;
-    const holder=row.querySelector('[data-achat-id]');
-    if(holder)id=String(holder.dataset.achatId||'').trim();
-    if(id)return id;
-    const edit=Array.from(row.querySelectorAll('[onclick]')).find(function(el){
-      return /editAchat\s*\(/.test(String(el.getAttribute('onclick')||''));
-    });
-    return edit?extractId(edit.getAttribute('onclick')||''):'';
   }
 
   function patchLegacyRows(){
