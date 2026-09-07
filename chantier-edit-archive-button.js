@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-archive-style-v1';
+  const STYLE_ID='yaya-chantier-edit-archive-style-v2';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -57,7 +57,7 @@
 
   function decorateModal(){
     const modal=document.querySelector('.yaya-chantier-edit-modal');
-    if(!modal)return;
+    if(!modal||modal.dataset.archiveButtonReady==='1')return;
     const foot=modal.querySelector('.mfoot');
     if(!foot)return;
 
@@ -66,10 +66,11 @@
     const cancel=foot.querySelector('#editChCancel');
     if(!del||!save||!cancel)return;
 
+    const cid=extractCid(modal);
+    if(!cid)return;
+
     let archive=foot.querySelector('.yaya-archive-chantier-modal-btn');
     if(!archive){
-      const cid=extractCid(modal);
-      if(!cid)return;
       archive=document.createElement('button');
       archive.type='button';
       archive.className='btn2 yaya-archive-chantier-modal-btn';
@@ -79,10 +80,16 @@
       });
     }
 
-    [del,archive,save,cancel].forEach(function(btn){foot.appendChild(btn);});
+    foot.replaceChildren(del,archive,save,cancel);
+    modal.dataset.archiveButtonReady='1';
   }
 
   const root=document.getElementById('modalRoot')||document.documentElement;
-  new MutationObserver(decorateModal).observe(root,{childList:true,subtree:true});
+  const observer=new MutationObserver(function(){
+    if(document.querySelector('.yaya-chantier-edit-modal:not([data-archive-button-ready="1"])')){
+      decorateModal();
+    }
+  });
+  observer.observe(root,{childList:true,subtree:true});
   setTimeout(decorateModal,0);
 })();
