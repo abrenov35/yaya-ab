@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDepenseAmountEditV3)return;
-  window.__yayaDepenseAmountEditV3=true;
+  if(window.__yayaDepenseAmountEditV4)return;
+  window.__yayaDepenseAmountEditV4=true;
 
-  const STYLE_ID='yaya-depense-amount-edit-style-v3';
+  const STYLE_ID='yaya-depense-amount-edit-style-v4';
 
   function installStyle(){
     let style=document.getElementById(STYLE_ID);
@@ -13,8 +13,14 @@
     style.id=STYLE_ID;
     style.textContent=`
       #pane-chantiers .yaya-detail-expenses-pane [data-yaya-depense-edit="1"],
-      #pane-chantiers .ligD [data-yaya-depense-edit="1"]{
+      #pane-chantiers .ligD [data-yaya-depense-edit="1"],
+      #pane-chantiers .yaya-detail-expenses-pane [data-yaya-depense-view="1"],
+      #pane-chantiers .ligD [data-yaya-depense-view="1"]{
         cursor:pointer!important;
+      }
+      #pane-chantiers .yaya-detail-expenses-pane [data-yaya-depense-view="1"]:hover,
+      #pane-chantiers .ligD [data-yaya-depense-view="1"]:hover{
+        opacity:.72!important;
       }
       #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-expense-edit,
       #pane-chantiers .yaya-detail-expenses-pane .yaya-detail-achat-edit,
@@ -70,6 +76,33 @@
     }
   }
 
+  function prepareViewTarget(el){
+    if(!el)return;
+    el.dataset.yayaDepenseView='1';
+    el.setAttribute('role','button');
+    el.setAttribute('tabindex','0');
+    el.setAttribute('title','Voir la pièce jointe');
+    el.setAttribute('aria-label','Voir la pièce jointe');
+  }
+
+  function nativeViewButton(row){
+    if(!row)return null;
+    const btn=row.querySelector('.yaya-detail-charge-view[data-achat-id],.yaya-detail-charge-view[data-lien]');
+    if(!btn||btn.disabled)return null;
+    const lien=String(btn.dataset&&btn.dataset.lien||'').trim();
+    if(!lien||!/^https?:/i.test(lien))return null;
+    return btn;
+  }
+
+  function legacyViewTarget(row){
+    if(!row)return null;
+    return Array.from(row.querySelectorAll('button,a,[onclick]')).find(function(el){
+      const onclick=String(el.getAttribute&&el.getAttribute('onclick')||'');
+      const href=String(el.getAttribute&&el.getAttribute('href')||'');
+      return /voirPiece\s*\(/.test(onclick)||/^https?:/i.test(href);
+    })||null;
+  }
+
   function idForNativeRow(row){
     let id=String(row.dataset&&row.dataset.achatId||'').trim();
     if(id)return id;
@@ -89,6 +122,23 @@
       if(amount&&id){
         row.dataset.achatId=id;
         prepareAmount(amount,id);
+      }
+
+      const view=nativeViewButton(row);
+      const supplier=row.querySelector('strong');
+      const type=row.querySelector('.yaya-detail-charge-hours');
+      if(view){
+        prepareViewTarget(supplier);
+        prepareViewTarget(type);
+      }else{
+        [supplier,type].forEach(function(el){
+          if(!el)return;
+          delete el.dataset.yayaDepenseView;
+          el.removeAttribute('role');
+          el.removeAttribute('tabindex');
+          el.removeAttribute('title');
+          el.removeAttribute('aria-label');
+        });
       }
       hidePencils(row);
     });
@@ -113,6 +163,15 @@
       }
 
       if(amount&&id)prepareAmount(amount,id);
+
+      const view=legacyViewTarget(row);
+      if(view){
+        const cells=Array.from(row.children||[]);
+        cells.forEach(function(el,index){
+          if(el===amount)return;
+          if(index<=2)prepareViewTarget(el);
+        });
+      }
       hidePencils(row);
     });
   }
@@ -144,11 +203,30 @@
     }
   }
 
+  function openViewFromText(target,event){
+    const row=target&&target.closest?target.closest('.yaya-detail-expense-row,.ligD'):null;
+    if(!row)return;
+    const view=row.classList.contains('yaya-detail-expense-row')?nativeViewButton(row):legacyViewTarget(row);
+    if(!view)return;
+
+    if(event){
+      event.preventDefault();
+      event.stopPropagation();
+      if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
+    }
+    try{view.click();}catch(e){}
+  }
+
   document.addEventListener('click',function(event){
     const amount=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers [data-yaya-depense-edit="1"]')
       :null;
-    if(amount)openEditFromAmount(amount,event);
+    if(amount){openEditFromAmount(amount,event);return;}
+
+    const viewTarget=event.target&&event.target.closest
+      ?event.target.closest('#pane-chantiers [data-yaya-depense-view="1"]')
+      :null;
+    if(viewTarget)openViewFromText(viewTarget,event);
   },true);
 
   document.addEventListener('keydown',function(event){
@@ -156,7 +234,12 @@
     const amount=event.target&&event.target.closest
       ?event.target.closest('#pane-chantiers [data-yaya-depense-edit="1"]')
       :null;
-    if(amount)openEditFromAmount(amount,event);
+    if(amount){openEditFromAmount(amount,event);return;}
+
+    const viewTarget=event.target&&event.target.closest
+      ?event.target.closest('#pane-chantiers [data-yaya-depense-view="1"]')
+      :null;
+    if(viewTarget)openViewFromText(viewTarget,event);
   },true);
 
   let raf=0;
