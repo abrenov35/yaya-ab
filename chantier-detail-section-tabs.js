@@ -116,6 +116,52 @@
         font-size:12.5px!important;
         text-align:center!important;
       }
+      .yaya-detail-section-action-row{
+        display:none!important;
+        align-items:center!important;
+        justify-content:space-between!important;
+        gap:12px!important;
+        min-height:44px!important;
+        margin:0 0 8px!important;
+        padding:6px 2px!important;
+        border-bottom:1px solid #e5eaf0!important;
+      }
+      .card[data-yaya-detail-section="marche"] > .yaya-detail-section-action-row[data-section="marche"],
+      .card[data-yaya-detail-section="commandes"] > .yaya-detail-section-action-row[data-section="commandes"],
+      .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-action-row[data-section="depenses"],
+      .card[data-yaya-detail-section="charges"] > .yaya-detail-section-action-row[data-section="charges"],
+      .card[data-yaya-detail-section="documents"] > .yaya-detail-section-action-row[data-section="documents"]{
+        display:flex!important;
+      }
+      .yaya-detail-section-action-title{
+        color:#233750!important;
+        font-size:12px!important;
+        font-weight:800!important;
+        letter-spacing:.035em!important;
+        text-transform:uppercase!important;
+      }
+      .yaya-detail-section-action-button{
+        min-height:32px!important;
+        height:32px!important;
+        margin:0!important;
+        padding:0 11px!important;
+        border:1px solid #c7d2df!important;
+        border-radius:7px!important;
+        background:#f7f9fb!important;
+        color:#29445f!important;
+        box-shadow:none!important;
+        font-size:11.5px!important;
+        font-weight:700!important;
+        line-height:1!important;
+        white-space:nowrap!important;
+        cursor:pointer!important;
+        touch-action:manipulation!important;
+      }
+      .yaya-detail-section-action-button:hover{
+        background:#edf2f7!important;
+        border-color:#aebdcd!important;
+        color:#173b60!important;
+      }
       .card[data-yaya-detail-section="marche"] > .yaya-detail-empty-pane[data-section="marche"][data-empty="1"],
       .card[data-yaya-detail-section="depenses"] > .yaya-detail-empty-pane[data-section="depenses"][data-empty="1"],
       .card[data-yaya-detail-section="charges"] > .yaya-detail-empty-pane[data-section="charges"][data-empty="1"],
@@ -200,6 +246,15 @@
           font-size:11px!important;
         }
         .yaya-detail-section-tab small{font-size:10px!important}
+        .yaya-detail-section-action-row{
+          flex-wrap:wrap!important;
+          padding:5px 0 7px!important;
+        }
+        .yaya-detail-section-action-button{
+          min-height:34px!important;
+          height:34px!important;
+          margin-left:auto!important;
+        }
         .yaya-detail-charge-row,
         .yaya-detail-document-row{grid-template-columns:minmax(90px,1fr) 68px 88px 28px!important;gap:8px!important;padding:7px 9px!important}
       }
@@ -774,6 +829,51 @@
     });
   }
 
+  function openSectionAction(card,key){
+    const cid=cardId(card);
+    if(!cid)return;
+    if(key==='marche'&&typeof openAvenant==='function')openAvenant(cid);
+    else if(key==='commandes'&&typeof window.openCommandeForChantier==='function')window.openCommandeForChantier(cid);
+    else if(key==='depenses'&&typeof window.openAchatForChantier==='function')window.openAchatForChantier(cid);
+    else if(key==='charges'&&typeof window.openAchatForChantier==='function')window.openAchatForChantier(cid,'Facture sous-traitant');
+    else if(key==='documents'&&typeof openDocumentModal==='function')openDocumentModal(cid);
+  }
+
+  function ensureSectionActions(card,tabs){
+    const actions={
+      marche:'Ajouter un devis',
+      commandes:'Ajouter une commande',
+      depenses:'Ajouter une dépense',
+      charges:'Ajouter une charge',
+      documents:'Ajouter un document'
+    };
+    Object.keys(actions).forEach(key=>{
+      if(!ORDER.includes(key))return;
+      let row=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="'+key+'"]');
+      if(!row){
+        row=document.createElement('div');
+        row.className='yaya-detail-section-node yaya-detail-section-action-row';
+        row.dataset.section=key;
+        row.innerHTML='<strong class="yaya-detail-section-action-title"></strong><button type="button" class="yaya-detail-section-action-button"></button>';
+        tabs.insertAdjacentElement('afterend',row);
+      }
+      const title=row.querySelector('.yaya-detail-section-action-title');
+      const button=row.querySelector('.yaya-detail-section-action-button');
+      const label=LABELS[key]||key;
+      const action=actions[key];
+      if(title&&title.textContent!==label)title.textContent=label;
+      if(button&&button.textContent!=='＋ '+action)button.textContent='＋ '+action;
+      if(button&&!button._yayaActionBound){
+        button._yayaActionBound=true;
+        button.addEventListener('click',e=>{
+          e.preventDefault();
+          e.stopPropagation();
+          openSectionAction(card,key);
+        });
+      }
+    });
+  }
+
   function ensureTabs(card){
     if(!card||card.classList.contains('yaya-docs-only-card'))return;
     const sections=sectionsFor(card);
@@ -869,6 +969,7 @@
     ensureDocumentsPane(card,tabs,documentRows);
     ensureMarketPane(card,tabs,marketRows);
     ensureMailPane(card,tabs,mailRows);
+    ensureSectionActions(card,tabs);
     updateSummaryKpis(card,chargeRows,depenseRows);
 
     const active=ORDER.includes(card.dataset.yayaDetailSection)

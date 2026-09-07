@@ -52,7 +52,7 @@
     document.head.appendChild(style);
   }
 
-  window.openAchatForChantier=function(cid){
+  window.openAchatForChantier=function(cid,typeDoc){
     if(typeof window.openAchatModal!=='function')return;
     window.openAchatModal();
     const preselect=function(){
@@ -60,6 +60,11 @@
       if(!sel)return false;
       sel.value=String(cid||'');
       sel.dispatchEvent(new Event('change',{bubbles:true}));
+      const type=document.getElementById('acType');
+      if(type&&typeDoc){
+        type.value=String(typeDoc);
+        type.dispatchEvent(new Event('change',{bubbles:true}));
+      }
       return true;
     };
     requestAnimationFrame(preselect);
@@ -142,8 +147,11 @@
 
   function cleanToolbar(toolbar){
     if(!toolbar)return;
-    addCommandButton(toolbar);
-    addExpenseButton(toolbar);
+    toolbar.querySelectorAll('.chantier-command-btn,.chantier-expense-btn').forEach(button=>button.remove());
+    toolbar.querySelectorAll('button').forEach(button=>{
+      const onclick=String(button.getAttribute('onclick')||'');
+      if(onclick.includes('openAvenant(')||onclick.includes('openDocumentModal('))button.remove();
+    });
     styleLeftActionButtons(toolbar);
   }
 
