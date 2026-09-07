@@ -108,13 +108,3 @@
 
   installCreateCompat();
 })();
-
-(function(){
-  'use strict';
-  if(window.__yayaMarcheDevisLoaderV1)return;
-  window.__yayaMarcheDevisLoaderV1=true;
-  const script=document.createElement('script');
-  script.src='marche-add-devis-action.js?v=marchedevis-1';
-  script.async=false;
-  document.head.appendChild(script);
-})();
