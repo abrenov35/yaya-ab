@@ -160,3 +160,14 @@
   s.setAttribute('data-yaya-commande-amount-edit','1');
   document.head.appendChild(s);
 })();
+
+/* Dépenses : le montant ouvre la modification et le crayon reste masqué. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-depense-amount-edit="1"]'))return;
+  const s=document.createElement('script');
+  s.src='depense-amount-edit.js?v=depense-amount-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-depense-amount-edit','1');
+  document.head.appendChild(s);
+})();
