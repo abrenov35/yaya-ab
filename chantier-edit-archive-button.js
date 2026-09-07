@@ -217,6 +217,7 @@
   }
 
   function decorateEditModal(modal){
+    if(!modal||modal.dataset.yayaManageReady==='1')return;
     const cid=extractCid(modal);
     if(!cid)return;
 
@@ -256,7 +257,7 @@
   }
 
   function decorateCreateModal(modal){
-    if(!modal||!modal.querySelector('#chCreateBtn'))return;
+    if(!modal||modal.dataset.yayaManageReady==='1'||!modal.querySelector('#chCreateBtn'))return;
     modal.classList.add('yaya-manage-create-modal','yaya-manage-modal');
     setUnifiedTitle(modal);
     addSelector(modal,'');
