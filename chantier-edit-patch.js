@@ -5,7 +5,7 @@
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
-    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      #pane-chantiers button[onclick*="delChantier"],#pane-chantiers .chantier-delete-btn{display:none!important;}\n      .yaya-edit-chantier-btn{margin-left:auto!important;padding:5px 10px!important;font-size:11.5px!important;white-space:nowrap!important;}\n      .yaya-delete-chantier-modal-btn{margin-right:auto!important;background:#fff1f0!important;border:1px solid #e6a09a!important;color:#b42318!important;font-weight:750!important;}\n      .yaya-delete-chantier-modal-btn:hover{background:#fee4e2!important;border-color:#cf6d64!important;}\n      .yaya-signature-fields{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:8px;}\n      .yaya-signature-fields .inp{width:100%!important;min-width:0!important;background:#fff!important;}\n      @media(max-width:640px){.yaya-edit-chantier-btn{margin-left:0!important}.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}.yaya-delete-chantier-modal-btn{width:100%!important;margin:0 0 8px!important}.yaya-chantier-edit-modal .mfoot{flex-wrap:wrap!important}.yaya-signature-fields{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}}\n    ';
+    style.textContent='\n      #yayaCreateChantierBtn,#yayaCreateChantierWrap{display:none!important;}\n      #pane-chantiers button[onclick*="delChantier"],#pane-chantiers .chantier-delete-btn{display:none!important;}\n      .yaya-edit-chantier-btn{display:none!important;}\n      .yaya-delete-chantier-modal-btn{margin-right:auto!important;background:#fff1f0!important;border:1px solid #e6a09a!important;color:#b42318!important;font-weight:750!important;}\n      .yaya-delete-chantier-modal-btn:hover{background:#fee4e2!important;border-color:#cf6d64!important;}\n      .yaya-signature-fields{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:8px;}\n      .yaya-signature-fields .inp{width:100%!important;min-width:0!important;background:#fff!important;}\n      @media(max-width:640px){.yaya-chantier-edit-modal{max-width:calc(100vw - 16px)!important;padding:14px!important}.yaya-delete-chantier-modal-btn{width:100%!important;margin:0 0 8px!important}.yaya-chantier-edit-modal .mfoot{flex-wrap:wrap!important}.yaya-signature-fields{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}}\n    ';
     document.head.appendChild(style);
   }
 
@@ -24,14 +24,6 @@
 
   function getChantier(cid){
     try{return S.chantiers.find(c=>String(c.id)===String(cid))||null;}catch(e){return null;}
-  }
-
-  function cidFromCard(card){
-    if(!card)return '';
-    const el=card.querySelector('[onclick*="editMontantDevis"]');
-    const s=el&&el.getAttribute('onclick')||'';
-    const m=s.match(/editMontantDevis\(['\"]([^'\"]+)/);
-    return m?m[1]:'';
   }
 
   function monthValue(v){
@@ -151,23 +143,17 @@
       +'</div></div>';
   };
 
+  function removeLegacyEditButtons(){
+    document.querySelectorAll('.yaya-edit-chantier-btn').forEach(function(btn){
+      btn.remove();
+    });
+  }
+
   function decorateCards(){
     if(!ready())return;
     const pane=document.getElementById('pane-chantiers');if(!pane)return;
     pane.querySelectorAll('button[onclick*="delChantier"],.chantier-delete-btn').forEach(btn=>btn.remove());
-    pane.querySelectorAll('.card').forEach(card=>{
-      if(card.querySelector('.yaya-edit-chantier-btn'))return;
-      const cid=cidFromCard(card);if(!cid)return;
-      const c=getChantier(cid);if(!c||String(cid).startsWith('__'))return;
-      const toolbar=card.querySelector('.chantier-fin-toolbar');
-      if(!toolbar)return;
-      const btn=document.createElement('button');
-      btn.type='button';
-      btn.className='btn2 yaya-edit-chantier-btn';
-      btn.textContent='✏️ Modifier chantier';
-      btn.addEventListener('click',()=>openExistingChantierModal(cid));
-      toolbar.appendChild(btn);
-    });
+    removeLegacyEditButtons();
   }
 
   function install(){
