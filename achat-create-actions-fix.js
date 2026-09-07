@@ -1,7 +1,10 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-achat-create-actions-fix-v1';
+  if(window.__yayaAchatCreateActionsFixV2)return;
+  window.__yayaAchatCreateActionsFixV2=true;
+
+  const STYLE_ID='yaya-achat-create-actions-fix-v2';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -34,6 +37,7 @@
         filter:none!important;
         padding:0 22px!important;
         font-weight:700!important;
+        cursor:pointer!important;
       }
       .yaya-achat-create-actions-fixed .yaya-achat-save-btn{
         order:2!important;
@@ -48,6 +52,28 @@
       }
     `;
     document.head.appendChild(style);
+  }
+
+  function bindImportButton(upload,modal){
+    if(!upload||!modal)return;
+
+    upload.type='button';
+    upload.removeAttribute('onclick');
+    upload.onclick=function(event){
+      event.preventDefault();
+      event.stopPropagation();
+
+      const input=modal.querySelector('#achatFile')||document.getElementById('achatFile');
+      if(!input){
+        console.warn('Import achat : champ fichier #achatFile introuvable');
+        if(typeof toast==='function')toast('Import impossible : sélecteur de fichier introuvable',true);
+        return;
+      }
+
+      // Autorise aussi la sélection successive du même fichier.
+      try{input.value='';}catch(_){}
+      input.click();
+    };
   }
 
   function patch(){
@@ -90,6 +116,8 @@
 
     upload.textContent='Importer';
     upload.classList.add('yaya-achat-import-btn');
+    bindImportButton(upload,modal);
+
     save.classList.add('yaya-achat-save-btn');
     close.classList.add('yaya-achat-close-btn');
 
