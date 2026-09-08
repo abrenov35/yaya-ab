@@ -3,7 +3,6 @@
 
   const STYLE_ID='yaya-consumables-expense-style-v1';
   const MODAL_CLASS='yaya-consumables-overlay';
-  const RATE_PER_HOUR=2.5;
   const DEFAULT_COEFF=2;
   const COEFFS=[1,1.5,2,2.5,3];
   const TYPE='Consommables';
@@ -134,14 +133,14 @@
   }
 
   function amountFor(cid,coeff){
-    return Math.round(hoursFor(cid)*RATE_PER_HOUR*Number(coeff||DEFAULT_COEFF)*100)/100;
+    const hourlyRate=Number(coeff||DEFAULT_COEFF);
+    return Math.round(hoursFor(cid)*hourlyRate*100)/100;
   }
 
   function designationFor(cid,coeff){
     const h=hoursFor(cid).toLocaleString('fr-FR',{maximumFractionDigits:2});
-    const rate=RATE_PER_HOUR.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
-    const c=Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});
-    return 'Calcul automatique — '+h+' h × '+rate+' €/h × coef. '+c+' ['+MARKER+' coef='+Number(coeff)+']';
+    const rate=Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    return 'Calcul automatique — '+h+' h × '+rate+' €/h ['+MARKER+' coef='+Number(coeff)+']';
   }
 
   function saveCache(){
@@ -217,7 +216,7 @@
       <div class="yaya-consumables-modal" role="dialog" aria-modal="true" aria-label="Coefficient consommables">
         <h3>Consommables</h3>
         <p class="yaya-consumables-sub">${esc(chantierName(cid))}</p>
-        <div class="yaya-consumables-summary"><span>Montant calculé</span><b>${esc(euro(amount))}</b><small>${esc(h.toLocaleString('fr-FR',{maximumFractionDigits:2}))} h × ${esc(RATE_PER_HOUR.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}))} €/h × coefficient ${esc(Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1}))}</small></div>
+        <div class="yaya-consumables-summary"><span>Montant calculé</span><b>${esc(euro(amount))}</b><small>${esc(h.toLocaleString('fr-FR',{maximumFractionDigits:2}))} h × ${esc(Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}))} €/h</small></div>
         <div class="yaya-consumables-choices">${COEFFS.map(function(value){const label=value.toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1});return '<button type="button" class="yaya-consumables-choice'+(Math.abs(value-coeff)<0.001?' on':'')+'" data-coeff="'+value+'">'+label+'</button>';}).join('')}</div>
         <button type="button" class="yaya-consumables-close">Fermer</button>
       </div>`;
