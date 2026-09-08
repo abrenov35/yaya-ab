@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-commande-action-modal-style-v2';
+  const STYLE_ID='yaya-commande-action-modal-style-v3';
 
   function esc(v){
     const d=document.createElement('div');
@@ -15,10 +15,11 @@
     s.id=STYLE_ID;
     s.textContent=`
       .yaya-commande-edit-overlay,
-      .yaya-commande-delete-overlay{
+      .yaya-commande-delete-overlay,
+      .yaya-commande-depense-overlay{
         position:fixed!important;
         inset:0!important;
-        z-index:20000!important;
+        z-index:24000!important;
         background:rgba(22,45,73,.48)!important;
         display:flex!important;
         align-items:center!important;
@@ -27,7 +28,8 @@
         overflow:auto!important;
       }
       .yaya-commande-edit-modal,
-      .yaya-commande-delete-modal{
+      .yaya-commande-delete-modal,
+      .yaya-commande-depense-modal{
         width:min(440px,100%)!important;
         max-height:calc(100vh - 32px)!important;
         overflow:auto!important;
@@ -38,12 +40,14 @@
         box-shadow:0 18px 55px rgba(0,0,0,.28)!important;
       }
       .yaya-commande-edit-modal h3,
-      .yaya-commande-delete-modal h3{
+      .yaya-commande-delete-modal h3,
+      .yaya-commande-depense-modal h3{
         margin:0 0 14px!important;
         font-size:17px!important;
         color:#162d49!important;
       }
-      .yaya-commande-delete-text{
+      .yaya-commande-delete-text,
+      .yaya-commande-depense-text{
         margin:0!important;
         font-size:14px!important;
         line-height:1.5!important;
@@ -52,7 +56,8 @@
       .yaya-commande-edit-field{display:block!important;margin:10px 0!important;font-size:12px!important;font-weight:700!important;color:#4b5b70!important}
       .yaya-commande-edit-field input{display:block!important;width:100%!important;margin-top:5px!important;padding:9px 10px!important;border:1px solid #cbd5e1!important;border-radius:7px!important;font:inherit!important;color:#162d49!important;background:#fff!important;box-sizing:border-box!important}
       .yaya-commande-edit-actions,
-      .yaya-commande-delete-actions{
+      .yaya-commande-delete-actions,
+      .yaya-commande-depense-actions{
         display:flex!important;
         justify-content:flex-end!important;
         gap:10px!important;
@@ -60,17 +65,22 @@
         flex-wrap:wrap!important;
       }
       .yaya-commande-edit-actions button,
-      .yaya-commande-delete-actions button{
+      .yaya-commande-delete-actions button,
+      .yaya-commande-depense-actions button{
+        min-height:42px!important;
         padding:9px 15px!important;
         border-radius:8px!important;
         font-weight:700!important;
         cursor:pointer!important;
       }
       .yaya-commande-cancel,
-      .yaya-commande-delete-cancel{border:1px solid #cbd5e1!important;background:#fff!important;color:#334155!important}
+      .yaya-commande-delete-cancel,
+      .yaya-commande-depense-no{border:1px solid #cbd5e1!important;background:#fff!important;color:#334155!important}
       .yaya-commande-save{border:1px solid #285943!important;background:#285943!important;color:#fff!important}
       .yaya-commande-delete-confirm{border:1px solid #b42318!important;background:#b42318!important;color:#fff!important;font-weight:800!important}
-      .yaya-commande-delete-confirm:disabled{opacity:.6!important;cursor:default!important}
+      .yaya-commande-depense-yes{border:1px solid #0f4f8d!important;background:#0f4f8d!important;color:#fff!important;font-weight:800!important}
+      .yaya-commande-delete-confirm:disabled,
+      .yaya-commande-depense-yes:disabled{opacity:.6!important;cursor:default!important}
     `;
     document.head.appendChild(s);
   }
@@ -233,5 +243,188 @@
     }
   },true);
 
+  // --- Commande -> Dépense : une seule saisie ---
+  const knownCommandeIds=new Set();
+  const promptedCommandeIds=new Set();
+  let lastCreateSaveAt=0;
+  let knownReady=false;
+
+  function toastSafe(message,isError){
+    try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
+  }
+
+  function seedKnownCommandes(){
+    try{
+      if(typeof S==='undefined'||!S||!Array.isArray(S.commandes))return false;
+      S.commandes.forEach(function(c){
+        const id=String(c&&c.id||'').trim();
+        if(id)knownCommandeIds.add(id);
+      });
+      knownReady=true;
+      return true;
+    }catch(e){return false;}
+  }
+
+  function demanderAjoutDepense(commande){
+    installStyle();
+    document.querySelectorAll('.yaya-commande-depense-overlay').forEach(x=>x.remove());
+
+    return new Promise(function(resolve){
+      const overlay=document.createElement('div');
+      overlay.className='yaya-commande-depense-overlay';
+      overlay.innerHTML='<div class="yaya-commande-depense-modal" role="dialog" aria-modal="true" aria-labelledby="yayaCommandeDepenseTitle">'
+        +'<h3 id="yayaCommandeDepenseTitle">Enregistrer aussi dans Dépenses ?</h3>'
+        +'<p class="yaya-commande-depense-text">La commande est enregistrée. Voulez-vous enregistrer <b>la même pièce et le même montant</b> dans Dépenses ?</p>'
+        +'<div class="yaya-commande-depense-actions">'
+        +'<button type="button" class="yaya-commande-depense-no">Non</button>'
+        +'<button type="button" class="yaya-commande-depense-yes">Oui, dans Dépenses</button>'
+        +'</div></div>';
+
+      function done(value){
+        if(overlay.parentNode)overlay.remove();
+        resolve(value);
+      }
+
+      overlay.querySelector('.yaya-commande-depense-no').onclick=function(){done(false);};
+      overlay.querySelector('.yaya-commande-depense-yes').onclick=function(){done(true);};
+      overlay.addEventListener('click',function(e){if(e.target===overlay)done(false);});
+      document.body.appendChild(overlay);
+      setTimeout(function(){
+        const b=overlay.querySelector('.yaya-commande-depense-no');
+        if(b)b.focus();
+      },0);
+    });
+  }
+
+  function makeAchatId(){
+    try{if(typeof uid==='function')return uid();}catch(e){}
+    return 'ach_cmd_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+  }
+
+  function achatFromCommande(commande){
+    return {
+      id:makeAchatId(),
+      chantierId:String(commande.chantierId||''),
+      typeDoc:'Bon de commande',
+      fournisseur:String(commande.fournisseur||''),
+      designation:String(commande.designation||commande.pieceNom||''),
+      date:String(commande.date||'').slice(0,10),
+      montantHT:Number(commande.montantHT)||0,
+      sousTraitant:'',
+      lien:String(commande.lien||''),
+      statutValidation:'VALIDEE',
+      origine:'COMMANDE',
+      commandeId:String(commande.id||''),
+      pieceNom:String(commande.pieceNom||'')
+    };
+  }
+
+  function persistAchatLocal(row){
+    try{
+      if(typeof S==='undefined'||!S)return false;
+      if(!Array.isArray(S.achats))S.achats=[];
+      if(S.achats.some(function(a){return String(a&&a.commandeId||'')===String(row.commandeId);} ))return false;
+      S.achats.push(row);
+
+      try{
+        const key='YAYA_CACHE_DATA_V2';
+        const raw=localStorage.getItem(key);
+        const cached=raw?JSON.parse(raw):null;
+        if(cached&&typeof cached==='object'){
+          const rows=Array.isArray(cached.achats)?cached.achats:[];
+          if(!rows.some(function(a){return String(a&&a.commandeId||'')===String(row.commandeId);} ))rows.push(row);
+          cached.achats=rows;
+          localStorage.setItem(key,JSON.stringify(cached));
+        }
+      }catch(e){}
+
+      try{if(typeof render==='function')render();}catch(e){}
+      return true;
+    }catch(e){return false;}
+  }
+
+  function rollbackAchat(row){
+    try{
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.achats)){
+        S.achats=S.achats.filter(function(a){return String(a&&a.id)!==String(row.id);});
+        if(typeof render==='function')render();
+      }
+    }catch(e){}
+  }
+
+  async function enregistrerCommandeEnDepense(commande){
+    try{
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.achats)){
+        const deja=S.achats.some(function(a){
+          return String(a&&a.commandeId||'')===String(commande.id||'');
+        });
+        if(deja){toastSafe('Cette commande est déjà dans Dépenses',true);return;}
+      }
+    }catch(e){}
+
+    const row=achatFromCommande(commande);
+    if(!persistAchatLocal(row)){
+      toastSafe('Cette commande est déjà dans Dépenses',true);
+      return;
+    }
+
+    toastSafe('Ajoutée dans Dépenses ✓');
+
+    Promise.resolve()
+      .then(function(){
+        return (typeof apiPost==='function')?apiPost('addAchat',row):false;
+      })
+      .then(function(ok){
+        if(ok)return;
+        rollbackAchat(row);
+        toastSafe('Ajout dans Dépenses non enregistré',true);
+      })
+      .catch(function(err){
+        console.error('Commande -> Dépense :',err);
+        rollbackAchat(row);
+        toastSafe('Ajout dans Dépenses non enregistré',true);
+      });
+  }
+
+  async function proposerDepensePourCommande(commande){
+    const id=String(commande&&commande.id||'').trim();
+    if(!id||promptedCommandeIds.has(id))return;
+    if(!String(commande&&commande.lien||'').trim())return;
+    promptedCommandeIds.add(id);
+
+    const oui=await demanderAjoutDepense(commande);
+    if(oui)enregistrerCommandeEnDepense(commande);
+  }
+
+  document.addEventListener('click',function(e){
+    const save=e.target&&e.target.closest?e.target.closest('.yaya-commande-create-save'):null;
+    if(save)lastCreateSaveAt=Date.now();
+  },true);
+
+  window.addEventListener('yaya:data-refreshed',function(){
+    if(!knownReady){
+      seedKnownCommandes();
+      return;
+    }
+
+    let list=[];
+    try{list=Array.isArray(S&&S.commandes)?S.commandes.slice():[];}catch(e){return;}
+    const newlyAdded=[];
+
+    list.forEach(function(c){
+      const id=String(c&&c.id||'').trim();
+      if(!id)return;
+      if(!knownCommandeIds.has(id))newlyAdded.push(c);
+      knownCommandeIds.add(id);
+    });
+
+    if(Date.now()-lastCreateSaveAt>120000)return;
+    newlyAdded.forEach(function(c){
+      if(String(c&&c.origine||'')!=='YAYA')return;
+      setTimeout(function(){proposerDepensePourCommande(c);},50);
+    });
+  });
+
   installStyle();
+  if(!seedKnownCommandes())setTimeout(seedKnownCommandes,200);
 })();
