@@ -3,7 +3,8 @@
 
   const STYLE_ID='yaya-consumables-expense-style-v2';
   const MODAL_CLASS='yaya-consumables-overlay';
-  const DEFAULT_COEFF=2;
+  const DEFAULT_COEFF=1;
+  const OLD_DEFAULT_COEFF=2;
   const COEFFS=[1,1.5,2,2.5,3];
   const TYPE='Consommables';
   const FOURNISSEUR='FORFAIT CONSOMMABLES';
@@ -73,14 +74,24 @@
   function validCoeff(v){const n=Number(v);return COEFFS.some(x=>Math.abs(x-n)<0.001)?n:null;}
   function coeffKey(cid){return 'YAYA_CONSOMMABLES_COEFF_'+String(cid||'');}
   function coefficientFor(cid){
+    try{
+      const local=validCoeff(localStorage.getItem(coeffKey(cid)));
+      if(local!=null)return local;
+    }catch(e){}
+
     const expense=findExpense(cid);
     if(expense){
       const stored=validCoeff(expense.coefficientConsommables);
-      if(stored!=null)return stored;
+      const mode=String(expense.coefficientConsommablesMode||'').toUpperCase();
+      if(mode==='MANUEL'&&stored!=null)return stored;
+      if(mode==='DEFAUT')return DEFAULT_COEFF;
+      if(stored!=null){
+        if(String(expense.origine||'')==='CONSOMMABLES_AUTO'&&Math.abs(stored-OLD_DEFAULT_COEFF)<0.001)return DEFAULT_COEFF;
+        return stored;
+      }
       const m=String(expense.designation||'').match(/coef\s*=\s*(1(?:\.5)?|2(?:\.5)?|3)(?:\b|\])/i);
       if(m){const n=validCoeff(m[1]);if(n!=null)return n;}
     }
-    try{const n=validCoeff(localStorage.getItem(coeffKey(cid)));if(n!=null)return n;}catch(e){}
     return DEFAULT_COEFF;
   }
 
@@ -98,13 +109,14 @@
     if(!expense&&!forceCreate&&hoursFor(cid)<=0)return false;
     let changed=false;
     if(!expense){
-      expense={id:makeId(),chantierId:String(cid),typeDoc:TYPE,fournisseur:FOURNISSEUR,designation:'',coefficientConsommables:coeff,date:today(),montantHT:amount,sousTraitant:'',lien:'',statutValidation:'VALIDEE',origine:'CONSOMMABLES_AUTO'};
+      expense={id:makeId(),chantierId:String(cid),typeDoc:TYPE,fournisseur:FOURNISSEUR,designation:'',coefficientConsommables:coeff,coefficientConsommablesMode:'DEFAUT',date:today(),montantHT:amount,sousTraitant:'',lien:'',statutValidation:'VALIDEE',origine:'CONSOMMABLES_AUTO'};
       S.achats.push(expense);changed=true;
     }else{
       if(String(expense.typeDoc||'')!==TYPE){expense.typeDoc=TYPE;changed=true;}
       if(String(expense.fournisseur||'')!==FOURNISSEUR){expense.fournisseur=FOURNISSEUR;changed=true;}
       if(String(expense.designation||'')!==''){expense.designation='';changed=true;}
       if(Math.abs((Number(expense.coefficientConsommables)||0)-coeff)>0.001){expense.coefficientConsommables=coeff;changed=true;}
+      if(!String(expense.coefficientConsommablesMode||'')&&String(expense.origine||'')==='CONSOMMABLES_AUTO'){expense.coefficientConsommablesMode='DEFAUT';changed=true;}
       if(Math.abs((Number(expense.montantHT)||0)-amount)>0.009){expense.montantHT=amount;changed=true;}
       if(String(expense.statutValidation||'')!=='VALIDEE'){expense.statutValidation='VALIDEE';changed=true;}
     }
@@ -125,12 +137,12 @@
     overlay.querySelectorAll('.yaya-consumables-choice').forEach(btn=>btn.addEventListener('click',()=>{
       const selected=validCoeff(btn.dataset.coeff);if(selected==null)return;
       try{localStorage.setItem(coeffKey(cid),String(selected));}catch(e){}
-      const expense=findExpense(cid);if(expense){expense.designation='';expense.coefficientConsommables=selected;expense.montantHT=amountFor(cid,selected);expense.typeDoc=TYPE;expense.fournisseur=FOURNISSEUR;expense.statutValidation='VALIDEE';}
+      const expense=findExpense(cid);if(expense){expense.designation='';expense.coefficientConsommables=selected;expense.coefficientConsommablesMode='MANUEL';expense.montantHT=amountFor(cid,selected);expense.typeDoc=TYPE;expense.fournisseur=FOURNISSEUR;expense.statutValidation='VALIDEE';}
       ensureExpense(cid,true);saveCache();persistSoon(true);closeModal();scheduleRender();toastSafe('Consommables mis à jour ✓');
     }));
   }
 
-  function updateButton(button,cid){const amount=amountFor(cid,coefficientFor(cid));const signature=String(amount);if(button.dataset.signature===signature)return;button.dataset.signature=signature;button.innerHTML='<strong>Consommables : '+esc(euro(amount))+'</strong>';}
+  function updateButton(button,cid){const coeff=coefficientFor(cid);const amount=amountFor(cid,coeff);const signature=String(amount)+'|'+String(coeff);if(button.dataset.signature===signature)return;button.dataset.signature=signature;button.innerHTML='<strong>Consommables : '+esc(euro(amount))+'</strong>';button.title='Voir ou modifier les consommables — '+Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1})+' €/h';}
 
   function decorateRow(row){
     if(!row||row.dataset.section!=='depenses')return;
