@@ -128,9 +128,14 @@
     const stock=group.querySelector(':scope > .yaya-stock-expense-button');
     const consumables=group.querySelector(':scope > .yaya-consumables-button');
 
-    if(expense)group.appendChild(expense);
-    if(stock)group.appendChild(stock);
-    if(consumables){group.appendChild(consumables);formatButton(consumables);}
+    const wanted=[expense,stock,consumables].filter(Boolean);
+    const current=wanted.length?[...group.children].filter(function(el){return wanted.includes(el);}):[];
+    const ordered=current.length===wanted.length&&current.every(function(el,index){return el===wanted[index];});
+
+    if(!ordered){
+      wanted.forEach(function(el){group.appendChild(el);});
+    }
+    if(consumables)formatButton(consumables);
   }
 
   function apply(){
