@@ -65,11 +65,6 @@
     return true;
   }
 
-  /*
-   * On prend le pointerup, pas seulement click : si le DOM de la modale bouge
-   * entre l'appui et le relâchement, le navigateur peut annuler l'événement click.
-   * Ainsi la confirmation de suppression apparaît dès le premier appui réel.
-   */
   document.addEventListener('pointerup',function(event){
     const btn=isDeleteButton(event.target);
     if(!btn)return;
@@ -91,4 +86,13 @@
 
     runDelete(event,btn);
   },true);
+})();
+
+(function(){
+  if(window.__yayaExtranetGovernanceLoaderV1)return;
+  window.__yayaExtranetGovernanceLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='chantier-extranet-governance.js?v=gov-1';
+  s.async=false;
+  document.head.appendChild(s);
 })();
