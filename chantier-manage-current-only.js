@@ -6,6 +6,7 @@
 
   const STYLE_ID='yaya-manage-current-only-style';
   let installed=false;
+  let syncing=false;
 
   function root(){return document.getElementById('modalRoot');}
 
@@ -52,11 +53,18 @@
   }
 
   function syncButton(){
-    const btn=document.getElementById('yayaCreateChantierBtn');
-    if(!btn)return;
-    btn.textContent='🛠️ Gérer chantier';
-    btn.title=currentChantierId()?'Gérer le chantier actuellement ouvert':'Ouvre une fiche chantier pour gérer le chantier';
-    btn.setAttribute('aria-label',btn.title);
+    if(syncing)return;
+    syncing=true;
+    try{
+      const btn=document.getElementById('yayaCreateChantierBtn');
+      if(!btn)return;
+      const title=currentChantierId()?'Gérer le chantier actuellement ouvert':'Ouvre une fiche chantier pour gérer le chantier';
+      if(btn.textContent!=='🛠️ Gérer chantier')btn.textContent='🛠️ Gérer chantier';
+      if(btn.title!==title)btn.title=title;
+      if(btn.getAttribute('aria-label')!==title)btn.setAttribute('aria-label',title);
+    }finally{
+      syncing=false;
+    }
   }
 
   function install(){
@@ -79,7 +87,12 @@
     };
 
     syncButton();
-    setInterval(syncButton,900);
+    setInterval(syncButton,700);
+
+    const header=document.querySelector('.hdr');
+    if(header){
+      new MutationObserver(function(){requestAnimationFrame(syncButton);}).observe(header,{childList:true,subtree:true,characterData:true,attributes:true,attributeFilter:['title','aria-label']});
+    }
   }
 
   installStyle();
