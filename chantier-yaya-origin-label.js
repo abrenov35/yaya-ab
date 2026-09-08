@@ -4,7 +4,7 @@
   if(window.__yayaChantierOriginLabelV2)return;
   window.__yayaChantierOriginLabelV2=true;
 
-  const MARK=' [yaya]';
+  const MARK=' ► [yaya]';
   let scheduled=false;
 
   function chantiers(){
@@ -18,7 +18,7 @@
   }
 
   function cleanName(v){
-    return String(v==null?'':v).replace(/\s*\[yaya\]\s*$/i,'').trim();
+    return String(v==null?'':v).replace(/\s*(?:►\s*)?\[yaya\]\s*$/i,'').trim();
   }
 
   function displayName(c){
