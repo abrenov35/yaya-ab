@@ -188,3 +188,14 @@
   g.onerror=loadOriginLabel;
   document.head.appendChild(g);
 })();
+
+// Le bouton « Gérer chantier » agit uniquement sur la fiche chantier actuellement ouverte.
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-manage-current-only-v1]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-manage-current-only.js?v=current-only-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-manage-current-only-v1','1');
+  document.head.appendChild(s);
+})();
