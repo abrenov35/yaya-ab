@@ -122,6 +122,8 @@
   function coefficientFor(cid){
     const expense=findExpense(cid);
     if(expense){
+      const stored=validCoeff(Number(expense.coefficientConsommables));
+      if(stored!=null)return stored;
       const m=String(expense.designation||'').match(/coef\s*=\s*(1(?:\.5)?|2(?:\.5)?|3)(?:\b|\])/i);
       if(m){const n=validCoeff(Number(m[1]));if(n!=null)return n;}
     }
@@ -140,7 +142,7 @@
   function designationFor(cid,coeff){
     const h=hoursFor(cid).toLocaleString('fr-FR',{maximumFractionDigits:2});
     const rate=Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2});
-    return 'Calcul automatique — '+h+' h × '+rate+' €/h ['+MARKER+' coef='+Number(coeff)+']';
+    return 'Calcul automatique — '+h+' h × '+rate+' €/h';
   }
 
   function saveCache(){
@@ -181,7 +183,7 @@
     let changed=false;
 
     if(!expense){
-      expense={id:makeId(),chantierId:String(cid),typeDoc:TYPE,fournisseur:FOURNISSEUR,designation:designationFor(cid,coeff),date:today(),montantHT:amount,sousTraitant:'',lien:'',statutValidation:'VALIDEE',origine:'CONSOMMABLES_AUTO'};
+      expense={id:makeId(),chantierId:String(cid),typeDoc:TYPE,fournisseur:FOURNISSEUR,designation:designationFor(cid,coeff),coefficientConsommables:coeff,date:today(),montantHT:amount,sousTraitant:'',lien:'',statutValidation:'VALIDEE',origine:'CONSOMMABLES_AUTO'};
       S.achats.push(expense);
       changed=true;
     }else{
@@ -189,6 +191,7 @@
       if(String(expense.typeDoc||'')!==TYPE){expense.typeDoc=TYPE;changed=true;}
       if(String(expense.fournisseur||'')!==FOURNISSEUR){expense.fournisseur=FOURNISSEUR;changed=true;}
       if(String(expense.designation||'')!==des){expense.designation=des;changed=true;}
+      if(Math.abs((Number(expense.coefficientConsommables)||0)-coeff)>0.001){expense.coefficientConsommables=coeff;changed=true;}
       if(Math.abs((Number(expense.montantHT)||0)-amount)>0.009){expense.montantHT=amount;changed=true;}
       if(String(expense.statutValidation||'')!=='VALIDEE'){expense.statutValidation='VALIDEE';changed=true;}
     }
@@ -229,7 +232,7 @@
         if(selected==null)return;
         try{localStorage.setItem(coeffKey(cid),String(selected));}catch(e){}
         const expense=findExpense(cid);
-        if(expense){expense.designation=designationFor(cid,selected);expense.montantHT=amountFor(cid,selected);expense.typeDoc=TYPE;expense.fournisseur=FOURNISSEUR;expense.statutValidation='VALIDEE';}
+        if(expense){expense.designation=designationFor(cid,selected);expense.coefficientConsommables=selected;expense.montantHT=amountFor(cid,selected);expense.typeDoc=TYPE;expense.fournisseur=FOURNISSEUR;expense.statutValidation='VALIDEE';}
         ensureExpense(cid,true);
         saveCache();
         persistSoon(true);
