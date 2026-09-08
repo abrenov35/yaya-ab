@@ -98,3 +98,14 @@
   installStyle();
   install();
 })();
+
+/* Consommables : la dépense automatique participe aux totaux mais sa ligne technique n'est pas affichée. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-consumables-auto-row-hide-v1]'))return;
+  const s=document.createElement('script');
+  s.src='consumables-auto-row-hide.js?v=auto-row-hide-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-consumables-auto-row-hide-v1','1');
+  document.head.appendChild(s);
+})();
