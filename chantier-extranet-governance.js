@@ -62,7 +62,8 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      .yaya-governance-modal{max-width:520px!important;}
+      .yaya-governance-overlay{display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;box-sizing:border-box!important;overflow:auto!important;}
+      .yaya-governance-modal{max-width:520px!important;margin:auto!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;max-height:calc(100dvh - 36px)!important;overflow:auto!important;}
       .yaya-governance-info{margin:14px 0;padding:12px 13px;border:1px solid #cbd7e6;border-radius:10px;background:#f7faff;color:#29496d;font-size:12px;line-height:1.45;}
       .yaya-governance-warning{margin:14px 0;padding:12px 13px;border:1px solid #efc27a;border-radius:10px;background:#fff8e8;color:#7a4a00;font-size:12px;line-height:1.5;}
       .yaya-governance-section{display:grid;gap:6px;margin-top:14px;}
@@ -71,7 +72,7 @@
       .yaya-governance-row select{width:100%;min-width:0;}
       .yaya-governance-archive{background:#fff7e8!important;border:1px solid #efb86f!important;color:#9a4d00!important;font-weight:750!important;}
       .yaya-extranet-note{margin:8px 0 2px;padding:9px 11px;border-radius:8px;background:#eef4ff;border:1px solid #c7d7f2;color:#29496d;font-size:11px;line-height:1.4;}
-      @media(max-width:640px){.yaya-governance-row{grid-template-columns:1fr}.yaya-governance-row button{width:100%!important;}}
+      @media(max-width:640px){.yaya-governance-overlay{padding:12px!important}.yaya-governance-modal{max-height:calc(100dvh - 24px)!important}.yaya-governance-row{grid-template-columns:1fr}.yaya-governance-row button{width:100%!important;}}
     `;
     document.head.appendChild(style);
   }
@@ -104,7 +105,7 @@
     const r=root();if(!r)return;
     const locals=localChantiers();
     const actifs=activeChantiers();
-    r.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()">'
+    r.innerHTML='<div class="overlay yaya-governance-overlay" onclick="if(event.target===this)closeModal()">'
       +'<div class="modal yaya-governance-modal">'
       +'<h5>Gérer les chantiers<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
       +'<div class="yaya-governance-info"><b>Nouveaux chantiers :</b> création uniquement depuis l’Extranet AB RENOV 35.<br>Les chantiers créés par l’Extranet y sont également modifiés pour le <b>nom</b>, le <b>CA HT</b> et la <b>date de signature</b>.</div>'
@@ -139,7 +140,7 @@
     const nom=String(c&&c.nom||'Chantier');
     const montant=Number(c&&c.montantMarcheHT||c&&c.montantDevisHT||0);
     const sig=String(c&&c.dateSignature||'').trim();
-    r.innerHTML='<div class="overlay" onclick="if(event.target===this)closeModal()">'
+    r.innerHTML='<div class="overlay yaya-governance-overlay" onclick="if(event.target===this)closeModal()">'
       +'<div class="modal yaya-governance-modal">'
       +'<h5>Chantier géré par l’Extranet<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
       +'<div style="font-size:15px;font-weight:800;color:#162d49;margin-top:14px">'+esc(nom)+'</div>'
