@@ -187,3 +187,81 @@
   `;
   document.head.appendChild(style);
 })();
+
+// Fiche Dépenses : réserve une vraie colonne à la date afin qu'elle reste sur une seule ligne.
+(function(){
+  const STYLE_ID='yaya-depense-date-column-v1';
+  if(!document.getElementById(STYLE_ID)){
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #pane-chantiers .yaya-detail-expense-row{
+        grid-template-columns:minmax(250px,1fr) 92px 92px 28px!important;
+        column-gap:12px!important;
+      }
+      #pane-chantiers .yaya-detail-expense-row > .yaya-expense-date-column{
+        display:block!important;
+        width:92px!important;
+        min-width:92px!important;
+        color:#6f7f94!important;
+        font-size:10.5px!important;
+        font-weight:600!important;
+        line-height:1!important;
+        text-align:right!important;
+        white-space:nowrap!important;
+      }
+      @media(max-width:640px){
+        #pane-chantiers .yaya-detail-expense-row{
+          grid-template-columns:minmax(145px,1fr) 78px 78px 28px!important;
+          column-gap:7px!important;
+        }
+        #pane-chantiers .yaya-detail-expense-row > .yaya-expense-date-column{
+          width:78px!important;
+          min-width:78px!important;
+          font-size:10px!important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function placeDates(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+
+    pane.querySelectorAll('.yaya-detail-expense-row').forEach(function(row){
+      if(row.querySelector(':scope > .yaya-expense-date-column'))return;
+
+      const source=row.querySelector('strong .yaya-history-date');
+      if(!source)return;
+
+      const date=document.createElement('span');
+      date.className='yaya-expense-date-column';
+      date.textContent=String(source.textContent||'').trim();
+      source.remove();
+
+      const amount=row.querySelector(':scope > .yaya-detail-charge-cost');
+      if(amount)row.insertBefore(date,amount);
+      else row.appendChild(date);
+    });
+  }
+
+  let raf=0;
+  function schedule(){
+    if(raf)return;
+    raf=requestAnimationFrame(function(){
+      raf=0;
+      placeDates();
+    });
+  }
+
+  function install(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane){setTimeout(install,120);return;}
+    placeDates();
+    new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
+    window.addEventListener('yaya:data-refreshed',schedule);
+  }
+
+  install();
+})();
