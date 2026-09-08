@@ -19,6 +19,7 @@
       #pane-chantiers .yaya-consumables-button{height:34px!important;min-height:34px!important;min-width:126px!important;padding:3px 10px!important;display:flex!important;align-items:center!important;justify-content:center!important;background:#fff8ec!important;border-color:#e9cf9c!important;color:#7a560e!important;line-height:1.05!important}
       #pane-chantiers .yaya-consumables-button:hover{background:#fdf0d7!important;border-color:#dcb66d!important}
       #pane-chantiers .yaya-consumables-button strong{font-size:11px!important;font-weight:800!important;white-space:nowrap!important}
+      #pane-chantiers .achligne.ligD > span:nth-child(2){text-align:center!important;justify-self:stretch!important}
       .yaya-consumables-overlay{position:fixed!important;inset:0!important;z-index:28000!important;background:rgba(22,45,73,.48)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow:auto!important}
       .yaya-consumables-modal{width:min(430px,100%)!important;background:#fff!important;border-radius:14px!important;padding:20px!important;box-shadow:0 18px 55px rgba(0,0,0,.28)!important;color:#162d49!important}
       .yaya-consumables-modal h3{margin:0 0 4px!important;font-size:18px!important}
