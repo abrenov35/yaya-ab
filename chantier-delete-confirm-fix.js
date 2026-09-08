@@ -1,268 +1,210 @@
 (function(){
   'use strict';
 
+  const CONFIRM_ID='yaya-delete-chantier-confirm';
   let suppressionEnCours=false;
-  let dernierDeclenchement=0;
 
-  function esc(v){
-    return String(v==null?'':v)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
-  }
-
-  function ready(){
+  function toastMsg(message,isError){
     try{
-      return typeof S!=='undefined' && Array.isArray(S.chantiers) &&
-        typeof apiPost==='function' && typeof render==='function';
-    }catch(e){return false;}
+      if(typeof window.toast==='function')window.toast(message,!!isError);
+      else if(isError)console.error(message);
+      else console.log(message);
+    }catch(e){}
   }
 
   function getChantier(id){
     try{
-      return S.chantiers.find(function(c){return String(c.id)===String(id);})||null;
+      return Array.isArray(S&&S.chantiers)
+        ?S.chantiers.find(function(c){return String(c&&c.id)===String(id);})||null
+        :null;
     }catch(e){return null;}
   }
 
-  function idDepuisBouton(btn){
-    if(!btn)return '';
-    let id=String(btn.dataset.yayaChantierId||'').trim();
-    if(id)return id;
-
-    const code=String(btn.getAttribute('onclick')||'');
-    let m=code.match(/deleteExistingChantier\(['\"]([^'\"]+)['\"]\)/);
-    if(m&&m[1])return m[1];
-
-    const modal=btn.closest('.yaya-chantier-edit-modal,.modal');
-    const save=modal&&modal.querySelector('[onclick*="saveExistingChantier"]');
-    const saveCode=String(save&&save.getAttribute('onclick')||'');
-    m=saveCode.match(/saveExistingChantier\(['\"]([^'\"]+)['\"]\)/);
-    if(m&&m[1])return m[1];
-
-    const select=modal&&modal.querySelector('#yayaManageChantierSelect');
-    return String(select&&select.value||'').trim();
+  function countAchats(id){
+    try{
+      return Array.isArray(S&&S.achats)
+        ?S.achats.filter(function(a){return String(a&&a.chantierId)===String(id);}).length
+        :0;
+    }catch(e){return 0;}
   }
 
-  function estBoutonSuppression(target){
-    if(!target||!target.closest)return null;
-    const btn=target.closest('button');
-    if(!btn)return null;
-    if(btn.classList.contains('yaya-delete-chantier-modal-btn'))return btn;
-    if(!btn.closest('.yaya-chantier-edit-modal'))return null;
-    const texte=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-    return (texte==='supprimer le chantier'||texte==='supprimer')?btn:null;
+  function countHeures(id){
+    try{
+      if(typeof window.heuresChantier==='function')return Number(window.heuresChantier(id))||0;
+      if(typeof heuresChantier==='function')return Number(heuresChantier(id))||0;
+    }catch(e){}
+    return 0;
   }
 
-  function confirmationCentree(id){
+  function closeConfirm(){
+    const old=document.getElementById(CONFIRM_ID);
+    if(old)old.remove();
+  }
+
+  function askConfirmation(id){
+    closeConfirm();
+    const c=getChantier(id);
+    if(!c){
+      toastMsg('Chantier introuvable',true);
+      return Promise.resolve(false);
+    }
+
+    const nb=countAchats(id);
+    const hh=countHeures(id);
+
     return new Promise(function(resolve){
-      const c=getChantier(id);
-      if(!c){resolve(false);return;}
-
-      const nb=Array.isArray(S.achats)
-        ?S.achats.filter(function(a){return String(a.chantierId)===String(id);}).length
-        :0;
-      const hh=Array.isArray(S.heures)
-        ?S.heures.filter(function(h){return h.type==='chantier'&&String(h.ref)===String(id);})
-          .reduce(function(t,h){return t+(Number(h.heures)||0);},0)
-        :0;
-
-      document.querySelectorAll('.yaya-chantier-delete-overlay').forEach(function(x){x.remove();});
-
       const overlay=document.createElement('div');
-      overlay.className='yaya-chantier-delete-overlay';
-      overlay.style.cssText='position:fixed;inset:0;z-index:60000;background:rgba(15,23,42,.48);display:flex;align-items:center;justify-content:center;padding:18px;overflow:auto;pointer-events:auto;touch-action:manipulation';
-      overlay.innerHTML=''
-        +'<div role="dialog" aria-modal="true" aria-labelledby="yayaChDeleteTitle" style="width:min(430px,calc(100vw - 36px));max-width:430px;background:#fff;border-radius:14px;padding:22px;box-shadow:0 22px 65px rgba(15,23,42,.30);margin:auto;position:relative">'
-        +'<div id="yayaChDeleteTitle" style="font-size:18px;font-weight:800;color:#162D49;text-align:center;margin-bottom:12px">Supprimer le chantier ?</div>'
-        +'<div style="font-size:14px;line-height:1.5;color:#334155;text-align:center;margin-bottom:14px">Confirmer la suppression de <b>« '+esc(c.nom||'Chantier')+' »</b> ?</div>'
-        +(nb?'<div style="font-size:12.5px;line-height:1.45;color:#9a3412;margin:5px 0">• '+nb+' achat'+(nb>1?'s':'')+' / charge'+(nb>1?'s':'')+' lié'+(nb>1?'s':'')+' sera'+(nb>1?'ont':'')+' aussi supprimé'+(nb>1?'s':'')+'.</div>':'')
-        +(hh?'<div style="font-size:12.5px;line-height:1.45;color:#64748b;margin:5px 0">• '+hh+' h saisies resteront dans l’historique des heures.</div>':'')
-        +'<div style="font-size:12px;color:#64748b;text-align:center;margin-top:12px">Cette action est définitive dans Yaya.</div>'
-        +'<div style="display:flex;gap:10px;justify-content:center;margin-top:20px">'
-        +'<button type="button" data-cancel style="min-width:120px;min-height:42px;padding:9px 16px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;font-family:inherit;touch-action:manipulation">Annuler</button>'
-        +'<button type="button" data-confirm style="min-width:120px;min-height:42px;padding:9px 16px;border-radius:8px;border:1px solid #b42318;background:#b42318;color:#fff;font-weight:800;font-family:inherit;touch-action:manipulation">Supprimer</button>'
-        +'</div></div>';
+      overlay.id=CONFIRM_ID;
+      overlay.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(22,45,73,.52);display:flex;align-items:center;justify-content:center;padding:18px;';
 
-      let fini=false;
-      function done(value){
-        if(fini)return;
-        fini=true;
-        if(overlay.parentNode)overlay.remove();
-        resolve(value);
+      const box=document.createElement('div');
+      box.setAttribute('role','dialog');
+      box.setAttribute('aria-modal','true');
+      box.style.cssText='width:min(430px,100%);background:#fff;border-radius:14px;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.30);color:#162d49;font-family:inherit;';
+
+      const title=document.createElement('div');
+      title.textContent='Supprimer ce chantier ?';
+      title.style.cssText='font-size:18px;font-weight:800;margin-bottom:10px;';
+
+      const text=document.createElement('div');
+      text.style.cssText='font-size:14px;line-height:1.5;color:#344861;';
+      const strong=document.createElement('strong');
+      strong.textContent=String(c.nom||'Chantier');
+      text.appendChild(document.createTextNode('Le chantier « '));
+      text.appendChild(strong);
+      text.appendChild(document.createTextNode(' » sera supprimé de Yaya.'));
+
+      if(nb){
+        const p=document.createElement('div');
+        p.style.marginTop='8px';
+        p.textContent='• '+nb+' achat'+(nb>1?'s':'')+' lié'+(nb>1?'s':'')+' sera'+(nb>1?'ont':'')+' également supprimé'+(nb>1?'s':'')+'.';
+        text.appendChild(p);
+      }
+      if(hh){
+        const p=document.createElement('div');
+        p.style.marginTop='4px';
+        p.textContent='• '+hh+' h saisies resteront dans l’historique des heures.';
+        text.appendChild(p);
       }
 
-      overlay.querySelector('[data-cancel]').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();done(false);});
-      overlay.querySelector('[data-confirm]').addEventListener('click',function(e){e.preventDefault();e.stopPropagation();done(true);});
-      overlay.addEventListener('click',function(e){if(e.target===overlay)done(false);});
+      const warning=document.createElement('div');
+      warning.textContent='Cette action est définitive.';
+      warning.style.cssText='margin-top:12px;font-size:12.5px;font-weight:700;color:#b42318;';
 
-      document.body.appendChild(overlay);
-      requestAnimationFrame(function(){
-        const b=overlay.querySelector('[data-cancel]');
-        if(b)b.focus({preventScroll:true});
+      const actions=document.createElement('div');
+      actions.style.cssText='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;';
+
+      const cancel=document.createElement('button');
+      cancel.type='button';
+      cancel.textContent='Annuler';
+      cancel.style.cssText='min-height:44px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#162d49;font:inherit;font-weight:700;cursor:pointer;';
+
+      const confirm=document.createElement('button');
+      confirm.type='button';
+      confirm.textContent='Supprimer';
+      confirm.style.cssText='min-height:44px;border:1px solid #b42318;border-radius:9px;background:#b42318;color:#fff;font:inherit;font-weight:800;cursor:pointer;';
+
+      let finished=false;
+      function finish(value){
+        if(finished)return;
+        finished=true;
+        document.removeEventListener('keydown',onKey,true);
+        closeConfirm();
+        resolve(value);
+      }
+      function onKey(e){
+        if(e.key==='Escape'){
+          e.preventDefault();
+          finish(false);
+        }
+      }
+
+      cancel.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();finish(false);});
+      confirm.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        confirm.disabled=true;
+        confirm.textContent='Suppression…';
+        finish(true);
       });
+      overlay.addEventListener('click',function(e){if(e.target===overlay)finish(false);});
+      document.addEventListener('keydown',onKey,true);
+
+      actions.append(cancel,confirm);
+      box.append(title,text,warning,actions);
+      overlay.appendChild(box);
+      document.body.appendChild(overlay);
+      requestAnimationFrame(function(){try{cancel.focus();}catch(e){}});
     });
   }
 
-  async function chargerEtatServeurAvantSuppression(id){
-    if(typeof apiGet!=='function')return null;
-    const fresh=await apiGet(true);
-    const list=Array.isArray(fresh&&fresh.chantiers)?fresh.chantiers:[];
-    const matches=list.filter(function(c){return String(c.id)===String(id);});
-    if(matches.length===0)throw new Error('chantier absent du serveur');
-    if(matches.length>1)throw new Error('doublon technique du même identifiant');
-    return fresh;
-  }
-
-  async function verifierSuppressionServeur(id){
-    if(typeof apiGet!=='function')return true;
-    await new Promise(function(resolve){setTimeout(resolve,180);});
-    const fresh=await apiGet(true);
-    const list=Array.isArray(fresh&&fresh.chantiers)?fresh.chantiers:[];
-    const existe=list.some(function(c){return String(c.id)===String(id);});
-    if(existe)throw new Error('suppression non enregistrée sur le serveur');
-
-    if(fresh&&typeof fresh==='object'){
-      if(Array.isArray(fresh.chantiers))S.chantiers=fresh.chantiers;
-      if(Array.isArray(fresh.achats))S.achats=fresh.achats;
-      if(Array.isArray(fresh.avenants))S.avenants=fresh.avenants;
-    }
-    return true;
-  }
-
-  async function supprimerApresValidation(id){
-    id=String(id||'').trim();
-    if(!id||suppressionEnCours)return;
-
-    const c=getChantier(id);
-    if(!c){
-      if(typeof toast==='function')toast('Chantier introuvable',true);
-      return;
-    }
-
-    const confirme=await confirmationCentree(id);
-    if(!confirme)return;
-
-    try{
-      const fresh=await chargerEtatServeurAvantSuppression(id);
-      if(fresh&&typeof fresh==='object'){
-        if(Array.isArray(fresh.chantiers))S.chantiers=fresh.chantiers;
-        if(Array.isArray(fresh.achats))S.achats=fresh.achats;
-        if(Array.isArray(fresh.avenants))S.avenants=fresh.avenants;
-      }
-    }catch(e){
-      if(typeof toast==='function')toast('Suppression bloquée : '+(e&&e.message?e.message:'état serveur invalide'),true);
-      console.error('Suppression chantier bloquée avant écriture :',e);
-      return;
-    }
-
+  async function persistDeletion(id){
+    if(suppressionEnCours)return false;
     suppressionEnCours=true;
-    const oldChantiers=S.chantiers.slice();
+
+    const oldChantiers=Array.isArray(S.chantiers)?S.chantiers.slice():[];
     const oldAchats=Array.isArray(S.achats)?S.achats.slice():[];
     const oldAvenants=Array.isArray(S.avenants)?S.avenants.slice():[];
 
-    S.chantiers=S.chantiers.filter(function(x){return String(x.id)!==id;});
-    if(Array.isArray(S.achats)){
-      S.achats=S.achats.filter(function(a){return String(a.chantierId)!==id;});
-    }
-    const hadAv=Array.isArray(S.avenants)&&S.avenants.some(function(v){return String(v.chantierId)===id;});
-    if(Array.isArray(S.avenants)){
-      S.avenants=S.avenants.filter(function(v){return String(v.chantierId)!==id;});
-    }
+    const hadAvenants=oldAvenants.some(function(v){return String(v&&v.chantierId)===String(id);});
 
     try{
-      render();
-      if(typeof toast==='function')toast('Suppression en cours…');
+      S.chantiers=oldChantiers.filter(function(x){return String(x&&x.id)!==String(id);});
+      S.achats=oldAchats.filter(function(a){return String(a&&a.chantierId)!==String(id);});
+      S.avenants=oldAvenants.filter(function(v){return String(v&&v.chantierId)!==String(id);});
+
+      if(typeof render==='function')render();
 
       const ok1=await apiPost('setChantiers',S.chantiers);
-      const ok2=await apiPost('setAchats',S.achats);
-      let ok3=true;
-      if(hadAv)ok3=await apiPost('setAvenants',S.avenants);
+      const ok2=ok1?await apiPost('setAchats',S.achats):false;
+      const ok3=(ok1&&ok2&&hadAvenants)?await apiPost('setAvenants',S.avenants):true;
 
-      if(!(ok1&&ok2&&ok3))throw new Error('enregistrement incomplet');
-      await verifierSuppressionServeur(id);
+      if(!(ok1&&ok2&&ok3))throw new Error('Enregistrement incomplet');
 
-      try{if(typeof closeModal==='function')closeModal();}catch(e){}
-      render();
-      if(typeof toast==='function')toast('Chantier supprimé ✓');
-    }catch(e){
+      try{
+        if(typeof window.closeModal==='function')window.closeModal();
+        else if(typeof closeModal==='function')closeModal();
+      }catch(e){}
+
+      toastMsg('Chantier supprimé ✓',false);
+      try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
+      return true;
+    }catch(err){
       S.chantiers=oldChantiers;
       S.achats=oldAchats;
       S.avenants=oldAvenants;
-      render();
-      if(typeof toast==='function')toast('Suppression impossible : le chantier est toujours présent',true);
-      console.error('Suppression chantier non confirmée :',e);
+      try{
+        await apiPost('setChantiers',oldChantiers);
+        await apiPost('setAchats',oldAchats);
+        if(hadAvenants)await apiPost('setAvenants',oldAvenants);
+      }catch(e){}
+      if(typeof render==='function')render();
+      toastMsg('Suppression non enregistrée — chantier conservé',true);
+      console.error('Suppression chantier:',err);
+      return false;
     }finally{
       suppressionEnCours=false;
     }
   }
 
-  function intercepter(event){
-    const btn=estBoutonSuppression(event.target);
-    if(!btn)return;
+  async function supprimerChantier(id){
+    id=String(id||'').trim();
+    if(!id||suppressionEnCours)return false;
+    if(!getChantier(id)){
+      toastMsg('Chantier introuvable',true);
+      return false;
+    }
 
-    const id=idDepuisBouton(btn);
-    if(!id)return;
-
-    event.preventDefault();
-    event.stopPropagation();
-    if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
-
-    const now=Date.now();
-    if(now-dernierDeclenchement<500)return;
-    dernierDeclenchement=now;
-    supprimerApresValidation(id);
-  }
-
-  function installCapture(){
-    if(document.documentElement.dataset.yayaDeleteChantierCaptureV6==='1')return;
-    document.documentElement.dataset.yayaDeleteChantierCaptureV6='1';
-    window.addEventListener('click',intercepter,true);
-  }
-
-  function marquerBoutons(){
-    document.querySelectorAll('.yaya-delete-chantier-modal-btn').forEach(function(btn){
-      const id=idDepuisBouton(btn);
-      if(id)btn.dataset.yayaChantierId=id;
-      btn.style.setProperty('pointer-events','auto','important');
-      btn.style.setProperty('touch-action','manipulation','important');
-    });
+    const confirmed=await askConfirmation(id);
+    if(!confirmed)return false;
+    return persistDeletion(id);
   }
 
   function install(){
-    if(!ready())return setTimeout(install,120);
-    window.deleteExistingChantier=supprimerApresValidation;
-    installCapture();
-    marquerBoutons();
-
-    const obs=new MutationObserver(function(){
-      marquerBoutons();
-      if(window.deleteExistingChantier!==supprimerApresValidation){
-        window.deleteExistingChantier=supprimerApresValidation;
-      }
-    });
-    obs.observe(document.documentElement,{childList:true,subtree:true});
+    window.delChantier=supprimerChantier;
+    window.deleteExistingChantier=supprimerChantier;
   }
 
+  closeConfirm();
   install();
-})();
-
-(function(){
-  'use strict';
-  if(document.querySelector('script[data-yaya-planning-save-confirm]'))return;
-  const s=document.createElement('script');
-  s.src='chantier-planning-save-confirm.js?v=planning-save-1';
-  s.async=false;
-  s.setAttribute('data-yaya-planning-save-confirm','1');
-  document.head.appendChild(s);
-})();
-
-(function(){
-  'use strict';
-  if(document.querySelector('script[data-yaya-duplicate-display-guard]'))return;
-  const s=document.createElement('script');
-  s.src='chantier-duplicate-display-guard.js?v=dupguard-2';
-  s.async=false;
-  s.setAttribute('data-yaya-duplicate-display-guard','1');
-  document.head.appendChild(s);
+  window.addEventListener('yaya:data-refreshed',install);
 })();
