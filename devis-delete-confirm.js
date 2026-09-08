@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-devis-delete-confirm-style-v1';
+  const STYLE_ID='yaya-devis-delete-confirm-style-v2';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -21,6 +21,7 @@
       .yaya-devis-confirm-actions button{flex:1;min-height:42px;border-radius:9px;font-weight:750;font-family:inherit;cursor:pointer}
       .yaya-devis-confirm-cancel{background:#fff;border:1px solid #cbd5e1;color:#334155}
       .yaya-devis-confirm-ok{background:#d93636;border:1px solid #d93636;color:#fff}
+      .yaya-devis-confirm-ok:disabled{opacity:.6;cursor:default}
       @media(max-width:640px){.yaya-devis-confirm-box{padding:20px}.yaya-devis-confirm-actions button{min-height:46px}}
     `;
     document.head.appendChild(style);
@@ -28,6 +29,57 @@
 
   function closeConfirm(){
     document.querySelector('.yaya-devis-confirm-overlay')?.remove();
+  }
+
+  function toastSafe(msg,err){
+    try{if(typeof toast==='function')toast(msg,!!err);}catch(e){}
+  }
+
+  function renderSafe(){
+    try{if(typeof render==='function')render();}catch(e){}
+  }
+
+  async function deleteAvenantDirect(id,ok,overlay){
+    if(!id||typeof S==='undefined'||!S||!Array.isArray(S.avenants)){
+      toastSafe('Suppression du devis indisponible',true);
+      return;
+    }
+
+    const before=S.avenants.slice();
+    const wanted=String(id);
+    const next=before.filter(v=>String(v&&v.id)!==wanted);
+
+    if(next.length===before.length){
+      toastSafe('Devis introuvable',true);
+      return;
+    }
+
+    if(ok){
+      ok.disabled=true;
+      ok.textContent='Suppression…';
+    }
+
+    S.avenants=next;
+    renderSafe();
+
+    try{
+      const saved=typeof apiPost==='function'
+        ? await apiPost('setAvenants',S.avenants)
+        : false;
+
+      if(!saved)throw new Error('enregistrement impossible');
+
+      if(overlay&&overlay.isConnected)overlay.remove();
+      toastSafe('Devis supprimé ✓');
+    }catch(e){
+      S.avenants=before;
+      renderSafe();
+      if(ok){
+        ok.disabled=false;
+        ok.textContent='Supprimer';
+      }
+      toastSafe('Suppression du devis impossible',true);
+    }
   }
 
   function openConfirm(id){
@@ -47,13 +99,9 @@
 
     const cancel=overlay.querySelector('.yaya-devis-confirm-cancel');
     const ok=overlay.querySelector('.yaya-devis-confirm-ok');
-    overlay.addEventListener('click',function(e){if(e.target===overlay)closeConfirm();});
-    cancel.addEventListener('click',closeConfirm);
-    ok.addEventListener('click',function(){
-      closeConfirm();
-      if(id&&typeof delAvenant==='function')delAvenant(id);
-      else if(typeof toast==='function')toast('Suppression du devis indisponible',true);
-    });
+    overlay.addEventListener('click',function(e){if(e.target===overlay&&!ok.disabled)closeConfirm();});
+    cancel.addEventListener('click',function(){if(!ok.disabled)closeConfirm();});
+    ok.addEventListener('click',function(){deleteAvenantDirect(id,ok,overlay);});
   }
 
   document.addEventListener('click',function(e){
