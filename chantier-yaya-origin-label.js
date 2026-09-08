@@ -1,11 +1,27 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierOriginLabelV2)return;
-  window.__yayaChantierOriginLabelV2=true;
+  if(window.__yayaChantierOriginLabelV3)return;
+  window.__yayaChantierOriginLabelV3=true;
 
-  const MARK=' ► [yaya]';
+  const MARK_TEXT='► [yaya]';
+  const MARK=' '+MARK_TEXT;
+  const STYLE_ID='yaya-origin-label-style-v3';
+  const MARK_CLASS='yaya-origin-label-mark';
   let scheduled=false;
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      .${MARK_CLASS}{
+        color:#7f8790!important;
+        font-weight:600!important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 
   function chantiers(){
     try{return Array.isArray(S&&S.chantiers)?S.chantiers.filter(function(c){return c&&c.id&&!String(c.id).startsWith('__');}):[];}catch(e){return [];}
@@ -31,6 +47,44 @@
     return chantiers().find(function(c){return String(c.id)===id;})||null;
   }
 
+  function hasAdjacentMark(node){
+    const next=node&&node.nextSibling;
+    return !!(next&&next.nodeType===Node.ELEMENT_NODE&&next.classList&&next.classList.contains(MARK_CLASS));
+  }
+
+  function replaceNodeWithGreyMark(node,base){
+    if(!node||!node.parentNode||hasAdjacentMark(node))return;
+    const raw=String(node.nodeValue||'');
+    const lead=(raw.match(/^\s*/)||[''])[0];
+    const trail=(raw.match(/\s*$/)||[''])[0];
+    const frag=document.createDocumentFragment();
+    frag.appendChild(document.createTextNode(lead+base+' '));
+    const mark=document.createElement('span');
+    mark.className=MARK_CLASS;
+    mark.textContent=MARK_TEXT;
+    frag.appendChild(mark);
+    if(trail)frag.appendChild(document.createTextNode(trail));
+    node.parentNode.replaceChild(frag,node);
+  }
+
+  function setElementName(el,c){
+    if(!el||!c)return;
+    const base=cleanName(c.nom||'Chantier');
+    if(isExtranet(c)){
+      if(String(el.textContent||'').trim()!==base)el.textContent=base;
+      return;
+    }
+    const current=String(el.textContent||'').trim();
+    const existing=el.querySelector('.'+MARK_CLASS);
+    if(current===base+MARK&&existing)return;
+    el.textContent='';
+    el.appendChild(document.createTextNode(base+' '));
+    const mark=document.createElement('span');
+    mark.className=MARK_CLASS;
+    mark.textContent=MARK_TEXT;
+    el.appendChild(mark);
+  }
+
   function replaceExactName(root,c){
     if(!root||!c||isExtranet(c))return;
     const base=cleanName(c.nom||'');
@@ -40,18 +94,14 @@
       acceptNode:function(node){
         const parent=node&&node.parentElement;
         if(!parent||parent.closest('script,style,option,input,textarea'))return NodeFilter.FILTER_REJECT;
+        if(hasAdjacentMark(node))return NodeFilter.FILTER_REJECT;
         const text=String(node.nodeValue||'').trim();
         return (text===base||text===wanted)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
       }
     });
     const nodes=[];
     while(walker.nextNode())nodes.push(walker.currentNode);
-    nodes.forEach(function(node){
-      const raw=String(node.nodeValue||'');
-      const lead=(raw.match(/^\s*/)||[''])[0];
-      const trail=(raw.match(/\s*$/)||[''])[0];
-      node.nodeValue=lead+wanted+trail;
-    });
+    nodes.forEach(function(node){replaceNodeWithGreyMark(node,base);});
   }
 
   function cardChantierId(card){
@@ -82,9 +132,7 @@
   function decorateNameLinks(){
     document.querySelectorAll('#pane-chantiers .yaya-chantier-name-edit-link[data-chantier-id]').forEach(function(el){
       const c=byId(el.dataset.chantierId);
-      if(!c)return;
-      const wanted=displayName(c);
-      if(String(el.textContent||'').trim()!==wanted)el.textContent=wanted;
+      if(c)setElementName(el,c);
     });
   }
 
@@ -118,6 +166,7 @@
       acceptNode:function(node){
         const parent=node&&node.parentElement;
         if(!parent||parent.closest('script,style,option,input,textarea'))return NodeFilter.FILTER_REJECT;
+        if(hasAdjacentMark(node))return NodeFilter.FILTER_REJECT;
         const text=String(node.nodeValue||'').trim();
         return map.has(text)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
       }
@@ -126,12 +175,12 @@
     while(walker.nextNode())nodes.push(walker.currentNode);
     nodes.forEach(function(node){
       const base=String(node.nodeValue||'').trim();
-      const c=map.get(base);
-      if(c)replaceExactName(node.parentElement,c);
+      if(map.has(base))replaceNodeWithGreyMark(node,base);
     });
   }
 
   function apply(){
+    installStyle();
     if(!chantiers().length)return;
     decorateCards();
     decorateNameLinks();
@@ -145,6 +194,7 @@
     requestAnimationFrame(function(){scheduled=false;apply();});
   }
 
+  installStyle();
   window.yayaApplyOriginLabels=apply;
   schedule();
   [120,350,800,1600,3000].forEach(function(ms){setTimeout(schedule,ms);});
