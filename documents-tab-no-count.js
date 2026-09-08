@@ -188,7 +188,8 @@
   document.head.appendChild(style);
 })();
 
-// Fiche Dépenses : réserve une vraie colonne à la date afin qu'elle reste sur une seule ligne.
+// Fiche Dépenses : ancienne tentative de colonne date directe.
+// Conservée pour compatibilité avec les lignes qui contiennent encore yaya-history-date.
 (function(){
   const STYLE_ID='yaya-depense-date-column-v1';
   if(!document.getElementById(STYLE_ID)){
@@ -264,4 +265,99 @@
   }
 
   install();
+})();
+
+// Fiche Dépenses : vraie ligne unique fournisseur / description / date / montant / suppression.
+// depense-amount-edit.js reconstruit le libellé et remet la date dans <strong> ;
+// on force donc ce bloc en grille interne afin que la date ne puisse plus passer dessous.
+(function(){
+  const STYLE_ID='yaya-depense-true-single-line-v2';
+  if(document.getElementById(STYLE_ID))return;
+  const style=document.createElement('style');
+  style.id=STYLE_ID;
+  style.textContent=`
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row{
+      grid-template-columns:minmax(0,1fr) 92px 36px!important;
+      column-gap:14px!important;
+      align-items:center!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong{
+      display:grid!important;
+      grid-template-columns:max-content minmax(0,1fr) 92px!important;
+      align-items:center!important;
+      gap:0 12px!important;
+      min-width:0!important;
+      width:100%!important;
+      flex-wrap:nowrap!important;
+      font-size:0!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong > .yaya-depense-supplier{
+      grid-column:1!important;
+      min-width:0!important;
+      white-space:nowrap!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong > .yaya-depense-description{
+      grid-column:2!important;
+      display:block!important;
+      min-width:0!important;
+      margin:0!important;
+      white-space:nowrap!important;
+      overflow:hidden!important;
+      text-overflow:ellipsis!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong > .yaya-depense-inline-date{
+      grid-column:3!important;
+      display:block!important;
+      width:92px!important;
+      min-width:92px!important;
+      margin:0!important;
+      padding:0!important;
+      text-align:right!important;
+      white-space:nowrap!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row:has(.yaya-depense-inline-date) > .yaya-expense-date-column{
+      display:none!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > .yaya-detail-charge-hours,
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > .yaya-detail-charge-view{
+      display:none!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > .yaya-detail-charge-cost{
+      grid-column:2!important;
+      width:92px!important;
+      min-width:92px!important;
+      text-align:right!important;
+      white-space:nowrap!important;
+    }
+    #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > .yaya-finance-delete-x{
+      grid-column:3!important;
+      justify-self:end!important;
+      margin-left:0!important;
+    }
+    @media(max-width:640px){
+      #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row{
+        grid-template-columns:minmax(0,1fr) 70px 32px!important;
+        column-gap:8px!important;
+      }
+      #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong{
+        grid-template-columns:minmax(72px,auto) minmax(0,1fr) 76px!important;
+        gap:0 7px!important;
+      }
+      #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong > .yaya-depense-supplier{
+        max-width:96px!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+      }
+      #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > strong > .yaya-depense-inline-date{
+        width:76px!important;
+        min-width:76px!important;
+        font-size:10px!important;
+      }
+      #pane-chantiers .card .yaya-detail-expenses-pane .yaya-detail-expense-row > .yaya-detail-charge-cost{
+        width:70px!important;
+        min-width:70px!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
 })();
