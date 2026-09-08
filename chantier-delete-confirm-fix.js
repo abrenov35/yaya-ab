@@ -2,6 +2,7 @@
   'use strict';
 
   const CONFIRM_ID='yaya-delete-chantier-confirm';
+  let confirmationEnCours=false;
   let suppressionEnCours=false;
 
   function toastMsg(message,isError){
@@ -188,13 +189,19 @@
 
   async function supprimerChantier(id){
     id=String(id||'').trim();
-    if(!id||suppressionEnCours)return false;
+    if(!id||suppressionEnCours||confirmationEnCours)return false;
     if(!getChantier(id)){
       toastMsg('Chantier introuvable',true);
       return false;
     }
 
-    const confirmed=await askConfirmation(id);
+    confirmationEnCours=true;
+    let confirmed=false;
+    try{
+      confirmed=await askConfirmation(id);
+    }finally{
+      confirmationEnCours=false;
+    }
     if(!confirmed)return false;
     return persistDeletion(id);
   }
