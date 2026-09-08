@@ -127,3 +127,40 @@
   s.setAttribute('data-yaya-stock-expense-loader-v1','1');
   document.head.appendChild(s);
 })();
+
+// Aligne « Ajouter une dépense » et « Stock » côte à côte, y compris sur mobile.
+(function(){
+  const id='yaya-stock-buttons-align-v1';
+  if(document.getElementById(id))return;
+  const style=document.createElement('style');
+  style.id=id;
+  style.textContent=`
+    #pane-chantiers .yaya-stock-action-buttons{
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:flex-end!important;
+      gap:7px!important;
+      width:auto!important;
+      margin-left:auto!important;
+      flex:0 0 auto!important;
+      flex-wrap:nowrap!important;
+    }
+    #pane-chantiers .yaya-stock-action-buttons > .yaya-detail-section-action-button{
+      margin:0!important;
+      width:auto!important;
+      flex:0 0 auto!important;
+    }
+    @media(max-width:640px){
+      #pane-chantiers .yaya-stock-action-buttons{
+        width:auto!important;
+        margin-left:auto!important;
+        gap:6px!important;
+        flex-wrap:nowrap!important;
+      }
+      #pane-chantiers .yaya-stock-action-buttons > .yaya-detail-section-action-button{
+        margin:0!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
