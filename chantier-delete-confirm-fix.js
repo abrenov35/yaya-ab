@@ -42,6 +42,23 @@
     if(old)old.remove();
   }
 
+  function closeEditModal(){
+    try{
+      if(typeof window.closeModal==='function')window.closeModal();
+      else if(typeof closeModal==='function')closeModal();
+      else{
+        const root=document.getElementById('modalRoot');
+        if(root)root.innerHTML='';
+      }
+    }catch(e){}
+  }
+
+  function saveLocalCache(){
+    try{
+      if(typeof S!=='undefined'&&S)localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(S));
+    }catch(e){}
+  }
+
   function askConfirmation(id){
     closeConfirm();
     const c=getChantier(id);
@@ -56,8 +73,6 @@
     return new Promise(function(resolve){
       const overlay=document.createElement('div');
       overlay.id=CONFIRM_ID;
-      // Compatibilité avec chantier-write-safety.js : cette classe permet
-      // d'identifier explicitement la modale de confirmation de suppression.
       overlay.className='yaya-chantier-delete-overlay';
       overlay.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(22,45,73,.52);display:flex;align-items:center;justify-content:center;padding:18px;';
 
@@ -107,8 +122,6 @@
       const confirm=document.createElement('button');
       confirm.type='button';
       confirm.textContent='Supprimer';
-      // chantier-write-safety.js écoute ce marqueur en capture afin
-      // d'autoriser précisément la suppression demandée par l'utilisateur.
       confirm.setAttribute('data-confirm','1');
       confirm.style.cssText='min-height:44px;border:1px solid #b42318;border-radius:9px;background:#b42318;color:#fff;font:inherit;font-weight:800;cursor:pointer;';
 
@@ -130,6 +143,7 @@
       cancel.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();finish(false);});
       confirm.addEventListener('click',function(e){
         e.preventDefault();e.stopPropagation();
+        if(finished)return;
         confirm.disabled=true;
         confirm.textContent='Suppression…';
         finish(true);
@@ -153,26 +167,40 @@
     const oldAchats=Array.isArray(S.achats)?S.achats.slice():[];
     const oldAvenants=Array.isArray(S.avenants)?S.avenants.slice():[];
 
-    const hadAvenants=oldAvenants.some(function(v){return String(v&&v.chantierId)===String(id);});
+    const newChantiers=oldChantiers.filter(function(x){return String(x&&x.id)!==String(id);});
+    const newAchats=oldAchats.filter(function(a){return String(a&&a.chantierId)!==String(id);});
+    const newAvenants=oldAvenants.filter(function(v){return String(v&&v.chantierId)!==String(id);});
+    const achatsChanged=newAchats.length!==oldAchats.length;
+    const avenantsChanged=newAvenants.length!==oldAvenants.length;
 
     try{
-      S.chantiers=oldChantiers.filter(function(x){return String(x&&x.id)!==String(id);});
-      S.achats=oldAchats.filter(function(a){return String(a&&a.chantierId)!==String(id);});
-      S.avenants=oldAvenants.filter(function(v){return String(v&&v.chantierId)!==String(id);});
-
-      if(typeof render==='function')render();
-
-      const ok1=await apiPost('setChantiers',S.chantiers);
-      const ok2=ok1?await apiPost('setAchats',S.achats):false;
-      const ok3=(ok1&&ok2&&hadAvenants)?await apiPost('setAvenants',S.avenants):true;
-
-      if(!(ok1&&ok2&&ok3))throw new Error('Enregistrement incomplet');
+      S.chantiers=newChantiers;
+      S.achats=newAchats;
+      S.avenants=newAvenants;
 
       try{
-        if(typeof window.closeModal==='function')window.closeModal();
-        else if(typeof closeModal==='function')closeModal();
+        if(typeof focusChantier!=='undefined'&&String(focusChantier||'')===String(id))focusChantier=null;
+        if(typeof tab!=='undefined')tab='chantiers';
       }catch(e){}
 
+      closeEditModal();
+      if(typeof render==='function')render();
+      saveLocalCache();
+
+      // Voie directe : on évite setChantiers, qui déclenche plusieurs lectures
+      // réseau de sécurité et rendait la suppression lente/irrégulière.
+      const okDelete=await apiPost('deleteChantier',{id:String(id)});
+      if(!okDelete)throw new Error('suppression chantier refusée par le serveur');
+
+      const writes=[];
+      if(achatsChanged)writes.push(apiPost('setAchats',newAchats));
+      if(avenantsChanged)writes.push(apiPost('setAvenants',newAvenants));
+      if(writes.length){
+        const results=await Promise.all(writes);
+        if(results.some(function(v){return !v;}))throw new Error('nettoyage des données liées incomplet');
+      }
+
+      saveLocalCache();
       toastMsg('Chantier supprimé ✓',false);
       try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
       return true;
@@ -180,13 +208,9 @@
       S.chantiers=oldChantiers;
       S.achats=oldAchats;
       S.avenants=oldAvenants;
-      try{
-        await apiPost('setChantiers',oldChantiers);
-        await apiPost('setAchats',oldAchats);
-        if(hadAvenants)await apiPost('setAvenants',oldAvenants);
-      }catch(e){}
+      saveLocalCache();
       if(typeof render==='function')render();
-      toastMsg('Suppression non enregistrée — chantier conservé',true);
+      toastMsg('Suppression non enregistrée — chantier restauré',true);
       console.error('Suppression chantier:',err);
       return false;
     }finally{
@@ -196,7 +220,11 @@
 
   async function supprimerChantier(id){
     id=String(id||'').trim();
-    if(!id||suppressionEnCours||confirmationEnCours)return false;
+    if(!id||confirmationEnCours)return false;
+    if(suppressionEnCours){
+      toastMsg('Une suppression est déjà en cours',true);
+      return false;
+    }
     if(!getChantier(id)){
       toastMsg('Chantier introuvable',true);
       return false;
