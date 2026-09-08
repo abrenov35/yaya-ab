@@ -1,6 +1,74 @@
 (function(){
   'use strict';
 
+  const CLOAK_ID='yayaStableBootCloak';
+  const startedAt=Date.now();
+  let finished=false;
+  let timer=0;
+
+  function ensureCloak(){
+    if(document.getElementById(CLOAK_ID))return;
+    const style=document.createElement('style');
+    style.id=CLOAK_ID;
+    style.textContent='html{background:#f4f6f8!important}body{visibility:hidden!important}';
+    (document.head||document.documentElement).appendChild(style);
+  }
+
+  function applicationReady(){
+    const header=document.querySelector('.hdr');
+    const pane=document.getElementById('pane-chantiers');
+    if(!header||!pane)return false;
+
+    let hasData=false;
+    try{
+      hasData=typeof S!=='undefined'&&S&&Array.isArray(S.chantiers)&&S.chantiers.length>0;
+    }catch(e){}
+    if(!hasData)return false;
+
+    try{
+      if(typeof focusChantier!=='undefined'&&focusChantier){
+        return !!pane.querySelector('.yaya-detail-section-tabs');
+      }
+    }catch(e){}
+
+    return !!pane.querySelector('.card');
+  }
+
+  function reveal(){
+    if(finished)return;
+    finished=true;
+    clearTimeout(timer);
+    requestAnimationFrame(function(){
+      requestAnimationFrame(function(){
+        const style=document.getElementById(CLOAK_ID);
+        if(style)style.remove();
+      });
+    });
+  }
+
+  function check(){
+    if(finished)return;
+    if(applicationReady()){
+      reveal();
+      return;
+    }
+    if(Date.now()-startedAt>=8000){
+      reveal();
+      return;
+    }
+    clearTimeout(timer);
+    timer=setTimeout(check,40);
+  }
+
+  ensureCloak();
+  window.addEventListener('yaya:data-refreshed',check);
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',check,{once:true});
+  check();
+})();
+
+(function(){
+  'use strict';
+
   const LINK_ID='yayaPlanningToolbarLink';
   const AB_DOCS_ID='yayaAbDocsToolbarLink';
   const STYLE_ID='yaya-planning-toolbar-link-style';
