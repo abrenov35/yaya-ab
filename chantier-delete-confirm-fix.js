@@ -56,6 +56,9 @@
     return new Promise(function(resolve){
       const overlay=document.createElement('div');
       overlay.id=CONFIRM_ID;
+      // Compatibilité avec chantier-write-safety.js : cette classe permet
+      // d'identifier explicitement la modale de confirmation de suppression.
+      overlay.className='yaya-chantier-delete-overlay';
       overlay.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(22,45,73,.52);display:flex;align-items:center;justify-content:center;padding:18px;';
 
       const box=document.createElement('div');
@@ -98,11 +101,15 @@
       const cancel=document.createElement('button');
       cancel.type='button';
       cancel.textContent='Annuler';
+      cancel.setAttribute('data-cancel','1');
       cancel.style.cssText='min-height:44px;border:1px solid #cbd5e1;border-radius:9px;background:#fff;color:#162d49;font:inherit;font-weight:700;cursor:pointer;';
 
       const confirm=document.createElement('button');
       confirm.type='button';
       confirm.textContent='Supprimer';
+      // chantier-write-safety.js écoute ce marqueur en capture afin
+      // d'autoriser précisément la suppression demandée par l'utilisateur.
+      confirm.setAttribute('data-confirm','1');
       confirm.style.cssText='min-height:44px;border:1px solid #b42318;border-radius:9px;background:#b42318;color:#fff;font:inherit;font-weight:800;cursor:pointer;';
 
       let finished=false;
