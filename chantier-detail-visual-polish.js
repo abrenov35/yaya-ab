@@ -208,6 +208,11 @@
       color:#233750!important;
     }
 
+    /* Le pavé consommables affiche uniquement le montant. Le coefficient reste dans sa modale. */
+    #pane-chantiers .yaya-consumables-button small{
+      display:none!important;
+    }
+
     #pane-chantiers .yaya-detail-section-action-row[data-section="marche"]{
       background:#f1f8f3!important;
       border-color:#cce3d3!important;
