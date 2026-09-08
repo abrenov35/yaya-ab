@@ -2,7 +2,7 @@
   'use strict';
 
   const DELETED='__YAYA_DEVIS_INITIAL_SUPPRIME__';
-  const STYLE_ID='yaya-market-initial-actions-v3';
+  const STYLE_ID='yaya-market-initial-actions-v4';
 
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
@@ -26,31 +26,78 @@
     document.head.appendChild(style);
   }
 
-  function chantier(id){try{return Array.isArray(S&&S.chantiers)?S.chantiers.find(c=>String(c&&c.id)===String(id))||null:null;}catch(e){return null;}}
-  function avenant(id){try{return Array.isArray(S&&S.avenants)?S.avenants.find(v=>String(v&&v.id)===String(id))||null:null;}catch(e){return null;}}
+  function chantier(id){
+    try{return Array.isArray(S&&S.chantiers)?S.chantiers.find(c=>String(c&&c.id)===String(id))||null:null;}catch(e){return null;}
+  }
+  function avenant(id){
+    try{return Array.isArray(S&&S.avenants)?S.avenants.find(v=>String(v&&v.id)===String(id))||null:null;}catch(e){return null;}
+  }
   function toastSafe(msg,err){try{if(typeof toast==='function')toast(msg,!!err);}catch(e){}}
   function renderSafe(){try{if(typeof render==='function')render();}catch(e){}}
   function http(value){const s=String(value||'').trim();return /^https?:\/\//i.test(s)?s:'';}
   function isDeleted(c){return !!c&&String(c.notes||'').includes(DELETED)&&!(Number(c.montantDevisHT)||0);}
 
+  function cardId(card){
+    if(!card)return '';
+    const mainEdit=card.querySelector('.yaya-detail-market-row .yaya-detail-document-edit[data-kind="main"][data-row-id]');
+    if(mainEdit&&mainEdit.dataset.rowId)return String(mainEdit.dataset.rowId);
+    const nodes=[...card.querySelectorAll('[onclick]')];
+    for(const el of nodes){
+      const raw=String(el.getAttribute('onclick')||'');
+      const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);
+      if(m&&m[1])return String(m[1]);
+    }
+    return '';
+  }
+
+  function expectedMarketCount(card){
+    const cid=cardId(card);
+    if(!cid||typeof S==='undefined')return null;
+    const c=chantier(cid);
+    if(!c)return null;
+    const main=isDeleted(c)?0:1;
+    let extras=0;
+    try{
+      extras=Array.isArray(S.avenants)
+        ?S.avenants.filter(v=>String(v&&v.chantierId||'')===cid).length
+        :0;
+    }catch(e){}
+    return main+extras;
+  }
+
   function syncEmpty(pane){
     if(!pane)return;
+    const card=pane.closest('.card');
+
     const visible=[...pane.querySelectorAll('.yaya-detail-market-row')].filter(function(r){
+      const edit=r.querySelector('.yaya-detail-document-edit[data-kind="main"][data-row-id]');
+      if(edit){
+        const c=chantier(String(edit.dataset.rowId||''));
+        if(isDeleted(c)){
+          r.dataset.yayaInitialDeleted='1';
+          r.style.setProperty('display','none','important');
+          return false;
+        }
+      }
       if(r.dataset.yayaInitialDeleted==='1')return false;
       if(r.hidden)return false;
       if(String(r.style&&r.style.display||'').toLowerCase()==='none')return false;
       return true;
     });
-    pane.dataset.empty=visible.length?'0':'1';
-    const card=pane.closest('.card');
-    const empty=card&&card.querySelector(':scope > .yaya-detail-empty-pane[data-section="marche"]');
-    if(empty){empty.dataset.empty=visible.length?'0':'1';if(!visible.length)empty.textContent='Aucun devis';}
 
-    // Le compteur Marché reflète toujours les lignes réellement présentes/visibles
-    // dans la section, et non un ancien compteur issu du rendu source.
+    const expected=expectedMarketCount(card);
+    const total=expected===null?visible.length:expected;
+
+    pane.dataset.empty=total?'0':'1';
+    const empty=card&&card.querySelector(':scope > .yaya-detail-empty-pane[data-section="marche"]');
+    if(empty){
+      empty.dataset.empty=total?'0':'1';
+      if(!total)empty.textContent='Aucun devis';
+    }
+
     const tab=card&&card.querySelector(':scope > .yaya-detail-section-tabs .yaya-detail-section-tab[data-section="marche"]');
     const count=tab&&tab.querySelector('small');
-    if(count&&count.textContent!==String(visible.length))count.textContent=String(visible.length);
+    if(count&&count.textContent!==String(total))count.textContent=String(total);
   }
 
   function confirmDelete(c){
@@ -100,9 +147,6 @@
       }
       syncEmpty(row.closest('.yaya-detail-markets-pane'));
     });
-
-    // Même quand le devis 1 supprimé n'est plus rendu du tout dans le DOM,
-    // recalculer le compteur sur toutes les sections Marché.
     document.querySelectorAll('#pane-chantiers .yaya-detail-markets-pane').forEach(syncEmpty);
   }
 
@@ -158,8 +202,17 @@
   }
 
   let scheduled=false;
-  function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(function(){scheduled=false;decorateRows();ensureDocumentField();});}
+  function schedule(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(function(){
+      scheduled=false;
+      decorateRows();
+      ensureDocumentField();
+    });
+  }
+
   schedule();
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();
