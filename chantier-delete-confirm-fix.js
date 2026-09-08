@@ -38,7 +38,10 @@
     const save=modal&&modal.querySelector('[onclick*="saveExistingChantier"]');
     const saveCode=String(save&&save.getAttribute('onclick')||'');
     m=saveCode.match(/saveExistingChantier\(['\"]([^'\"]+)['\"]\)/);
-    return m&&m[1]?m[1]:'';
+    if(m&&m[1])return m[1];
+
+    const select=modal&&modal.querySelector('#yayaManageChantierSelect');
+    return String(select&&select.value||'').trim();
   }
 
   function estBoutonSuppression(target){
@@ -48,7 +51,7 @@
     if(btn.classList.contains('yaya-delete-chantier-modal-btn'))return btn;
     if(!btn.closest('.yaya-chantier-edit-modal'))return null;
     const texte=String(btn.textContent||'').replace(/\s+/g,' ').trim().toLowerCase();
-    return texte==='supprimer le chantier'?btn:null;
+    return (texte==='supprimer le chantier'||texte==='supprimer')?btn:null;
   }
 
   function confirmationCentree(id){
@@ -206,26 +209,15 @@
     if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
 
     const now=Date.now();
-    if(now-dernierDeclenchement<700)return;
+    if(now-dernierDeclenchement<500)return;
     dernierDeclenchement=now;
     supprimerApresValidation(id);
   }
 
   function installCapture(){
-    if(document.documentElement.dataset.yayaDeleteChantierCaptureV5==='1')return;
-    document.documentElement.dataset.yayaDeleteChantierCaptureV5='1';
-
-    window.addEventListener('pointerup',function(event){
-      const btn=estBoutonSuppression(event.target);
-      if(!btn)return;
-      intercepter(event);
-    },true);
-
-    window.addEventListener('click',function(event){
-      const btn=estBoutonSuppression(event.target);
-      if(!btn)return;
-      intercepter(event);
-    },true);
+    if(document.documentElement.dataset.yayaDeleteChantierCaptureV6==='1')return;
+    document.documentElement.dataset.yayaDeleteChantierCaptureV6='1';
+    window.addEventListener('click',intercepter,true);
   }
 
   function marquerBoutons(){
@@ -269,7 +261,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-duplicate-display-guard]'))return;
   const s=document.createElement('script');
-  s.src='chantier-duplicate-display-guard.js?v=dupguard-1';
+  s.src='chantier-duplicate-display-guard.js?v=dupguard-2';
   s.async=false;
   s.setAttribute('data-yaya-duplicate-display-guard','1');
   document.head.appendChild(s);
