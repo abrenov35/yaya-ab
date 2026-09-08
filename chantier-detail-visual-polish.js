@@ -190,6 +190,66 @@
       opacity:1!important;
     }
 
+    /* Titres de rubrique : séparation nette avec les listes */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row{
+      min-height:46px!important;
+      margin:6px 0 9px!important;
+      padding:7px 9px 7px 11px!important;
+      border:1px solid #dde5ed!important;
+      border-left-width:4px!important;
+      border-radius:9px!important;
+      box-shadow:0 1px 2px rgba(22,45,73,.04)!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row .yaya-detail-section-action-title{
+      font-size:13px!important;
+      font-weight:850!important;
+      letter-spacing:.065em!important;
+      line-height:1!important;
+      color:#233750!important;
+    }
+
+    #pane-chantiers .yaya-detail-section-action-row[data-section="marche"]{
+      background:#f1f8f3!important;
+      border-color:#cce3d3!important;
+      border-left-color:#68a87b!important;
+    }
+    #pane-chantiers .yaya-detail-section-action-row[data-section="marche"] .yaya-detail-section-action-title{color:#286b3e!important}
+
+    #pane-chantiers .yaya-detail-section-action-row[data-section="commandes"]{
+      background:#f2f6fa!important;
+      border-color:#d3e0eb!important;
+      border-left-color:#759cbc!important;
+    }
+    #pane-chantiers .yaya-detail-section-action-row[data-section="commandes"] .yaya-detail-section-action-title{color:#315a7b!important}
+
+    #pane-chantiers .yaya-detail-section-action-row[data-section="depenses"]{
+      background:#fff4f6!important;
+      border-color:#efd8de!important;
+      border-left-color:#d17b8e!important;
+    }
+    #pane-chantiers .yaya-detail-section-action-row[data-section="depenses"] .yaya-detail-section-action-title{color:#96384c!important}
+
+    #pane-chantiers .yaya-detail-section-action-row[data-section="charges"]{
+      background:#fff8ed!important;
+      border-color:#eedfc5!important;
+      border-left-color:#d19b4c!important;
+    }
+    #pane-chantiers .yaya-detail-section-action-row[data-section="charges"] .yaya-detail-section-action-title{color:#8b5a10!important}
+
+    #pane-chantiers .yaya-detail-section-action-row[data-section="documents"]{
+      background:#f2f7fd!important;
+      border-color:#d5e3f2!important;
+      border-left-color:#6f9fcd!important;
+    }
+    #pane-chantiers .yaya-detail-section-action-row[data-section="documents"] .yaya-detail-section-action-title{color:#285f96!important}
+
+    #pane-chantiers .yaya-detail-section-action-row[data-section="mail"]{
+      background:#f8f5f3!important;
+      border-color:#e5dcd7!important;
+      border-left-color:#aa8f80!important;
+    }
+    #pane-chantiers .yaya-detail-section-action-row[data-section="mail"] .yaya-detail-section-action-title{color:#6d5044!important}
+
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-empty-pane{
       margin-top:2px!important;
       padding:17px 12px!important;
@@ -226,6 +286,14 @@
         height:33px!important;
         min-height:33px!important;
         padding:0 9px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row{
+        min-height:43px!important;
+        padding:6px 7px 6px 9px!important;
+        margin:5px 0 8px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row .yaya-detail-section-action-title{
+        font-size:12px!important;
       }
     }
   `;
