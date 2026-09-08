@@ -1,11 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierEditButtonsFixInstalled)return;
-  window.__yayaChantierEditButtonsFixInstalled=true;
+  if(window.__yayaChantierEditButtonsFixV3Installed)return;
+  window.__yayaChantierEditButtonsFixV3Installed=true;
 
-  let saveBusy=false;
+  const busyButtons=new WeakSet();
   let lastPointerAt=0;
+  let lastPointerButton=null;
 
   function modal(){
     return document.querySelector('#modalRoot .yaya-chantier-edit-modal');
@@ -23,6 +24,11 @@
 
   function chantierIdFromModal(m){
     if(!m)return '';
+
+    const select=m.querySelector('#yayaManageChantierSelect');
+    const selected=String(select&&select.value||'').trim();
+    if(selected)return selected;
+
     const save=m.querySelector('#editChSave');
     const code=String(save&&save.getAttribute('onclick')||'');
     let match=code.match(/saveExistingChantier\(['\"]([^'\"]+)['\"]\)/);
@@ -45,6 +51,8 @@
   }
 
   function readValues(c){
+    try{if(typeof window.syncEditChSignature==='function')window.syncEditChSignature();}catch(e){}
+
     const nom=document.getElementById('editChNom');
     const sig=document.getElementById('editChSignature');
     const dem=document.getElementById('editChDemarrage');
@@ -76,7 +84,8 @@
   }
 
   async function saveEdit(button){
-    if(saveBusy)return;
+    if(button&&busyButtons.has(button))return;
+
     const m=modal();
     const id=chantierIdFromModal(m);
     const c=getChantier(id);
@@ -100,12 +109,13 @@
     c.dateDemarrageEstime=values.dateDemarrageEstime;
     c.montantMarcheHT=values.montantMarcheHT;
 
-    saveBusy=true;
     if(button){
+      busyButtons.add(button);
       button.disabled=true;
       button.textContent='Enregistrement…';
     }
 
+    /* Un seul appui suffit : fermeture immédiate, synchronisation ensuite. */
     closeEditModal();
     try{if(typeof render==='function')render();}catch(e){}
 
@@ -123,7 +133,7 @@
       if(typeof toast==='function')toast('Enregistrement impossible : aucune modification conservée',true);
       console.error('Edition chantier : enregistrement impossible',err);
     }finally{
-      saveBusy=false;
+      if(button)busyButtons.delete(button);
     }
   }
 
@@ -137,11 +147,11 @@
 
   function intercept(event){
     const m=modal();
-    if(!m||!event.target||!event.target.closest)return;
+    if(!m||!event.target||!event.target.closest)return false;
     const btn=event.target.closest('button');
-    if(!btn||!m.contains(btn))return;
+    if(!btn||!m.contains(btn))return false;
     const action=actionFromButton(btn);
-    if(!action)return;
+    if(!action)return false;
 
     event.preventDefault();
     event.stopPropagation();
@@ -149,31 +159,34 @@
 
     if(action==='cancel'){
       closeEditModal();
-      return;
+      return true;
     }
     saveEdit(btn);
+    return true;
   }
 
+  /* pointerup garantit la prise en compte au premier appui, avant les anciens onclick. */
   window.addEventListener('pointerup',function(event){
     const m=modal();
     const btn=m&&event.target&&event.target.closest?event.target.closest('button'):null;
     const action=btn&&m&&m.contains(btn)?actionFromButton(btn):'';
     if(!action)return;
     lastPointerAt=Date.now();
+    lastPointerButton=btn;
     intercept(event);
   },true);
 
   window.addEventListener('click',function(event){
-    if(Date.now()-lastPointerAt<650){
-      const m=modal();
-      const btn=m&&event.target&&event.target.closest?event.target.closest('button'):null;
-      const action=btn&&m&&m.contains(btn)?actionFromButton(btn):'';
-      if(action){
-        event.preventDefault();
-        event.stopPropagation();
-        if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
-        return;
-      }
+    const m=modal();
+    const btn=m&&event.target&&event.target.closest?event.target.closest('button'):null;
+    const action=btn&&m&&m.contains(btn)?actionFromButton(btn):'';
+    if(!action)return;
+
+    if(btn===lastPointerButton&&Date.now()-lastPointerAt<800){
+      event.preventDefault();
+      event.stopPropagation();
+      if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
+      return;
     }
     intercept(event);
   },true);
