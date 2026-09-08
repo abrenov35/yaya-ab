@@ -117,3 +117,13 @@
 
   install();
 })();
+
+// Dépenses chantier : affectation manuelle de stock consommé.
+(function(){
+  if(document.querySelector('script[data-yaya-stock-expense-loader-v1]'))return;
+  const s=document.createElement('script');
+  s.src='stock-expense-button.js?v=stockexpense-1';
+  s.async=false;
+  s.setAttribute('data-yaya-stock-expense-loader-v1','1');
+  document.head.appendChild(s);
+})();
