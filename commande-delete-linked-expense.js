@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-commande-linked-delete-style-v1';
+  const STYLE_ID='yaya-commande-linked-delete-style-v2';
 
   function esc(v){
     const d=document.createElement('div');
@@ -16,22 +16,56 @@
     s.textContent=`
       .yaya-linked-delete-overlay{
         position:fixed!important;inset:0!important;z-index:26000!important;
-        background:rgba(22,45,73,.48)!important;display:flex!important;
+        background:rgba(22,45,73,.58)!important;display:flex!important;
         align-items:center!important;justify-content:center!important;
         padding:16px!important;overflow:auto!important
       }
       .yaya-linked-delete-modal{
-        width:min(460px,100%)!important;max-height:calc(100vh - 32px)!important;
+        width:min(480px,100%)!important;max-height:calc(100vh - 32px)!important;
         overflow:auto!important;margin:auto!important;background:#fff!important;
         border-radius:14px!important;padding:20px!important;
-        box-shadow:0 18px 55px rgba(0,0,0,.28)!important
+        box-shadow:0 18px 55px rgba(0,0,0,.32)!important
       }
-      .yaya-linked-delete-modal h3{margin:0 0 12px!important;font-size:17px!important;color:#162d49!important}
+      .yaya-linked-delete-modal h3{margin:0 0 12px!important;font-size:18px!important;color:#162d49!important}
       .yaya-linked-delete-modal p{margin:0!important;font-size:14px!important;line-height:1.5!important;color:#334155!important}
+      .yaya-linked-delete-modal-linked{
+        border:3px solid #d97706!important;
+        background:#fffdf8!important;
+        box-shadow:0 22px 65px rgba(120,53,15,.32)!important
+      }
+      .yaya-linked-delete-modal-linked h3{
+        color:#9a3412!important;font-size:20px!important;font-weight:900!important;
+        margin-bottom:14px!important
+      }
+      .yaya-linked-delete-warning{
+        border:2px solid #f59e0b!important;background:#fff7ed!important;
+        border-radius:11px!important;padding:14px 15px!important;margin:0 0 16px!important
+      }
+      .yaya-linked-delete-warning-title{
+        display:block!important;margin:0 0 8px!important;color:#b42318!important;
+        font-size:15px!important;font-weight:900!important;letter-spacing:.02em!important
+      }
+      .yaya-linked-delete-warning strong{color:#7c2d12!important}
+      .yaya-linked-delete-choice-label{
+        display:block!important;margin-top:12px!important;padding-top:10px!important;
+        border-top:1px solid #fdba74!important;color:#7c2d12!important;
+        font-size:12px!important;font-weight:900!important;text-transform:uppercase!important
+      }
       .yaya-linked-delete-actions{display:flex!important;justify-content:flex-end!important;gap:10px!important;margin-top:18px!important;flex-wrap:wrap!important}
-      .yaya-linked-delete-actions button{min-height:42px!important;padding:9px 15px!important;border-radius:8px!important;font-weight:700!important;cursor:pointer!important}
-      .yaya-linked-delete-cancel,.yaya-linked-delete-keep{border:1px solid #cbd5e1!important;background:#fff!important;color:#334155!important}
-      .yaya-linked-delete-confirm{border:1px solid #b42318!important;background:#b42318!important;color:#fff!important;font-weight:800!important}
+      .yaya-linked-delete-actions button{min-height:44px!important;padding:10px 16px!important;border-radius:9px!important;font-weight:800!important;cursor:pointer!important}
+      .yaya-linked-delete-cancel,.yaya-linked-delete-keep{border:1px solid #b8c5d4!important;background:#f8fafc!important;color:#26364b!important}
+      .yaya-linked-delete-modal-linked .yaya-linked-delete-cancel{
+        border:2px solid #5b7fa3!important;background:#eef5fb!important;color:#173d63!important
+      }
+      .yaya-linked-delete-confirm{border:1px solid #b42318!important;background:#b42318!important;color:#fff!important;font-weight:900!important}
+      .yaya-linked-delete-modal-linked .yaya-linked-delete-confirm{
+        border:2px solid #b42318!important;background:#c5221f!important;color:#fff!important
+      }
+      @media(max-width:640px){
+        .yaya-linked-delete-modal{padding:17px!important}
+        .yaya-linked-delete-actions{display:grid!important;grid-template-columns:1fr!important}
+        .yaya-linked-delete-actions button{width:100%!important}
+      }
     `;
     document.head.appendChild(s);
   }
@@ -96,9 +130,10 @@
     return new Promise(function(resolve){
       const overlay=document.createElement('div');
       overlay.className='yaya-linked-delete-overlay';
-      overlay.innerHTML='<div class="yaya-linked-delete-modal" role="dialog" aria-modal="true">'
+      const linked=opts.variant==='linked';
+      overlay.innerHTML='<div class="yaya-linked-delete-modal'+(linked?' yaya-linked-delete-modal-linked':'')+'" role="dialog" aria-modal="true">'
         +'<h3>'+esc(opts.title||'Confirmation')+'</h3>'
-        +'<p>'+String(opts.html||'')+'</p>'
+        +(linked?'<div class="yaya-linked-delete-warning">'+String(opts.html||'')+'</div>':'<p>'+String(opts.html||'')+'</p>')
         +'<div class="yaya-linked-delete-actions">'
         +'<button type="button" class="yaya-linked-delete-cancel">'+esc(opts.cancelText||'Annuler')+'</button>'
         +'<button type="button" class="yaya-linked-delete-confirm">'+esc(opts.confirmText||'Confirmer')+'</button>'
@@ -128,23 +163,28 @@
     const commande=commandeById(id);
     if(!commande)return;
 
+    const lies=linkedExpenses(commande);
     const libelle=norm(commande.designation||commande.pieceNom||commande.fournisseur||'cette commande');
     const ok=await ask({
-      title:'Supprimer la commande ?',
-      html:'Confirmer la suppression de <b>« '+esc(libelle)+' »</b> ?',
+      title:lies.length?'1/2 — Supprimer la commande ?':'Supprimer la commande ?',
+      html:'Confirmer la suppression de <b>« '+esc(libelle)+' »</b> ?'+(lies.length?'<br><br><b>Une deuxième question concernera ensuite la dépense liée.</b>':''),
       cancelText:'Annuler',
-      confirmText:'Supprimer'
+      confirmText:'Supprimer la commande'
     });
     if(!ok)return;
 
-    const lies=linkedExpenses(commande);
     let supprimerDepense=false;
     if(lies.length){
       supprimerDepense=await ask({
-        title:'Supprimer aussi dans Dépenses ?',
-        html:'Cette commande a aussi été enregistrée dans <b>Dépenses</b> avec la même pièce. Voulez-vous supprimer également '+(lies.length>1?'les dépenses liées':'la dépense liée')+' ?',
-        cancelText:'Non, garder la dépense',
-        confirmText:'Oui, supprimer aussi'
+        variant:'linked',
+        title:'⚠️ 2/2 — DÉPENSE LIÉE',
+        html:'<span class="yaya-linked-delete-warning-title">ATTENTION : CE N’EST PAS UNE CONFIRMATION DE LA COMMANDE</span>'
+          +'<b>La commande sera supprimée dans tous les cas.</b><br><br>'
+          +'Cette commande existe aussi dans <b>Dépenses</b> avec la même pièce.<br>'
+          +'Voulez-vous conserver '+(lies.length>1?'les dépenses liées':'la dépense liée')+' ou '+(lies.length>1?'les supprimer aussi':'la supprimer aussi')+' ?'
+          +'<span class="yaya-linked-delete-choice-label">Choisissez maintenant ce qu’il faut faire dans Dépenses</span>',
+        cancelText:'GARDER LA DÉPENSE',
+        confirmText:'SUPPRIMER AUSSI LA DÉPENSE'
       });
     }
 
@@ -163,7 +203,7 @@
       saveCache();
       try{if(typeof render==='function')render();}catch(e){}
       try{window.dispatchEvent(new Event('yaya:data-refreshed'));}catch(e){}
-      try{if(typeof toast==='function')toast(supprimerDepense?'Commande et dépense supprimées ✓':'Commande supprimée ✓');}catch(e){}
+      try{if(typeof toast==='function')toast(supprimerDepense?'Commande et dépense supprimées ✓':'Commande supprimée — dépense conservée ✓');}catch(e){}
     }catch(err){
       alert('Suppression impossible : '+String(err&&err.message||err));
     }
