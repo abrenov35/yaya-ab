@@ -81,7 +81,7 @@ function yayaUpsertChantierExtranet_(data) {
       .map(function(v) { return String(v || '').trim(); });
 
     // Colonnes nécessaires à la synchro Extranet -> Yaya.
-    ['id', 'nom', 'montantDevisHT', 'montantMarcheHT', 'statut', 'dateDemarrage', 'dateSignature']
+    ['id', 'nom', 'montantDevisHT', 'montantMarcheHT', 'statut', 'dateDemarrage', 'dateSignature', 'origine']
       .forEach(function(header) {
         if (headers.indexOf(header) === -1) {
           headers.push(header);
@@ -116,6 +116,7 @@ function yayaUpsertChantierExtranet_(data) {
 
     existingValues[col.id] = id;
     existingValues[col.nom] = nom;
+    existingValues[col.origine] = 'EXTRANET';
 
     // À la création depuis l'Extranet, montant_ht devient le montant initial Yaya.
     // montantMarcheHT est également renseigné pour les vues/exports qui l'utilisent.
@@ -138,7 +139,8 @@ function yayaUpsertChantierExtranet_(data) {
     return {
       ok: true,
       id: id,
-      created: !existingRow
+      created: !existingRow,
+      origine: 'EXTRANET'
     };
   } finally {
     lock.releaseLock();
