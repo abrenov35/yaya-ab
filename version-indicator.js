@@ -159,3 +159,32 @@
   install();
   window.addEventListener('yaya:data-refreshed',install);
 })();
+
+// Gouvernance des chantiers : Extranet = source de référence, Yaya = anciens chantiers locaux + archivage.
+// Puis marque visuellement les anciens chantiers créés dans Yaya avec [yaya], sans modifier leur nom enregistré.
+(function(){
+  'use strict';
+
+  function loadOriginLabel(){
+    if(window.__yayaChantierOriginLabelV1||document.querySelector('script[data-yaya-chantier-origin-label-v1]'))return;
+    const l=document.createElement('script');
+    l.src='chantier-yaya-origin-label.js?v=origin-label-1-'+Date.now();
+    l.async=false;
+    l.setAttribute('data-yaya-chantier-origin-label-v1','1');
+    document.head.appendChild(l);
+  }
+
+  if(window.__yayaChantierExtranetGovernanceV1){
+    loadOriginLabel();
+    return;
+  }
+
+  if(document.querySelector('script[data-yaya-chantier-governance-v1]'))return;
+  const g=document.createElement('script');
+  g.src='chantier-extranet-governance.js?v=governance-1-'+Date.now();
+  g.async=false;
+  g.setAttribute('data-yaya-chantier-governance-v1','1');
+  g.onload=loadOriginLabel;
+  g.onerror=loadOriginLabel;
+  document.head.appendChild(g);
+})();
