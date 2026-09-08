@@ -164,3 +164,26 @@
   `;
   document.head.appendChild(style);
 })();
+
+// Fiche Dépenses : le type de pièce est déjà visible dans la pièce jointe.
+// On retire donc sa colonne de la liste pour donner plus de place à l'intitulé.
+(function(){
+  const id='yaya-depense-hide-type-column-v1';
+  if(document.getElementById(id))return;
+  const style=document.createElement('style');
+  style.id=id;
+  style.textContent=`
+    #pane-chantiers .yaya-detail-expense-row{
+      grid-template-columns:minmax(120px,1fr) 110px 28px!important;
+    }
+    #pane-chantiers .yaya-detail-expense-row > .yaya-detail-charge-hours{
+      display:none!important;
+    }
+    @media(max-width:640px){
+      #pane-chantiers .yaya-detail-expense-row{
+        grid-template-columns:minmax(90px,1fr) 88px 28px!important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
