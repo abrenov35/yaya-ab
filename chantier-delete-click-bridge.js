@@ -1,10 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDeleteChantierClickBridgeV1)return;
-  window.__yayaDeleteChantierClickBridgeV1=true;
-
-  let running=false;
+  if(window.__yayaDeleteChantierClickBridgeV2)return;
+  window.__yayaDeleteChantierClickBridgeV2=true;
 
   function idFromButton(btn){
     if(!btn)return '';
@@ -44,27 +42,25 @@
     if(!btn)return;
 
     const id=idFromButton(btn);
+    event.preventDefault();
+    event.stopPropagation();
+    if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
+
     if(!id){
       try{if(typeof window.toast==='function')window.toast('Chantier introuvable',true);}catch(e){}
       return;
     }
 
-    event.preventDefault();
-    event.stopPropagation();
-    if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
-
-    if(running)return;
     if(typeof window.deleteExistingChantier!=='function'){
       try{if(typeof window.toast==='function')window.toast('Suppression chantier indisponible',true);}catch(e){}
       return;
     }
 
-    running=true;
-    Promise.resolve(window.deleteExistingChantier(id))
-      .catch(function(err){
-        console.error('Suppression chantier :',err);
-        try{if(typeof window.toast==='function')window.toast('Suppression du chantier impossible',true);}catch(e){}
-      })
-      .finally(function(){running=false;});
+    // Aucun verrou local ici : la fonction de suppression gère elle-même
+    // les doubles clics. Cela évite qu'un ancien appel réseau bloque les clics suivants.
+    Promise.resolve(window.deleteExistingChantier(id)).catch(function(err){
+      console.error('Suppression chantier :',err);
+      try{if(typeof window.toast==='function')window.toast('Suppression du chantier impossible',true);}catch(e){}
+    });
   },true);
 })();
