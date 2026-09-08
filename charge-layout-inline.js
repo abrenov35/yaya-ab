@@ -39,7 +39,7 @@
         line-height:1.3!important;
         white-space:nowrap!important;
       }
-      #pane-chantiers .achligne.ligD.yaya-consumables-auto-row{
+      #pane-chantiers .yaya-consumables-auto-row{
         display:none!important;
       }
 
@@ -60,38 +60,88 @@
     document.head.appendChild(style);
   }
 
-  function achatFromRow(row){
-    try{
-      const action=Array.from(row.querySelectorAll('[onclick]')).map(function(el){
-        return String(el.getAttribute('onclick')||'');
-      }).join(' ');
-      const match=action.match(/(?:editAchat|editMontantAchat|delAchat)\(['\"]([^'\"]+)['\"]\)/);
-      if(!match||!match[1]||typeof S==='undefined'||!Array.isArray(S.achats))return null;
-      return S.achats.find(function(a){return String(a&&a.id||'')===String(match[1]);})||null;
-    }catch(e){return null;}
+  const TARGET='FORFAIT CONSOMMABLES';
+
+  function norm(value){
+    return String(value||'').replace(/\s+/g,' ').trim().toUpperCase();
   }
 
-  function isConsumablesRow(row){
-    if(!row)return false;
-    const text=String(row.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
-    if(text.indexOf('FORFAIT CONSOMMABLES')!==-1)return true;
-    const badge=row.querySelector('.badge');
-    if(badge&&String(badge.textContent||'').trim().toUpperCase()==='CONSOMMABLES')return true;
+  function achatById(id){
+    try{
+      if(typeof S==='undefined'||!Array.isArray(S.achats))return null;
+      return S.achats.find(function(a){
+        return String(a&&a.id||'')===String(id||'');
+      })||null;
+    }catch(e){
+      return null;
+    }
+  }
 
-    const achat=achatFromRow(row);
+  function isConsumableAchat(achat){
     if(!achat)return false;
-    return String(achat.origine||'').toUpperCase()==='CONSOMMABLES_AUTO' ||
-      String(achat.fournisseur||'').trim().toUpperCase()==='FORFAIT CONSOMMABLES' ||
-      String(achat.typeDoc||'').trim().toUpperCase()==='CONSOMMABLES';
+    return norm(achat.origine)==='CONSOMMABLES_AUTO' ||
+      norm(achat.fournisseur)===TARGET ||
+      norm(achat.typeDoc)==='CONSOMMABLES';
+  }
+
+  function achatIdFromElement(el){
+    if(!el)return '';
+    const code=String(el.getAttribute&&el.getAttribute('onclick')||'');
+    const match=code.match(/(?:editAchat|editMontantAchat|delAchat)\(['\"]([^'\"]+)['\"]\)/);
+    return match&&match[1]?String(match[1]):'';
+  }
+
+  function hasDeleteAction(el){
+    return !!(el&&el.querySelector&&el.querySelector('button[onclick*="delAchat"],[onclick*="delAchat"],button.x,.x'));
+  }
+
+  function rowFromElement(el){
+    if(!el)return null;
+
+    let current=el;
+    for(let i=0;i<8&&current&&current!==document.body;i++,current=current.parentElement){
+      if(hasDeleteAction(current))return current;
+    }
+
+    if(el.closest){
+      return el.closest('.achligne,.yaya-detail-expense-row,.yaya-detail-achat-row,[data-achat-id],[data-expense-id],tr,li');
+    }
+
+    return null;
+  }
+
+  function hideRow(row){
+    if(!row)return;
+    row.classList.add('yaya-consumables-auto-row');
+    row.style.setProperty('display','none','important');
+    row.setAttribute('aria-hidden','true');
+  }
+
+  function hideByStoredData(root){
+    root.querySelectorAll('[onclick*="editAchat"],[onclick*="editMontantAchat"],[onclick*="delAchat"]').forEach(function(el){
+      const id=achatIdFromElement(el);
+      if(!id||!isConsumableAchat(achatById(id)))return;
+      hideRow(rowFromElement(el));
+    });
+  }
+
+  function hideByVisibleText(root){
+    root.querySelectorAll('*').forEach(function(el){
+      const own=norm(el.textContent);
+      if(own.indexOf(TARGET)===-1)return;
+
+      // Ne masquer que la ligne métier contenant les actions de l'achat,
+      // jamais le bouton "Consommables : xx €" ni toute la fiche chantier.
+      const row=rowFromElement(el);
+      if(row)hideRow(row);
+    });
   }
 
   function hideConsumablesRows(){
-    document.querySelectorAll('#pane-chantiers .achligne.ligD').forEach(function(row){
-      if(!isConsumablesRow(row))return;
-      row.classList.add('yaya-consumables-auto-row');
-      row.style.setProperty('display','none','important');
-      row.setAttribute('aria-hidden','true');
-    });
+    const root=document.getElementById('pane-chantiers');
+    if(!root)return;
+    hideByStoredData(root);
+    hideByVisibleText(root);
   }
 
   let scheduled=false;
@@ -110,4 +160,7 @@
   }
   new MutationObserver(scheduleHide).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
   window.addEventListener('yaya:data-refreshed',scheduleHide);
+  setTimeout(scheduleHide,100);
+  setTimeout(scheduleHide,350);
+  setTimeout(scheduleHide,900);
 })();
