@@ -2,7 +2,7 @@
   'use strict';
 
   const DELETED='__YAYA_DEVIS_INITIAL_SUPPRIME__';
-  const STYLE_ID='yaya-market-initial-actions-v4';
+  const STYLE_ID='yaya-market-initial-actions-v5';
 
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
@@ -10,6 +10,8 @@
     style.textContent=`
       #pane-chantiers .yaya-initial-devis-delete{width:28px!important;height:28px!important;min-width:28px!important;padding:0!important;margin:0!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;border:1px solid #e6a7a7!important;border-radius:7px!important;background:#fff3f3!important;color:#c83c3c!important;box-shadow:0 1px 3px rgba(22,45,73,.14)!important;font-size:14px!important;line-height:1!important;cursor:pointer!important}
       #pane-chantiers .yaya-detail-market-row[data-yaya-initial-deleted="1"]{display:none!important}
+      #pane-chantiers .yaya-detail-section-tab[data-section="marche"] small[data-yaya-market-count]{font-size:0!important}
+      #pane-chantiers .yaya-detail-section-tab[data-section="marche"] small[data-yaya-market-count]::after{content:attr(data-yaya-market-count)!important;font-size:10.5px!important;font-weight:700!important;line-height:1!important}
       .yaya-devis-document-field{display:grid!important;gap:5px!important;margin-top:12px!important}
       .yaya-devis-document-label{color:#596579!important;font-size:11.5px!important;font-weight:750!important;letter-spacing:.015em!important}
       .yaya-devis-document-field .yaya-devis-fast-piece{margin-top:0!important;min-height:48px!important}
@@ -97,7 +99,10 @@
 
     const tab=card&&card.querySelector(':scope > .yaya-detail-section-tabs .yaya-detail-section-tab[data-section="marche"]');
     const count=tab&&tab.querySelector('small');
-    if(count&&count.textContent!==String(total))count.textContent=String(total);
+    if(count){
+      count.dataset.yayaMarketCount=String(total);
+      if(count.textContent!==String(total))count.textContent=String(total);
+    }
   }
 
   function confirmDelete(c){
