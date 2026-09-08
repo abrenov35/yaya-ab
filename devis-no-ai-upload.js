@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisNoAiUploadV8)return;
-  window.__yayaDevisNoAiUploadV8=true;
+  if(window.__yayaDevisNoAiUploadV9)return;
+  window.__yayaDevisNoAiUploadV9=true;
 
   let uploading=false;
   const nativeFetch=window.fetch.bind(window);
@@ -12,7 +12,7 @@
   const IMAGE_OPTIMIZE_FROM=650*1024;
   const IMAGE_MAX_SIDE=1800;
   const IMAGE_QUALITY=0.82;
-  const UPLOAD_TIMEOUT=25000;
+  const UPLOAD_TIMEOUT=40000;
 
   function apiUrl(){
     try{return typeof API!=='undefined'?API:'';}catch(e){return '';}
@@ -128,6 +128,7 @@
     try{
       const response=await nativeFetch(api,{
         method:'POST',
+        cache:'no-store',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
         body:JSON.stringify({
           action:action,
@@ -145,7 +146,7 @@
       try{json=await response.json();}catch(e){throw new Error('Réponse serveur invalide');}
       return json;
     }catch(e){
-      if(e&&e.name==='AbortError')throw new Error('Import interrompu après 25 secondes — réessaie');
+      if(e&&e.name==='AbortError')throw new Error('Import interrompu — réessaie');
       throw e;
     }finally{
       clearTimeout(timer);
@@ -156,15 +157,15 @@
     const base64=await readBase64(file);
     if(!base64)throw new Error('Document vide ou illisible');
 
-    // Utilise directement l'action déjà déployée et fonctionnelle.
-    // On ne tente plus archiverDevis avant : cette tentative pouvait bloquer
-    // la modale jusqu'au timeout lorsque le backend ne la gérait pas.
-    const json=await postPayload('extraireDevis',file,base64);
+    // Archivage direct sans analyse IA : même chemin que Documents et Commandes.
+    // L'ancien appel extraireDevis lançait un traitement inutile et pouvait dépasser 25 s.
+    const json=await postPayload('archiverDevis',file,base64);
 
     if(!json||!json.ok)throw new Error(String(json&&json.error||'Archivage impossible'));
     const data=json.data||{};
-    if(!data.lienDrive)throw new Error(data.archiveErreur||'Fichier non archivé');
-    return data.lienDrive;
+    const lien=String(data.lienDrive||data.lien||'').trim();
+    if(!lien)throw new Error(data.archiveErreur||'Fichier non archivé');
+    return lien;
   }
 
   async function persistLink(type,id,lien){
@@ -226,7 +227,7 @@
       }
 
       uploading=true;
-      emitState('start',type,id,'Import en cours');
+      emitState('start',type,id,'Import et archivage en cours');
 
       try{
         file=await optimizeFile(file);
@@ -256,14 +257,16 @@
   }
 
   function cleanAiLabels(root){
-    (root||document).querySelectorAll('.scan-zone,.scan-ok,#avEtat,#chEtat,#pj-zone').forEach(function(el){
+    (root||document).querySelectorAll('.scan-zone,.scan-ok,#avEtat,#chEtat,#pj-zone,.yaya-upload-progress-title,.yaya-upload-progress-sub').forEach(function(el){
       const text=String(el.textContent||'');
-      if(/scan ia|analyse ia|analyse du document|lecture ia/i.test(text)){
+      if(/scan ia|analyse ia|analyse du document|lecture ia|traitement et d.archivage/i.test(text)){
         el.innerHTML=el.innerHTML
-          .replace(/Scan IA en cours\.{0,3}/gi,'Chargement du document…')
-          .replace(/Analyse IA/gi,'Chargement')
-          .replace(/Analyse du document/gi,'Chargement du document')
-          .replace(/Lecture IA/gi,'Chargement');
+          .replace(/Scan IA en cours\.{0,3}/gi,'Import du document en cours…')
+          .replace(/Analyse IA/gi,'Import')
+          .replace(/Analyse du document en cours…?/gi,'Import du document en cours…')
+          .replace(/Analyse du document/gi,'Import du document')
+          .replace(/Lecture IA/gi,'Import')
+          .replace(/La pièce est en cours de traitement et d.archivage\.?/gi,'La pièce est en cours d’archivage.');
       }
     });
   }
