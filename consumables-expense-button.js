@@ -21,7 +21,8 @@
       #pane-chantiers .yaya-consumables-button:hover{background:#fdf0d7!important;border-color:#dcb66d!important}
       #pane-chantiers .yaya-consumables-button strong{font-size:11px!important;font-weight:800!important;white-space:nowrap!important}
       #pane-chantiers .achligne.ligD > span:nth-child(2){text-align:center!important;justify-self:stretch!important}
-      #pane-chantiers .achligne.ligD[data-yaya-consumables-hidden="1"]{display:none!important}
+      #pane-chantiers .achligne.ligD[data-yaya-consumables-hidden="1"],
+      #pane-chantiers .yaya-detail-expense-row[data-yaya-consumables-hidden="1"]{display:none!important}
       .yaya-consumables-overlay{position:fixed!important;inset:0!important;z-index:28000!important;background:rgba(22,45,73,.48)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:16px!important;overflow:auto!important}
       .yaya-consumables-modal{width:min(430px,100%)!important;background:#fff!important;border-radius:14px!important;padding:20px!important;box-shadow:0 18px 55px rgba(0,0,0,.28)!important;color:#162d49!important}
       .yaya-consumables-modal h3{margin:0 0 4px!important;font-size:18px!important}
@@ -146,11 +147,18 @@
   function updateButton(button,cid){const coeff=coefficientFor(cid);const amount=amountFor(cid,coeff);const signature=String(amount)+'|'+String(coeff);if(button.dataset.signature===signature)return;button.dataset.signature=signature;button.innerHTML='<strong>Consommables : '+esc(euro(amount))+'</strong>';button.title='Voir ou modifier les consommables — '+Number(coeff).toLocaleString('fr-FR',{minimumFractionDigits:1,maximumFractionDigits:1})+' €/h';}
 
   function hideConsumablesDetailRows(){
-    document.querySelectorAll('#pane-chantiers .achligne.ligD').forEach(row=>{
+    document.querySelectorAll('#pane-chantiers .achligne.ligD,#pane-chantiers .yaya-detail-expense-row').forEach(row=>{
       const text=String(row.textContent||'').replace(/\s+/g,' ').trim().toUpperCase();
       const isConsumables=text.includes(FOURNISSEUR)||text.startsWith(TYPE.toUpperCase()+' ');
-      if(isConsumables)row.setAttribute('data-yaya-consumables-hidden','1');
-      else row.removeAttribute('data-yaya-consumables-hidden');
+      if(isConsumables){
+        row.setAttribute('data-yaya-consumables-hidden','1');
+        row.style.setProperty('display','none','important');
+        row.setAttribute('aria-hidden','true');
+      }else if(row.getAttribute('data-yaya-consumables-hidden')==='1'){
+        row.removeAttribute('data-yaya-consumables-hidden');
+        row.style.removeProperty('display');
+        row.removeAttribute('aria-hidden');
+      }
     });
   }
 
