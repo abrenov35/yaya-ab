@@ -88,4 +88,12 @@
       raf=requestAnimationFrame(function(){raf=0;apply();});
     }).observe(root,{childList:true,subtree:true});
   }
+
+  if(!document.querySelector('script[data-yaya-charge-delete-direct]')){
+    const s=document.createElement('script');
+    s.src='charge-delete-direct.js?v=chargedel-direct-1';
+    s.async=false;
+    s.setAttribute('data-yaya-charge-delete-direct','1');
+    document.head.appendChild(s);
+  }
 })();
