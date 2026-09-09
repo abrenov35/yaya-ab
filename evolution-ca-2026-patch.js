@@ -150,3 +150,55 @@
   setTimeout(rafraichir,400);
   setTimeout(rafraichir,1400);
 })();
+
+/*
+  2026 est une base de départ : aucune signature 2025 ne doit intervenir
+  dans les montants, cumuls, comparaisons ou échelles de la page 2026.
+*/
+(function(){
+  'use strict';
+  if(window.__yayaEvolution2026YearIsolationV1)return;
+
+  function install(){
+    if(typeof window.renderEvolution!=='function'){
+      setTimeout(install,120);
+      return;
+    }
+    if(window.renderEvolution.__yayaEvolution2026YearIsolationV1)return;
+
+    const original=window.renderEvolution;
+
+    function signatureYear(c){
+      const direct=String(c&&c.dateSignature||'').trim().match(/^(\d{4})-/);
+      if(direct)return Number(direct[1]);
+      const legacy=String(c&&c.notes||'').match(/\[\[YAYA_SIG:(\d{4})-/);
+      return legacy?Number(legacy[1]):null;
+    }
+
+    const wrapped=function(){
+      let year=null;
+      try{year=typeof anneeEvolution!=='undefined'?Number(anneeEvolution):null;}catch(e){}
+      if(year!==2026||typeof S==='undefined'||!S||!Array.isArray(S.chantiers)){
+        return original.apply(this,arguments);
+      }
+
+      const all=S.chantiers;
+      S.chantiers=all.filter(function(c){
+        const y=signatureYear(c);
+        return y===null||y>=2026;
+      });
+
+      try{
+        return original.apply(this,arguments);
+      }finally{
+        S.chantiers=all;
+      }
+    };
+
+    wrapped.__yayaEvolution2026YearIsolationV1=true;
+    window.renderEvolution=wrapped;
+    window.__yayaEvolution2026YearIsolationV1=true;
+  }
+
+  install();
+})();
