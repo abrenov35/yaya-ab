@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierEditModalSimpleV2)return;
-  window.__yayaChantierEditModalSimpleV2=true;
+  if(window.__yayaChantierEditModalSimpleV3)return;
+  window.__yayaChantierEditModalSimpleV3=true;
 
-  const STYLE_ID='yaya-chantier-edit-modal-simple-v2';
+  const STYLE_ID='yaya-chantier-edit-modal-simple-v3';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -41,12 +41,10 @@
 
   function removeForbiddenFields(modal){
     if(!modal)return;
-    ['editChDemarrage','editChMarcheHT'].forEach(function(id){
-      const input=modal.querySelector('#'+id);
-      const label=input&&input.closest('label');
-      if(label)label.remove();
-      else if(input)input.remove();
-    });
+    const input=modal.querySelector('#editChDemarrage');
+    const label=input&&input.closest('label');
+    if(label)label.remove();
+    else if(input)input.remove();
   }
 
   function simplify(){
@@ -74,7 +72,8 @@
       const nom=document.getElementById('editChNom');
       const sigMonth=document.getElementById('editChSignatureMonth');
       const sigYear=document.getElementById('editChSignatureYear');
-      if(!nom||!sigMonth||!sigYear)return;
+      const mt=document.getElementById('editChMarcheHT');
+      if(!nom||!sigMonth||!sigYear||!mt)return;
 
       const name=String(nom.value||'').trim();
       if(!name){
@@ -89,11 +88,20 @@
         return;
       }
 
+      const brut=String(mt.value||'0').trim().replace(/\s/g,'').replace(',','.');
+      const montant=Number(brut||0);
+      if(!Number.isFinite(montant)||montant<0){
+        try{toast('Chiffre d’affaires HT invalide',true);}catch(e){}
+        mt.focus();
+        return;
+      }
+
       const signature=(sigMonth.value&&sigYear.value)?String(sigYear.value)+'-'+String(sigMonth.value):'';
 
-      // Seuls ces deux champs sont modifiables, quelle que soit l'origine du chantier.
+      // Chantier créé dans Yaya : nom, Signé le et CA HT sont modifiables.
       c.nom=name;
       c.dateSignature=signature;
+      c.montantMarcheHT=montant;
 
       const btn=document.getElementById('editChSave');
       if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
