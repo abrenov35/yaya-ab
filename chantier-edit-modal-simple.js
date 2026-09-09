@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierEditModalSimpleV1)return;
-  window.__yayaChantierEditModalSimpleV1=true;
+  if(window.__yayaChantierEditModalSimpleV2)return;
+  window.__yayaChantierEditModalSimpleV2=true;
 
-  const STYLE_ID='yaya-chantier-edit-modal-simple-v1';
+  const STYLE_ID='yaya-chantier-edit-modal-simple-v2';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -39,6 +39,16 @@
     if(!done)h5.insertBefore(document.createTextNode('Modifier le chantier'),h5.firstChild||null);
   }
 
+  function removeForbiddenFields(modal){
+    if(!modal)return;
+    ['editChDemarrage','editChMarcheHT'].forEach(function(id){
+      const input=modal.querySelector('#'+id);
+      const label=input&&input.closest('label');
+      if(label)label.remove();
+      else if(input)input.remove();
+    });
+  }
+
   function simplify(){
     installStyle();
     const modal=document.querySelector('#modalRoot .yaya-chantier-edit-modal');
@@ -47,11 +57,64 @@
     modal.querySelectorAll('.yaya-manage-selector,.yaya-extranet-note,.yaya-manage-edit-title').forEach(function(el){
       el.remove();
     });
+    removeForbiddenFields(modal);
     setTitle(modal);
+  }
+
+  function getChantier(cid){
+    try{return Array.isArray(S&&S.chantiers)?S.chantiers.find(function(c){return String(c&&c.id)===String(cid);})||null:null;}
+    catch(e){return null;}
+  }
+
+  function installRestrictedSave(){
+    window.saveExistingChantier=async function(cid){
+      const c=getChantier(cid);
+      if(!c)return;
+
+      const nom=document.getElementById('editChNom');
+      const sigMonth=document.getElementById('editChSignatureMonth');
+      const sigYear=document.getElementById('editChSignatureYear');
+      if(!nom||!sigMonth||!sigYear)return;
+
+      const name=String(nom.value||'').trim();
+      if(!name){
+        try{toast('Indique le nom du chantier',true);}catch(e){}
+        nom.focus();
+        return;
+      }
+
+      if((sigMonth.value&&!sigYear.value)||(!sigMonth.value&&sigYear.value)){
+        try{toast('Choisis le mois et l’année de signature',true);}catch(e){}
+        (sigMonth.value?sigYear:sigMonth).focus();
+        return;
+      }
+
+      const signature=(sigMonth.value&&sigYear.value)?String(sigYear.value)+'-'+String(sigMonth.value):'';
+
+      // Seuls ces deux champs sont modifiables, quelle que soit l'origine du chantier.
+      c.nom=name;
+      c.dateSignature=signature;
+
+      const btn=document.getElementById('editChSave');
+      if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
+
+      let ok=false;
+      try{ok=await apiPost('setChantiers',S.chantiers);}catch(e){ok=false;}
+
+      if(ok){
+        try{closeModal();}catch(e){}
+        try{render();}catch(e){}
+        try{toast('Chantier mis à jour ✓');}catch(e){}
+      }else if(btn){
+        btn.disabled=false;
+        btn.textContent='Enregistrer';
+      }
+    };
   }
 
   function install(){
     installStyle();
+    installRestrictedSave();
     simplify();
     const root=document.getElementById('modalRoot');
     if(!root){setTimeout(install,120);return;}
