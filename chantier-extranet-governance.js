@@ -1,18 +1,21 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierExtranetGovernanceV2)return;
+  if(window.__yayaChantierExtranetGovernanceV3)return;
+  window.__yayaChantierExtranetGovernanceV3=true;
   window.__yayaChantierExtranetGovernanceV2=true;
-  // Compatibilité avec chantier-manage-current-only.js
   window.__yayaChantierExtranetGovernanceV1=true;
 
-  const STYLE_ID='yaya-chantier-extranet-governance-v2';
+  const STYLE_ID='yaya-chantier-extranet-governance-v3';
   const originalOpenExisting=window.openExistingChantierModal;
   const originalDeleteExisting=window.deleteExistingChantier;
   const originalDelChantier=window.delChantier;
 
   function toastSafe(message,isError){
-    try{if(typeof window.toast==='function')window.toast(message,!!isError);else console.log(message);}catch(e){}
+    try{
+      if(typeof window.toast==='function')window.toast(message,!!isError);
+      else console.log(message);
+    }catch(e){}
   }
 
   function esc(v){
@@ -63,7 +66,6 @@
       .yaya-governance-overlay{display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;box-sizing:border-box!important;overflow:auto!important}
       .yaya-governance-modal{max-width:520px!important;margin:auto!important;position:relative!important;max-height:calc(100dvh - 36px)!important;overflow:auto!important}
       .yaya-governance-info{margin:14px 0;padding:12px 13px;border:1px solid #cbd7e6;border-radius:10px;background:#f7faff;color:#29496d;font-size:12px;line-height:1.45}
-      .yaya-governance-warning{margin:14px 0;padding:12px 13px;border:1px solid #efc27a;border-radius:10px;background:#fff8e8;color:#7a4a00;font-size:12px;line-height:1.5}
       .yaya-governance-fields{display:grid;gap:12px;margin-top:16px}
       .yaya-governance-fields label{display:grid;gap:5px;font-size:12px;font-weight:700;color:#162d49}
       .yaya-governance-signature{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,.9fr);gap:8px}
@@ -75,8 +77,7 @@
   }
 
   function signatureParts(v){
-    const s=String(v||'').trim();
-    const m=s.match(/^(\d{4})-(\d{2})/);
+    const m=String(v||'').trim().match(/^(\d{4})-(\d{2})/);
     return m?{year:m[1],month:m[2]}:{year:'',month:''};
   }
 
@@ -138,44 +139,47 @@
       return;
     }
     const signature=(month.value&&year.value)?String(year.value)+'-'+String(month.value):'';
+    const current=byId(id);
+    if(!current){toastSafe('Chantier introuvable',true);return;}
+
+    const oldName=String(current.nom||'');
+    const oldSignature=String(current.dateSignature||'');
+    const next=list().map(function(c){return Object.assign({},c);});
+    const target=byId(id,next);
+    if(!target){toastSafe('Chantier introuvable',true);return;}
+    target.nom=name;
+    target.dateSignature=signature;
 
     if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
 
     try{
-      let base=null;
-      try{
-        if(typeof apiGet==='function')base=await apiGet(true);
-      }catch(e){}
-      const freshList=base&&Array.isArray(base.chantiers)?base.chantiers.slice():list().slice();
-      const target=byId(id,freshList);
-      if(!target)throw new Error('chantier introuvable');
-
-      // Règle : seuls ces deux champs peuvent être modifiés dans Yaya.
-      target.nom=name;
-      target.dateSignature=signature;
-
-      const ok=typeof apiPost==='function'?await apiPost('setChantiers',freshList):false;
+      // Une seule écriture : la sécurité globale de Yaya fait déjà la relecture/validation serveur.
+      // On évite ici les deux apiGet supplémentaires qui bloquaient inutilement la modale.
+      const ok=typeof window.apiPost==='function'
+        ?await window.apiPost('setChantiers',next)
+        :false;
       if(!ok)throw new Error('enregistrement refusé');
 
-      try{
-        const refreshed=typeof apiGet==='function'?await apiGet(true):null;
-        if(refreshed&&Array.isArray(refreshed.chantiers)){
-          S=refreshed;
-          try{localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(refreshed));}catch(e){}
-        }else{
-          S.chantiers=freshList;
-        }
-      }catch(e){
-        S.chantiers=freshList;
+      const saved=byId(id);
+      if(saved){
+        saved.nom=name;
+        saved.dateSignature=signature;
+      }else if(typeof S!=='undefined'&&S){
+        S.chantiers=next;
       }
+      try{localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(S));}catch(e){}
 
       closeModalSafe();
       try{if(typeof render==='function')render();}catch(e){}
       toastSafe('Nom et Signé le enregistrés ✓');
-      try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
     }catch(err){
+      const local=byId(id);
+      if(local){local.nom=oldName;local.dateSignature=oldSignature;}
       toastSafe('Modification impossible : '+String(err&&err.message||err),true);
-      if(btn&&document.contains(btn)){btn.disabled=false;btn.textContent='Enregistrer';}
+      if(btn&&document.contains(btn)){
+        btn.disabled=false;
+        btn.textContent='Enregistrer';
+      }
     }
   }
 
@@ -202,7 +206,6 @@
     if(save)save.onclick=function(){saveNameAndSignature(id);};
     const arch=document.getElementById('yayaGovArchiveCurrent');
     if(arch)arch.onclick=function(){archive(id);};
-    setTimeout(function(){try{document.getElementById('yayaGovNom')?.focus();}catch(e){}},0);
   }
 
   function showManageModal(){
@@ -210,7 +213,7 @@
     r.innerHTML='<div class="overlay yaya-governance-overlay" onclick="if(event.target===this)closeModal()">'
       +'<div class="modal yaya-governance-modal">'
       +'<h5>Gérer les chantiers<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
-      +'<div class="yaya-governance-info">Ouvre la fiche du chantier concerné puis clique sur <b>Gérer chantier</b>. Seuls <b>Nom du chantier</b> et <b>Signé le</b> sont modifiables.</div>'
+      +'<div class="yaya-governance-info">Ouvre la fiche du chantier concerné puis clique sur <b>Gérer chantier</b>.</div>'
       +'<div class="mfoot" style="justify-content:flex-end"><button type="button" class="btn2" onclick="closeModal()">Fermer</button></div>'
       +'</div></div>';
   }
@@ -222,7 +225,6 @@
     if(typeof originalOpenExisting==='function')originalOpenExisting(id);
   };
 
-  // Un chantier Extranet reste non supprimable depuis Yaya.
   window.deleteExistingChantier=function(id){
     id=String(id||'').trim();
     if(isExtranet(id)){
@@ -243,15 +245,5 @@
 
   window.openChantierModal=function(){showManageModal();};
 
-  function syncToolbar(){
-    const btn=document.getElementById('yayaCreateChantierBtn');
-    if(!btn)return;
-    btn.textContent='🛠️ Gérer chantier';
-    btn.title='Modifier uniquement le nom et Signé le';
-    btn.setAttribute('aria-label','Gérer le chantier');
-  }
-
   installStyle();
-  syncToolbar();
-  setInterval(syncToolbar,1200);
 })();
