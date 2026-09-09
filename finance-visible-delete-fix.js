@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceVisibleDeleteFixV2)return;
-  window.__yayaFinanceVisibleDeleteFixV2=true;
+  if(window.__yayaFinanceVisibleDeleteFixV3)return;
+  window.__yayaFinanceVisibleDeleteFixV3=true;
 
   const pending=new Set();
 
@@ -62,14 +62,18 @@
     return /sous[-\s]?trait/i.test(String(a&&a.typeDoc||'')) || txt(a&&a.sousTraitant)!=='';
   }
   function resolveServerId(list,row,domId,isExpense){
-    const cid=chantierIdFromRow(row);
-    const exact=(list||[]).find(function(a){
-      if(String(a&&a.id||'')!==String(domId||''))return false;
-      if(cid&&String(a&&a.chantierId||'')!==cid)return false;
-      return true;
-    });
-    if(exact)return String(exact.id||'');
+    // L'ID d'une écriture achat/charge est unique dans le Sheet.
+    // On le privilégie toujours, sans dépendre de l'ID chantier trouvé dans la carte.
+    // Cela évite les faux échecs sur les chantiers issus de l'Extranet (ex. C455).
+    const wantedId=String(domId||'').trim();
+    if(wantedId){
+      const exact=(list||[]).find(function(a){
+        return String(a&&a.id||'')===wantedId;
+      });
+      if(exact)return String(exact.id||'');
+    }
 
+    const cid=chantierIdFromRow(row);
     const amount=amountFromRow(row);
     const rowText=norm(row&&row.textContent||'');
     const candidates=(list||[]).filter(function(a){
