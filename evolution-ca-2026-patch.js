@@ -114,11 +114,6 @@
 
     doc.sujet=JSON.stringify(valeurs);
 
-    /*
-      Protection contre une lecture réseau déjà lancée avant l'enregistrement.
-      Sans cela, l'ancien snapshot pouvait être réappliqué juste après fermeture
-      de la modale et donner l'impression que la modification s'annulait.
-    */
     ecrireShadow(valeurs);
     sauverCache();
 
@@ -151,43 +146,53 @@
   setTimeout(rafraichir,1400);
 })();
 
-/*
-  2026 est une base de départ : aucune signature 2025 ne doit intervenir
-  dans les montants, cumuls, comparaisons ou échelles de la page 2026.
-*/
+/* Une seule date de signature est utilisée pour le CA : la correction Yaya
+   [[YAYA_SIG:AAAA-MM]] est prioritaire sur l'ancienne date venue de l'Extranet. */
 (function(){
   'use strict';
-  if(window.__yayaEvolution2026YearIsolationV1)return;
+  if(window.__yayaEvolutionSignaturePriorityV2)return;
 
   function install(){
     if(typeof window.renderEvolution!=='function'){
       setTimeout(install,120);
       return;
     }
-    if(window.renderEvolution.__yayaEvolution2026YearIsolationV1)return;
+    if(window.renderEvolution.__yayaEvolutionSignaturePriorityV2)return;
 
     const original=window.renderEvolution;
 
-    function signatureYear(c){
-      const direct=String(c&&c.dateSignature||'').trim().match(/^(\d{4})-/);
-      if(direct)return Number(direct[1]);
-      const legacy=String(c&&c.notes||'').match(/\[\[YAYA_SIG:(\d{4})-/);
-      return legacy?Number(legacy[1]):null;
+    function signatureCanonique(c){
+      const marker=String(c&&c.notes||'').match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
+      if(marker&&marker[1])return marker[1];
+      const direct=String(c&&c.dateSignature||'').trim().match(/^(\d{4}-\d{2})/);
+      return direct&&direct[1]?direct[1]:'';
     }
 
     const wrapped=function(){
-      let year=null;
-      try{year=typeof anneeEvolution!=='undefined'?Number(anneeEvolution):null;}catch(e){}
-      if(year!==2026||typeof S==='undefined'||!S||!Array.isArray(S.chantiers)){
+      if(typeof S==='undefined'||!S||!Array.isArray(S.chantiers)){
         return original.apply(this,arguments);
       }
 
+      let year=null;
+      try{year=typeof anneeEvolution!=='undefined'?Number(anneeEvolution):null;}catch(e){}
+
       const all=S.chantiers;
-      S.chantiers=all.filter(function(c){
-        const y=signatureYear(c);
-        return y===null||y>=2026;
+      let calcul=all.map(function(c){
+        const copie=Object.assign({},c);
+        const sig=signatureCanonique(copie);
+        if(sig)copie.dateSignature=sig;
+        return copie;
       });
 
+      if(year===2026){
+        calcul=calcul.filter(function(c){
+          const sig=signatureCanonique(c);
+          const m=sig.match(/^(\d{4})-/);
+          return !m||Number(m[1])>=2026;
+        });
+      }
+
+      S.chantiers=calcul;
       try{
         return original.apply(this,arguments);
       }finally{
@@ -195,9 +200,9 @@
       }
     };
 
-    wrapped.__yayaEvolution2026YearIsolationV1=true;
+    wrapped.__yayaEvolutionSignaturePriorityV2=true;
     window.renderEvolution=wrapped;
-    window.__yayaEvolution2026YearIsolationV1=true;
+    window.__yayaEvolutionSignaturePriorityV2=true;
   }
 
   install();
