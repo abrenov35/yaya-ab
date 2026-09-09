@@ -1,12 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierExtranetGovernanceV3)return;
+  if(window.__yayaChantierExtranetGovernanceV4)return;
+  window.__yayaChantierExtranetGovernanceV4=true;
   window.__yayaChantierExtranetGovernanceV3=true;
   window.__yayaChantierExtranetGovernanceV2=true;
   window.__yayaChantierExtranetGovernanceV1=true;
 
-  const STYLE_ID='yaya-chantier-extranet-governance-v3';
+  const STYLE_ID='yaya-chantier-extranet-governance-v4';
   const originalOpenExisting=window.openExistingChantierModal;
   const originalDeleteExisting=window.deleteExistingChantier;
   const originalDelChantier=window.delChantier;
@@ -51,11 +52,10 @@
 
   function root(){return document.getElementById('modalRoot');}
 
-  function closeModalSafe(){
-    try{
-      if(typeof window.closeModal==='function')window.closeModal();
-      else{const r=root();if(r)r.innerHTML='';}
-    }catch(e){const r=root();if(r)r.innerHTML='';}
+  function forceCloseModal(){
+    const r=root();
+    try{if(typeof window.closeModal==='function')window.closeModal();}catch(e){}
+    if(r)r.innerHTML='';
   }
 
   function installStyle(){
@@ -123,12 +123,11 @@
     }
   }
 
-  async function saveNameAndSignature(id){
+  function saveNameAndSignature(id){
     id=String(id||'').trim();
     const nom=document.getElementById('yayaGovNom');
     const month=document.getElementById('yayaGovSigMonth');
     const year=document.getElementById('yayaGovSigYear');
-    const btn=document.getElementById('yayaGovSave');
     if(!nom||!month||!year)return;
 
     const name=String(nom.value||'').trim();
@@ -138,6 +137,7 @@
       (month.value?year:month).focus();
       return;
     }
+
     const signature=(month.value&&year.value)?String(year.value)+'-'+String(month.value):'';
     const current=byId(id);
     if(!current){toastSafe('Chantier introuvable',true);return;}
@@ -147,40 +147,34 @@
     const next=list().map(function(c){return Object.assign({},c);});
     const target=byId(id,next);
     if(!target){toastSafe('Chantier introuvable',true);return;}
+
     target.nom=name;
     target.dateSignature=signature;
 
-    if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
+    // Mise à jour locale immédiate puis fermeture immédiate de la modale.
+    current.nom=name;
+    current.dateSignature=signature;
+    forceCloseModal();
+    try{if(typeof render==='function')render();}catch(e){}
+    toastSafe('Enregistrement en cours…');
 
-    try{
-      // Une seule écriture : la sécurité globale de Yaya fait déjà la relecture/validation serveur.
-      // On évite ici les deux apiGet supplémentaires qui bloquaient inutilement la modale.
-      const ok=typeof window.apiPost==='function'
-        ?await window.apiPost('setChantiers',next)
-        :false;
+    // L'écriture serveur continue après fermeture de la modale.
+    Promise.resolve().then(function(){
+      if(typeof window.apiPost!=='function')return false;
+      return window.apiPost('setChantiers',next);
+    }).then(function(ok){
       if(!ok)throw new Error('enregistrement refusé');
-
-      const saved=byId(id);
-      if(saved){
-        saved.nom=name;
-        saved.dateSignature=signature;
-      }else if(typeof S!=='undefined'&&S){
-        S.chantiers=next;
-      }
       try{localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(S));}catch(e){}
-
-      closeModalSafe();
-      try{if(typeof render==='function')render();}catch(e){}
       toastSafe('Nom et Signé le enregistrés ✓');
-    }catch(err){
+    }).catch(function(err){
       const local=byId(id);
-      if(local){local.nom=oldName;local.dateSignature=oldSignature;}
-      toastSafe('Modification impossible : '+String(err&&err.message||err),true);
-      if(btn&&document.contains(btn)){
-        btn.disabled=false;
-        btn.textContent='Enregistrer';
+      if(local){
+        local.nom=oldName;
+        local.dateSignature=oldSignature;
       }
-    }
+      try{if(typeof render==='function')render();}catch(e){}
+      toastSafe('Modification impossible : '+String(err&&err.message||err),true);
+    });
   }
 
   function showExtranetModal(id){
