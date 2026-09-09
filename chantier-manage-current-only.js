@@ -109,3 +109,102 @@
   s.setAttribute('data-yaya-consumables-auto-row-hide-v1','1');
   document.head.appendChild(s);
 })();
+
+/* Extranet : évite la double relecture réseau qui pouvait laisser Enregistrer bloqué. */
+(function(){
+  'use strict';
+  if(window.__yayaExtranetSaveUnblockV1)return;
+  window.__yayaExtranetSaveUnblockV1=true;
+
+  function chantierList(){
+    try{return Array.isArray(S&&S.chantiers)?S.chantiers:[];}catch(e){return [];}
+  }
+
+  function isExtranet(c){
+    const id=String(c&&c.id||'').trim();
+    const origine=String(c&&c.origine||c&&c.source||'').trim().toUpperCase();
+    return origine==='EXTRANET'||/^C\d+$/i.test(id);
+  }
+
+  function currentId(){
+    try{
+      const raw=(typeof focusChantier!=='undefined')?focusChantier:'';
+      const id=(raw&&typeof raw==='object'&&raw.id!=null)?raw.id:raw;
+      const s=String(id||'').trim();
+      const c=chantierList().find(function(x){return String(x&&x.id)===s;});
+      if(c&&isExtranet(c))return s;
+    }catch(e){}
+
+    const nomEl=document.getElementById('yayaGovNom');
+    const nom=String(nomEl&&nomEl.value||'').trim();
+    if(!nom)return '';
+    const matches=chantierList().filter(function(c){
+      return isExtranet(c)&&String(c&&c.nom||'').trim()===nom;
+    });
+    return matches.length===1?String(matches[0].id):'';
+  }
+
+  function toastSafe(msg,err){
+    try{if(typeof toast==='function')toast(msg,!!err);}catch(e){}
+  }
+
+  async function saveFast(btn){
+    const id=currentId();
+    if(!id)return false;
+
+    const nomEl=document.getElementById('yayaGovNom');
+    const month=document.getElementById('yayaGovSigMonth');
+    const year=document.getElementById('yayaGovSigYear');
+    if(!nomEl||!month||!year)return false;
+
+    const nom=String(nomEl.value||'').trim();
+    if(!nom){toastSafe('Indique le nom du chantier',true);nomEl.focus();return true;}
+    if((month.value&&!year.value)||(!month.value&&year.value)){
+      toastSafe('Choisis le mois et l’année de signature',true);
+      (month.value?year:month).focus();
+      return true;
+    }
+
+    const signature=(month.value&&year.value)?String(year.value)+'-'+String(month.value):'';
+    const before=chantierList().map(function(c){return c&&typeof c==='object'?Object.assign({},c):c;});
+    const working=before.map(function(c){return c&&typeof c==='object'?Object.assign({},c):c;});
+    const target=working.find(function(c){return String(c&&c.id)===id;});
+    if(!target){toastSafe('Chantier introuvable',true);return true;}
+
+    target.nom=nom;
+    target.dateSignature=signature;
+
+    btn.disabled=true;
+    btn.textContent='Enregistrement…';
+
+    try{
+      S.chantiers=working;
+      const ok=await apiPost('setChantiers',working);
+      if(!ok)throw new Error('enregistrement refusé');
+      try{if(typeof closeModal==='function')closeModal();}catch(e){}
+      try{if(typeof render==='function')render();}catch(e){}
+      toastSafe('Nom et Signé le enregistrés ✓',false);
+      return true;
+    }catch(err){
+      S.chantiers=before;
+      try{if(typeof render==='function')render();}catch(e){}
+      if(document.contains(btn)){
+        btn.disabled=false;
+        btn.textContent='Enregistrer';
+      }
+      toastSafe('Modification impossible : '+String(err&&err.message||err),true);
+      return true;
+    }
+  }
+
+  document.addEventListener('click',function(e){
+    const btn=e.target&&e.target.closest?e.target.closest('#yayaGovSave'):null;
+    if(!btn)return;
+    const id=currentId();
+    if(!id)return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
+    saveFast(btn);
+  },true);
+})();
