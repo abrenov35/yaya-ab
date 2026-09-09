@@ -1,12 +1,13 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierOriginLabelV3)return;
+  if(window.__yayaChantierOriginLabelV4)return;
+  window.__yayaChantierOriginLabelV4=true;
   window.__yayaChantierOriginLabelV3=true;
 
   const MARK_TEXT='► [yaya]';
   const MARK=' '+MARK_TEXT;
-  const STYLE_ID='yaya-origin-label-style-v3';
+  const STYLE_ID='yaya-origin-label-style-v4';
   const MARK_CLASS='yaya-origin-label-mark';
   let scheduled=false;
 
@@ -24,7 +25,11 @@
   }
 
   function chantiers(){
-    try{return Array.isArray(S&&S.chantiers)?S.chantiers.filter(function(c){return c&&c.id&&!String(c.id).startsWith('__');}):[];}catch(e){return [];}
+    try{
+      return Array.isArray(S&&S.chantiers)
+        ?S.chantiers.filter(function(c){return c&&c.id&&!String(c.id).startsWith('__');})
+        :[];
+    }catch(e){return [];}
   }
 
   function isExtranet(c){
@@ -65,6 +70,19 @@
     frag.appendChild(mark);
     if(trail)frag.appendChild(document.createTextNode(trail));
     node.parentNode.replaceChild(frag,node);
+  }
+
+  function removeWrongMark(root,c){
+    if(!root||!c||!isExtranet(c))return;
+    const base=cleanName(c.nom||'');
+    root.querySelectorAll('.'+MARK_CLASS).forEach(function(mark){
+      const prev=mark.previousSibling;
+      const prevText=prev&&prev.nodeType===Node.TEXT_NODE?cleanName(prev.nodeValue||''):'';
+      if(!base||prevText===base){
+        if(prev&&prev.nodeType===Node.TEXT_NODE)prev.nodeValue=String(prev.nodeValue||'').replace(/\s+$/,'');
+        mark.remove();
+      }
+    });
   }
 
   function setElementName(el,c){
@@ -125,7 +143,9 @@
     document.querySelectorAll('#pane-chantiers .card').forEach(function(card){
       const id=cardChantierId(card);
       const c=id?byId(id):null;
-      if(c)replaceExactName(card,c);
+      if(!c)return;
+      if(isExtranet(c))removeWrongMark(card,c);
+      else replaceExactName(card,c);
     });
   }
 
@@ -155,22 +175,37 @@
   function decoratePaneByName(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
-    const locals=chantiers().filter(function(c){return !isExtranet(c);});
+
+    const all=chantiers();
+    const extranetNames=new Set(
+      all.filter(isExtranet).map(function(c){return cleanName(c.nom||'');}).filter(Boolean)
+    );
+    const locals=all.filter(function(c){return !isExtranet(c);});
     const map=new Map();
+
     locals.forEach(function(c){
       const name=cleanName(c.nom||'');
-      if(name&&!map.has(name))map.set(name,c);
+      if(name&&!extranetNames.has(name)&&!map.has(name))map.set(name,c);
     });
     if(!map.size)return;
+
     const walker=document.createTreeWalker(pane,NodeFilter.SHOW_TEXT,{
       acceptNode:function(node){
         const parent=node&&node.parentElement;
         if(!parent||parent.closest('script,style,option,input,textarea'))return NodeFilter.FILTER_REJECT;
         if(hasAdjacentMark(node))return NodeFilter.FILTER_REJECT;
+
+        const card=parent.closest('.card');
+        if(card){
+          const id=cardChantierId(card);
+          if(id&&byId(id))return NodeFilter.FILTER_REJECT;
+        }
+
         const text=String(node.nodeValue||'').trim();
         return map.has(text)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;
       }
     });
+
     const nodes=[];
     while(walker.nextNode())nodes.push(walker.currentNode);
     nodes.forEach(function(node){
