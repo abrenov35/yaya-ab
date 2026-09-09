@@ -10,9 +10,23 @@
     return false;
   }
 
+  function isExpenseContext(node){
+    const el=node&&node.parentElement;
+    return !!(el&&el.closest&&el.closest('.yaya-detail-expense-row'));
+  }
+
   function fixTextNode(node){
     if(!node||node.nodeType!==3)return;
     const v=String(node.nodeValue||'');
+
+    // Dépense saisie avec un montant HT négatif :
+    // Yaya ajoute déjà le signe de la dépense, ce qui produisait "--11 €".
+    // On conserve la valeur négative pour les calculs et on corrige uniquement l'affichage.
+    if(isExpenseContext(node) && /-\s*-\s*\d[\d\s.,]*\s*€/.test(v)){
+      node.nodeValue=v.replace(/-\s*-\s*(\d[\d\s.,]*\s*€)/g,'$1');
+      return;
+    }
+
     if(!/-\s*\d[\d\s.,]*\s*€/.test(v))return;
     if(!isAvoirContext(node))return;
     node.nodeValue=v.replace(/-\s*(\d[\d\s.,]*\s*€)/g,'+ $1');
