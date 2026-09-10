@@ -27,7 +27,8 @@
     'mtlmue3aefv2':'C462',       // HERVOUET -> HERVOUET - GANCHE #2
     'planning-28':'C463',        // MANINI -> MANINI - SCI YZOTERRA #2
     'mrrui7k8nrtg':'C464',       // LE GUEN -> LE GUEN #2
-    'mthmmenk2njd':'C465'        // STANUS -> STANUS / HIVE #2
+    'mthmmenk2njd':'C465',       // STANUS -> STANUS / HIVE #2
+    'mrsvjujxia59':'C466'        // MVONDO -> MVONDO - NDONGO #2
   });
 
   const ARRAY_ACTIONS=new Set([
