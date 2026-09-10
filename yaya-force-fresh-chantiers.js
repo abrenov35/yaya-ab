@@ -1,204 +1,85 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFreshChantiersInstalled)return;
+  /*
+   * Ce fichier remplace l'ancien rafraîchissement forcé des chantiers.
+   * yaya-auto-refresh.js est désormais le seul rafraîchissement périodique.
+   * Ici on garde seulement deux protections légères :
+   * - signaler une écriture en cours pour éviter qu'un refresh l'écrase visuellement ;
+   * - remettre dateSignature depuis [[YAYA_SIG:AAAA-MM]] quand l'API renvoie la
+   *   signature historique uniquement dans notes.
+   */
+  if(window.__yayaRefreshCoordinatorV1Installed)return;
+  window.__yayaRefreshCoordinatorV1Installed=true;
   window.__yayaFreshChantiersInstalled=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
-  const MIN_GAP_MS=45000;
-  const PERIODIC_MS=300000;
 
-  let busy=false;
-  let lastRun=0;
-  let pendingTimer=0;
-
-  function key(value){
-    return String(value||'')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g,'')
-      .toUpperCase()
-      .replace(/[^A-Z0-9]+/g,' ')
-      .trim();
+  function signatureFromNotes(notes){
+    const m=String(notes==null?'':notes).match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
+    return m&&m[1]?m[1]:'';
   }
 
-  function fixDate(value){
-    const s=String(value||'');
-    if(!s)return '';
-    if(s.includes('T')){
+  function normalizeSignatures(){
+    try{
+      if(typeof S==='undefined'||!S||!Array.isArray(S.chantiers))return false;
+      let changed=false;
+      S.chantiers.forEach(function(c){
+        if(!c)return;
+        if(String(c.dateSignature||'').trim())return;
+        const sig=signatureFromNotes(c.notes);
+        if(!sig)return;
+        c.dateSignature=sig;
+        changed=true;
+      });
+      if(changed){
+        try{localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));}catch(e){}
+      }
+      return changed;
+    }catch(e){return false;}
+  }
+
+  function normalizeAndRender(){
+    const changed=normalizeSignatures();
+    if(changed){
+      try{if(typeof render==='function')render();}catch(e){}
+    }
+  }
+
+  window.yayaNormalizeChantierSignatures=normalizeSignatures;
+
+  function installWriteCoordinator(){
+    if(typeof window.apiPost!=='function'){
+      setTimeout(installWriteCoordinator,120);
+      return;
+    }
+    if(window.apiPost.__yayaWriteCoordinatorV1)return;
+
+    const original=window.apiPost;
+
+    async function coordinatedApiPost(action,data){
+      window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
       try{
-        const d=new Date(s);
-        d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
-        return d.toISOString().slice(0,10);
-      }catch(e){return s.slice(0,10);}
-    }
-    return s.slice(0,10);
-  }
-
-  function preservePlanning(fresh,current){
-    fresh=Array.isArray(fresh)?fresh:[];
-    current=Array.isArray(current)?current:[];
-
-    const byId=new Map(current.map(function(c){
-      return [String(c&&c.id||''),c];
-    }));
-    const byName=new Map();
-
-    current.forEach(function(c){
-      const k=key(c&&c.nom);
-      if(k&&!byName.has(k))byName.set(k,c);
-    });
-
-    fresh.forEach(function(c){
-      const previous=
-        byId.get(String(c&&c.id||'')) ||
-        byName.get(key(c&&c.nom));
-
-      if(!previous)return;
-      if(!c.dateSignature&&previous.dateSignature)c.dateSignature=previous.dateSignature;
-      if(!c.sourcePlanningId&&previous.sourcePlanningId)c.sourcePlanningId=previous.sourcePlanningId;
-      if(!c.planningNom&&previous.planningNom)c.planningNom=previous.planningNom;
-      if(c.planningPresent==null&&previous.planningPresent!=null)c.planningPresent=previous.planningPresent;
-    });
-
-    return fresh;
-  }
-
-  function safeToApply(){
-    if(document.hidden)return false;
-    if(window.yayaHoursPending)return false;
-
-    const root=document.getElementById('modalRoot');
-    if(root&&root.children&&root.children.length)return false;
-
-    const active=document.activeElement;
-    if(active&&/^(INPUT|TEXTAREA|SELECT)$/i.test(active.tagName||''))return false;
-
-    return true;
-  }
-
-  function saveCache(){
-    try{
-      if(typeof S!=='undefined'&&S&&typeof S==='object'){
-        localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));
-        if(window.__yayaCache&&typeof window.__yayaCache.write==='function'){
-          window.__yayaCache.write(S,null);
-        }
+        return await original(action,data);
+      }finally{
+        window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+        window.__yayaLastWriteAt=Date.now();
+        setTimeout(normalizeAndRender,0);
       }
-    }catch(e){}
-  }
-
-  function applyFresh(data){
-    if(!data||!Array.isArray(data.chantiers))return;
-
-    let current=[];
-    try{current=Array.isArray(S&&S.chantiers)?S.chantiers:[];}catch(e){}
-
-    const fresh=preservePlanning(data.chantiers,current);
-    fresh.forEach(function(c){
-      c.montantDevisHT=Number(c.montantDevisHT)||0;
-    });
-
-    const freshAvenants=Array.isArray(data.avenants)
-      ?data.avenants.map(function(v){
-        const row=Object.assign({},v||{});
-        row.montantHT=Number(row.montantHT)||0;
-        row.date=fixDate(row.date);
-        return row;
-      })
-      :null;
-
-    try{
-      S.chantiers=fresh;
-      if(freshAvenants)S.avenants=freshAvenants;
-      saveCache();
-      if(typeof render==='function')render();
-      try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
-    }catch(e){
-      console.warn('Rafraichissement chantiers/devis ignore :',e);
     }
+
+    coordinatedApiPost.__yayaWriteCoordinatorV1=true;
+    coordinatedApiPost.__yayaWrappedApiPost=original;
+    window.apiPost=coordinatedApiPost;
   }
 
-  function queueApply(data){
-    clearTimeout(pendingTimer);
+  installWriteCoordinator();
 
-    const run=function(){
-      if(!safeToApply()){
-        pendingTimer=setTimeout(run,900);
-        return;
-      }
-      applyFresh(data);
-    };
+  window.addEventListener('yaya:data-refreshed',function(){
+    requestAnimationFrame(normalizeAndRender);
+  });
 
-    run();
-  }
-
-  function apiUrl(){
-    try{return typeof API!=='undefined'?String(API||''):'';}catch(e){return '';}
-  }
-
-  async function directRead(){
-    const api=apiUrl();
-    if(!api)throw new Error('API Yaya indisponible');
-
-    const sep=api.includes('?')?'&':'?';
-    const url=api+sep+'tabs=chantiers%2Cavenants&_yaya_fresh='+Date.now();
-    const ctrl=new AbortController();
-    const timer=setTimeout(function(){ctrl.abort();},18000);
-
-    try{
-      const r=await fetch(url,{method:'GET',cache:'no-store',signal:ctrl.signal});
-      const text=await r.text();
-      const json=JSON.parse(text);
-      if(!json||json.ok!==true)throw new Error(json&&json.error?json.error:'Réponse Yaya invalide');
-      const data=json.data||{};
-      if(!Array.isArray(data.chantiers))throw new Error('Liste chantiers absente');
-      return data;
-    }finally{
-      clearTimeout(timer);
-    }
-  }
-
-  async function refresh(force){
-    const now=Date.now();
-    if(busy)return;
-    if(!force&&now-lastRun<MIN_GAP_MS)return;
-
-    busy=true;
-    lastRun=now;
-
-    try{
-      let fresh;
-      try{
-        fresh=await directRead();
-      }catch(directErr){
-        if(typeof apiGet!=='function')throw directErr;
-        fresh=await apiGet(true);
-      }
-      queueApply(fresh);
-    }catch(e){
-      console.warn('Lecture reseau chantiers/devis impossible :',e);
-    }finally{
-      busy=false;
-    }
-  }
-
-  function start(){
-    setTimeout(function(){refresh(true);},500);
-
-    document.addEventListener('visibilitychange',function(){
-      if(!document.hidden)setTimeout(function(){refresh(false);},400);
-    });
-
-    window.addEventListener('focus',function(){
-      setTimeout(function(){refresh(false);},400);
-    });
-
-    setInterval(function(){refresh(false);},PERIODIC_MS);
-  }
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',start,{once:true});
-  }else{
-    start();
-  }
+  [100,500,1500].forEach(function(ms){
+    setTimeout(normalizeAndRender,ms);
+  });
 })();
