@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaExternalReturnRefreshV3Installed)return;
+  if(window.__yayaExternalReturnRefreshV4Installed)return;
+  window.__yayaExternalReturnRefreshV4Installed=true;
   window.__yayaExternalReturnRefreshV3Installed=true;
   window.__yayaExternalReturnRefreshInstalled=true;
 
@@ -85,10 +86,17 @@
     }
 
     busy=true;
+    const readStartedAt=Date.now();
     try{
       const fresh=normalizeFresh(await apiGet(true));
       if(seq!==burstSeq||!fresh||typeof fresh!=='object')return;
       if(Number(window.__yayaWriteInFlight||0)>0)return;
+      if(Number(window.__yayaLastWriteAt||0)>readStartedAt){
+        if((deferred||0)<MAX_DEFERRED_RETRIES){
+          timers.push(setTimeout(function(){refreshNow(seq,(deferred||0)+1);},WRITE_COOLDOWN_MS));
+        }
+        return;
+      }
 
       const x=window.scrollX||0;
       const y=window.scrollY||0;
@@ -123,10 +131,7 @@
     if(absence>=MIN_HIDDEN_MS)scheduleBurst();
   });
 
-  /*
-   * Fallback uniquement si visibilitychange n'a pas traité le retour.
-   * Un simple clic/focus dans Yaya ne déclenche plus quatre lectures complètes.
-   */
+  /* Fallback seulement si visibilitychange n'a pas traité le retour. */
   window.addEventListener('focus',function(){
     if(document.hidden||!hiddenAt)return;
     const absence=Date.now()-hiddenAt;
