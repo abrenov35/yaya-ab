@@ -137,7 +137,7 @@
     fresh.forEach(function(c){
       const previous=byId.get(String(c.id||''))||byName.get(chantierKey(c.nom));
       if(!previous)return;
-      if(!c.dateSignature&&previous.dateSignature)c.dateSignature=previous.dateSignature;
+      // La signature appartient à la base : ne jamais la ressusciter depuis un cache local.
       if(!c.sourcePlanningId&&previous.sourcePlanningId)c.sourcePlanningId=previous.sourcePlanningId;
       if(!c.planningNom&&previous.planningNom)c.planningNom=previous.planningNom;
       if(c.planningPresent==null&&previous.planningPresent!=null)c.planningPresent=previous.planningPresent;
@@ -204,6 +204,8 @@
 
     const lastWrite=Number(window.__yayaLastWriteAt||0);
     if(lastWrite&&pendingFetchedAt&&lastWrite>pendingFetchedAt){
+      // Une écriture locale est plus récente que la lecture : jeter le delta,
+      // mais NE PAS avancer lastMeta. Le prochain contrôle le redemandera.
       clearPending();
       setTimeout(function(){smartCheck(true);},500);
       return;
@@ -222,6 +224,7 @@
 
     try{
       S=next;
+      if(metaForCache&&metaForCache.tabs)lastMeta=metaForCache;
       if(typeof render==='function')render();
       saveCache(next,metaForCache);
       requestAnimationFrame(function(){try{window.scrollTo(x,y);}catch(e){}});
@@ -317,7 +320,7 @@
       const deltaUrl=api+sep+'tabs='+encodeURIComponent(changed.join(','))+'&_yaya_delta='+Date.now();
       const deltaJson=await getJson(deltaUrl);
       const nextMeta=deltaJson.meta&&deltaJson.meta.tabs?deltaJson.meta:metaJson.meta;
-      lastMeta=nextMeta;
+      // lastMeta n'avance qu'après application effective du delta.
       if(deltaJson.data&&typeof deltaJson.data==='object'){
         queuePartial(deltaJson.data,nextMeta,deltaStartedAt);
       }
@@ -334,6 +337,9 @@
       busy=false;
     }
   }
+
+  // Point d'entrée unique pour les retours d'app externe : évite un second moteur de synchro.
+  window.yayaSmartRefreshNow=function(){return smartCheck(true);};
 
   function install(){
     if(typeof render!=='function'||typeof apiGet!=='function'){
