@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-global-button-soft-theme-v1';
+  const id='yaya-global-button-soft-theme-v2';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -21,6 +21,11 @@
       --yaya-btn-orange-border:#f0d2af;
       --yaya-btn-red:#fff0f0;
       --yaya-btn-red-border:#efc7c7;
+    }
+
+    /* Gérer chantier reste uniquement dans la fiche chantier. */
+    #yayaCreateChantierBtn{
+      display:none!important;
     }
 
     button,
