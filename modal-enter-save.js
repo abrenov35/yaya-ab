@@ -54,18 +54,9 @@
     const modal=topModal();
     if(!modal)return;
 
-    // Bloc-note chantier : Entrée = Enregistrer. Maj+Entrée conserve un retour à la ligne.
-    if(target && target.closest && target.closest('.yaya-note-modal-textarea')){
-      if(e.shiftKey)return;
-      const btn=saveButton(modal);
-      if(!btn)return;
-      const label=String(btn.textContent||btn.value||'').trim();
-      if(/supprim|effac|archiv/i.test(label))return;
-      e.preventDefault();
-      e.stopPropagation();
-      btn.click();
-      return;
-    }
+    // Bloc-note chantier uniquement : Entrée garde son comportement natif = retour à la ligne.
+    // L'enregistrement se fait avec le bouton Enregistrer.
+    if(target && target.closest && target.closest('.yaya-note-modal-textarea'))return;
 
     if(e.shiftKey)return;
 
