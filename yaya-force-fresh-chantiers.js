@@ -29,7 +29,8 @@
     'mrrui7k8nrtg':'C464',
     'mthmmenk2njd':'C465',
     'mrsvjujxia59':'C466',
-    'mtovzolwurte':'C468'
+    'mtovzolwurte':'C468',
+    'mrrum5gnhn92':'C469'
   });
 
   const ARRAY_ACTIONS=new Set([
@@ -181,7 +182,7 @@
         try{
           return await original(action,frozenData);
         }finally{
-          window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+          window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1;
           window.__yayaLastWriteAt=Date.now();
           setTimeout(normalizeAndRender,0);
         }
