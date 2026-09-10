@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-chantier-toolbar-style-v4';
+  const id='yaya-chantier-toolbar-style-v5';
   if(document.getElementById(id))return;
   const style=document.createElement('style');
   style.id=id;
@@ -87,6 +87,41 @@
     #pane-chantiers .chantier-fin-toolbar > button:active{
       transform:translateY(1px)!important;
     }
+
+    /* Le bouton de gestion appartient à la fiche chantier lorsqu'elle est ouverte. */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
+      display:flex!important;
+      align-items:center!important;
+      flex-wrap:wrap!important;
+    }
+    #yayaManageChantierCardBtn{
+      margin-left:auto!important;
+      min-height:34px!important;
+      height:34px!important;
+      padding:0 13px!important;
+      display:inline-flex!important;
+      align-items:center!important;
+      justify-content:center!important;
+      gap:6px!important;
+      border:1px solid #9eb6d5!important;
+      border-radius:8px!important;
+      background:#eef4fb!important;
+      color:#184f86!important;
+      font-size:11.5px!important;
+      font-weight:750!important;
+      line-height:1!important;
+      white-space:nowrap!important;
+      box-shadow:none!important;
+      cursor:pointer!important;
+    }
+    #yayaManageChantierCardBtn:hover{
+      background:#e2edf9!important;
+      border-color:#83a4cb!important;
+    }
+    #yayaManageChantierCardBtn:active{
+      transform:translateY(1px)!important;
+    }
+
     @media(max-width:640px){
       #pane-chantiers .chantier-fin-toolbar{
         display:grid!important;
@@ -103,6 +138,13 @@
       #pane-chantiers .chantier-fin-toolbar > .yaya-edit-chantier-btn{
         margin-left:0!important;
       }
+      #yayaManageChantierCardBtn{
+        margin-left:0!important;
+        min-height:32px!important;
+        height:32px!important;
+        padding:0 10px!important;
+        font-size:10.5px!important;
+      }
     }
   `;
   document.head.appendChild(style);
@@ -114,4 +156,73 @@
     theme.dataset.yayaGlobalButtonTheme='1';
     document.head.appendChild(theme);
   }
+
+  let syncPending=false;
+
+  function openedDetailCard(){
+    return document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');
+  }
+
+  function syncManageButtonIntoCard(){
+    syncPending=false;
+    const card=openedDetailCard();
+    const original=document.getElementById('yayaCreateChantierBtn');
+    const existing=document.getElementById('yayaManageChantierCardBtn');
+
+    if(!card){
+      if(existing)existing.remove();
+      if(original)original.style.removeProperty('display');
+      return;
+    }
+
+    const top=card.querySelector(':scope > .top');
+    if(!top)return;
+
+    if(original)original.style.setProperty('display','none','important');
+
+    let btn=existing;
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.id='yayaManageChantierCardBtn';
+      btn.textContent='🛠️ Gérer chantier';
+      btn.title='Gérer ce chantier';
+      btn.setAttribute('aria-label','Gérer chantier');
+      btn.addEventListener('click',function(event){
+        event.preventDefault();
+        event.stopPropagation();
+        const source=document.getElementById('yayaCreateChantierBtn');
+        if(source){
+          source.click();
+          return;
+        }
+        try{
+          const cid=String(typeof focusChantier!=='undefined'?focusChantier:'').trim();
+          if(cid&&typeof window.openExistingChantierModal==='function')window.openExistingChantierModal(cid);
+          else if(typeof window.openChantierModal==='function')window.openChantierModal();
+        }catch(e){}
+      });
+    }
+
+    if(btn.parentNode!==top)top.appendChild(btn);
+  }
+
+  function scheduleSync(){
+    if(syncPending)return;
+    syncPending=true;
+    requestAnimationFrame(syncManageButtonIntoCard);
+  }
+
+  function installManageButtonObserver(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane){setTimeout(installManageButtonObserver,120);return;}
+    if(pane.dataset.yayaManageButtonCardObserved!=='1'){
+      pane.dataset.yayaManageButtonCardObserved='1';
+      new MutationObserver(scheduleSync).observe(pane,{childList:true,subtree:true});
+    }
+    scheduleSync();
+  }
+
+  installManageButtonObserver();
+  [200,700,1600].forEach(function(ms){setTimeout(scheduleSync,ms);});
 })();
