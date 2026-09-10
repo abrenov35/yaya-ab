@@ -109,3 +109,14 @@
   s.setAttribute('data-yaya-consumables-auto-row-hide-v1','1');
   document.head.appendChild(s);
 })();
+
+/* Recherche chantier : inclut les archives automatiquement sans ouvrir le bloc manuellement. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-search-archives-v1]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-search-archives.js?v=search-archives-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-search-archives-v1','1');
+  document.head.appendChild(s);
+})();
