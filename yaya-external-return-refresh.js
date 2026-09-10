@@ -154,3 +154,15 @@
     if(absence>=MIN_HIDDEN_MS)scheduleBurst();
   });
 })();
+
+/* Sécurité : même si une édition manuelle du Sheet n'a pas incrémenté la
+   révision, Yaya effectue une réconciliation complète mais très espacée. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-manual-sheet-reconcile-v1]'))return;
+  const s=document.createElement('script');
+  s.src='yaya-manual-sheet-reconcile.js?v=sheet-reconcile-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-manual-sheet-reconcile-v1','1');
+  document.head.appendChild(s);
+})();
