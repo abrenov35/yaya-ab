@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierManageCurrentOnlyV1)return;
+  if(window.__yayaChantierManageCurrentOnlyV2)return;
+  window.__yayaChantierManageCurrentOnlyV2=true;
   window.__yayaChantierManageCurrentOnlyV1=true;
 
   const STYLE_ID='yaya-manage-current-only-style';
@@ -87,7 +88,7 @@
     };
 
     syncButton();
-    setInterval(syncButton,700);
+    window.addEventListener('focus',syncButton,{passive:true});
 
     const header=document.querySelector('.hdr');
     if(header){
@@ -104,7 +105,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-consumables-auto-row-hide-v1]'))return;
   const s=document.createElement('script');
-  s.src='consumables-auto-row-hide.js?v=auto-row-hide-1-'+Date.now();
+  s.src='consumables-auto-row-hide.js?v=auto-row-hide-1';
   s.async=false;
   s.setAttribute('data-yaya-consumables-auto-row-hide-v1','1');
   document.head.appendChild(s);
@@ -115,7 +116,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-search-archives-v1]'))return;
   const s=document.createElement('script');
-  s.src='chantier-search-archives.js?v=search-archives-1-'+Date.now();
+  s.src='chantier-search-archives.js?v=search-archives-1';
   s.async=false;
   s.setAttribute('data-yaya-search-archives-v1','1');
   document.head.appendChild(s);
@@ -126,7 +127,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-achats-label-v1]'))return;
   const s=document.createElement('script');
-  s.src='chantier-achats-label.js?v=achats-label-1-'+Date.now();
+  s.src='chantier-achats-label.js?v=achats-label-1';
   s.async=false;
   s.setAttribute('data-yaya-achats-label-v1','1');
   document.head.appendChild(s);
