@@ -78,3 +78,15 @@
   observer.observe(document.documentElement,{childList:true,subtree:true});
   scan();
 })();
+
+/* Correctif concurrence achats : charge une protection qui empêche un ancien état
+   local de réécrire tout l'onglet achats et d'effacer une pièce arrivée de Yaya Mail. */
+(function(){
+  'use strict';
+  if(window.__yayaAchatsConcurrencyLoaderV1)return;
+  window.__yayaAchatsConcurrencyLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='achats-concurrency-guard.js?v=concurrency-1';
+  s.async=false;
+  document.head.appendChild(s);
+})();
