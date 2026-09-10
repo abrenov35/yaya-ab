@@ -6,12 +6,16 @@
    - ?mode=meta : renvoyer uniquement les versions des rubriques.
    - ?tabs=chantiers,documents : lire uniquement les rubriques demandées.
    - aucune relecture complète de toutes les feuilles pour un simple contrôle.
+   - une modification manuelle dans le Google Sheet incrémente aussi la
+     révision de la rubrique afin que Yaya la voie sans fermer/réouvrir l'app.
 
    IMPORTANT
    1) Remplacer le doGet(e) actuel par celui de ce fichier.
    2) Ajouter l'appel yayaTouchAction_(a) dans doPost(e), juste AVANT
       le return ContentService.createTextOutput(...) de succès.
-   3) Redéployer une nouvelle version du Web App en gardant la même URL /exec.
+   3) Conserver la fonction onEdit(e) ci-dessous dans le projet lié au Sheet.
+      Pour onEdit seul, une sauvegarde du projet suffit : pas de redéploiement.
+   4) Si doGet/doPost sont modifiés, redéployer le Web App avec la même URL /exec.
 ========================================================= */
 
 const YAYA_REV_GLOBAL_KEY_ = "YAYA_REV_GLOBAL";
@@ -89,6 +93,21 @@ function yayaTabsAction_(action) {
 
 function yayaTouchAction_(action) {
   yayaTouchTabs_(yayaTabsAction_(action));
+}
+
+// Modification MANUELLE du Google Sheet : touche uniquement la rubrique éditée.
+// Les écritures faites par Yaya passent déjà par doPost et ne déclenchent pas
+// ce simple trigger, ce qui évite une double incrémentation inutile.
+function onEdit(e) {
+  try {
+    const range = e && e.range;
+    const sheet = range && range.getSheet();
+    const name = sheet && sheet.getName();
+    if (!name || !TABS[name]) return;
+    yayaTouchTabs_([name]);
+  } catch (err) {
+    console.warn("Yaya onEdit ignoré : " + String(err));
+  }
 }
 
 
