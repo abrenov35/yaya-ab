@@ -1,13 +1,16 @@
 (function(){
   'use strict';
 
-  if(window.__yayaExternalReturnRefreshInstalled)return;
+  if(window.__yayaExternalReturnRefreshV3Installed)return;
+  window.__yayaExternalReturnRefreshV3Installed=true;
   window.__yayaExternalReturnRefreshInstalled=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
-  const BURST_DELAYS=[650,2200,5500,10000];
+  const BURST_DELAYS=[1600,6500];
   const RETRY_IF_BUSY_MS=900;
-  const MAX_DEFERRED_RETRIES=12;
+  const MAX_DEFERRED_RETRIES=10;
+  const MIN_HIDDEN_MS=1000;
+  const WRITE_COOLDOWN_MS=1400;
 
   let hiddenAt=0;
   let busy=false;
@@ -19,9 +22,41 @@
     timers=[];
   }
 
+  function signatureFromNotes(notes){
+    const m=String(notes==null?'':notes).match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
+    return m&&m[1]?m[1]:'';
+  }
+
+  function normalizeFresh(fresh){
+    if(!fresh||typeof fresh!=='object')return fresh;
+    if(Array.isArray(fresh.chantiers)){
+      let current=[];
+      try{current=Array.isArray(S&&S.chantiers)?S.chantiers:[];}catch(e){}
+      const byId=new Map(current.map(function(c){return [String(c&&c.id||''),c];}));
+
+      fresh.chantiers.forEach(function(c){
+        if(!c)return;
+        const previous=byId.get(String(c.id||''));
+        const direct=String(c.dateSignature||'').trim();
+        const marker=signatureFromNotes(c.notes);
+        if(!direct&&marker)c.dateSignature=marker;
+        else if(!direct&&previous&&previous.dateSignature)c.dateSignature=previous.dateSignature;
+
+        if(previous){
+          if(!c.sourcePlanningId&&previous.sourcePlanningId)c.sourcePlanningId=previous.sourcePlanningId;
+          if(!c.planningNom&&previous.planningNom)c.planningNom=previous.planningNom;
+          if(c.planningPresent==null&&previous.planningPresent!=null)c.planningPresent=previous.planningPresent;
+        }
+      });
+    }
+    return fresh;
+  }
+
   function canApply(){
     if(document.hidden)return false;
     if(window.yayaHoursPending)return false;
+    if(Number(window.__yayaWriteInFlight||0)>0)return false;
+    if(Date.now()-Number(window.__yayaLastWriteAt||0)<WRITE_COOLDOWN_MS)return false;
     if(document.body&&document.body.classList.contains('yaya-fiche-inter-open'))return false;
 
     const root=document.getElementById('modalRoot');
@@ -51,11 +86,9 @@
 
     busy=true;
     try{
-      // Lecture réseau complète volontaire : le Gmail Add-on peut terminer son écriture
-      // quelques secondes après le retour de l'utilisateur dans Yaya. Le burst ci-dessus
-      // relit donc plusieurs fois la source de vérité au lieu de supposer que 550 ms suffisent.
-      const fresh=await apiGet(true);
+      const fresh=normalizeFresh(await apiGet(true));
       if(seq!==burstSeq||!fresh||typeof fresh!=='object')return;
+      if(Number(window.__yayaWriteInFlight||0)>0)return;
 
       const x=window.scrollX||0;
       const y=window.scrollY||0;
@@ -65,7 +98,7 @@
       try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{source:'external-return'}}));}catch(e){}
       requestAnimationFrame(function(){try{window.scrollTo(x,y);}catch(e){}});
     }catch(e){
-      console.warn('Actualisation retour Gmail ignorée :',e);
+      console.warn('Actualisation retour externe ignorée :',e);
     }finally{
       busy=false;
     }
@@ -87,13 +120,17 @@
 
     const absence=hiddenAt?Date.now()-hiddenAt:0;
     hiddenAt=0;
-    if(absence>300)scheduleBurst();
+    if(absence>=MIN_HIDDEN_MS)scheduleBurst();
   });
 
-  // Certains navigateurs déclenchent focus sans visibilitychange fiable.
-  // Un burst est donc aussi armé au focus, mais les timers précédents sont remplacés.
+  /*
+   * Fallback uniquement si visibilitychange n'a pas traité le retour.
+   * Un simple clic/focus dans Yaya ne déclenche plus quatre lectures complètes.
+   */
   window.addEventListener('focus',function(){
-    if(document.hidden)return;
-    scheduleBurst();
+    if(document.hidden||!hiddenAt)return;
+    const absence=Date.now()-hiddenAt;
+    hiddenAt=0;
+    if(absence>=MIN_HIDDEN_MS)scheduleBurst();
   });
 })();
