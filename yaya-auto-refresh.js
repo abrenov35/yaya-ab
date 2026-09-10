@@ -9,6 +9,7 @@
   const FALLBACK_FULL_INTERVAL_MS=MOBILE?900000:600000;
   const START_GRACE_MS=window.__yayaCachedBoot?350:2500;
   const APPLY_IDLE_MS=2200;
+  const WRITE_COOLDOWN_MS=1400;
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   const CACHE_META_KEY='YAYA_CACHE_META_V2';
 
@@ -59,11 +60,22 @@
     return s.slice(0,10);
   }
 
+  function signatureFromNotes(notes){
+    const m=String(notes==null?'':notes).match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
+    return m&&m[1]?m[1]:'';
+  }
+
   function normalizeTab(name,value){
     const rows=Array.isArray(value)?value:[];
 
     if(name==='chantiers'){
-      rows.forEach(function(c){c.montantDevisHT=Number(c.montantDevisHT)||0;});
+      rows.forEach(function(c){
+        c.montantDevisHT=Number(c.montantDevisHT)||0;
+        if(!String(c.dateSignature||'').trim()){
+          const sig=signatureFromNotes(c.notes);
+          if(sig)c.dateSignature=sig;
+        }
+      });
     }else if(name==='salaries'){
       rows.forEach(function(s){
         s.heuresContrat=Number(s.heuresContrat)||0;
@@ -158,6 +170,8 @@
     if(loaderVisible())return false;
     if(Date.now()-lastInteraction<APPLY_IDLE_MS)return false;
     if(window.yayaHoursPending)return false;
+    if(Number(window.__yayaWriteInFlight||0)>0)return false;
+    if(Date.now()-Number(window.__yayaLastWriteAt||0)<WRITE_COOLDOWN_MS)return false;
     if(modalOpen()||editing())return false;
     if(document.body.classList.contains('yaya-fiche-inter-open'))return false;
     return true;
