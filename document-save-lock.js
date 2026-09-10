@@ -162,7 +162,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-modal-outside-lock="1"]'))return;
   const s=document.createElement('script');
-  s.src='modal-outside-click-lock.js?v=outside-lock-'+Date.now();
+  s.src='modal-outside-click-lock.js?v=outside-lock-1';
   s.async=false;
   s.setAttribute('data-yaya-modal-outside-lock','1');
   document.head.appendChild(s);
@@ -173,7 +173,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-modal-enter-save="1"]'))return;
   const s=document.createElement('script');
-  s.src='modal-enter-save.js?v=enter-save-'+Date.now();
+  s.src='modal-enter-save.js?v=enter-save-1';
   s.async=false;
   s.setAttribute('data-yaya-modal-enter-save','1');
   document.head.appendChild(s);
@@ -184,7 +184,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-chantier-market-note="1"]'))return;
   const s=document.createElement('script');
-  s.src='chantier-market-note.js?v=market-note-'+Date.now();
+  s.src='chantier-market-note.js?v=market-note-1';
   s.async=false;
   s.setAttribute('data-yaya-chantier-market-note','1');
   document.head.appendChild(s);
@@ -195,7 +195,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-note-modal-center-fix="1"]'))return;
   const s=document.createElement('script');
-  s.src='chantier-note-modal-center-fix.js?v=note-center-'+Date.now();
+  s.src='chantier-note-modal-center-fix.js?v=note-center-1';
   s.async=false;
   s.setAttribute('data-yaya-note-modal-center-fix','1');
   document.head.appendChild(s);
@@ -206,7 +206,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-achat-upload-lock="1"]'))return;
   const s=document.createElement('script');
-  s.src='achat-upload-lock.js?v=upload-lock-'+Date.now();
+  s.src='achat-upload-lock.js?v=upload-lock-1';
   s.async=false;
   s.setAttribute('data-yaya-achat-upload-lock','1');
   document.head.appendChild(s);
@@ -217,7 +217,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-chantier-modal-context-lock="1"]'))return;
   const s=document.createElement('script');
-  s.src='chantier-modal-context-lock.js?v=context-lock-'+Date.now();
+  s.src='chantier-modal-context-lock.js?v=context-lock-1';
   s.async=false;
   s.setAttribute('data-yaya-chantier-modal-context-lock','1');
   document.head.appendChild(s);
