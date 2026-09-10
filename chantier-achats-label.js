@@ -6,17 +6,30 @@
 
   function replaceTabLabel(tab){
     if(!tab)return;
+
+    // Le moteur d'onglets place le libellé dans <strong> et le compteur dans <small>.
+    // On remplace uniquement le libellé, sans ajouter de texte devant le bouton.
+    const strong=tab.querySelector('strong');
+    if(strong){
+      if(strong.textContent!=='Achats')strong.textContent='Achats';
+      Array.from(tab.childNodes).forEach(function(node){
+        if(node.nodeType!==Node.TEXT_NODE)return;
+        const t=String(node.textContent||'').trim();
+        if(/^achats$/i.test(t)||/^d[ée]penses$/i.test(t))node.remove();
+      });
+      return;
+    }
+
     let replaced=false;
     Array.from(tab.childNodes).forEach(function(node){
-      if(replaced||node.nodeType!==Node.TEXT_NODE)return;
-      if(String(node.textContent||'').trim()){
-        node.textContent='Achats ';
-        replaced=true;
+      if(node.nodeType!==Node.TEXT_NODE)return;
+      const t=String(node.textContent||'').trim();
+      if(/^d[ée]penses$/i.test(t)||/^achats$/i.test(t)){
+        if(!replaced){node.textContent='Achats ';replaced=true;}
+        else node.remove();
       }
     });
-    if(!replaced){
-      tab.insertBefore(document.createTextNode('Achats '),tab.firstChild||null);
-    }
+    if(!replaced)tab.insertBefore(document.createTextNode('Achats '),tab.firstChild||null);
   }
 
   function apply(){
