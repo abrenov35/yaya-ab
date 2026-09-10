@@ -120,3 +120,14 @@
   s.setAttribute('data-yaya-search-archives-v1','1');
   document.head.appendChild(s);
 })();
+
+/* Fiche chantier : harmonise le libellé Dépenses avec le KPI Achats. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achats-label-v1]'))return;
+  const s=document.createElement('script');
+  s.src='chantier-achats-label.js?v=achats-label-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achats-label-v1','1');
+  document.head.appendChild(s);
+})();
