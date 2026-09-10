@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-devis-delete-confirm-style-v2';
+  const STYLE_ID='yaya-devis-delete-confirm-style-v3';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -47,6 +47,8 @@
 
     const before=S.avenants.slice();
     const wanted=String(id);
+    const originalIndex=before.findIndex(v=>String(v&&v.id)===wanted);
+    const removed=originalIndex>=0?before[originalIndex]:null;
     const next=before.filter(v=>String(v&&v.id)!==wanted);
 
     if(next.length===before.length){
@@ -59,26 +61,39 @@
       ok.textContent='Suppression…';
     }
 
+    /*
+     * Suppression optimiste : la modale se ferme tout de suite.
+     * L'écriture Sheet continue ensuite sans bloquer l'écran.
+     */
     S.avenants=next;
     renderSafe();
+    if(overlay&&overlay.isConnected)overlay.remove();
+    toastSafe('Suppression en cours…');
 
     try{
       const saved=typeof apiPost==='function'
-        ? await apiPost('setAvenants',S.avenants)
+        ? await apiPost('setAvenants',next)
         : false;
 
       if(!saved)throw new Error('enregistrement impossible');
-
-      if(overlay&&overlay.isConnected)overlay.remove();
       toastSafe('Devis supprimé ✓');
     }catch(e){
-      S.avenants=before;
-      renderSafe();
-      if(ok){
-        ok.disabled=false;
-        ok.textContent='Supprimer';
+      /*
+       * En cas d'échec, on restaure uniquement le devis supprimé sans écraser
+       * d'éventuelles autres modifications faites pendant l'attente réseau.
+       */
+      if(removed&&typeof S!=='undefined'&&S&&Array.isArray(S.avenants)){
+        const current=S.avenants.slice();
+        const alreadyThere=current.some(v=>String(v&&v.id)===wanted);
+        if(!alreadyThere){
+          current.splice(Math.min(Math.max(originalIndex,0),current.length),0,removed);
+          S.avenants=current;
+        }
+      }else{
+        S.avenants=before;
       }
-      toastSafe('Suppression du devis impossible',true);
+      renderSafe();
+      toastSafe('Suppression non enregistrée — devis restauré',true);
     }
   }
 
