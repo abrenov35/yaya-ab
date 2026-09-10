@@ -19,16 +19,16 @@
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
 
   const CHANTIER_ALIASES=Object.freeze({
-    'mtiureohm15c':'C454',       // CONGREGATION -> CONGREGATION #2
-    'planning-12':'C458',       // LABIGANG 2 -> LABIGANG • SDB 3
-    'msm3za2i1tpw':'C459',      // FIMINSKI -> FIMINSKI - RENOVATION #2
-    'mtqylt0du6sy':'C460',       // ancien ODALYS -> ODALYS Extranet
-    'mtk4fpwm5tka':'C461',       // GRANDJEAN -> GRANDJEAN #2
-    'mtlmue3aefv2':'C462',       // HERVOUET -> HERVOUET - GANCHE #2
-    'planning-28':'C463',        // MANINI -> MANINI - SCI YZOTERRA #2
-    'mrrui7k8nrtg':'C464',       // LE GUEN -> LE GUEN #2
-    'mthmmenk2njd':'C465',       // STANUS -> STANUS / HIVE #2
-    'mrsvjujxia59':'C466'        // MVONDO -> MVONDO - NDONGO #2
+    'mtiureohm15c':'C454',
+    'planning-12':'C458',
+    'msm3za2i1tpw':'C459',
+    'mtqylt0du6sy':'C460',
+    'mtk4fpwm5tka':'C461',
+    'mtlmue3aefv2':'C462',
+    'planning-28':'C463',
+    'mrrui7k8nrtg':'C464',
+    'mthmmenk2njd':'C465',
+    'mrsvjujxia59':'C466'
   });
 
   const ARRAY_ACTIONS=new Set([
@@ -207,4 +207,12 @@
   [100,500,1500].forEach(function(ms){
     setTimeout(normalizeAndRender,ms);
   });
+
+  if(!document.querySelector('script[data-yaya-post-html-recovery]')){
+    const script=document.createElement('script');
+    script.src='yaya-post-html-recovery.js?v=1';
+    script.async=false;
+    script.dataset.yayaPostHtmlRecovery='1';
+    document.head.appendChild(script);
+  }
 })();
