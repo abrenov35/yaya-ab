@@ -182,7 +182,7 @@
         try{
           return await original(action,frozenData);
         }finally{
-          window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1;
+          window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
           window.__yayaLastWriteAt=Date.now();
           setTimeout(normalizeAndRender,0);
         }
