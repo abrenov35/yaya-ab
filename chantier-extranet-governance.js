@@ -19,12 +19,6 @@
     }catch(e){}
   }
 
-  function esc(v){
-    return String(v==null?'':v)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-
   function list(){
     try{
       return Array.isArray(S&&S.chantiers)
@@ -123,15 +117,12 @@
     }
   }
 
-  function saveNameAndSignature(id){
+  function saveSignature(id){
     id=String(id||'').trim();
-    const nom=document.getElementById('yayaGovNom');
     const month=document.getElementById('yayaGovSigMonth');
     const year=document.getElementById('yayaGovSigYear');
-    if(!nom||!month||!year)return;
+    if(!month||!year)return;
 
-    const name=String(nom.value||'').trim();
-    if(!name){toastSafe('Indique le nom du chantier',true);nom.focus();return;}
     if((month.value&&!year.value)||(!month.value&&year.value)){
       toastSafe('Choisis le mois et l’année de signature',true);
       (month.value?year:month).focus();
@@ -142,17 +133,14 @@
     const current=byId(id);
     if(!current){toastSafe('Chantier introuvable',true);return;}
 
-    const oldName=String(current.nom||'');
     const oldSignature=String(current.dateSignature||'');
     const next=list().map(function(c){return Object.assign({},c);});
     const target=byId(id,next);
     if(!target){toastSafe('Chantier introuvable',true);return;}
 
-    target.nom=name;
     target.dateSignature=signature;
 
     // Mise à jour locale immédiate puis fermeture immédiate de la modale.
-    current.nom=name;
     current.dateSignature=signature;
     forceCloseModal();
     try{if(typeof render==='function')render();}catch(e){}
@@ -165,13 +153,10 @@
     }).then(function(ok){
       if(!ok)throw new Error('enregistrement refusé');
       try{localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(S));}catch(e){}
-      toastSafe('Nom et Signé le enregistrés ✓');
+      toastSafe('Signé le enregistré ✓');
     }).catch(function(err){
       const local=byId(id);
-      if(local){
-        local.nom=oldName;
-        local.dateSignature=oldSignature;
-      }
+      if(local)local.dateSignature=oldSignature;
       try{if(typeof render==='function')render();}catch(e){}
       toastSafe('Modification impossible : '+String(err&&err.message||err),true);
     });
@@ -185,9 +170,8 @@
     r.innerHTML='<div class="overlay yaya-governance-overlay" onclick="if(event.target===this)closeModal()">'
       +'<div class="modal yaya-governance-modal">'
       +'<h5>Modifier le chantier<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
-      +'<div class="yaya-governance-info"><b>Chantier créé via l’Extranet.</b><br>Dans Yaya, seuls le <b>nom du chantier</b> et <b>Signé le</b> peuvent être corrigés.</div>'
+      +'<div class="yaya-governance-info"><b>Chantier créé via l’Extranet.</b><br>Dans Yaya, seul le champ <b>Signé le</b> peut être corrigé.</div>'
       +'<div class="yaya-governance-fields">'
-      +'<label>Nom du chantier<input class="inp" id="yayaGovNom" autocomplete="off" value="'+esc(c.nom||'')+'"></label>'
       +'<label>Signé le <span style="font-size:11px;font-weight:400;opacity:.65">mois et année</span><span class="yaya-governance-signature"><select class="inp" id="yayaGovSigMonth">'+monthOptions(sig.month)+'</select><select class="inp" id="yayaGovSigYear">'+yearOptions(sig.year)+'</select></span></label>'
       +'</div>'
       +'<div class="mfoot" style="justify-content:flex-end;gap:8px">'
@@ -197,7 +181,7 @@
       +'</div></div></div>';
 
     const save=document.getElementById('yayaGovSave');
-    if(save)save.onclick=function(){saveNameAndSignature(id);};
+    if(save)save.onclick=function(){saveSignature(id);};
     const arch=document.getElementById('yayaGovArchiveCurrent');
     if(arch)arch.onclick=function(){archive(id);};
   }
