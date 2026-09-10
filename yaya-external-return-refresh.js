@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaExternalReturnRefreshV4Installed)return;
+  if(window.__yayaExternalReturnRefreshV5Installed)return;
+  window.__yayaExternalReturnRefreshV5Installed=true;
   window.__yayaExternalReturnRefreshV4Installed=true;
   window.__yayaExternalReturnRefreshV3Installed=true;
   window.__yayaExternalReturnRefreshInstalled=true;
@@ -41,7 +42,7 @@
         const direct=String(c.dateSignature||'').trim();
         const marker=signatureFromNotes(c.notes);
         if(!direct&&marker)c.dateSignature=marker;
-        else if(!direct&&previous&&previous.dateSignature)c.dateSignature=previous.dateSignature;
+        // Ne jamais reprendre une signature absente depuis l'ancien état local.
 
         if(previous){
           if(!c.sourcePlanningId&&previous.sourcePlanningId)c.sourcePlanningId=previous.sourcePlanningId;
@@ -68,16 +69,7 @@
     return true;
   }
 
-  async function refreshNow(seq,deferred){
-    if(seq!==burstSeq)return;
-
-    if(busy||!canApply()){
-      if((deferred||0)<MAX_DEFERRED_RETRIES){
-        timers.push(setTimeout(function(){refreshNow(seq,(deferred||0)+1);},RETRY_IF_BUSY_MS));
-      }
-      return;
-    }
-
+  async function fallbackFullRefresh(seq,deferred){
     if(typeof apiGet!=='function'){
       if((deferred||0)<MAX_DEFERRED_RETRIES){
         timers.push(setTimeout(function(){refreshNow(seq,(deferred||0)+1);},RETRY_IF_BUSY_MS));
@@ -103,13 +95,36 @@
       S=fresh;
       try{localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(fresh));}catch(e){}
       if(typeof render==='function')render();
-      try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{source:'external-return'}}));}catch(e){}
+      try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{source:'external-return-fallback'}}));}catch(e){}
       requestAnimationFrame(function(){try{window.scrollTo(x,y);}catch(e){}});
     }catch(e){
       console.warn('Actualisation retour externe ignorée :',e);
     }finally{
       busy=false;
     }
+  }
+
+  async function refreshNow(seq,deferred){
+    if(seq!==burstSeq)return;
+
+    if(busy||!canApply()){
+      if((deferred||0)<MAX_DEFERRED_RETRIES){
+        timers.push(setTimeout(function(){refreshNow(seq,(deferred||0)+1);},RETRY_IF_BUSY_MS));
+      }
+      return;
+    }
+
+    // Moteur unique : le retour d'une app externe demande désormais le même
+    // contrôle meta/delta que la synchro normale, au lieu de lancer un second GET complet.
+    if(typeof window.yayaSmartRefreshNow==='function'){
+      try{await window.yayaSmartRefreshNow();}catch(e){
+        console.warn('Contrôle retour externe ignoré :',e);
+      }
+      return;
+    }
+
+    // Compatibilité de secours si le moteur principal n'est pas encore chargé.
+    return fallbackFullRefresh(seq,deferred);
   }
 
   function scheduleBurst(){
