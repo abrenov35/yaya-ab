@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaPostHtmlRecoveryV1Installed)return;
+  if(window.__yayaPostHtmlRecoveryV2Installed)return;
+  window.__yayaPostHtmlRecoveryV2Installed=true;
   window.__yayaPostHtmlRecoveryV1Installed=true;
 
   const DATASET_BY_SET={
@@ -50,11 +51,11 @@
   }
 
   function normSignature(value,notes){
-    let s=String(value==null?'':value).trim();
-    let m=s.match(/^(\d{4})-(\d{2})/);
-    if(m)return m[1]+'-'+m[2];
-    m=String(notes||'').match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
-    return m&&m[1]?m[1]:'';
+    let m=String(notes||'').match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
+    if(m&&m[1])return m[1];
+    const s=String(value==null?'':value).trim();
+    m=s.match(/^(\d{4})-(\d{2})/);
+    return m?m[1]+'-'+m[2]:'';
   }
 
   function normScalar(dataset,key,value,row){
@@ -99,7 +100,7 @@
 
   function verifySet(dataset,wanted,freshRows){
     if(!Array.isArray(wanted)||!Array.isArray(freshRows))return false;
-    let server=dataset==='chantiers'?canonicalServerChantiers(freshRows):freshRows.slice();
+    const server=dataset==='chantiers'?canonicalServerChantiers(freshRows):freshRows.slice();
 
     if(dataset==='heures'){
       const a=wanted.map(function(r){return JSON.stringify(comparable(dataset,r));}).sort();
@@ -146,12 +147,27 @@
     return false;
   }
 
+  function actualSubmittedData(action,fallback){
+    try{
+      const info=window.__yayaLastSubmittedWrite;
+      if(
+        info&&
+        String(info.action||'')===String(action||'')&&
+        Number(info.at||0)>0&&
+        Date.now()-Number(info.at||0)<45000
+      ){
+        return info.data;
+      }
+    }catch(e){}
+    return fallback;
+  }
+
   function install(){
     if(typeof window.apiPost!=='function'||typeof window.apiGet!=='function'){
       setTimeout(install,120);
       return;
     }
-    if(window.apiPost.__yayaPostHtmlRecoveryV1)return;
+    if(window.apiPost.__yayaPostHtmlRecoveryV2)return;
 
     const original=window.apiPost;
 
@@ -196,7 +212,8 @@
 
       if(capturedTransport&&(result===false||thrown)){
         try{
-          const confirmed=await verifyAfterAmbiguousResponse(String(action||''),data);
+          const verifyData=actualSubmittedData(action,data);
+          const confirmed=await verifyAfterAmbiguousResponse(String(action||''),verifyData);
           if(confirmed){
             try{
               if(typeof window.syncMsg==='function')window.syncMsg('✓ enregistré '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}));
@@ -215,6 +232,7 @@
       return result;
     }
 
+    recoveredApiPost.__yayaPostHtmlRecoveryV2=true;
     recoveredApiPost.__yayaPostHtmlRecoveryV1=true;
     recoveredApiPost.__yayaWrappedApiPost=original;
     window.apiPost=recoveredApiPost;
