@@ -8,9 +8,11 @@
    *   leur ID Extranet canonique avant toute sauvegarde ;
    * - un ancien cache ne peut plus rattacher achats, documents, commandes,
    *   devis ou heures à un chantier Yaya supprimé ;
-   * - dateSignature est restaurée depuis [[YAYA_SIG:AAAA-MM]] si nécessaire.
+   * - la signature historique [[YAYA_SIG:AAAA-MM]] reste autoritaire quand
+   *   une ancienne date technique contradictoire est encore présente.
    */
-  if(window.__yayaRefreshCoordinatorV3Installed)return;
+  if(window.__yayaRefreshCoordinatorV4Installed)return;
+  window.__yayaRefreshCoordinatorV4Installed=true;
   window.__yayaRefreshCoordinatorV3Installed=true;
   window.__yayaRefreshCoordinatorV2Installed=true;
   window.__yayaRefreshCoordinatorV1Installed=true;
@@ -53,6 +55,11 @@
     return m&&m[1]?m[1]:'';
   }
 
+  function signatureMonth(value){
+    const m=String(value==null?'':value).trim().match(/^(\d{4}-\d{2})/);
+    return m&&m[1]?m[1]:'';
+  }
+
   function canonicalizeRecord(row){
     if(!row||typeof row!=='object')return row;
 
@@ -82,7 +89,7 @@
     if(action==='setChantiers'&&Array.isArray(copy)){
       return copy.filter(function(c){
         const id=String(c&&c.id||'').trim();
-        return !CHANTIER_ALIASES[id];
+        return !!id&&!CHANTIER_ALIASES[id];
       });
     }
 
@@ -114,18 +121,20 @@
       if(Array.isArray(S.chantiers)){
         S.chantiers.forEach(function(c){
           if(!c)return;
-          if(!String(c.dateSignature||'').trim()){
-            const sig=signatureFromNotes(c.notes);
-            if(sig){c.dateSignature=sig;changed=true;}
+          const sig=signatureFromNotes(c.notes);
+          if(sig&&signatureMonth(c.dateSignature)!==sig){
+            c.dateSignature=sig;
+            changed=true;
           }
         });
 
         const targets=new Set(S.chantiers.map(function(c){
           return String(c&&c.id||'').trim();
-        }));
+        }).filter(Boolean));
         const before=S.chantiers.length;
         S.chantiers=S.chantiers.filter(function(c){
           const id=String(c&&c.id||'').trim();
+          if(!id)return false;
           const target=CHANTIER_ALIASES[id];
           return !(target&&targets.has(target));
         });
@@ -170,7 +179,7 @@
       setTimeout(installWriteCoordinator,120);
       return;
     }
-    if(window.apiPost.__yayaWriteCoordinatorV3)return;
+    if(window.apiPost.__yayaWriteCoordinatorV4)return;
 
     const original=window.apiPost;
 
@@ -194,6 +203,7 @@
       return task;
     }
 
+    coordinatedApiPost.__yayaWriteCoordinatorV4=true;
     coordinatedApiPost.__yayaWriteCoordinatorV3=true;
     coordinatedApiPost.__yayaWriteCoordinatorV2=true;
     coordinatedApiPost.__yayaWriteCoordinatorV1=true;
