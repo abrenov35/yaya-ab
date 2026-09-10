@@ -3,7 +3,10 @@
 
   /*
    * Coordinateur de stabilité Yaya.
-   * - une seule file d'écriture : pas de sauvegardes concurrentes ;
+   * - une seule file d'écriture : pas de sauvegardes concurrentes locales ;
+   * - fusion différentielle des tables à ID avant les écritures globales :
+   *   une nouvelle ligne arrivée de Gmail / d'un autre poste n'est plus effacée
+   *   par une sauvegarde effectuée depuis un écran plus ancien ;
    * - les anciens IDs des chantiers migrés sont toujours convertis vers
    *   leur ID Extranet canonique avant toute sauvegarde ;
    * - un ancien cache ne peut plus rattacher achats, documents, commandes,
@@ -11,7 +14,8 @@
    * - la signature historique [[YAYA_SIG:AAAA-MM]] reste autoritaire quand
    *   une ancienne date technique contradictoire est encore présente.
    */
-  if(window.__yayaRefreshCoordinatorV4Installed)return;
+  if(window.__yayaRefreshCoordinatorV5Installed)return;
+  window.__yayaRefreshCoordinatorV5Installed=true;
   window.__yayaRefreshCoordinatorV4Installed=true;
   window.__yayaRefreshCoordinatorV3Installed=true;
   window.__yayaRefreshCoordinatorV2Installed=true;
@@ -42,8 +46,15 @@
   const SINGLE_ACTIONS=new Set([
     'addAchat','addDocument','addCommande'
   ]);
+  const SAFE_MERGE_ACTIONS=Object.freeze({
+    setAchats:'achats',
+    setDocuments:'documents',
+    setAvenants:'avenants',
+    setCommandes:'commandes'
+  });
 
   let writeQueue=Promise.resolve();
+  let visibleShadow={};
 
   function canonicalId(value){
     const id=String(value==null?'':value).trim();
@@ -113,6 +124,136 @@
     return copy;
   }
 
+  function captureVisibleShadow(){
+    try{
+      if(typeof S==='undefined'||!S||typeof S!=='object')return;
+      Object.keys(SAFE_MERGE_ACTIONS).forEach(function(action){
+        const name=SAFE_MERGE_ACTIONS[action];
+        if(Array.isArray(S[name]))visibleShadow[name]=snapshotData(S[name]);
+      });
+    }catch(e){}
+  }
+
+  function apiUrl(){
+    try{return typeof API!=='undefined'?String(API||''):'';}catch(e){return '';}
+  }
+
+  async function fetchFreshTable(name){
+    const api=apiUrl();
+    if(!api)return null;
+    const sep=api.includes('?')?'&':'?';
+    const ctrl=new AbortController();
+    const timer=setTimeout(function(){ctrl.abort();},12000);
+    try{
+      const r=await fetch(
+        api+sep+'tabs='+encodeURIComponent(name)+'&_yaya_write_merge='+Date.now(),
+        {method:'GET',cache:'no-store',signal:ctrl.signal}
+      );
+      const text=await r.text();
+      if(/^\s*</.test(text))throw new Error('Réponse Google temporairement invalide');
+      const json=JSON.parse(text);
+      if(!json||json.ok!==true||!json.data||!Array.isArray(json.data[name]))return null;
+      return json.data[name].map(function(row){
+        const copy=snapshotData(row);
+        canonicalizeRecord(copy);
+        return copy;
+      });
+    }catch(e){
+      if(!(e&&e.name==='AbortError'))console.warn('Fusion pré-écriture '+name+' ignorée :',e);
+      return null;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  function sameValue(a,b){
+    if(a===b)return true;
+    try{return JSON.stringify(a)===JSON.stringify(b);}catch(e){return String(a)===String(b);}
+  }
+
+  function mapById(rows){
+    const map=new Map();
+    (Array.isArray(rows)?rows:[]).forEach(function(row){
+      const id=String(row&&row.id||'').trim();
+      if(id)map.set(id,row);
+    });
+    return map;
+  }
+
+  function mergeUserDiffOntoFresh(baseline,incoming,fresh){
+    baseline=Array.isArray(baseline)?baseline:[];
+    incoming=Array.isArray(incoming)?incoming:[];
+    fresh=Array.isArray(fresh)?fresh:[];
+
+    const baseMap=mapById(baseline);
+    const inMap=mapById(incoming);
+    const freshMap=mapById(fresh);
+    const order=fresh.map(function(r){return String(r&&r.id||'').trim();}).filter(Boolean);
+
+    // Suppressions explicites : la ligne était visible avant l'action et a disparu de l'état envoyé.
+    baseMap.forEach(function(_row,id){
+      if(!inMap.has(id))freshMap.delete(id);
+    });
+
+    inMap.forEach(function(inRow,id){
+      const baseRow=baseMap.get(id);
+      if(!baseRow){
+        // Ajout local : conserver aussi les éventuels ajouts serveur concurrents.
+        freshMap.set(id,snapshotData(inRow));
+        if(!order.includes(id))order.push(id);
+        return;
+      }
+
+      const freshRow=freshMap.get(id);
+      if(!freshRow){
+        // La ligne existait dans l'écran et a été modifiée localement : ne pas perdre l'action utilisateur.
+        freshMap.set(id,snapshotData(inRow));
+        if(!order.includes(id))order.push(id);
+        return;
+      }
+
+      // Mise à jour champ par champ : seuls les champs réellement changés par l'utilisateur
+      // remplacent la version fraîche. Les autres changements serveur sont conservés.
+      const merged=Object.assign({},snapshotData(freshRow));
+      const keys=new Set(Object.keys(baseRow||{}).concat(Object.keys(inRow||{})));
+      keys.forEach(function(key){
+        if(!sameValue(baseRow&&baseRow[key],inRow&&inRow[key])){
+          if(Object.prototype.hasOwnProperty.call(inRow,key))merged[key]=snapshotData(inRow[key]);
+          else delete merged[key];
+        }
+      });
+      canonicalizeRecord(merged);
+      freshMap.set(id,merged);
+    });
+
+    const out=[];
+    const used=new Set();
+    order.forEach(function(id){
+      if(used.has(id)||!freshMap.has(id))return;
+      used.add(id);
+      out.push(freshMap.get(id));
+    });
+    inMap.forEach(function(_row,id){
+      if(used.has(id)||!freshMap.has(id))return;
+      used.add(id);
+      out.push(freshMap.get(id));
+    });
+    return out;
+  }
+
+  async function prepareSafeWrite(action,incoming){
+    const name=SAFE_MERGE_ACTIONS[action];
+    if(!name||!Array.isArray(incoming))return incoming;
+
+    const baseline=Array.isArray(visibleShadow[name])?snapshotData(visibleShadow[name]):snapshotData(incoming);
+    const fresh=await fetchFreshTable(name);
+    if(!fresh)return incoming;
+
+    const merged=mergeUserDiffOntoFresh(baseline,incoming,fresh);
+    merged.forEach(canonicalizeRecord);
+    return merged;
+  }
+
   function normalizeSignaturesAndIds(){
     try{
       if(typeof S==='undefined'||!S||typeof S!=='object')return false;
@@ -157,6 +298,7 @@
       if(changed){
         try{localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));}catch(e){}
       }
+      captureVisibleShadow();
       return changed;
     }catch(e){
       console.warn('Normalisation Yaya ignorée :',e);
@@ -179,8 +321,9 @@
       setTimeout(installWriteCoordinator,120);
       return;
     }
-    if(window.apiPost.__yayaWriteCoordinatorV4)return;
+    if(window.apiPost.__yayaWriteCoordinatorV5)return;
 
+    captureVisibleShadow();
     const original=window.apiPost;
 
     function coordinatedApiPost(action,data){
@@ -189,8 +332,20 @@
       window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
 
       const execute=async function(){
+        let submitted=frozenData;
         try{
-          return await original(action,frozenData);
+          submitted=await prepareSafeWrite(safeAction,frozenData);
+          window.__yayaLastSubmittedWrite={
+            action:safeAction,
+            data:snapshotData(submitted),
+            at:Date.now()
+          };
+          const result=await original(action,submitted);
+          if(result!==false){
+            const name=SAFE_MERGE_ACTIONS[safeAction];
+            if(name&&Array.isArray(frozenData))visibleShadow[name]=snapshotData(frozenData);
+          }
+          return result;
         }finally{
           window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
           window.__yayaLastWriteAt=Date.now();
@@ -203,6 +358,7 @@
       return task;
     }
 
+    coordinatedApiPost.__yayaWriteCoordinatorV5=true;
     coordinatedApiPost.__yayaWriteCoordinatorV4=true;
     coordinatedApiPost.__yayaWriteCoordinatorV3=true;
     coordinatedApiPost.__yayaWriteCoordinatorV2=true;
@@ -214,7 +370,10 @@
   installWriteCoordinator();
 
   window.addEventListener('yaya:data-refreshed',function(){
-    requestAnimationFrame(normalizeAndRender);
+    requestAnimationFrame(function(){
+      normalizeAndRender();
+      captureVisibleShadow();
+    });
   });
 
   [100,500,1500].forEach(function(ms){
@@ -223,7 +382,7 @@
 
   if(!document.querySelector('script[data-yaya-post-html-recovery]')){
     const script=document.createElement('script');
-    script.src='yaya-post-html-recovery.js?v=1';
+    script.src='yaya-post-html-recovery.js?v=2';
     script.async=false;
     script.dataset.yayaPostHtmlRecovery='1';
     document.head.appendChild(script);
