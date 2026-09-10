@@ -2,18 +2,22 @@
   'use strict';
 
   /*
-   * Ce fichier remplace l'ancien rafraîchissement forcé des chantiers.
-   * yaya-auto-refresh.js est désormais le seul rafraîchissement périodique.
-   * Ici on garde seulement deux protections légères :
-   * - signaler une écriture en cours pour éviter qu'un refresh l'écrase visuellement ;
-   * - remettre dateSignature depuis [[YAYA_SIG:AAAA-MM]] quand l'API renvoie la
-   *   signature historique uniquement dans notes.
+   * Coordinateur léger de stabilité.
+   * L'ancien refresh forcé des chantiers est volontairement supprimé :
+   * yaya-auto-refresh.js reste le seul rafraîchissement périodique.
+   *
+   * Ici :
+   * - les écritures sont mises en file au lieu de se télescoper ;
+   * - un refresh sait qu'une sauvegarde est en attente/en cours ;
+   * - dateSignature est restaurée depuis [[YAYA_SIG:AAAA-MM]] si nécessaire.
    */
-  if(window.__yayaRefreshCoordinatorV1Installed)return;
+  if(window.__yayaRefreshCoordinatorV2Installed)return;
+  window.__yayaRefreshCoordinatorV2Installed=true;
   window.__yayaRefreshCoordinatorV1Installed=true;
   window.__yayaFreshChantiersInstalled=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
+  let writeQueue=Promise.resolve();
 
   function signatureFromNotes(notes){
     const m=String(notes==null?'':notes).match(/\[\[YAYA_SIG:(\d{4}-\d{2})\]\]/);
@@ -46,6 +50,13 @@
     }
   }
 
+  function snapshotData(data){
+    try{
+      if(typeof structuredClone==='function')return structuredClone(data);
+    }catch(e){}
+    try{return JSON.parse(JSON.stringify(data));}catch(e){return data;}
+  }
+
   window.yayaNormalizeChantierSignatures=normalizeSignatures;
 
   function installWriteCoordinator(){
@@ -53,21 +64,30 @@
       setTimeout(installWriteCoordinator,120);
       return;
     }
-    if(window.apiPost.__yayaWriteCoordinatorV1)return;
+    if(window.apiPost.__yayaWriteCoordinatorV2)return;
 
     const original=window.apiPost;
 
-    async function coordinatedApiPost(action,data){
+    function coordinatedApiPost(action,data){
+      const frozenData=snapshotData(data);
       window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
-      try{
-        return await original(action,data);
-      }finally{
-        window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
-        window.__yayaLastWriteAt=Date.now();
-        setTimeout(normalizeAndRender,0);
-      }
+
+      const execute=async function(){
+        try{
+          return await original(action,frozenData);
+        }finally{
+          window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+          window.__yayaLastWriteAt=Date.now();
+          setTimeout(normalizeAndRender,0);
+        }
+      };
+
+      const task=writeQueue.then(execute,execute);
+      writeQueue=task.catch(function(){return false;});
+      return task;
     }
 
+    coordinatedApiPost.__yayaWriteCoordinatorV2=true;
     coordinatedApiPost.__yayaWriteCoordinatorV1=true;
     coordinatedApiPost.__yayaWrappedApiPost=original;
     window.apiPost=coordinatedApiPost;
