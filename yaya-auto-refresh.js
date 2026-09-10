@@ -5,7 +5,7 @@
   window.__yayaSmartRefreshInstalled=true;
 
   const MOBILE=window.matchMedia&&window.matchMedia('(pointer:coarse)').matches;
-  const META_INTERVAL_MS=MOBILE?90000:60000;
+  const META_INTERVAL_MS=MOBILE?10000:60000;
   const FALLBACK_FULL_INTERVAL_MS=MOBILE?900000:600000;
   const START_GRACE_MS=window.__yayaCachedBoot?350:2500;
   const APPLY_IDLE_MS=2200;
