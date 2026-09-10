@@ -21,6 +21,7 @@
   let lastMeta=(window.__yayaCachedMeta&&window.__yayaCachedMeta.tabs)?window.__yayaCachedMeta:null;
   let pendingData=null;
   let pendingMeta=null;
+  let pendingFetchedAt=0;
   let applyTimer=0;
 
   ['pointerdown','touchstart','keydown','scroll'].forEach(function(type){
@@ -191,9 +192,23 @@
     return next;
   }
 
+  function clearPending(){
+    pendingData=null;
+    pendingMeta=null;
+    pendingFetchedAt=0;
+  }
+
   function applyPending(){
     clearTimeout(applyTimer);
     if(!pendingData)return;
+
+    const lastWrite=Number(window.__yayaLastWriteAt||0);
+    if(lastWrite&&pendingFetchedAt&&lastWrite>pendingFetchedAt){
+      clearPending();
+      setTimeout(function(){smartCheck(true);},500);
+      return;
+    }
+
     if(!safeToApply()){
       applyTimer=setTimeout(applyPending,900);
       return;
@@ -201,8 +216,7 @@
 
     const next=pendingData;
     const metaForCache=pendingMeta||lastMeta;
-    pendingData=null;
-    pendingMeta=null;
+    clearPending();
     const x=window.scrollX||0;
     const y=window.scrollY||0;
 
@@ -217,9 +231,10 @@
     }
   }
 
-  function queuePartial(partial,meta){
+  function queuePartial(partial,meta,fetchedAt){
     pendingData=mergePartial(partial);
     if(meta&&meta.tabs)pendingMeta=meta;
+    pendingFetchedAt=Number(fetchedAt)||Date.now();
     applyPending();
   }
 
@@ -247,9 +262,10 @@
 
   async function fullRefreshInBackground(){
     if(typeof apiGet!=='function')return;
+    const startedAt=Date.now();
     const fresh=await apiGet(true);
     lastFull=Date.now();
-    if(fresh&&typeof fresh==='object')queuePartial(fresh,lastMeta);
+    if(fresh&&typeof fresh==='object')queuePartial(fresh,lastMeta,startedAt);
   }
 
   async function smartCheck(force){
@@ -284,8 +300,6 @@
 
       metaSupported=true;
 
-      // Si le démarrage vient du cache, lastMeta contient la révision du cache.
-      // On compare donc immédiatement avec le serveur et on ne lit que les onglets modifiés.
       if(!lastMeta){
         lastMeta=metaJson.meta;
         saveCache((function(){try{return S;}catch(e){return null;}})(),lastMeta);
@@ -299,12 +313,13 @@
         return;
       }
 
+      const deltaStartedAt=Date.now();
       const deltaUrl=api+sep+'tabs='+encodeURIComponent(changed.join(','))+'&_yaya_delta='+Date.now();
       const deltaJson=await getJson(deltaUrl);
       const nextMeta=deltaJson.meta&&deltaJson.meta.tabs?deltaJson.meta:metaJson.meta;
       lastMeta=nextMeta;
       if(deltaJson.data&&typeof deltaJson.data==='object'){
-        queuePartial(deltaJson.data,nextMeta);
+        queuePartial(deltaJson.data,nextMeta,deltaStartedAt);
       }
 
     }catch(err){
