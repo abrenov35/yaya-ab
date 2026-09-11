@@ -14,57 +14,35 @@
       .${BLOCK_CLASS}{
         display:none!important;
         width:100%!important;
-        margin:0 0 6px!important;
-        border:1px solid #cbd9e9!important;
-        border-radius:10px!important;
-        background:#fff!important;
-        overflow:hidden!important;
-        box-shadow:0 1px 3px rgba(22,45,73,.06)!important;
+        margin:0!important;
+        padding:0!important;
+        border:0!important;
+        border-radius:0!important;
+        background:transparent!important;
+        overflow:visible!important;
+        box-shadow:none!important;
       }
       .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{
         display:block!important;
       }
-      .${BLOCK_CLASS} .yaya-ab-commandes-head{
-        display:flex!important;
-        align-items:center!important;
-        justify-content:space-between!important;
-        gap:10px!important;
-        padding:9px 12px!important;
-        border-bottom:1px solid #dbe5ef!important;
-        background:#f3f7fc!important;
-      }
-      .${BLOCK_CLASS} .yaya-ab-commandes-title{
-        margin:0!important;
-        color:#173b60!important;
-        font-size:12px!important;
-        font-weight:850!important;
-        letter-spacing:.035em!important;
-        text-transform:uppercase!important;
-      }
-      .${BLOCK_CLASS} .yaya-ab-commandes-open{
-        color:#174d7d!important;
-        font-size:11px!important;
-        font-weight:800!important;
-        text-decoration:none!important;
-        white-space:nowrap!important;
-      }
       .${BLOCK_CLASS} .yaya-ab-commandes-wait{
-        padding:12px!important;
+        padding:8px 0!important;
         color:#708095!important;
         font-size:12px!important;
         font-weight:700!important;
-        text-align:center!important;
+        text-align:left!important;
+        background:transparent!important;
+        border:0!important;
       }
       .${FRAME_CLASS}{
         display:block!important;
         width:100%!important;
         height:260px!important;
+        min-height:0!important;
         border:0!important;
+        border-radius:0!important;
         background:#fff!important;
-      }
-      @media(max-width:640px){
-        .${BLOCK_CLASS} .yaya-ab-commandes-head{padding:8px 10px!important}
-        .${FRAME_CLASS}{height:320px!important}
+        overflow:hidden!important;
       }
     `;
     document.head.appendChild(style);
@@ -105,11 +83,11 @@
     return '';
   }
 
-  function linkFor(id,name,embed){
+  function linkFor(id,name){
     const url=new URL(AB_COMMANDES_URL);
     if(id)url.searchParams.set('chantierId',String(id));
     if(name)url.searchParams.set('chantierName',String(name));
-    if(embed)url.searchParams.set('embed','1');
+    url.searchParams.set('embed','1');
     return url.toString();
   }
 
@@ -139,16 +117,16 @@
       block.className='yaya-detail-section-node '+BLOCK_CLASS;
       block.dataset.section='commandes';
       block.innerHTML=`
-        <div class="yaya-ab-commandes-head">
-          <strong class="yaya-ab-commandes-title">📦 AB COMMANDES</strong>
-          <a class="yaya-ab-commandes-open" target="_blank" rel="noopener">Ouvrir en grand ↗</a>
-        </div>
         <div class="yaya-ab-commandes-wait">Chargement du suivi commandes…</div>
-        <iframe class="${FRAME_CLASS}" title="Suivi des commandes chantier" loading="lazy" style="display:none!important"></iframe>
+        <iframe class="${FRAME_CLASS}" title="Suivi des commandes chantier" loading="eager" scrolling="no" style="display:none!important"></iframe>
       `;
     }else{
       block.classList.add('yaya-detail-section-node');
       block.dataset.section='commandes';
+      const oldHead=block.querySelector('.yaya-ab-commandes-head');
+      if(oldHead)oldHead.remove();
+      const oldOpen=block.querySelector('.yaya-ab-commandes-open');
+      if(oldOpen)oldOpen.remove();
     }
 
     positionBlock(card,tabs,block);
@@ -156,7 +134,6 @@
 
     const id=cardId(card);
     const name=chantierName(id,card);
-    const a=block.querySelector('.yaya-ab-commandes-open');
     const frame=block.querySelector('.'+FRAME_CLASS);
     const wait=block.querySelector('.yaya-ab-commandes-wait');
 
@@ -165,26 +142,32 @@
       return;
     }
 
-    const fullHref=linkFor(id,name,false);
-    const embedHref=linkFor(id,name,true);
-    if(a)a.href=fullHref;
+    const embedHref=linkFor(id,name);
     block.dataset.chantierId=id||'';
 
-    if(frame&&frame.dataset.src!==embedHref){
-      frame.dataset.src=embedHref;
-      frame.src=embedHref;
+    if(frame){
+      frame.setAttribute('scrolling','no');
+      frame.style.setProperty('overflow','hidden','important');
+      if(frame.dataset.src!==embedHref){
+        frame.dataset.src=embedHref;
+        frame.src=embedHref;
+      }
+      frame.style.setProperty('display','block','important');
     }
-    if(frame)frame.style.setProperty('display','block','important');
     if(wait)wait.style.setProperty('display','none','important');
   }
 
   function handleMessage(e){
     const d=e&&e.data;
     if(!d||d.type!=='AB_COMMANDES_HEIGHT')return;
-    const h=Math.max(120,Math.min(1200,Number(d.height)||260));
+    const measured=Math.ceil(Number(d.height)||260);
+    const h=Math.max(120,measured+2);
     document.querySelectorAll('.'+FRAME_CLASS).forEach(frame=>{
       try{
-        if(frame.contentWindow===e.source)frame.style.setProperty('height',h+'px','important');
+        if(frame.contentWindow===e.source){
+          frame.style.setProperty('height',h+'px','important');
+          frame.setAttribute('scrolling','no');
+        }
       }catch(err){}
     });
   }
@@ -204,5 +187,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='3.2';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.0';
 })();
