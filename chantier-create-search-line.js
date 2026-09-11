@@ -64,33 +64,6 @@
         display:none!important;
         content:none!important;
       }
-      .hdr .tabs #yayaCreateChantierBtn{
-        position:relative!important;
-        display:inline-flex!important;
-        visibility:visible!important;
-        opacity:1!important;
-        align-items:center!important;
-        justify-content:center!important;
-        gap:7px!important;
-        flex:0 0 auto!important;
-        min-width:160px!important;
-        height:42px!important;
-        min-height:42px!important;
-        margin:0!important;
-        padding:0 16px!important;
-        border:1px solid #7d91c7!important;
-        border-radius:7px!important;
-        background:#294796!important;
-        color:#fff!important;
-        box-shadow:none!important;
-        font-size:13px!important;
-        font-weight:700!important;
-        line-height:1!important;
-        white-space:nowrap!important;
-        font-family:inherit!important;
-        cursor:pointer!important;
-      }
-      .hdr .tabs #yayaCreateChantierBtn:hover{background:#3453a2!important;}
       #pane-chantiers .yaya-chantier-search-line{display:none!important;}
       #pane-chantiers .card .top button[onclick*="toggleChantier"].yaya-chantier-view-eye{
         width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;
@@ -101,7 +74,6 @@
       @media(max-width:760px){
         .hdr .tabs .yaya-header-chantier-search{flex:0 1 150px!important;width:150px!important;min-width:105px!important;height:36px!important;}
         .hdr .tabs .yaya-header-chantier-search #filtreInput{height:36px!important;min-height:36px!important;font-size:12px!important;padding:0 10px!important;}
-        .hdr .tabs #yayaCreateChantierBtn{min-width:auto!important;height:38px!important;min-height:38px!important;padding:0 11px!important;font-size:11px!important;}
       }
     `;
     document.head.appendChild(style);
@@ -233,48 +205,9 @@
     });
   }
 
-  function ensureCreateButton(pane){
-    let btn=document.getElementById('yayaCreateChantierBtn');
-    if(!btn&&pane){
-      const legacy=[...pane.querySelectorAll('button')].find(function(b){
-        return String(b.getAttribute('onclick')||'').includes('openChantierModal');
-      });
-      btn=legacy||null;
-    }
-    if(!btn){
-      btn=document.createElement('button');
-      btn.id='yayaCreateChantierBtn';
-      btn.type='button';
-      btn.className='btnp';
-      btn.addEventListener('click',function(){
-        if(typeof window.openChantierModal==='function')window.openChantierModal();
-      });
-    }else{
-      btn.id='yayaCreateChantierBtn';
-      btn.type='button';
-    }
-    btn.textContent='🛠️ Gérer chantier';
-    btn.title='Ajouter ou modifier un chantier';
-    btn.setAttribute('aria-label','Gérer chantier');
-    return btn;
-  }
-
-  function ensureToolbarCreateButton(){
-    const tabs=document.querySelector('.hdr .tabs');
-    const pane=document.getElementById('pane-chantiers');
-    if(!tabs||!pane)return;
-
-    const btn=ensureCreateButton(pane);
-    const planning=document.getElementById('yayaPlanningToolbarLink') || tabs.querySelector('.planning-external-tab');
-
-    if(planning){
-      if(btn.parentElement!==tabs || btn.previousElementSibling!==planning){
-        planning.insertAdjacentElement('afterend',btn);
-      }
-    }else if(btn.parentElement!==tabs){
-      tabs.appendChild(btn);
-    }
-
+  function removeToolbarManageButton(){
+    const btn=document.getElementById('yayaCreateChantierBtn');
+    if(btn&&btn.closest('.hdr .tabs'))btn.remove();
     document.querySelectorAll('#pane-chantiers .yaya-chantier-search-line').forEach(function(row){row.remove();});
   }
 
@@ -293,7 +226,7 @@
     if(!pane)return;
 
     ensureHeaderSearch();
-    ensureToolbarCreateButton();
+    removeToolbarManageButton();
 
     [...pane.children].forEach(function(el){
       if(el.tagName!=='DIV')return;
@@ -325,7 +258,7 @@
     clearTimeout(headerTimer);
     headerTimer=setTimeout(function(){
       ensureHeaderSearch();
-      ensureToolbarCreateButton();
+      removeToolbarManageButton();
     },0);
   }
 
@@ -341,8 +274,8 @@
         if(records.some(function(r){return r.addedNodes.length||r.removedNodes.length;}))scheduleHeader();
       }).observe(header,{childList:true,subtree:true});
     }
-    setTimeout(function(){ensureHeaderSearch();ensureToolbarCreateButton();},150);
-    setTimeout(function(){ensureHeaderSearch();ensureToolbarCreateButton();},600);
+    setTimeout(function(){ensureHeaderSearch();removeToolbarManageButton();},150);
+    setTimeout(function(){ensureHeaderSearch();removeToolbarManageButton();},600);
   }
 
   install();
