@@ -2,14 +2,15 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-new='yaya-ab-commandes-link.js?v=commandes-link-11'
+new='yaya-ab-commandes-link.js?v=commandes-link-12'
 
 if new in s:
-    print('AB COMMANDES v11 déjà chargé')
+    print('AB COMMANDES v12 déjà chargé')
     raise SystemExit(0)
 
 replaced=False
 for old in (
+    'yaya-ab-commandes-link.js?v=commandes-link-11',
     'yaya-ab-commandes-link.js?v=commandes-link-10',
     'yaya-ab-commandes-link.js?v=commandes-link-9',
     'yaya-ab-commandes-link.js?v=commandes-link-8',
@@ -35,7 +36,7 @@ if not replaced:
     if end<0:
         raise SystemExit('Fin script wrapper introuvable')
     end += len("<\\/script>'")
-    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-11\"><\\/script>'" + s[end:]
+    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-12\"><\\/script>'" + s[end:]
 
 p.write_text(s,encoding='utf-8')
-print('AB COMMANDES v11 chargé dans Yaya - détection robuste onglet Commande')
+print('AB COMMANDES v12 chargé dans Yaya - affichage structurel onglet Commande')
