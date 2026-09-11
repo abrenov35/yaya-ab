@@ -12,6 +12,7 @@
     style.id=STYLE_ID;
     style.textContent=`
       .${BLOCK_CLASS}{
+        display:none!important;
         width:100%!important;
         margin:0 0 6px!important;
         border:1px solid #cbd9e9!important;
@@ -19,6 +20,9 @@
         background:#fff!important;
         overflow:hidden!important;
         box-shadow:0 1px 3px rgba(22,45,73,.06)!important;
+      }
+      .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{
+        display:block!important;
       }
       .${BLOCK_CLASS} .yaya-ab-commandes-head{
         display:flex!important;
@@ -120,6 +124,11 @@
     }
   }
 
+  function syncVisibility(card,block){
+    const active=String(card?.dataset?.yayaDetailSection||'')==='commandes';
+    block.style.setProperty('display',active?'block':'none','important');
+  }
+
   function ensure(card){
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(!tabs)return;
@@ -143,6 +152,7 @@
     }
 
     positionBlock(card,tabs,block);
+    syncVisibility(card,block);
 
     const id=cardId(card);
     const name=chantierName(id,card);
@@ -194,5 +204,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='3.1';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='3.2';
 })();
