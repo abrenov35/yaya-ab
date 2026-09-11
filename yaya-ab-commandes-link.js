@@ -4,7 +4,7 @@
   const STYLE_ID='yaya-ab-commandes-link-style';
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
-  const OWNER='ab-commandes-v44';
+  const OWNER='ab-commandes-v45';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
 
   function installStyle(){
@@ -16,7 +16,6 @@
         border:0!important;border-radius:0!important;background:transparent!important;
         overflow:visible!important;box-shadow:none!important;min-height:0!important;
       }
-      .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
       #pane-chantiers .card > .yaya-detail-commandes-pane,
       #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
       #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
@@ -25,6 +24,16 @@
       .${BLOCK_CLASS} .yaya-ab-commandes-wait{padding:8px 0!important;color:#708095!important;font-size:12px!important;font-weight:700!important;text-align:left!important;background:transparent!important;border:0!important}
       .${FRAME_CLASS}{display:block!important;width:100%!important;height:260px!important;min-height:0!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:hidden!important}
     `;
+  }
+
+  function commandesActive(card){
+    if(!card)return false;
+    if(String(card.dataset.yayaDetailSection||'')==='commandes')return true;
+    const tab=card.querySelector(':scope > .yaya-detail-section-tabs [data-section="commandes"]');
+    if(!tab)return false;
+    if(tab.classList.contains('on')||tab.classList.contains('active'))return true;
+    if(tab.getAttribute('aria-selected')==='true')return true;
+    return false;
   }
 
   function cardId(card){
@@ -70,8 +79,12 @@
   function purgeCard(card){
     const blocks=[...card.querySelectorAll(':scope > .'+BLOCK_CLASS)];
     if(!blocks.length)return null;
-    const keep=blocks[0];
-    blocks.slice(1).forEach(b=>{b.querySelectorAll('iframe').forEach(stopIframe);b.remove()});
+    const keep=blocks.find(b=>b.dataset.abCommandesOwner===OWNER)||blocks[0];
+    blocks.forEach(b=>{
+      if(b===keep)return;
+      b.querySelectorAll('iframe').forEach(stopIframe);
+      b.remove();
+    });
 
     if(keep.dataset.abCommandesOwner!==OWNER){
       keep.querySelectorAll('iframe').forEach(stopIframe);
@@ -140,14 +153,20 @@
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(!tabs)return;
     const block=ensureBlock(card,tabs);
-    const active=String(card.dataset.yayaDetailSection||'')==='commandes';
+    const active=commandesActive(card);
     block.style.setProperty('display',active?'block':'none','important');
-    if(!active){stopFrame(block);return}
+
+    if(!active){
+      /* On ne détruit pas immédiatement une iframe déjà créée sur une simple phase de rerender.
+         Cela évite le cas où Yaya remplace la classe active quelques millisecondes après le clic. */
+      return;
+    }
 
     const id=cardId(card),name=chantierName(id,card);
     if(!id&&!name){
-      stopFrame(block);
-      const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement du chantier…';block.appendChild(wait);
+      if(!block.querySelector('.yaya-ab-commandes-wait')){
+        const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement du chantier…';block.appendChild(wait);
+      }
       return;
     }
     block.dataset.chantierId=id||'';
@@ -173,10 +192,17 @@
 
   installStyle();
   scan();
-  new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section']});
+  new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section','class','aria-selected']});
+  document.addEventListener('click',e=>{
+    if(e.target&&e.target.closest&&e.target.closest('[data-section="commandes"]')){
+      setTimeout(scan,0);
+      setTimeout(scan,80);
+      setTimeout(scan,220);
+    }
+  },true);
   window.addEventListener('message',handleMessage);
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.4';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.5';
 })();
