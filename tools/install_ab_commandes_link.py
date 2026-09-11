@@ -2,24 +2,32 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-filename='yaya-ab-commandes-link.js?v=commandes-link-1'
-if filename in s:
-    print('Lien AB COMMANDES déjà chargé')
+new='yaya-ab-commandes-link.js?v=commandes-link-3'
+
+if new in s:
+    print('AB COMMANDES v3 déjà chargé')
     raise SystemExit(0)
 
-lines=s.splitlines(True)
-inserted=False
-new=[]
-for line in lines:
-    new.append(line)
-    if (not inserted) and 'chantier-detail-section-tabs-mail-wrapper.js?v=detailtabs-native-commandes-3' in line:
-        ending='\n' if line.endswith('\n') else ''
-        new.append('    \'<script src="yaya-ab-commandes-link.js?v=commandes-link-1"><\\\\/script>\'+'+ending)
-        inserted=True
+replaced=False
+for old in (
+    'yaya-ab-commandes-link.js?v=commandes-link-2',
+    'yaya-ab-commandes-link.js?v=commandes-link-1',
+):
+    if old in s:
+        s=s.replace(old,new,1)
+        replaced=True
+        break
 
-if not inserted:
-    raise SystemExit('Point insertion onglets chantier introuvable')
+if not replaced:
+    needle='chantier-detail-section-tabs-mail-wrapper.js?v=detailtabs-native-commandes-3'
+    pos=s.find(needle)
+    if pos<0:
+        raise SystemExit('Point insertion onglets chantier introuvable')
+    end=s.find("<\\/script>'",pos)
+    if end<0:
+        raise SystemExit('Fin script wrapper introuvable')
+    end += len("<\\/script>'")
+    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-3\"><\\/script>'" + s[end:]
 
-s=''.join(new)
 p.write_text(s,encoding='utf-8')
-print('Lien AB COMMANDES installé sous les onglets chantier')
+print('AB COMMANDES v3 chargé dans Yaya')
