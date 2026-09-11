@@ -81,9 +81,20 @@
     return '';
   }
 
-  function linkFor(id){
+  function chantierName(id){
+    try{
+      if(typeof S!=='undefined'&&Array.isArray(S.chantiers)){
+        const c=S.chantiers.find(x=>String(x.id||'')===String(id||''));
+        if(c&&c.nom)return String(c.nom).trim();
+      }
+    }catch(e){}
+    return '';
+  }
+
+  function linkFor(id,name){
     const url=new URL(AB_COMMANDES_URL);
     url.searchParams.set('chantierId',String(id||''));
+    if(name)url.searchParams.set('chantierName',String(name));
     return url.toString();
   }
 
@@ -92,6 +103,7 @@
     if(!tabs)return;
     const id=cardId(card);
     if(!id)return;
+    const name=chantierName(id);
 
     let block=card.querySelector(':scope > .'+BLOCK_CLASS);
     if(!block){
@@ -106,7 +118,7 @@
       `;
     }
 
-    const href=linkFor(id);
+    const href=linkFor(id,name);
     const a=block.querySelector('.yaya-ab-commandes-open');
     if(a&&a.href!==href)a.href=href;
     block.dataset.chantierId=id;
@@ -128,5 +140,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='1.0';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='1.1';
 })();
