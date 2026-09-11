@@ -12,62 +12,31 @@
     style.id=STYLE_ID;
     style.textContent=`
       .${BLOCK_CLASS}{
-        display:none!important;
-        width:100%!important;
-        margin:0!important;
-        padding:0!important;
-        border:0!important;
-        border-radius:0!important;
-        background:transparent!important;
-        overflow:visible!important;
-        box-shadow:none!important;
+        display:none!important;width:100%!important;margin:0!important;padding:0!important;
+        border:0!important;border-radius:0!important;background:transparent!important;
+        overflow:visible!important;box-shadow:none!important;
       }
-      .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{
-        display:block!important;
-      }
-
-      /* AB COMMANDES remplace l'ancienne liste native Commande de Yaya.
-         On masque uniquement l'affichage : les données historiques restent intactes. */
+      .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
       #pane-chantiers .card > .yaya-detail-commandes-pane,
       #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
-      #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{
-        display:none!important;
-      }
-
-      .${BLOCK_CLASS} .yaya-ab-commandes-wait{
-        padding:8px 0!important;
-        color:#708095!important;
-        font-size:12px!important;
-        font-weight:700!important;
-        text-align:left!important;
-        background:transparent!important;
-        border:0!important;
-      }
-      .${FRAME_CLASS}{
-        display:block!important;
-        width:100%!important;
-        height:260px!important;
-        min-height:0!important;
-        border:0!important;
-        border-radius:0!important;
-        background:#fff!important;
-        overflow:hidden!important;
-      }
+      #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
+      .${BLOCK_CLASS} .yaya-ab-commandes-wait{padding:8px 0!important;color:#708095!important;font-size:12px!important;font-weight:700!important;text-align:left!important;background:transparent!important;border:0!important}
+      .${FRAME_CLASS}{display:block!important;width:100%!important;height:260px!important;min-height:0!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:hidden!important}
     `;
     document.head.appendChild(style);
   }
 
   function cardId(card){
     if(!card)return '';
-    try{
-      if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim();
-    }catch(e){}
     const nodes=[...card.querySelectorAll('[onclick]')];
     for(const el of nodes){
       const raw=String(el.getAttribute('onclick')||'');
       const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);
       if(m&&m[1])return String(m[1]).trim();
     }
+    try{
+      if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim();
+    }catch(e){}
     return '';
   }
 
@@ -78,13 +47,7 @@
         if(c&&c.nom)return String(c.nom).trim();
       }
     }catch(e){}
-    const candidates=[
-      ':scope > .top b',
-      ':scope > .top strong',
-      ':scope > div:first-child b',
-      ':scope > div:first-child strong'
-    ];
-    for(const sel of candidates){
+    for(const sel of [':scope > .top b',':scope > .top strong',':scope > div:first-child b',':scope > div:first-child strong']){
       const el=card&&card.querySelector(sel);
       const txt=String(el&&el.textContent||'').trim();
       if(txt)return txt;
@@ -101,92 +64,89 @@
   }
 
   function positionBlock(card,tabs,block){
-    const nativeCommandRow=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="commandes"]');
-    const nativeCommandPane=card.querySelector(':scope > .yaya-detail-commandes-pane');
-    const anchor=nativeCommandRow||nativeCommandPane;
-    if(anchor){
-      if(block.nextElementSibling!==anchor)card.insertBefore(block,anchor);
-    }else if(block.parentElement!==card||tabs.nextElementSibling!==block){
-      tabs.insertAdjacentElement('afterend',block);
-    }
+    const anchor=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="commandes"]')||card.querySelector(':scope > .yaya-detail-commandes-pane');
+    if(anchor){if(block.nextElementSibling!==anchor)card.insertBefore(block,anchor)}
+    else if(block.parentElement!==card||tabs.nextElementSibling!==block)tabs.insertAdjacentElement('afterend',block);
   }
 
-  function syncVisibility(card,block){
-    const active=String(card?.dataset?.yayaDetailSection||'')==='commandes';
-    block.style.setProperty('display',active?'block':'none','important');
-  }
-
-  function ensure(card){
-    const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
-    if(!tabs)return;
-
+  function ensureBlock(card,tabs){
     let block=card.querySelector(':scope > .'+BLOCK_CLASS);
     if(!block){
       block=document.createElement('div');
       block.className='yaya-detail-section-node '+BLOCK_CLASS;
       block.dataset.section='commandes';
-      block.innerHTML=`
-        <div class="yaya-ab-commandes-wait">Chargement du suivi commandes…</div>
-        <iframe class="${FRAME_CLASS}" title="Suivi des commandes chantier" loading="eager" scrolling="no" style="display:none!important"></iframe>
-      `;
-    }else{
-      block.classList.add('yaya-detail-section-node');
-      block.dataset.section='commandes';
-      const oldHead=block.querySelector('.yaya-ab-commandes-head');
-      if(oldHead)oldHead.remove();
-      const oldOpen=block.querySelector('.yaya-ab-commandes-open');
-      if(oldOpen)oldOpen.remove();
     }
-
     positionBlock(card,tabs,block);
-    syncVisibility(card,block);
+    return block;
+  }
+
+  function stopFrame(block){
+    const frame=block&&block.querySelector('.'+FRAME_CLASS);
+    if(frame){
+      try{frame.src='about:blank'}catch(e){}
+      frame.remove();
+    }
+    const wait=block&&block.querySelector('.yaya-ab-commandes-wait');
+    if(wait)wait.remove();
+  }
+
+  function startFrame(block,id,name){
+    const href=linkFor(id,name);
+    let frame=block.querySelector('.'+FRAME_CLASS);
+    if(frame&&frame.dataset.src===href)return;
+    stopFrame(block);
+    const wait=document.createElement('div');
+    wait.className='yaya-ab-commandes-wait';
+    wait.textContent='Chargement des dernières commandes…';
+    frame=document.createElement('iframe');
+    frame.className=FRAME_CLASS;
+    frame.title='Suivi des commandes chantier';
+    frame.loading='eager';
+    frame.scrolling='no';
+    frame.dataset.src=href;
+    frame.style.setProperty('overflow','hidden','important');
+    block.append(wait,frame);
+    frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove()},{once:true});
+    frame.src=href;
+  }
+
+  function ensure(card){
+    const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
+    if(!tabs)return;
+    const block=ensureBlock(card,tabs);
+    const active=String(card.dataset.yayaDetailSection||'')==='commandes';
+    block.style.setProperty('display',active?'block':'none','important');
+
+    /* Important : aucun iframe / aucune synchro tant que l'onglet Commande n'est pas ouvert. */
+    if(!active){stopFrame(block);return}
 
     const id=cardId(card);
     const name=chantierName(id,card);
-    const frame=block.querySelector('.'+FRAME_CLASS);
-    const wait=block.querySelector('.yaya-ab-commandes-wait');
-
     if(!id&&!name){
-      if(wait)wait.textContent='Chargement du chantier…';
+      stopFrame(block);
+      const wait=document.createElement('div');
+      wait.className='yaya-ab-commandes-wait';
+      wait.textContent='Chargement du chantier…';
+      block.appendChild(wait);
       return;
     }
-
-    const embedHref=linkFor(id,name);
     block.dataset.chantierId=id||'';
-
-    if(frame){
-      frame.setAttribute('scrolling','no');
-      frame.style.setProperty('overflow','hidden','important');
-      if(frame.dataset.src!==embedHref){
-        frame.dataset.src=embedHref;
-        frame.src=embedHref;
-      }
-      frame.style.setProperty('display','block','important');
-    }
-    if(wait)wait.style.setProperty('display','none','important');
+    startFrame(block,id,name);
   }
 
   function handleMessage(e){
     const d=e&&e.data;
     if(!d||d.type!=='AB_COMMANDES_HEIGHT')return;
-    const measured=Math.ceil(Number(d.height)||260);
-    const h=Math.max(120,measured+2);
+    const h=Math.max(120,Math.ceil(Number(d.height)||260)+2);
     document.querySelectorAll('.'+FRAME_CLASS).forEach(frame=>{
-      try{
-        if(frame.contentWindow===e.source){
-          frame.style.setProperty('height',h+'px','important');
-          frame.setAttribute('scrolling','no');
-        }
-      }catch(err){}
+      try{if(frame.contentWindow===e.source){frame.style.setProperty('height',h+'px','important');frame.setAttribute('scrolling','no')}}catch(err){}
     });
   }
 
   let timer=0;
   function scan(){
     clearTimeout(timer);
-    timer=setTimeout(()=>{
-      document.querySelectorAll('#pane-chantiers .card').forEach(ensure);
-    },40);
+    timer=setTimeout(()=>document.querySelectorAll('#pane-chantiers .card').forEach(ensure),50);
   }
 
   installStyle();
@@ -196,5 +156,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.1';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.2';
 })();
