@@ -2,14 +2,15 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-new='yaya-ab-commandes-link.js?v=commandes-link-8'
+new='yaya-ab-commandes-link.js?v=commandes-link-9'
 
 if new in s:
-    print('AB COMMANDES v8 déjà chargé')
+    print('AB COMMANDES v9 déjà chargé')
     raise SystemExit(0)
 
 replaced=False
 for old in (
+    'yaya-ab-commandes-link.js?v=commandes-link-8',
     'yaya-ab-commandes-link.js?v=commandes-link-7',
     'yaya-ab-commandes-link.js?v=commandes-link-6',
     'yaya-ab-commandes-link.js?v=commandes-link-5',
@@ -32,7 +33,7 @@ if not replaced:
     if end<0:
         raise SystemExit('Fin script wrapper introuvable')
     end += len("<\\/script>'")
-    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-8\"><\\/script>'" + s[end:]
+    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-9\"><\\/script>'" + s[end:]
 
 p.write_text(s,encoding='utf-8')
-print('AB COMMANDES v8 chargé dans Yaya - iframe uniquement à ouverture Commande')
+print('AB COMMANDES v9 chargé dans Yaya - ancien doublon supprimé')
