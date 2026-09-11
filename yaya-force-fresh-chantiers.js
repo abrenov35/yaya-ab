@@ -118,6 +118,7 @@
       canonicalizeRecord(copy);
       if(Array.isArray(copy.heures))copy.heures.forEach(canonicalizeRecord);
       if(Array.isArray(copy.rows))copy.rows.forEach(canonicalizeRecord);
+      if(Array.isArray(copy.lignes))copy.lignes.forEach(canonicalizeRecord);
       return copy;
     }
 
