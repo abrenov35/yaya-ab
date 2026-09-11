@@ -4,7 +4,7 @@
   const STYLE_ID='yaya-ab-commandes-link-style';
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
-  const OWNER='ab-commandes-v48';
+  const OWNER='ab-commandes-v49';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
   let activeCard=null;
   let scanTimer=0;
@@ -65,6 +65,7 @@
     if(id)url.searchParams.set('chantierId',String(id));
     if(name)url.searchParams.set('chantierName',String(name));
     url.searchParams.set('embed','1');
+    url.searchParams.set('ui','drive-upload-v3');
     return url.toString();
   }
 
@@ -193,7 +194,6 @@
   installStyle();
   cleanupOtherBlocks(null);
 
-  /* Navigation pilotée par les clics : aucun observer d'attributs/classes, donc aucune boucle auto-entretenue. */
   document.addEventListener('click',e=>{
     const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section]');
     if(!btn)return;
@@ -207,7 +207,6 @@
     }
   });
 
-  /* Observer uniquement les créations/reconstructions de cartes/onglets. Les mutations internes de l'embed sont ignorées. */
   const pane=document.getElementById('pane-chantiers');
   if(pane){
     new MutationObserver(records=>{
@@ -227,5 +226,5 @@
   setTimeout(scanActive,0);
   setTimeout(scanActive,300);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.8';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.9';
 })();
