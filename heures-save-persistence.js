@@ -7,6 +7,9 @@
   const PENDING_KEY='YAYA_PENDING_HOURS_V1';
   const CACHE_KEY='YAYA_CACHE_DATA_V2';
   let recoveryRunning=false;
+  let syncQueue=Promise.resolve();
+  let retryTimer=0;
+  let lastPendingWarningAt=0;
 
   function clone(value){
     try{return JSON.parse(JSON.stringify(value));}catch(e){return value;}
@@ -140,6 +143,7 @@
   }
 
   function clearConfirmed(store,remoteHours){
+    const latest=readPending();
     let changed=false;
     Object.keys(store.items||{}).forEach(function(key){
       const item=store.items[key];
@@ -147,11 +151,16 @@
         return weekOf(row)===String(item.semaine)&&workerOf(row)===String(item.salarieId)&&Number(row.jour)>=0&&Number(row.jour)<=4;
       });
       if(sameRows(actual,item.lignes)){
+        const latestItem=latest.items&&latest.items[key];
+        // Ne jamais supprimer une nouvelle saisie du même salarié arrivée
+        // pendant que la précédente était encore en cours de contrôle.
+        if(!latestItem||Number(latestItem.savedAt)!==Number(item.savedAt)||!sameRows(latestItem.lignes,item.lignes))return;
+        delete latest.items[key];
         delete store.items[key];
         changed=true;
       }
     });
-    if(changed)writePending(store);
+    if(changed)writePending(latest);
     return changed;
   }
 
@@ -187,23 +196,60 @@
     return null;
   }
 
-  function lockModal(locked){
-    const modal=document.querySelector('.yaya-week-modal');
-    if(!modal)return;
-    modal.querySelectorAll('.yaya-week-close,.yaya-week-cancel,.yaya-week-add,.yaya-week-select,.yaya-week-hours').forEach(function(el){
-      el.disabled=!!locked;
-    });
-    const overlay=modal.closest('.yaya-week-overlay');
-    if(overlay){
-      overlay.dataset.saving=locked?'1':'0';
-      if(locked){
-        if(!overlay.__yayaHoursOriginalClick)overlay.__yayaHoursOriginalClick=overlay.onclick;
-        overlay.onclick=function(event){event.stopPropagation();};
-      }else if(overlay.__yayaHoursOriginalClick){
-        overlay.onclick=overlay.__yayaHoursOriginalClick;
-        delete overlay.__yayaHoursOriginalClick;
-      }
+  async function flushPending(){
+    if(recoveryRunning)return;
+    const store=readPending();
+    if(!Object.keys(store.items||{}).length){
+      window.yayaHoursPending=false;
+      return;
     }
+
+    recoveryRunning=true;
+    window.yayaHoursPending=true;
+    const weeks=[...new Set(Object.values(store.items).map(function(item){return String(item.semaine||'');}).filter(Boolean))];
+    let allConfirmed=true;
+
+    for(const week of weeks){
+      try{
+        const fresh=await savePendingWeek(week,store);
+        if(!fresh)allConfirmed=false;
+        else if(typeof S!=='undefined'&&Array.isArray(fresh.heures)){
+          // Une autre saisie peut avoir été faite pendant le contrôle : elle
+          // reste prioritaire grâce à la file locale persistante.
+          S.heures=mergePendingIntoHours(fresh.heures,readPending());
+        }
+      }catch(e){allConfirmed=false;}
+    }
+
+    recoveryRunning=false;
+    window.yayaHoursPending=hasPending();
+    cacheCurrent();
+    if(typeof render==='function')render();
+
+    if(allConfirmed&&!window.yayaHoursPending){
+      if(typeof toast==='function')toast('Heures synchronisées avec le Sheet ✓');
+    }else if(window.yayaHoursPending){
+      const now=Date.now();
+      if(now-lastPendingWarningAt>30000&&typeof toast==='function'){
+        lastPendingWarningAt=now;
+        toast('Synchronisation des heures en attente — nouvelle tentative automatique',true);
+      }
+      queueSync(8000);
+    }
+  }
+
+  function queueSync(delay){
+    const launch=function(){
+      retryTimer=0;
+      syncQueue=syncQueue.then(flushPending,flushPending);
+    };
+    if(Number(delay)>0){
+      if(retryTimer)return;
+      retryTimer=setTimeout(launch,Number(delay));
+      return;
+    }
+    if(retryTimer){clearTimeout(retryTimer);retryTimer=0;}
+    launch();
   }
 
   function installSave(){
@@ -250,35 +296,16 @@
       yayaWeekSaving=true;
       window.yayaHoursPending=true;
       const btn=document.getElementById('yayaWeekSaveBtn');
-      if(btn){btn.disabled=true;btn.textContent='Enregistrement en cours…';}
-      lockModal(true);
+      if(btn){btn.disabled=true;btn.textContent='Enregistré ✓';}
 
       let store=putPending(semaine,sid,fresh,typeof isValidated==='function'?isValidated():false);
       if(typeof S!=='undefined')S.heures=mergePendingIntoHours(S.heures,store);
       cacheCurrent();
-      if(typeof render==='function')render();
-
-      let confirmed=null;
-      try{confirmed=await savePendingWeek(semaine,store);}catch(e){confirmed=null;}
-
-      if(confirmed){
-        if(typeof S!=='undefined'&&Array.isArray(confirmed.heures))S.heures=confirmed.heures.map(normalizedRow);
-        cacheCurrent();
-        yayaWeekSaving=false;
-        window.yayaHoursPending=hasPending();
-        closeModal();
-        if(typeof render==='function')render();
-        if(typeof toast==='function')toast('Heures enregistrées et vérifiées ✓');
-        return;
-      }
-
       yayaWeekSaving=false;
-      // Tant qu'une copie locale n'est pas confirmée, la synchronisation
-      // automatique ne doit jamais la remplacer par une ancienne lecture.
-      window.yayaHoursPending=true;
-      lockModal(false);
-      if(btn){btn.disabled=false;btn.textContent='Réessayer l’enregistrement';}
-      if(typeof toast==='function')toast('Les heures sont conservées sur cet appareil, mais le Sheet ne les a pas encore confirmées. Appuie sur « Réessayer ».',true);
+      closeModal();
+      if(typeof render==='function')render();
+      if(typeof toast==='function')toast('Heures prises en compte ✓ — synchronisation en arrière-plan');
+      queueSync(0);
     }
 
     persistentSaveWeek.__yayaPersistentHoursV1=true;
@@ -287,7 +314,6 @@
   }
 
   async function recoverPending(){
-    if(recoveryRunning)return;
     const store=readPending();
     if(!Object.keys(store.items||{}).length)return;
     if(typeof S==='undefined'||!S||!Array.isArray(S.heures)||typeof apiPost!=='function'){
@@ -295,29 +321,11 @@
       return;
     }
 
-    recoveryRunning=true;
     window.yayaHoursPending=true;
     S.heures=mergePendingIntoHours(S.heures,store);
     cacheCurrent();
     if(typeof render==='function')render();
-
-    const weeks=[...new Set(Object.values(store.items).map(function(item){return String(item.semaine||'');}).filter(Boolean))];
-    let allConfirmed=true;
-    for(const week of weeks){
-      try{
-        const fresh=await savePendingWeek(week,store);
-        if(!fresh)allConfirmed=false;
-        else if(Array.isArray(fresh.heures))S.heures=fresh.heures.map(normalizedRow);
-      }catch(e){allConfirmed=false;}
-    }
-
-    window.yayaHoursPending=hasPending();
-    recoveryRunning=false;
-    cacheCurrent();
-    if(typeof render==='function')render();
-    if(allConfirmed&&!Object.keys(readPending().items||{}).length&&typeof toast==='function'){
-      toast('Heures en attente récupérées et enregistrées ✓');
-    }
+    queueSync(0);
   }
 
   installSave();
