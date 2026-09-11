@@ -25,6 +25,15 @@
       .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{
         display:block!important;
       }
+
+      /* AB COMMANDES remplace l'ancienne liste native Commande de Yaya.
+         On masque uniquement l'affichage : les données historiques restent intactes. */
+      #pane-chantiers .card > .yaya-detail-commandes-pane,
+      #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
+      #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{
+        display:none!important;
+      }
+
       .${BLOCK_CLASS} .yaya-ab-commandes-wait{
         padding:8px 0!important;
         color:#708095!important;
@@ -187,5 +196,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.0';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.1';
 })();
