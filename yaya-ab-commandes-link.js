@@ -4,7 +4,7 @@
   const STYLE_ID='yaya-ab-commandes-link-style';
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
-  const OWNER='ab-commandes-v45';
+  const OWNER='ab-commandes-v46';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
 
   function installStyle(){
@@ -15,6 +15,11 @@
         display:none!important;width:100%!important;margin:0!important;padding:0!important;
         border:0!important;border-radius:0!important;background:transparent!important;
         overflow:visible!important;box-shadow:none!important;min-height:0!important;
+      }
+      /* Le moteur d'onglets Yaya retire les styles inline du panneau actif.
+         Cette règle structurelle garantit donc l'affichage de l'embed Commande. */
+      #pane-chantiers .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{
+        display:block!important;
       }
       #pane-chantiers .card > .yaya-detail-commandes-pane,
       #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
@@ -31,9 +36,7 @@
     if(String(card.dataset.yayaDetailSection||'')==='commandes')return true;
     const tab=card.querySelector(':scope > .yaya-detail-section-tabs [data-section="commandes"]');
     if(!tab)return false;
-    if(tab.classList.contains('on')||tab.classList.contains('active'))return true;
-    if(tab.getAttribute('aria-selected')==='true')return true;
-    return false;
+    return tab.classList.contains('on')||tab.classList.contains('active')||tab.getAttribute('aria-selected')==='true';
   }
 
   function cardId(card){
@@ -121,22 +124,18 @@
     return block;
   }
 
-  function stopFrame(block){
-    if(!block)return;
-    block.querySelectorAll('iframe').forEach(stopIframe);
-    block.querySelectorAll('.yaya-ab-commandes-wait').forEach(x=>x.remove());
-    block.style.removeProperty('height');
-    block.style.removeProperty('min-height');
-  }
-
   function startFrame(block,id,name){
     const href=linkFor(id,name);
     let frame=block.querySelector('.'+FRAME_CLASS);
     if(frame&&frame.dataset.src===href)return;
-    stopFrame(block);
+
+    block.querySelectorAll('iframe').forEach(stopIframe);
+    block.querySelectorAll('.yaya-ab-commandes-wait').forEach(x=>x.remove());
+
     const wait=document.createElement('div');
     wait.className='yaya-ab-commandes-wait';
     wait.textContent='Chargement des dernières commandes…';
+
     frame=document.createElement('iframe');
     frame.className=FRAME_CLASS;
     frame.title='Suivi des commandes chantier';
@@ -144,6 +143,7 @@
     frame.scrolling='no';
     frame.dataset.src=href;
     frame.style.setProperty('overflow','hidden','important');
+
     block.append(wait,frame);
     frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove()},{once:true});
     frame.src=href;
@@ -154,21 +154,20 @@
     if(!tabs)return;
     const block=ensureBlock(card,tabs);
     const active=commandesActive(card);
-    block.style.setProperty('display',active?'block':'none','important');
 
-    if(!active){
-      /* On ne détruit pas immédiatement une iframe déjà créée sur une simple phase de rerender.
-         Cela évite le cas où Yaya remplace la classe active quelques millisecondes après le clic. */
-      return;
-    }
+    if(!active)return;
 
     const id=cardId(card),name=chantierName(id,card);
     if(!id&&!name){
       if(!block.querySelector('.yaya-ab-commandes-wait')){
-        const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement du chantier…';block.appendChild(wait);
+        const wait=document.createElement('div');
+        wait.className='yaya-ab-commandes-wait';
+        wait.textContent='Chargement du chantier…';
+        block.appendChild(wait);
       }
       return;
     }
+
     block.dataset.chantierId=id||'';
     startFrame(block,id,name);
   }
@@ -193,16 +192,19 @@
   installStyle();
   scan();
   new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section','class','aria-selected']});
+
+  /* Après le moteur natif Yaya : au clic sur Commande, on force l'insertion immédiatement. */
   document.addEventListener('click',e=>{
-    if(e.target&&e.target.closest&&e.target.closest('[data-section="commandes"]')){
-      setTimeout(scan,0);
-      setTimeout(scan,80);
-      setTimeout(scan,220);
-    }
-  },true);
+    const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section="commandes"]');
+    if(!btn)return;
+    const card=btn.closest('.card');
+    setTimeout(()=>{if(card)ensure(card)},0);
+    setTimeout(()=>{if(card)ensure(card)},80);
+  });
+
   window.addEventListener('message',handleMessage);
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.5';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.6';
 })();
