@@ -2,14 +2,15 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-new='yaya-ab-commandes-link.js?v=commandes-link-5'
+new='yaya-ab-commandes-link.js?v=commandes-link-6'
 
 if new in s:
-    print('AB COMMANDES v5 déjà chargé')
+    print('AB COMMANDES v6 déjà chargé')
     raise SystemExit(0)
 
 replaced=False
 for old in (
+    'yaya-ab-commandes-link.js?v=commandes-link-5',
     'yaya-ab-commandes-link.js?v=commandes-link-4',
     'yaya-ab-commandes-link.js?v=commandes-link-3',
     'yaya-ab-commandes-link.js?v=commandes-link-2',
@@ -29,7 +30,7 @@ if not replaced:
     if end<0:
         raise SystemExit('Fin script wrapper introuvable')
     end += len("<\\/script>'")
-    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-5\"><\\/script>'" + s[end:]
+    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-6\"><\\/script>'" + s[end:]
 
 p.write_text(s,encoding='utf-8')
-print('AB COMMANDES v5 chargé dans Yaya')
+print('AB COMMANDES v6 chargé dans Yaya')
