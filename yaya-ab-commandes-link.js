@@ -4,8 +4,9 @@
   const STYLE_ID='yaya-ab-commandes-link-style';
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
-  const OWNER='ab-commandes-v46';
+  const OWNER='ab-commandes-v47';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
+  const cleanupTimers=new WeakMap();
 
   function installStyle(){
     let style=document.getElementById(STYLE_ID);
@@ -16,11 +17,7 @@
         border:0!important;border-radius:0!important;background:transparent!important;
         overflow:visible!important;box-shadow:none!important;min-height:0!important;
       }
-      /* Le moteur d'onglets Yaya retire les styles inline du panneau actif.
-         Cette règle structurelle garantit donc l'affichage de l'embed Commande. */
-      #pane-chantiers .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{
-        display:block!important;
-      }
+      #pane-chantiers .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
       #pane-chantiers .card > .yaya-detail-commandes-pane,
       #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
       #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
@@ -79,18 +76,52 @@
     frame.remove();
   }
 
+  function clearBlockRuntime(block){
+    if(!block)return;
+    block.querySelectorAll('iframe').forEach(stopIframe);
+    block.querySelectorAll('.yaya-ab-commandes-wait').forEach(x=>x.remove());
+    block.style.removeProperty('height');
+    block.style.removeProperty('min-height');
+  }
+
+  function cancelCleanup(block){
+    const t=cleanupTimers.get(block);
+    if(t){clearTimeout(t);cleanupTimers.delete(block)}
+  }
+
+  function scheduleCleanup(block){
+    if(!block||cleanupTimers.has(block))return;
+    const t=setTimeout(()=>{
+      cleanupTimers.delete(block);
+      const card=block.closest('.card');
+      if(card&&commandesActive(card))return;
+      clearBlockRuntime(block);
+    },500);
+    cleanupTimers.set(block,t);
+  }
+
+  function stopOtherActiveFrames(keepBlock){
+    document.querySelectorAll('#pane-chantiers .'+BLOCK_CLASS).forEach(block=>{
+      if(block===keepBlock)return;
+      cancelCleanup(block);
+      clearBlockRuntime(block);
+    });
+  }
+
   function purgeCard(card){
     const blocks=[...card.querySelectorAll(':scope > .'+BLOCK_CLASS)];
     if(!blocks.length)return null;
     const keep=blocks.find(b=>b.dataset.abCommandesOwner===OWNER)||blocks[0];
     blocks.forEach(b=>{
       if(b===keep)return;
-      b.querySelectorAll('iframe').forEach(stopIframe);
+      cancelCleanup(b);
+      clearBlockRuntime(b);
       b.remove();
     });
 
     if(keep.dataset.abCommandesOwner!==OWNER){
-      keep.querySelectorAll('iframe').forEach(stopIframe);
+      cancelCleanup(keep);
+      clearBlockRuntime(keep);
       keep.replaceChildren();
       keep.removeAttribute('style');
       keep.dataset.abCommandesOwner=OWNER;
@@ -129,9 +160,7 @@
     let frame=block.querySelector('.'+FRAME_CLASS);
     if(frame&&frame.dataset.src===href)return;
 
-    block.querySelectorAll('iframe').forEach(stopIframe);
-    block.querySelectorAll('.yaya-ab-commandes-wait').forEach(x=>x.remove());
-
+    clearBlockRuntime(block);
     const wait=document.createElement('div');
     wait.className='yaya-ab-commandes-wait';
     wait.textContent='Chargement des dernières commandes…';
@@ -155,7 +184,13 @@
     const block=ensureBlock(card,tabs);
     const active=commandesActive(card);
 
-    if(!active)return;
+    if(!active){
+      scheduleCleanup(block);
+      return;
+    }
+
+    cancelCleanup(block);
+    stopOtherActiveFrames(block);
 
     const id=cardId(card),name=chantierName(id,card);
     if(!id&&!name){
@@ -187,13 +222,13 @@
   }
 
   let timer=0;
-  function scan(){clearTimeout(timer);timer=setTimeout(()=>document.querySelectorAll('#pane-chantiers .card').forEach(ensure),35)}
+  function scan(){clearTimeout(timer);timer=setTimeout(()=>document.querySelectorAll('#pane-chantiers .card').forEach(ensure),45)}
 
   installStyle();
   scan();
-  new MutationObserver(scan).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section','class','aria-selected']});
+  const pane=document.getElementById('pane-chantiers')||document.documentElement;
+  new MutationObserver(scan).observe(pane,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section','class','aria-selected']});
 
-  /* Après le moteur natif Yaya : au clic sur Commande, on force l'insertion immédiatement. */
   document.addEventListener('click',e=>{
     const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section="commandes"]');
     if(!btn)return;
@@ -206,5 +241,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.6';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.7';
 })();
