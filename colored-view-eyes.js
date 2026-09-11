@@ -46,3 +46,11 @@
   if(document.body)install();
   else document.addEventListener('DOMContentLoaded',install,{once:true});
 })();
+
+(function(){
+  if(document.querySelector('script[data-yaya-commandes-failsafe]'))return;
+  const s=document.createElement('script');
+  s.src='yaya-commandes-failsafe.js?v=1';
+  s.dataset.yayaCommandesFailsafe='1';
+  (document.head||document.documentElement).appendChild(s);
+})();
