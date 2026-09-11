@@ -124,22 +124,25 @@
   }
 
   function ensurePlanningLink(){
+    const tabs=document.querySelector('.hdr .tabs');
+    const evolution=tabs&&tabs.querySelector('.tab[data-tab="evolution"]');
+    if(!tabs||!evolution)return null;
+
     let link=document.getElementById(LINK_ID);
-    if(link)return link;
+    if(!link){
+      link=document.createElement('a');
+      link.id=LINK_ID;
+      link.className='planning-external-tab';
+      link.href='https://abrenov35.github.io/planning-ab/';
+      link.target='_blank';
+      link.rel='noopener noreferrer';
+      link.textContent='Planning';
+      link.setAttribute('aria-label','Ouvrir le planning dans un nouvel onglet');
+    }
 
-    const fiche=document.querySelector('.fiche-inter-tab');
-    if(!fiche)return null;
-
-    link=document.createElement('a');
-    link.id=LINK_ID;
-    link.className='planning-external-tab';
-    link.href='https://abrenov35.github.io/planning-ab/';
-    link.target='_blank';
-    link.rel='noopener noreferrer';
-    link.textContent='Planning';
-    link.setAttribute('aria-label','Ouvrir le planning dans un nouvel onglet');
-
-    fiche.insertAdjacentElement('afterend',link);
+    if(link.parentElement!==tabs || link.previousElementSibling!==evolution){
+      evolution.insertAdjacentElement('afterend',link);
+    }
     return link;
   }
 
