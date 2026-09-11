@@ -2,14 +2,15 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-new='yaya-ab-commandes-link.js?v=commandes-link-14'
+new='yaya-ab-commandes-link.js?v=commandes-link-15'
 
 if new in s:
-    print('AB COMMANDES v14 déjà chargé')
+    print('AB COMMANDES v15 déjà chargé')
     raise SystemExit(0)
 
 replaced=False
 for old in (
+    'yaya-ab-commandes-link.js?v=commandes-link-14',
     'yaya-ab-commandes-link.js?v=commandes-link-13',
     'yaya-ab-commandes-link.js?v=commandes-link-12',
     'yaya-ab-commandes-link.js?v=commandes-link-11',
@@ -38,7 +39,7 @@ if not replaced:
     if end<0:
         raise SystemExit('Fin script wrapper introuvable')
     end += len("<\\/script>'")
-    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-14\"><\\/script>'" + s[end:]
+    s=s[:end] + "+'<script src=\"yaya-ab-commandes-link.js?v=commandes-link-15\"><\\/script>'" + s[end:]
 
 p.write_text(s,encoding='utf-8')
-print('AB COMMANDES v14 chargé dans Yaya - navigation stable sans boucle observer')
+print('AB COMMANDES v15 chargé dans Yaya - vrai upload PDF Drive forcé')
