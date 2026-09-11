@@ -4,7 +4,7 @@
   const brand=document.querySelector('.hdr .brand span');
   if(brand)brand.textContent='AB RENOV 35';
 
-  const STYLE_ID='yaya-create-chantier-search-line-main-v9';
+  const STYLE_ID='yaya-create-chantier-search-line-main-v10';
   if(!document.getElementById(STYLE_ID)){
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -64,31 +64,8 @@
         display:none!important;
         content:none!important;
       }
-      .hdr .tabs .yaya-commandes-toolbar-link{
-        position:relative!important;
-        display:inline-flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        flex:0 0 auto!important;
-        min-width:112px!important;
-        height:42px!important;
-        min-height:42px!important;
-        margin:0!important;
-        padding:0 16px!important;
-        border:1px solid #7d91c7!important;
-        border-radius:7px!important;
-        background:#294796!important;
-        color:#fff!important;
-        box-shadow:none!important;
-        font-size:13px!important;
-        font-weight:700!important;
-        line-height:1!important;
-        white-space:nowrap!important;
-        font-family:inherit!important;
-        cursor:pointer!important;
-        text-decoration:none!important;
-      }
-      .hdr .tabs .yaya-commandes-toolbar-link:hover{background:#3453a2!important;}
+      .hdr .tabs #yayaCommandesToolbarLink,
+      .hdr .tabs .yaya-commandes-toolbar-link{display:none!important;}
       #pane-chantiers .yaya-chantier-search-line{display:none!important;}
       #pane-chantiers .card .top button[onclick*="toggleChantier"].yaya-chantier-view-eye{
         width:32px!important;min-width:32px!important;height:32px!important;min-height:32px!important;
@@ -99,7 +76,6 @@
       @media(max-width:760px){
         .hdr .tabs .yaya-header-chantier-search{flex:0 1 150px!important;width:150px!important;min-width:105px!important;height:36px!important;}
         .hdr .tabs .yaya-header-chantier-search #filtreInput{height:36px!important;min-height:36px!important;font-size:12px!important;padding:0 10px!important;}
-        .hdr .tabs .yaya-commandes-toolbar-link{min-width:auto!important;height:38px!important;min-height:38px!important;padding:0 11px!important;font-size:11px!important;}
       }
     `;
     document.head.appendChild(style);
@@ -221,24 +197,13 @@
       chantierBtn.insertAdjacentElement('afterend',wrap);
     }
 
-    let commandes=document.getElementById('yayaCommandesToolbarLink');
-    if(!commandes){
-      commandes=document.createElement('a');
-      commandes.id='yayaCommandesToolbarLink';
-      commandes.className='yaya-commandes-toolbar-link';
-      commandes.href='https://abrenov35.github.io/ab-commandes/';
-      commandes.target='_blank';
-      commandes.rel='noopener noreferrer';
-      commandes.textContent='Commande';
-      commandes.setAttribute('aria-label','Ouvrir les commandes dans un nouvel onglet');
-    }
-    if(commandes.parentElement!==tabs || commandes.previousElementSibling!==wrap){
-      wrap.insertAdjacentElement('afterend',commandes);
-    }
+    const commandes=document.getElementById('yayaCommandesToolbarLink');
+    if(commandes)commandes.remove();
+    tabs.querySelectorAll('.yaya-commandes-toolbar-link').forEach(function(el){el.remove();});
 
     const hours=tabs.querySelector('.yaya-hours-toolbar-btn') || tabs.querySelector('.tab[data-tab="heures"]');
-    if(hours && hours.previousElementSibling!==commandes){
-      commandes.insertAdjacentElement('afterend',hours);
+    if(hours && hours.previousElementSibling!==wrap){
+      wrap.insertAdjacentElement('afterend',hours);
     }
 
     document.querySelectorAll('#pane-chantiers .yaya-search-wrap,#pane-chantiers .yaya-search-input-box').forEach(function(el){
