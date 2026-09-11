@@ -53,4 +53,11 @@ const mismatch=api.readPending();
 api.clearConfirmed(mismatch,remote);
 assert.equal(Object.keys(mismatch.items).length,1);
 
+const oldKevin=api.readPending();
+api.putPending(week,'kevin-2',[row('kevin-2',2,8,'C6')],false);
+api.clearConfirmed(oldKevin,[row('kevin-2',1,8,'C5')]);
+const newestKevin=api.readPending();
+assert.equal(Object.keys(newestKevin.items).length,1);
+assert.equal(newestKevin.items[week+'|kevin-2'].lignes[0].ref,'C6');
+
 console.log('heures-save-persistence: tests OK');
