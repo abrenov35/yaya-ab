@@ -69,8 +69,45 @@
     else if(block.parentElement!==card||tabs.nextElementSibling!==block)tabs.insertAdjacentElement('afterend',block);
   }
 
+  function stopAnyIframe(block){
+    if(!block)return;
+    block.querySelectorAll('iframe').forEach(frame=>{
+      try{frame.src='about:blank'}catch(e){}
+      frame.remove();
+    });
+  }
+
+  function isLegacyBlock(block){
+    if(!block)return false;
+    const link=[...block.querySelectorAll('a')].find(a=>/ouvrir en grand/i.test(String(a.textContent||'')));
+    const oldFrame=block.querySelector('iframe:not(.'+FRAME_CLASS+')');
+    const oldTitle=[...block.querySelectorAll('strong')].find(el=>/ab commandes/i.test(String(el.textContent||'')));
+    return !!(link||oldFrame||oldTitle);
+  }
+
+  function normalizeBlocks(card){
+    const blocks=[...card.querySelectorAll(':scope > .'+BLOCK_CLASS)];
+    if(!blocks.length)return null;
+
+    let keep=blocks.find(b=>b.querySelector('.'+FRAME_CLASS))||blocks[0];
+    blocks.forEach(b=>{
+      if(b===keep)return;
+      stopAnyIframe(b);
+      b.remove();
+    });
+
+    if(isLegacyBlock(keep)){
+      stopAnyIframe(keep);
+      keep.innerHTML='';
+      keep.removeAttribute('style');
+    }
+    keep.className='yaya-detail-section-node '+BLOCK_CLASS;
+    keep.dataset.section='commandes';
+    return keep;
+  }
+
   function ensureBlock(card,tabs){
-    let block=card.querySelector(':scope > .'+BLOCK_CLASS);
+    let block=normalizeBlocks(card);
     if(!block){
       block=document.createElement('div');
       block.className='yaya-detail-section-node '+BLOCK_CLASS;
@@ -117,7 +154,7 @@
     const active=String(card.dataset.yayaDetailSection||'')==='commandes';
     block.style.setProperty('display',active?'block':'none','important');
 
-    /* Important : aucun iframe / aucune synchro tant que l'onglet Commande n'est pas ouvert. */
+    /* Aucun iframe / aucune synchro tant que l'onglet Commande n'est pas ouvert. */
     if(!active){stopFrame(block);return}
 
     const id=cardId(card);
@@ -146,7 +183,7 @@
   let timer=0;
   function scan(){
     clearTimeout(timer);
-    timer=setTimeout(()=>document.querySelectorAll('#pane-chantiers .card').forEach(ensure),50);
+    timer=setTimeout(()=>document.querySelectorAll('#pane-chantiers .card').forEach(ensure),40);
   }
 
   installStyle();
@@ -156,5 +193,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.2';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.3';
 })();
