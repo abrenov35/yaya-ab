@@ -12,7 +12,6 @@
     style.id=STYLE_ID;
     style.textContent=`
       .${BLOCK_CLASS}{
-        display:none!important;
         width:100%!important;
         margin:0 0 12px!important;
         border:1px solid #cbd9e9!important;
@@ -21,7 +20,6 @@
         overflow:hidden!important;
         box-shadow:0 1px 3px rgba(22,45,73,.06)!important;
       }
-      .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
       .${BLOCK_CLASS} .yaya-ab-commandes-head{
         display:flex!important;
         align-items:center!important;
@@ -46,6 +44,13 @@
         text-decoration:none!important;
         white-space:nowrap!important;
       }
+      .${BLOCK_CLASS} .yaya-ab-commandes-wait{
+        padding:18px!important;
+        color:#708095!important;
+        font-size:12px!important;
+        font-weight:700!important;
+        text-align:center!important;
+      }
       .${FRAME_CLASS}{
         display:block!important;
         width:100%!important;
@@ -63,69 +68,104 @@
 
   function cardId(card){
     if(!card)return '';
+    try{
+      if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim();
+    }catch(e){}
     const nodes=[...card.querySelectorAll('[onclick]')];
     for(const el of nodes){
       const raw=String(el.getAttribute('onclick')||'');
       const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);
       if(m&&m[1])return String(m[1]).trim();
     }
-    try{
-      if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim();
-    }catch(e){}
     return '';
   }
 
-  function chantierName(id){
+  function chantierName(id,card){
     try{
       if(typeof S!=='undefined'&&Array.isArray(S.chantiers)){
         const c=S.chantiers.find(x=>String(x.id||'')===String(id||''));
         if(c&&c.nom)return String(c.nom).trim();
       }
     }catch(e){}
+    const candidates=[
+      ':scope > .top b',
+      ':scope > .top strong',
+      ':scope > div:first-child b',
+      ':scope > div:first-child strong'
+    ];
+    for(const sel of candidates){
+      const el=card&&card.querySelector(sel);
+      const txt=String(el&&el.textContent||'').trim();
+      if(txt)return txt;
+    }
     return '';
   }
 
   function linkFor(id,name,embed){
     const url=new URL(AB_COMMANDES_URL);
-    url.searchParams.set('chantierId',String(id||''));
+    if(id)url.searchParams.set('chantierId',String(id));
     if(name)url.searchParams.set('chantierName',String(name));
     if(embed)url.searchParams.set('embed','1');
     return url.toString();
   }
 
+  function positionBlock(card,tabs,block){
+    const nativeCommandRow=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="commandes"]');
+    const nativeCommandPane=card.querySelector(':scope > .yaya-detail-commandes-pane');
+    const anchor=nativeCommandRow||nativeCommandPane;
+    if(anchor){
+      if(block.nextElementSibling!==anchor)card.insertBefore(block,anchor);
+    }else if(block.parentElement!==card||tabs.nextElementSibling!==block){
+      tabs.insertAdjacentElement('afterend',block);
+    }
+  }
+
   function ensure(card){
     const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
     if(!tabs)return;
-    const id=cardId(card);
-    if(!id)return;
-    const name=chantierName(id);
 
     let block=card.querySelector(':scope > .'+BLOCK_CLASS);
     if(!block){
       block=document.createElement('div');
-      block.className=BLOCK_CLASS;
+      block.className='yaya-detail-section-node '+BLOCK_CLASS;
+      block.dataset.section='commandes';
       block.innerHTML=`
         <div class="yaya-ab-commandes-head">
           <strong class="yaya-ab-commandes-title">📦 AB COMMANDES</strong>
           <a class="yaya-ab-commandes-open" target="_blank" rel="noopener">Ouvrir en grand ↗</a>
         </div>
-        <iframe class="${FRAME_CLASS}" title="Suivi des commandes chantier" loading="lazy"></iframe>
+        <div class="yaya-ab-commandes-wait">Chargement du suivi commandes…</div>
+        <iframe class="${FRAME_CLASS}" title="Suivi des commandes chantier" loading="lazy" style="display:none!important"></iframe>
       `;
+    }else{
+      block.classList.add('yaya-detail-section-node');
+      block.dataset.section='commandes';
+    }
+
+    positionBlock(card,tabs,block);
+
+    const id=cardId(card);
+    const name=chantierName(id,card);
+    const a=block.querySelector('.yaya-ab-commandes-open');
+    const frame=block.querySelector('.'+FRAME_CLASS);
+    const wait=block.querySelector('.yaya-ab-commandes-wait');
+
+    if(!id&&!name){
+      if(wait)wait.textContent='Chargement du chantier…';
+      return;
     }
 
     const fullHref=linkFor(id,name,false);
     const embedHref=linkFor(id,name,true);
-    const a=block.querySelector('.yaya-ab-commandes-open');
-    if(a&&a.href!==fullHref)a.href=fullHref;
-    const frame=block.querySelector('.'+FRAME_CLASS);
-    block.dataset.chantierId=id;
+    if(a)a.href=fullHref;
+    block.dataset.chantierId=id||'';
 
-    if(tabs.nextElementSibling!==block)tabs.insertAdjacentElement('afterend',block);
-
-    if(card.dataset.yayaDetailSection==='commandes'&&frame&&frame.dataset.src!==embedHref){
+    if(frame&&frame.dataset.src!==embedHref){
       frame.dataset.src=embedHref;
       frame.src=embedHref;
     }
+    if(frame)frame.style.setProperty('display','block','important');
+    if(wait)wait.style.setProperty('display','none','important');
   }
 
   function handleMessage(e){
@@ -154,5 +194,5 @@
   window.addEventListener('hashchange',scan);
   window.addEventListener('focus',scan);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='2.0';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='3.0';
 })();
