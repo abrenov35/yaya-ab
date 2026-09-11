@@ -1,10 +1,11 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierEditModalSimpleV3)return;
+  if(window.__yayaChantierEditModalSimpleV4)return;
+  window.__yayaChantierEditModalSimpleV4=true;
   window.__yayaChantierEditModalSimpleV3=true;
 
-  const STYLE_ID='yaya-chantier-edit-modal-simple-v3';
+  const STYLE_ID='yaya-chantier-edit-modal-simple-v4';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -62,6 +63,58 @@
   function getChantier(cid){
     try{return Array.isArray(S&&S.chantiers)?S.chantiers.find(function(c){return String(c&&c.id)===String(cid);})||null:null;}
     catch(e){return null;}
+  }
+
+  function toastSafe(message,isError){
+    try{if(typeof window.toast==='function')window.toast(message,!!isError);}
+    catch(e){}
+  }
+
+  function installReliableArchive(){
+    window.archiverChantier=async function(cid){
+      const id=String(cid||'').trim();
+      const c=getChantier(id);
+      if(!c){toastSafe('Chantier introuvable',true);return false;}
+
+      if(String(c.statut||'').trim()==='Archivé'){
+        toastSafe('Chantier déjà archivé');
+        try{if(typeof window.closeModal==='function')window.closeModal();}catch(e){}
+        return true;
+      }
+
+      const nom=String(c.nom||id).trim();
+      if(!window.confirm('Archiver le chantier « '+nom+' » ?\n\nIl restera accessible dans les archives.'))return false;
+
+      const ancienStatut=c.statut;
+      c.statut='Archivé';
+
+      try{
+        if(typeof expChantiers!=='undefined'&&expChantiers&&typeof expChantiers.delete==='function'){
+          expChantiers.delete(id);
+        }
+      }catch(e){}
+
+      try{if(typeof window.closeModal==='function')window.closeModal();}catch(e){}
+      try{if(typeof window.render==='function')window.render();}catch(e){}
+      toastSafe('Archivage en cours…');
+
+      let ok=false;
+      try{
+        if(typeof window.apiPost==='function'){
+          ok=!!(await window.apiPost('setChantiers',S.chantiers));
+        }
+      }catch(e){ok=false;}
+
+      if(ok){
+        toastSafe('Chantier archivé ✓');
+        return true;
+      }
+
+      c.statut=ancienStatut;
+      try{if(typeof window.render==='function')window.render();}catch(e){}
+      toastSafe('L’archivage du chantier a échoué',true);
+      return false;
+    };
   }
 
   function installRestrictedSave(){
@@ -122,6 +175,7 @@
 
   function install(){
     installStyle();
+    installReliableArchive();
     installRestrictedSave();
     simplify();
     const root=document.getElementById('modalRoot');
