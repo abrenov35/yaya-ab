@@ -1,4 +1,4 @@
-name: Repair commandes guard injection
+name: Bump commandes navigation-safe cache
 
 on:
   push:
@@ -9,29 +9,29 @@ permissions:
   contents: write
 
 jobs:
-  repair:
+  bump:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Retirer l'injection guard qui casse le chargement
+      - name: Forcer la liaison Commande navigation-safe
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          lines=s.splitlines(True)
-          new_lines=[line for line in lines if 'commandes-work-session-guard.js' not in line]
-          if len(new_lines)==len(lines):
-              raise SystemExit('ligne guard introuvable')
-          p.write_text(''.join(new_lines),encoding='utf-8')
+          old='yaya-ab-commandes-link.js?v=commandes-link-17'
+          new='yaya-ab-commandes-link.js?v=commandes-link-20'
+          if old not in s:
+              raise SystemExit('clé commandes-link-17 introuvable')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
       - name: Commit
         run: |
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Répare le chargement Yaya sans workguard"
+          git commit -m "Force la liaison Commande navigation-safe v20"
           git pull --rebase origin main
           git push origin main
