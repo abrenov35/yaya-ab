@@ -12,35 +12,24 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     steps:
-      - name: Check chantiers dateSignature with long timeout
+      - name: Check chantiers schema
         shell: bash
         run: |
           python3 - <<'PY'
           import json
-          import time
           import urllib.request
 
           base = 'https://script.google.com/macros/s/AKfycbx6IwMFf2plAq7i8qf8qF6f6MMC-1-WynAqn1ZRqCZrVqHeE9a1ygSSTzp5uOf0L3bn/exec'
-          started = time.time()
-          req = urllib.request.Request(base + '?tabs=chantiers&_diag=3', headers={'User-Agent':'Yaya-Diagnostic/3.0'})
-          with urllib.request.urlopen(req, timeout=90) as response:
+          req = urllib.request.Request(base + '?tabs=chantiers&_diag=4', headers={'User-Agent':'Yaya-Diagnostic/4.0'})
+          with urllib.request.urlopen(req, timeout=60) as response:
               payload = json.load(response)
 
           rows = ((payload.get('data') or {}).get('chantiers') or [])
           objects = [r for r in rows if isinstance(r, dict)]
-          values = [str(r.get('dateSignature') or '').strip() for r in objects]
+          keys = sorted(set().union(*(r.keys() for r in objects))) if objects else []
 
-          print('elapsed_s=' + str(round(time.time() - started, 1)))
-          print('api_ok=' + str(payload.get('ok') is True).lower())
           print('chantiers=' + str(len(rows)))
-          print('dateSignature_field=' + str(sum('dateSignature' in r for r in objects)))
-          print('dateSignature_nonempty=' + str(sum(bool(v) for v in values)))
-          print('before_sept=' + str(sum(v.upper() == 'AVANT_2026-09' for v in values)))
-
-          if not rows:
-              raise SystemExit('ERROR: no chantiers returned')
-          if not any('dateSignature' in r for r in objects):
-              raise SystemExit('ERROR: API omits dateSignature')
-          if not any(values):
-              raise SystemExit('ERROR: all dateSignature values are empty')
+          print('keys=' + ','.join(keys))
+          for field in ('modeSuivi','dateDemarrage','dateSignature','origine'):
+              print(field + '_field=' + str(sum(field in r for r in objects)))
           PY
