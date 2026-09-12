@@ -1,4 +1,4 @@
-name: Install V39 signature bridge
+name: Install V40 signature bridge
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Activer sigbridge-1
+      - name: Activer sigbridge-2
         shell: bash
         run: |
           python3 - <<'PY'
@@ -25,14 +25,14 @@ jobs:
           p=Path('index.html')
           text=p.read_text(encoding='utf-8')
           pattern=r'chantier-signature-sheet-refresh\.js\?v=[A-Za-z0-9._-]+'
-          new='chantier-signature-sheet-refresh.js?v=sigbridge-1'
+          new='chantier-signature-sheet-refresh.js?v=sigbridge-2'
           if not re.search(pattern,text):
               raise SystemExit('Tag chantier-signature-sheet-refresh introuvable')
           text=re.sub(pattern,new,text,count=1)
           p.write_text(text,encoding='utf-8')
           PY
 
-      - name: Publier V39 avec retry
+      - name: Publier V40 avec retry
         shell: bash
         run: |
           if git diff --quiet; then
@@ -42,7 +42,7 @@ jobs:
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Yaya V39 - activer sigbridge-1"
+          git commit -m "Yaya V40 - activer sigbridge-2"
           for n in 1 2 3 4 5; do
             git fetch origin main
             git rebase origin/main
@@ -51,8 +51,8 @@ jobs:
             fi
             sleep $((n*2))
           done
-          echo "Push V39 impossible après 5 tentatives" >&2
+          echo "Push V40 impossible après 5 tentatives" >&2
           exit 1
 
       - name: Confirmer
-        run: echo "sigbridge-1 activé"
+        run: echo "sigbridge-2 activé"
