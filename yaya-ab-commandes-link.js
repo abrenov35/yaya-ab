@@ -66,6 +66,7 @@
     if(name)url.searchParams.set('chantierName',String(name));
     url.searchParams.set('embed','1');
     url.searchParams.set('ui','drive-upload-v3');
+    url.searchParams.set('_v','open-only-15');
     return url.toString();
   }
 
