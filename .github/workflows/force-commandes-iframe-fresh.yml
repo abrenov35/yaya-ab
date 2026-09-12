@@ -1,0 +1,48 @@
+name: Force commandes iframe fresh
+
+on:
+  push:
+    paths:
+      - '.github/workflows/force-commandes-iframe-fresh.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Ajouter un cache-buster à l'iframe Commande
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p=Path('yaya-ab-commandes-link.js')
+          s=p.read_text(encoding='utf-8')
+          old="    url.searchParams.set('ui','drive-upload-v3');\n    return url.toString();"
+          new="    url.searchParams.set('ui','drive-upload-v3');\n    url.searchParams.set('_v','open-only-15');\n    return url.toString();"
+          if old not in s and "url.searchParams.set('_v','open-only-15');" not in s:
+              raise SystemExit('Point insertion iframe introuvable')
+          if old in s:
+              s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='yaya-ab-commandes-link.js?v=commandes-link-16'
+          new='yaya-ab-commandes-link.js?v=commandes-link-17'
+          if old not in s:
+              raise SystemExit('clé commandes-link-16 introuvable')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          PY
+      - name: Commit
+        run: |
+          git config user.name "Yaya automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add yaya-ab-commandes-link.js index.html
+          git commit -m "Forcer le rechargement frais de Commande"
+          git pull --rebase origin main
+          git push origin main
