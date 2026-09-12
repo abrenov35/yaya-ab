@@ -1,4 +1,4 @@
-name: Bump commandes work guard cache
+name: Repair commandes guard injection
 
 on:
   push:
@@ -9,29 +9,29 @@ permissions:
   contents: write
 
 jobs:
-  bump:
+  repair:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Force protection Commande v2
+      - name: Retirer l'injection guard qui casse le chargement
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old='commandes-work-session-guard.js?v=workguard-1'
-          new='commandes-work-session-guard.js?v=workguard-2'
-          if old not in s:
-              raise SystemExit('clé workguard-1 introuvable')
-          p.write_text(s.replace(old,new,1),encoding='utf-8')
+          lines=s.splitlines(True)
+          new_lines=[line for line in lines if 'commandes-work-session-guard.js' not in line]
+          if len(new_lines)==len(lines):
+              raise SystemExit('ligne guard introuvable')
+          p.write_text(''.join(new_lines),encoding='utf-8')
           PY
       - name: Commit
         run: |
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Force le verrou Commande workguard v2"
+          git commit -m "Répare le chargement Yaya sans workguard"
           git pull --rebase origin main
           git push origin main
