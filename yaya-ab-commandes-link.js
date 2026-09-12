@@ -4,7 +4,7 @@
   const STYLE_ID='yaya-ab-commandes-link-style';
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
-  const OWNER='ab-commandes-v49';
+  const OWNER='ab-commandes-v50';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
   let activeCard=null;
   let scanTimer=0;
@@ -194,6 +194,8 @@
   installStyle();
   cleanupOtherBlocks(null);
 
+  // Commande est chargée uniquement au clic d'ouverture de l'onglet.
+  // Une actualisation Yaya ou un retour de focus ne doit plus recréer l'iframe.
   document.addEventListener('click',e=>{
     const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section]');
     if(!btn)return;
@@ -221,10 +223,9 @@
 
   window.addEventListener('message',handleMessage);
   window.addEventListener('hashchange',scanActive);
-  window.addEventListener('focus',scanActive);
-  window.addEventListener('yaya:data-refreshed',scanActive);
+  // Pas de listener focus ni yaya:data-refreshed : aucune réouverture automatique.
   setTimeout(scanActive,0);
   setTimeout(scanActive,300);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.9';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='5.0-open-only';
 })();
