@@ -1,15 +1,15 @@
 (function(){
   'use strict';
 
-  if(window.__yayaSignatureBridgeV2Installed)return;
-  window.__yayaSignatureBridgeV2Installed=true;
+  if(window.__yayaSignatureBridgeV3Installed)return;
+  window.__yayaSignatureBridgeV3Installed=true;
 
   const DATA_CACHE_KEY='YAYA_CACHE_DATA_V2';
   const MAP_KEY='YAYA_SIGNATURE_CANONICAL_V2';
   const SPECIAL='AVANT_2026-09';
 
   // Valeurs vérifiées directement dans YAYA-AB / chantiers / colonne J le 12/09/2026.
-  // Elles servent uniquement tant que l'API Yaya ne renvoie pas dateSignature.
+  // Elles servent tant que l'API Yaya ne renvoie pas dateSignature.
   const VERIFIED_BY_ID={
     'mrrpbaxcbsf6':'AVANT_2026-09',
     'msso73wnhrbp':'2026-09-01',
@@ -90,7 +90,7 @@
     return map;
   }
 
-  function inspectBackend(list){
+  function inspectFreshBackend(list){
     if(!Array.isArray(list)||!list.length)return;
     backendSupportsSignature=list.some(hasField);
     backendSupportKnown=true;
@@ -111,10 +111,8 @@
       let map=loadMap();
       let changed=false;
 
-      if(!backendSupportKnown)inspectBackend(list);
-
-      if(backendSupportsSignature){
-        // Dès que le backend renverra J, la BDD reprend automatiquement la priorité.
+      // Ne jamais déduire le support backend depuis S : S peut provenir du cache local.
+      if(backendSupportsSignature&&backendSupportKnown){
         list.forEach(function(c){
           if(!hasField(c))return;
           const id=idKey(c);
@@ -158,24 +156,25 @@
 
   function installApiGet(){
     const current=window.apiGet;
-    if(typeof current!=='function'||current.__yayaSignatureBridgeV2)return false;
+    if(typeof current!=='function'||current.__yayaSignatureBridgeV3)return false;
     const wrapped=async function(){
       const data=await current.apply(this,arguments);
       try{
         const list=data&&Array.isArray(data.chantiers)?data.chantiers:null;
-        if(list)inspectBackend(list);
+        // L'apiGet Yaya positionne explicitement __yayaCachedBoot=false après une vraie lecture réseau.
+        if(list&&window.__yayaCachedBoot===false)inspectFreshBackend(list);
       }catch(e){}
       setTimeout(apply,0);
       return data;
     };
-    wrapped.__yayaSignatureBridgeV2=true;
+    wrapped.__yayaSignatureBridgeV3=true;
     window.apiGet=wrapped;
     return true;
   }
 
   function installApiPost(){
     const current=window.apiPost;
-    if(typeof current!=='function'||current.__yayaSignatureBridgeV2)return false;
+    if(typeof current!=='function'||current.__yayaSignatureBridgeV3)return false;
     const wrapped=async function(action,data){
       let proposed=null;
       if(String(action||'')==='setChantiers'&&Array.isArray(data)){
@@ -196,7 +195,7 @@
       }
       return result;
     };
-    wrapped.__yayaSignatureBridgeV2=true;
+    wrapped.__yayaSignatureBridgeV3=true;
     window.apiPost=wrapped;
     return true;
   }
@@ -205,10 +204,7 @@
     installApiGet();
     installApiPost();
     const list=rows();
-    if(list){
-      if(!backendSupportKnown)inspectBackend(list);
-      apply();
-    }
+    if(list)apply();
     if((!list||typeof window.apiGet!=='function'||typeof window.apiPost!=='function')&&installTries<40){
       installTries++;
       setTimeout(install,150);
