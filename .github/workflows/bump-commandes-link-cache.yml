@@ -21,10 +21,10 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old='yaya-ab-commandes-link.js?v=commandes-link-17'
-          new='yaya-ab-commandes-link.js?v=commandes-link-20'
+          old='yaya-ab-commandes-link.js?v=commandes-link-21'
+          new='yaya-ab-commandes-link.js?v=commandes-link-22'
           if old not in s:
-              raise SystemExit('clé commandes-link-17 introuvable')
+              raise SystemExit('clé commandes-link-21 introuvable')
           p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
       - name: Commit
@@ -32,6 +32,6 @@ jobs:
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Force la liaison Commande navigation-safe v20"
+          git commit -m "Forcer le chargement du correctif ouverture chantier v22"
           git pull --rebase origin main
           git push origin main
