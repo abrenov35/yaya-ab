@@ -1,4 +1,4 @@
-name: Bump commandes link cache
+name: Bump commandes work guard cache
 
 on:
   push:
@@ -15,39 +15,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Force protection de session Commande
+      - name: Force protection Commande v2
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old='yaya-ab-commandes-link.js?v=commandes-link-18'
-          new='yaya-ab-commandes-link.js?v=commandes-link-19'
+          old='commandes-work-session-guard.js?v=workguard-1'
+          new='commandes-work-session-guard.js?v=workguard-2'
           if old not in s:
-              raise SystemExit('clé commandes-link-18 introuvable')
-          s=s.replace(old,new,1)
-          if 'commandes-work-session-guard.js' not in s:
-              lines=s.splitlines(True)
-              needle='yaya-ab-commandes-link.js?v=commandes-link-19'
-              for i,line in enumerate(lines):
-                  if needle in line:
-                      guard_line=line.replace(
-                          '<script src="yaya-ab-commandes-link.js?v=commandes-link-19">',
-                          '<script src="commandes-work-session-guard.js?v=workguard-1"><\\/script>'+"' +\n    '"+'<script src="yaya-ab-commandes-link.js?v=commandes-link-19">',
-                          1
-                      )
-                      lines[i]=guard_line
-                      break
-              else:
-                  raise SystemExit('ligne liaison Commande introuvable')
-              s=''.join(lines)
-          p.write_text(s,encoding='utf-8')
+              raise SystemExit('clé workguard-1 introuvable')
+          p.write_text(s.replace(old,new,1),encoding='utf-8')
           PY
       - name: Commit
         run: |
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Force le verrouillage Commande v19"
+          git commit -m "Force le verrou Commande workguard v2"
           git pull --rebase origin main
           git push origin main
