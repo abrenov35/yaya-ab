@@ -1,4 +1,4 @@
-name: Force disabled auto refresh cache
+name: Force navigation-safe Commande cache
 
 on:
   push:
@@ -21,34 +21,28 @@ jobs:
         run: |
           git fetch origin main
           git reset --hard origin/main
-      - name: Forcer les versions sans rafraichissement automatique
+      - name: Forcer la liaison Commande navigation-safe
         run: |
           python3 - <<'PY'
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          replacements=[
-              ('yaya-auto-refresh.js?v=autorefresh-10','yaya-auto-refresh.js?v=autorefresh-11'),
-              ('yaya-external-return-refresh.js?v=externalreturn-5','yaya-external-return-refresh.js?v=externalreturn-6'),
-          ]
-          changed=False
-          for old,new in replacements:
-              if old in s:
-                  s=s.replace(old,new,1)
-                  changed=True
-              elif new not in s:
-                  raise SystemExit('clé introuvable: '+old)
-          if changed:
+          old='yaya-ab-commandes-link.js?v=commandes-link-21'
+          new='yaya-ab-commandes-link.js?v=commandes-link-22'
+          if old in s:
+              s=s.replace(old,new,1)
               p.write_text(s,encoding='utf-8')
+          elif new not in s:
+              raise SystemExit('clé commandes-link-21 introuvable')
           PY
       - name: Commit
         run: |
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           if git diff --quiet -- index.html; then
-            echo "Versions déjà forcées"
+            echo "Cache navigation-safe déjà forcé"
             exit 0
           fi
           git add index.html
-          git commit -m "Force Yaya sans synchro automatique en travail Commande"
+          git commit -m "Force la liaison Commande navigation-safe v22"
           git push origin main
