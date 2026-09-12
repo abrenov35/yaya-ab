@@ -1,4 +1,4 @@
-// V36 — normalisation des dates de signature Sheet + cas antérieur à septembre 2026
+// V37 — affichage stable des signatures depuis dateSignature (colonne J)
 (function(){
   'use strict';
 
@@ -13,84 +13,42 @@
 
   function pad2(n){return String(n).padStart(2,'0');}
 
-  function serialToIso(v){
-    const n=Number(v);
-    if(!Number.isFinite(n)||n<20000||n>100000)return '';
-    const d=new Date(SHEETS_EPOCH+Math.round(n)*DAY_MS);
-    if(Number.isNaN(d.getTime()))return '';
-    return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate());
-  }
-
-  function normalizeSignature(v){
-    if(v==null)return '';
+  function valueToIso(v){
+    if(v==null||v==='')return '';
     if(isSpecial(v))return SPECIAL;
-    if(typeof v==='number')return serialToIso(v)||String(v);
-    const s=String(v).trim();
-    if(/^\d{5}(?:\.0+)?$/.test(s))return serialToIso(s)||s;
-    return s;
+    if(typeof v==='number'||/^\d{5}(?:\.0+)?$/.test(String(v).trim())){
+      const n=Number(v);
+      if(Number.isFinite(n)&&n>=20000&&n<=100000){
+        const d=new Date(SHEETS_EPOCH+Math.round(n)*DAY_MS);
+        if(!Number.isNaN(d.getTime())){
+          return d.getUTCFullYear()+'-'+pad2(d.getUTCMonth()+1)+'-'+pad2(d.getUTCDate());
+        }
+      }
+    }
+    return String(v).trim();
   }
 
-  function normalizeState(){
-    let changed=false;
-    try{
-      if(!window.S||!Array.isArray(S.chantiers))return false;
-      S.chantiers.forEach(function(c){
-        if(!c)return;
-        const before=c.dateSignature;
-        const after=normalizeSignature(before);
-        if(after!==before){c.dateSignature=after;changed=true;}
-      });
-    }catch(e){}
-    return changed;
+  function signatureHtml(c){
+    const value=valueToIso(c&&c.dateSignature);
+    if(!value)return '';
+    if(isSpecial(value)){
+      return '<span class="signature-date">'+LABEL+'</span>';
+    }
+    const m=value.match(/^(\d{4})-(\d{2})/);
+    if(!m)return '';
+    const d=new Date(Number(m[1]),Number(m[2])-1,1);
+    const lib=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    const txt=lib.charAt(0).toUpperCase()+lib.slice(1);
+    return '<span class="signature-date">Signé : '+txt+'</span>';
   }
 
   function installDisplay(){
-    const previous=window.signatureChantierHtml;
-    if(typeof previous!=='function'||previous.__yayaSignatureV36)return;
-    const wrapped=function(c){
-      const value=normalizeSignature(c&&c.dateSignature);
-      if(isSpecial(value)){
-        return '<span class="signature-date">'+LABEL+'</span>';
-      }
-      if(c&&value!==c.dateSignature){
-        c=Object.assign({},c,{dateSignature:value});
-      }
-      return previous(c);
-    };
-    wrapped.__yayaSignatureV36=true;
-    window.signatureChantierHtml=wrapped;
-  }
-
-  function installPlanningProtection(){
-    const previous=window.synchroniserDatesPlanning;
-    if(typeof previous!=='function'||previous.__yayaSignatureV36)return;
-    const wrapped=async function(){
-      normalizeState();
-      const keep=new Map();
-      try{
-        (window.S&&Array.isArray(S.chantiers)?S.chantiers:[]).forEach(function(c){
-          if(c&&isSpecial(c.dateSignature))keep.set(String(c.id||''),SPECIAL);
-        });
-      }catch(e){}
-      const result=await previous.apply(this,arguments);
-      try{
-        if(window.S&&Array.isArray(S.chantiers)){
-          S.chantiers.forEach(function(c){
-            const id=String(c&&c.id||'');
-            if(keep.has(id))c.dateSignature=SPECIAL;
-            else c.dateSignature=normalizeSignature(c.dateSignature);
-          });
-        }
-      }catch(e){}
-      return result;
-    };
-    wrapped.__yayaSignatureV36=true;
-    window.synchroniserDatesPlanning=wrapped;
+    window.signatureChantierHtml=signatureHtml;
   }
 
   function installEditSupport(){
     const previousSync=window.syncEditChSignature;
-    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV36){
+    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV37){
       const wrappedSync=function(){
         const special=document.getElementById('editChSignatureBeforeSept');
         const hidden=document.getElementById('editChSignature');
@@ -100,21 +58,15 @@
         }
         return previousSync.apply(this,arguments);
       };
-      wrappedSync.__yayaSignatureV36=true;
+      wrappedSync.__yayaSignatureV37=true;
       window.syncEditChSignature=wrappedSync;
     }
 
     const previousOpen=window.openExistingChantierModal;
-    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV36)return;
+    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV37)return;
 
-    const wrappedOpen=function(cid){
-      normalizeState();
+    const wrappedOpen=function(){
       const result=previousOpen.apply(this,arguments);
-      let chantier=null;
-      try{
-        chantier=(window.S&&Array.isArray(S.chantiers))?S.chantiers.find(function(c){return String(c&&c.id||'')===String(cid||'');}):null;
-      }catch(e){}
-
       const month=document.getElementById('editChSignatureMonth');
       const year=document.getElementById('editChSignatureYear');
       const hidden=document.getElementById('editChSignature');
@@ -122,15 +74,18 @@
 
       const fields=month.closest('.yaya-signature-fields')||month.parentElement;
       const label=fields&&fields.closest('label');
-      if(!label||document.getElementById('editChSignatureBeforeSept'))return result;
+      if(!label)return result;
 
-      const row=document.createElement('label');
-      row.style.cssText='display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;margin:2px 0 6px;cursor:pointer';
-      row.innerHTML='<input id="editChSignatureBeforeSept" type="checkbox" style="width:16px;height:16px"> <span>'+LABEL+'</span>';
-      label.insertBefore(row,fields);
+      let checkbox=document.getElementById('editChSignatureBeforeSept');
+      if(!checkbox){
+        const row=document.createElement('label');
+        row.style.cssText='display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;margin:2px 0 6px;cursor:pointer';
+        row.innerHTML='<input id="editChSignatureBeforeSept" type="checkbox" style="width:16px;height:16px"> <span>'+LABEL+'</span>';
+        label.insertBefore(row,fields);
+        checkbox=row.querySelector('input');
+      }
 
-      const checkbox=row.querySelector('input');
-      checkbox.checked=!!(chantier&&isSpecial(chantier.dateSignature));
+      checkbox.checked=isSpecial(hidden.value);
 
       function apply(){
         const on=checkbox.checked;
@@ -142,38 +97,29 @@
           hidden.value=SPECIAL;
         }else{
           if(isSpecial(hidden.value))hidden.value='';
-          window.syncEditChSignature();
+          if(typeof window.syncEditChSignature==='function')window.syncEditChSignature();
         }
       }
-      checkbox.addEventListener('change',apply);
+
+      checkbox.onchange=apply;
       apply();
       return result;
     };
-    wrappedOpen.__yayaSignatureV36=true;
+    wrappedOpen.__yayaSignatureV37=true;
     window.openExistingChantierModal=wrappedOpen;
   }
 
   function install(){
-    const changed=normalizeState();
     installDisplay();
-    installPlanningProtection();
     installEditSupport();
-    try{
-      if(changed&&typeof render==='function')render();
-      else if(typeof render==='function')render();
-    }catch(e){}
+    try{if(typeof render==='function')render();}catch(e){}
   }
-
-  window.addEventListener('yaya:data-refreshed',function(){
-    const changed=normalizeState();
-    if(changed){try{if(typeof render==='function')render();}catch(e){}}
-  });
 
   if(document.readyState==='loading'){
     document.addEventListener('DOMContentLoaded',function(){setTimeout(install,0);},{once:true});
   }else{
     setTimeout(install,0);
   }
-  setTimeout(install,250);
-  setTimeout(install,1000);
+  setTimeout(install,300);
+  setTimeout(install,1200);
 })();
