@@ -15,6 +15,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Attendre le bump de version Yaya
+        run: sleep 10
+      - name: Reprendre la racine la plus récente
+        run: |
+          git fetch origin main
+          git reset --hard origin/main
       - name: Forcer les versions sans rafraichissement automatique
         run: |
           python3 - <<'PY'
@@ -25,17 +31,24 @@ jobs:
               ('yaya-auto-refresh.js?v=autorefresh-10','yaya-auto-refresh.js?v=autorefresh-11'),
               ('yaya-external-return-refresh.js?v=externalreturn-5','yaya-external-return-refresh.js?v=externalreturn-6'),
           ]
+          changed=False
           for old,new in replacements:
-              if old not in s:
+              if old in s:
+                  s=s.replace(old,new,1)
+                  changed=True
+              elif new not in s:
                   raise SystemExit('clé introuvable: '+old)
-              s=s.replace(old,new,1)
-          p.write_text(s,encoding='utf-8')
+          if changed:
+              p.write_text(s,encoding='utf-8')
           PY
       - name: Commit
         run: |
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
+          if git diff --quiet -- index.html; then
+            echo "Versions déjà forcées"
+            exit 0
+          fi
           git add index.html
           git commit -m "Force Yaya sans synchro automatique en travail Commande"
-          git pull --rebase origin main
           git push origin main
