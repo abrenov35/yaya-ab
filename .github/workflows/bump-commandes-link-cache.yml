@@ -21,15 +21,26 @@ jobs:
           from pathlib import Path
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-          old='yaya-ab-commandes-link.js?v=commandes-link-17'
-          new='yaya-ab-commandes-link.js?v=commandes-link-18'
-          guard='<script src="commandes-work-session-guard.js?v=workguard-1"><\\/script>'
+          old='yaya-ab-commandes-link.js?v=commandes-link-18'
+          new='yaya-ab-commandes-link.js?v=commandes-link-19'
           if old not in s:
-              raise SystemExit('clé commandes-link-17 introuvable')
+              raise SystemExit('clé commandes-link-18 introuvable')
           s=s.replace(old,new,1)
-          marker='<script src="yaya-ab-commandes-link.js?v=commandes-link-18"><\\/script>'
           if 'commandes-work-session-guard.js' not in s:
-              s=s.replace(marker,guard+marker,1)
+              lines=s.splitlines(True)
+              needle='yaya-ab-commandes-link.js?v=commandes-link-19'
+              for i,line in enumerate(lines):
+                  if needle in line:
+                      guard_line=line.replace(
+                          '<script src="yaya-ab-commandes-link.js?v=commandes-link-19">',
+                          '<script src="commandes-work-session-guard.js?v=workguard-1"><\\/script>'+"' +\n    '"+'<script src="yaya-ab-commandes-link.js?v=commandes-link-19">',
+                          1
+                      )
+                      lines[i]=guard_line
+                      break
+              else:
+                  raise SystemExit('ligne liaison Commande introuvable')
+              s=''.join(lines)
           p.write_text(s,encoding='utf-8')
           PY
       - name: Commit
@@ -37,6 +48,6 @@ jobs:
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
           git add index.html
-          git commit -m "Force la protection Commande sans rerendu v18"
+          git commit -m "Force le verrouillage Commande v19"
           git pull --rebase origin main
           git push origin main
