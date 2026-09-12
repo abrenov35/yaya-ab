@@ -1,3 +1,4 @@
+// V35.1 — affichage et conservation des signatures antérieures à septembre 2026
 (function(){
   'use strict';
 
