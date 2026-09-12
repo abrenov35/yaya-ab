@@ -43,8 +43,21 @@ jobs:
 
           new_version = f'{int(m.group(1))}.{int(m.group(2)) + 1}'
           p.write_text(new_version + '\n', encoding='utf-8')
-
           Path('VERSION.txt').write_text('v' + new_version + '\n', encoding='utf-8')
+
+          # V34 : la date de signature appartient à dateSignature, jamais à notes.
+          guard_path = Path('chantier-write-safety.js')
+          if guard_path.exists():
+              guard = guard_path.read_text(encoding='utf-8')
+              guard = guard.replace(
+                  "  function notesWithSignature(notes,signature){\n    const clean=cleanNotes(notes);\n    const sig=signatureMonth(signature);\n    if(!sig)return clean;\n    return (clean?clean+'\\n':'')+'[[YAYA_SIG:'+sig+']]';\n  }",
+                  "  function notesWithSignature(notes,signature){\n    return cleanNotes(notes);\n  }"
+              )
+              guard = guard.replace(
+                  '      merged.notes=notesWithSignature(merged.notes,incoming.dateSignature);',
+                  '      merged.notes=cleanNotes(merged.notes);'
+              )
+              guard_path.write_text(guard, encoding='utf-8')
 
           for filename in ('index.html', 'index-production-base.html', 'index-legacy.html'):
               path = Path(filename)
@@ -60,17 +73,17 @@ jobs:
               )
               if filename == 'index.html':
                   text = text.replace(
+                      'chantier-write-safety.js?v=writeguard-7',
+                      'chantier-write-safety.js?v=writeguard-8'
+                  )
+                  text = text.replace(
                       'chantier-write-safety.js?v=writeguard-2',
-                      'chantier-write-safety.js?v=writeguard-3'
+                      'chantier-write-safety.js?v=writeguard-8'
                   )
                   text = text.replace(
                       'chantier-planning-status-fix.js?v=planningstatus-7',
                       'chantier-planning-status-fix.js?v=planningstatus-8'
                   )
-                  marker = '<script src="chantier-write-safety.js?v=writeguard-7"><\\/script>'
-                  addition = marker + '<script src="chantier-signature-column-fix.js?v=signaturecol-1"><\\/script>'
-                  if 'chantier-signature-column-fix.js' not in text:
-                      text = text.replace(marker, addition)
               path.write_text(text, encoding='utf-8')
 
           print(f'Yaya {current} -> {new_version}')
@@ -80,6 +93,6 @@ jobs:
         run: |
           git config user.email "github-actions@github.com"
           git config user.name "GitHub Actions"
-          git add version.txt VERSION.txt index.html index-production-base.html index-legacy.html
+          git add version.txt VERSION.txt index.html index-production-base.html index-legacy.html chantier-write-safety.js
           git commit -m "Bump Yaya visible version" || echo "No change"
           git push
