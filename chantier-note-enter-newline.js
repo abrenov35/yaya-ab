@@ -1,78 +1,85 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierNoteEnterNewlineV3)return;
-  window.__yayaChantierNoteEnterNewlineV3=true;
+  if(window.__yayaChantierNoteEnterNewlineV4)return;
+  window.__yayaChantierNoteEnterNewlineV4=true;
 
-  const STYLE_ID='yaya-chantier-note-contrast-v3';
+  const STYLE_ID='yaya-chantier-note-contrast-v4';
 
   function installContrast(){
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
+      /* NOTE : même identité visuelle que les titres COMMANDES */
       #pane-chantiers .yaya-chantier-note-box{
-        border:2px solid #879bb4!important;
-        border-radius:12px!important;
-        background:#f8fafc!important;
-        box-shadow:0 2px 8px rgba(22,45,73,.13)!important;
+        border:1px solid #d3e0eb!important;
+        border-left:4px solid #759cbc!important;
+        border-radius:9px!important;
+        background:#fff!important;
+        box-shadow:0 1px 2px rgba(22,45,73,.04)!important;
         overflow:hidden!important;
         padding:0!important;
       }
       #pane-chantiers .yaya-chantier-note-head{
-        min-height:42px!important;
+        min-height:46px!important;
         margin:0!important;
-        padding:10px 13px!important;
-        background:#dce7f3!important;
-        border-bottom:1px solid #9fb1c7!important;
+        padding:7px 9px 7px 11px!important;
+        display:flex!important;
+        align-items:center!important;
+        background:#f2f6fa!important;
+        border-bottom:1px solid #d3e0eb!important;
       }
       #pane-chantiers .yaya-chantier-note-title{
-        color:#162d49!important;
-        font-size:12.5px!important;
-        font-weight:900!important;
-        letter-spacing:.05em!important;
+        color:#315a7b!important;
+        font-size:13px!important;
+        font-weight:850!important;
+        letter-spacing:.065em!important;
+        line-height:1!important;
       }
       #pane-chantiers .yaya-chantier-note-text{
-        margin:10px 12px 8px!important;
+        margin:10px 11px 8px!important;
         padding:12px 13px!important;
-        border:1px solid #c5d2e1!important;
-        border-radius:9px!important;
+        border:1px solid #d3e0eb!important;
+        border-radius:8px!important;
         background:#fff!important;
         color:#233750!important;
-        box-shadow:inset 0 1px 2px rgba(22,45,73,.035)!important;
+        box-shadow:none!important;
       }
       #pane-chantiers .yaya-chantier-note-date{
         margin:0!important;
-        padding:0 13px 10px!important;
-        color:#62738a!important;
+        padding:0 12px 10px!important;
+        color:#677d93!important;
       }
       #pane-chantiers .yaya-chantier-note-add{
         display:block!important;
-        width:calc(100% - 24px)!important;
-        min-height:42px!important;
-        margin:11px 12px!important;
+        width:calc(100% - 22px)!important;
+        min-height:40px!important;
+        margin:10px 11px!important;
         padding:9px 12px!important;
-        border:1px solid #a7b9ce!important;
-        border-radius:9px!important;
-        background:#fff!important;
-        color:#162d49!important;
+        border:1px solid #c3d3e1!important;
+        border-radius:8px!important;
+        background:#f8fbfe!important;
+        color:#315a7b!important;
         font-size:12.5px!important;
-        font-weight:850!important;
-        box-shadow:0 1px 3px rgba(22,45,73,.07)!important;
+        font-weight:800!important;
+        box-shadow:none!important;
       }
       #pane-chantiers .yaya-chantier-note-add:hover{
-        background:#edf3f9!important;
-        border-color:#7f96b0!important;
+        background:#e8f0fa!important;
+        border-color:#9fb8d4!important;
       }
       #pane-chantiers .yaya-chantier-note-action{
         background:#fff!important;
-        box-shadow:0 1px 2px rgba(22,45,73,.08)!important;
+        border-color:#c3d3e1!important;
+        color:#315a7b!important;
+        box-shadow:none!important;
       }
       @media(max-width:640px){
-        #pane-chantiers .yaya-chantier-note-box{border-width:1.5px!important}
-        #pane-chantiers .yaya-chantier-note-head{padding:9px 11px!important}
-        #pane-chantiers .yaya-chantier-note-text{margin:9px 10px 7px!important;padding:11px!important}
-        #pane-chantiers .yaya-chantier-note-add{width:calc(100% - 20px)!important;margin:10px!important}
+        #pane-chantiers .yaya-chantier-note-head{min-height:43px!important;padding:6px 7px 6px 9px!important}
+        #pane-chantiers .yaya-chantier-note-title{font-size:12px!important}
+        #pane-chantiers .yaya-chantier-note-text{margin:9px 9px 7px!important;padding:11px!important}
+        #pane-chantiers .yaya-chantier-note-add{width:calc(100% - 18px)!important;margin:9px!important}
       }
     `;
     document.head.appendChild(style);
