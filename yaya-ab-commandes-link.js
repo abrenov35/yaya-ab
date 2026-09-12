@@ -4,19 +4,20 @@
   const STYLE_ID='yaya-ab-commandes-link-style';
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
-  const OWNER='ab-commandes-v51';
+  const OWNER='ab-commandes-v52';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
 
   let activeCard=null;
   let scanTimer=0;
   let requestedOpen=false;
-  let originalRender=null;
-  let deferredRenderArgs=null;
-  let renderGuardInstalled=false;
 
   function installStyle(){
     let style=document.getElementById(STYLE_ID);
-    if(!style){style=document.createElement('style');style.id=STYLE_ID;document.head.appendChild(style)}
+    if(!style){
+      style=document.createElement('style');
+      style.id=STYLE_ID;
+      document.head.appendChild(style);
+    }
     style.textContent=`
       .${BLOCK_CLASS}{
         display:none!important;width:100%!important;margin:0!important;padding:0!important;
@@ -27,8 +28,14 @@
       #pane-chantiers .card > .yaya-detail-commandes-pane,
       #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
       #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
-      .${BLOCK_CLASS} .yaya-ab-commandes-wait{padding:8px 0!important;color:#708095!important;font-size:12px!important;font-weight:700!important;background:transparent!important;border:0!important}
-      .${FRAME_CLASS}{display:block!important;width:100%!important;height:260px!important;min-height:0!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:hidden!important}
+      .${BLOCK_CLASS} .yaya-ab-commandes-wait{
+        padding:8px 0!important;color:#708095!important;font-size:12px!important;
+        font-weight:700!important;background:transparent!important;border:0!important
+      }
+      .${FRAME_CLASS}{
+        display:block!important;width:100%!important;height:260px!important;min-height:0!important;
+        border:0!important;border-radius:0!important;background:#fff!important;overflow:hidden!important
+      }
     `;
   }
 
@@ -36,49 +43,11 @@
     if(!card||!card.isConnected)return false;
     if(String(card.dataset.yayaDetailSection||'')==='commandes')return true;
     const tab=card.querySelector(':scope > .yaya-detail-section-tabs [data-section="commandes"]');
-    return !!(tab&&(tab.classList.contains('on')||tab.classList.contains('active')||tab.getAttribute('aria-selected')==='true'));
-  }
-
-  function protectedCommandesOpen(){
-    const frame=document.querySelector('#pane-chantiers .'+FRAME_CLASS);
-    if(!frame||!frame.isConnected)return false;
-    const card=frame.closest('.card');
-    return !!(requestedOpen&&card&&commandesActive(card));
-  }
-
-  function installRenderGuard(){
-    if(typeof window.render!=='function'){
-      setTimeout(installRenderGuard,120);
-      return;
-    }
-    if(window.render.__yayaCommandesStableGuardV51){
-      renderGuardInstalled=true;
-      return;
-    }
-
-    originalRender=window.render;
-
-    function guardedRender(){
-      if(protectedCommandesOpen()){
-        deferredRenderArgs=[...arguments];
-        window.__YAYA_COMMANDES_RENDER_DEFERRED=true;
-        return;
-      }
-      return originalRender.apply(this,arguments);
-    }
-
-    guardedRender.__yayaCommandesStableGuardV51=true;
-    guardedRender.__yayaWrappedRender=originalRender;
-    window.render=guardedRender;
-    renderGuardInstalled=true;
-  }
-
-  function flushDeferredRender(){
-    if(!deferredRenderArgs||typeof originalRender!=='function')return;
-    const args=deferredRenderArgs;
-    deferredRenderArgs=null;
-    window.__YAYA_COMMANDES_RENDER_DEFERRED=false;
-    try{originalRender.apply(window,args)}catch(e){console.warn('Rendu Yaya différé ignoré',e)}
+    return !!(tab&&(
+      tab.classList.contains('on')||
+      tab.classList.contains('active')||
+      tab.getAttribute('aria-selected')==='true'
+    ));
   }
 
   function cardId(card){
@@ -89,7 +58,9 @@
       const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);
       if(m&&m[1])return String(m[1]).trim();
     }
-    try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim()}catch(e){}
+    try{
+      if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim();
+    }catch(e){}
     return '';
   }
 
@@ -101,7 +72,8 @@
       }
     }catch(e){}
     for(const sel of [':scope > .top b',':scope > .top strong',':scope > div:first-child b',':scope > div:first-child strong']){
-      const el=card&&card.querySelector(sel),txt=String(el&&el.textContent||'').trim();
+      const el=card&&card.querySelector(sel);
+      const txt=String(el&&el.textContent||'').trim();
       if(txt)return txt;
     }
     return '';
@@ -113,13 +85,13 @@
     if(name)url.searchParams.set('chantierName',String(name));
     url.searchParams.set('embed','1');
     url.searchParams.set('ui','drive-upload-v3');
-    url.searchParams.set('_v','stable-16');
+    url.searchParams.set('_v','stable-20');
     return url.toString();
   }
 
   function stopIframe(frame){
     if(!frame)return;
-    try{frame.src='about:blank'}catch(e){}
+    try{frame.src='about:blank';}catch(e){}
     frame.remove();
   }
 
@@ -149,8 +121,8 @@
       block.dataset.abCommandesOwner=OWNER;
       tabs.insertAdjacentElement('afterend',block);
     }else{
-      if(block.className!=='yaya-detail-section-node '+BLOCK_CLASS)block.className='yaya-detail-section-node '+BLOCK_CLASS;
-      if(block.dataset.section!=='commandes')block.dataset.section='commandes';
+      block.className='yaya-detail-section-node '+BLOCK_CLASS;
+      block.dataset.section='commandes';
       block.dataset.abCommandesOwner=OWNER;
       if(tabs.nextElementSibling!==block)tabs.insertAdjacentElement('afterend',block);
     }
@@ -177,12 +149,12 @@
     frame.dataset.src=href;
     frame.style.setProperty('overflow','hidden','important');
     block.append(wait,frame);
-    frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove()},{once:true});
+    frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove();},{once:true});
     frame.src=href;
   }
 
   function deactivate(card){
-    if(card){card.querySelectorAll(':scope > .'+BLOCK_CLASS).forEach(destroyBlock)}
+    if(card)card.querySelectorAll(':scope > .'+BLOCK_CLASS).forEach(destroyBlock);
     if(activeCard===card)activeCard=null;
   }
 
@@ -194,16 +166,9 @@
 
     const block=ensureBlock(card);
     if(!block)return;
-    const id=cardId(card),name=chantierName(id,card);
-    if(!id&&!name){
-      if(!block.querySelector('.yaya-ab-commandes-wait')){
-        const wait=document.createElement('div');
-        wait.className='yaya-ab-commandes-wait';
-        wait.textContent='Chargement du chantier…';
-        block.appendChild(wait);
-      }
-      return;
-    }
+    const id=cardId(card);
+    const name=chantierName(id,card);
+    if(!id&&!name)return;
     block.dataset.chantierId=id||'';
     startFrame(block,id,name);
   }
@@ -211,7 +176,11 @@
   function findActiveCard(){
     const byData=document.querySelector('#pane-chantiers .card[data-yaya-detail-section="commandes"]');
     if(byData)return byData;
-    const btn=document.querySelector('#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]');
+    const btn=document.querySelector(
+      '#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,'+
+      '#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].active,'+
+      '#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]'
+    );
     return btn?btn.closest('.card'):null;
   }
 
@@ -221,7 +190,7 @@
     scanTimer=setTimeout(()=>{
       const card=findActiveCard();
       if(card)activate(card);
-    },35);
+    },25);
   }
 
   function handleMessage(e){
@@ -240,32 +209,37 @@
 
   installStyle();
   cleanupOtherBlocks(null);
-  installRenderGuard();
-  setTimeout(installRenderGuard,600);
-  setTimeout(installRenderGuard,1800);
 
-  // L'iframe Commande n'est créée qu'après un clic explicite sur l'onglet Commande.
-  // Tant qu'elle est ouverte, les render() Yaya sont différés : pas de remplacement
-  // de la fiche, donc pas de clignotement ni de fermeture de modale dans l'iframe.
+  /*
+   * Aucun verrou sur render()/renderChantiers().
+   * La navigation Yaya reste toujours prioritaire.
+   * L'iframe Commande n'est créée qu'au clic explicite sur Commande.
+   */
   document.addEventListener('click',e=>{
     const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section]');
-    if(!btn)return;
-    const card=btn.closest('.card');
-    const key=String(btn.dataset.section||'');
-
-    if(key==='commandes'){
-      requestedOpen=true;
-      setTimeout(scanActive,0);
-      setTimeout(scanActive,90);
+    if(btn){
+      const card=btn.closest('.card');
+      const key=String(btn.dataset.section||'');
+      if(key==='commandes'){
+        requestedOpen=true;
+        setTimeout(scanActive,0);
+        setTimeout(scanActive,80);
+      }else{
+        requestedOpen=false;
+        setTimeout(()=>deactivate(card||activeCard),0);
+      }
       return;
     }
 
-    requestedOpen=false;
-    setTimeout(()=>{
-      deactivate(card||activeCard);
-      flushDeferredRender();
-    },0);
-  });
+    const chantierNav=e.target&&e.target.closest&&e.target.closest(
+      '[onclick*="toggleChantier"],[onclick*="fermerFocus"],[onclick*="ouvrirChantier"]'
+    );
+    if(chantierNav){
+      requestedOpen=false;
+      cleanupOtherBlocks(null);
+      activeCard=null;
+    }
+  },true);
 
   const pane=document.getElementById('pane-chantiers');
   if(pane){
@@ -274,13 +248,17 @@
       for(const rec of records){
         const target=rec.target&&rec.target.nodeType===1?rec.target:null;
         if(target&&target.closest&&target.closest('.'+BLOCK_CLASS))continue;
-        const relevant=[...rec.addedNodes].some(n=>n&&n.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')));
+        const relevant=[...rec.addedNodes].some(n=>
+          n&&n.nodeType===1&&(
+            n.matches?.('.card,.yaya-detail-section-tabs')||
+            n.querySelector?.('.yaya-detail-section-tabs')
+          )
+        );
         if(relevant){scanActive();break;}
       }
     }).observe(pane,{childList:true,subtree:true});
   }
 
   window.addEventListener('message',handleMessage);
-
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='5.1-stable-work-session';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='5.2-navigation-safe';
 })();
