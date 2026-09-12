@@ -53,3 +53,6 @@ jobs:
           done
           echo "Push V39 impossible après 5 tentatives" >&2
           exit 1
+
+      - name: Confirmer
+        run: echo "sigbridge-1 activé"
