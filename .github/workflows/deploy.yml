@@ -84,11 +84,15 @@ jobs:
                       'chantier-planning-status-fix.js?v=planningstatus-7',
                       'chantier-planning-status-fix.js?v=planningstatus-8'
                   )
+                  text = text.replace(
+                      'chantier-signature-before-sept.js?v=beforesept-1',
+                      'chantier-signature-before-sept.js?v=beforesept-2'
+                  )
                   if 'chantier-signature-before-sept.js' not in text:
                       prefix = "    '<script src=\"chantier-write-safety.js?v=writeguard-8\">"
-                      injected = "    '<script src=\"chantier-signature-before-sept.js?v=beforesept-1\"><\\\\/script>'+\n" + prefix
+                      injected = "    '<script src=\"chantier-signature-before-sept.js?v=beforesept-2\"><\\\\/script>'+\n" + prefix
                       if prefix not in text:
-                          raise SystemExit('Point insertion V35 introuvable')
+                          raise SystemExit('Point insertion V36 introuvable')
                       text = text.replace(prefix, injected, 1)
               path.write_text(text, encoding='utf-8')
 
