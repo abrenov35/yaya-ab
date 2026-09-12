@@ -111,10 +111,7 @@
   }
 
   function notesWithSignature(notes,signature){
-    const clean=cleanNotes(notes);
-    const sig=signatureMonth(signature);
-    if(!sig)return clean;
-    return (clean?clean+'\n':'')+'[[YAYA_SIG:'+sig+']]';
+    return cleanNotes(notes);
   }
 
   function normalizedIncoming(value){
@@ -219,7 +216,7 @@
         }
       });
 
-      merged.notes=notesWithSignature(merged.notes,incoming.dateSignature);
+      merged.notes=cleanNotes(merged.notes);
 
       return merged;
     }).filter(Boolean);
