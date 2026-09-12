@@ -84,6 +84,10 @@ jobs:
                       'chantier-planning-status-fix.js?v=planningstatus-7',
                       'chantier-planning-status-fix.js?v=planningstatus-8'
                   )
+                  marker = '<script src="chantier-write-safety.js?v=writeguard-8"><\\/script>'
+                  addition = marker + '<script src="chantier-signature-before-sept.js?v=beforesept-1"><\\/script>'
+                  if 'chantier-signature-before-sept.js' not in text:
+                      text = text.replace(marker, addition)
               path.write_text(text, encoding='utf-8')
 
           print(f'Yaya {current} -> {new_version}')
