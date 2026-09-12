@@ -1,0 +1,55 @@
+name: Install V39 signature bridge
+
+on:
+  push:
+    paths:
+      - '.github/workflows/install-v39-signature-bridge.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Activer sigbridge-1
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p=Path('index.html')
+          text=p.read_text(encoding='utf-8')
+          pattern=r'chantier-signature-sheet-refresh\.js\?v=[A-Za-z0-9._-]+'
+          new='chantier-signature-sheet-refresh.js?v=sigbridge-1'
+          if not re.search(pattern,text):
+              raise SystemExit('Tag chantier-signature-sheet-refresh introuvable')
+          text=re.sub(pattern,new,text,count=1)
+          p.write_text(text,encoding='utf-8')
+          PY
+
+      - name: Publier V39 avec retry
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Tag déjà actif"
+            exit 0
+          fi
+          git config user.name "Yaya automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add index.html
+          git commit -m "Yaya V39 - activer sigbridge-1"
+          for n in 1 2 3 4 5; do
+            git fetch origin main
+            git rebase origin/main
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            sleep $((n*2))
+          done
+          echo "Push V39 impossible après 5 tentatives" >&2
+          exit 1
