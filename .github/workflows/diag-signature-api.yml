@@ -12,27 +12,35 @@ jobs:
   diagnose:
     runs-on: ubuntu-latest
     steps:
-      - name: Check Yaya meta endpoint
+      - name: Check chantiers dateSignature with long timeout
         shell: bash
         run: |
           python3 - <<'PY'
           import json
+          import time
           import urllib.request
 
           base = 'https://script.google.com/macros/s/AKfycbx6IwMFf2plAq7i8qf8qF6f6MMC-1-WynAqn1ZRqCZrVqHeE9a1ygSSTzp5uOf0L3bn/exec'
-          req = urllib.request.Request(base + '?mode=meta&_diag=2', headers={'User-Agent':'Yaya-Diagnostic/2.0'})
-          try:
-              with urllib.request.urlopen(req, timeout=15) as response:
-                  payload = json.load(response)
-          except Exception as exc:
-              print('meta_endpoint=timeout_or_error')
-              print('error_type=' + exc.__class__.__name__)
-              raise
+          started = time.time()
+          req = urllib.request.Request(base + '?tabs=chantiers&_diag=3', headers={'User-Agent':'Yaya-Diagnostic/3.0'})
+          with urllib.request.urlopen(req, timeout=90) as response:
+              payload = json.load(response)
 
+          rows = ((payload.get('data') or {}).get('chantiers') or [])
+          objects = [r for r in rows if isinstance(r, dict)]
+          values = [str(r.get('dateSignature') or '').strip() for r in objects]
+
+          print('elapsed_s=' + str(round(time.time() - started, 1)))
           print('api_ok=' + str(payload.get('ok') is True).lower())
-          print('has_meta=' + str(isinstance(payload.get('meta'), dict)).lower())
-          print('has_data=' + str(isinstance(payload.get('data'), dict)).lower())
+          print('chantiers=' + str(len(rows)))
+          print('dateSignature_field=' + str(sum('dateSignature' in r for r in objects)))
+          print('dateSignature_nonempty=' + str(sum(bool(v) for v in values)))
+          print('before_sept=' + str(sum(v.upper() == 'AVANT_2026-09' for v in values)))
 
-          if not isinstance(payload.get('meta'), dict):
-              raise SystemExit('ERROR: selective/meta backend is not deployed')
+          if not rows:
+              raise SystemExit('ERROR: no chantiers returned')
+          if not any('dateSignature' in r for r in objects):
+              raise SystemExit('ERROR: API omits dateSignature')
+          if not any(values):
+              raise SystemExit('ERROR: all dateSignature values are empty')
           PY
