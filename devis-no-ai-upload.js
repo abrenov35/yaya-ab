@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisNoAiUploadV10)return;
-  window.__yayaDevisNoAiUploadV10=true;
+  if(window.__yayaDevisNoAiUploadV11)return;
+  window.__yayaDevisNoAiUploadV11=true;
 
   let uploading=false;
   const nativeFetch=window.fetch.bind(window);
@@ -118,29 +118,20 @@
     });
   }
 
-  async function postPayload(action,file,base64){
+  async function postAction(action,data){
     const api=apiUrl();
     if(!api)throw new Error('API Yaya indisponible');
 
     const controller=new AbortController();
     const timer=setTimeout(function(){controller.abort();},UPLOAD_TIMEOUT);
-
     try{
       const response=await nativeFetch(api,{
         method:'POST',
         cache:'no-store',
         headers:{'Content-Type':'text/plain;charset=utf-8'},
-        body:JSON.stringify({
-          action:action,
-          data:{
-            filename:file.name,
-            mimeType:file.type||'application/pdf',
-            base64:base64
-          }
-        }),
+        body:JSON.stringify({action:action,data:data}),
         signal:controller.signal
       });
-
       if(!response.ok){
         const err=new Error('Erreur serveur '+response.status);
         err.status=response.status;
@@ -148,6 +139,7 @@
       }
       let json;
       try{json=await response.json();}catch(e){throw new Error('Réponse serveur invalide');}
+      if(!json||!json.ok)throw new Error(String(json&&json.error||'Enregistrement serveur refusé'));
       return json;
     }catch(e){
       if(e&&e.name==='AbortError')throw new Error('Import interrompu — réessaie');
@@ -155,6 +147,25 @@
     }finally{
       clearTimeout(timer);
     }
+  }
+
+  async function postPayload(action,file,base64){
+    return postAction(action,{
+      filename:file.name,
+      mimeType:file.type||'application/pdf',
+      base64:base64
+    });
+  }
+
+  async function freshData(){
+    const api=apiUrl();
+    if(!api)throw new Error('API Yaya indisponible');
+    const sep=api.indexOf('?')>=0?'&':'?';
+    const response=await nativeFetch(api+sep+'_ts='+Date.now(),{method:'GET',cache:'no-store'});
+    if(!response.ok)throw new Error('Lecture serveur impossible ('+response.status+')');
+    const json=await response.json();
+    if(!json||!json.ok||!json.data)throw new Error(String(json&&json.error||'Données serveur indisponibles'));
+    return json.data;
   }
 
   function shouldFallback(err,json){
@@ -170,10 +181,6 @@
     let json=null;
     try{
       json=await postPayload('archiverDevis',file,base64);
-      if(!json||!json.ok){
-        if(!shouldFallback(null,json))throw new Error(String(json&&json.error||'Archivage impossible'));
-        json=null;
-      }
     }catch(err){
       if(!shouldFallback(err,null))throw err;
     }
@@ -183,40 +190,77 @@
       json=await postPayload('extraireDevis',file,base64);
     }
 
-    if(!json||!json.ok)throw new Error(String(json&&json.error||'Archivage impossible'));
-    const data=json.data||{};
+    const data=json&&json.data||{};
     const lien=String(data.lienDrive||data.lien||'').trim();
     if(!lien)throw new Error(data.archiveErreur||'Fichier non archivé');
     return lien;
   }
 
-  async function persistLink(type,id,lien){
-    if(type==='devis'){
-      const c=chantier(id);
-      if(!c)throw new Error('Chantier introuvable');
-      const previous=c.notes;
-      c.notes=lien;
-      try{
-        const ok=typeof apiPost==='function'?await apiPost('setChantiers',S.chantiers):false;
-        if(!ok)throw new Error('Enregistrement impossible');
-      }catch(e){
-        c.notes=previous;
-        throw e;
-      }
-      return;
-    }
+  async function persistDevisLink(id,lien){
+    const local=chantier(id);
+    if(!local)throw new Error('Chantier introuvable');
 
-    const v=avenant(id);
-    if(!v)throw new Error('Devis introuvable');
-    const previous=v.lien;
-    v.lien=lien;
+    let source=null;
     try{
-      const ok=typeof apiPost==='function'?await apiPost('setAvenants',S.avenants):false;
-      if(!ok)throw new Error('Enregistrement impossible');
+      const fresh=await freshData();
+      if(fresh&&Array.isArray(fresh.chantiers))source=fresh.chantiers;
     }catch(e){
-      v.lien=previous;
-      throw e;
+      console.warn('Import devis : lecture fraîche indisponible, repli local.',e);
     }
+    if(!source&&typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))source=S.chantiers;
+    if(!source)throw new Error('Liste chantiers indisponible');
+
+    const list=source.map(function(c){return c&&typeof c==='object'?Object.assign({},c):c;});
+    const target=list.find(function(c){return String(c&&c.id||'')===String(id);});
+    if(!target)throw new Error('Chantier absent du serveur');
+    target.notes=lien;
+
+    await postAction('setChantiers',list);
+
+    let verified=false;
+    try{
+      const after=await freshData();
+      const stored=after&&Array.isArray(after.chantiers)
+        ?after.chantiers.find(function(c){return String(c&&c.id||'')===String(id);})
+        :null;
+      verified=!!(stored&&String(stored.notes||'').trim()===String(lien).trim());
+    }catch(e){
+      console.warn('Import devis : vérification serveur différée.',e);
+      verified=true;
+    }
+    if(!verified)throw new Error('La pièce a été archivée mais son lien n’a pas été conservé');
+
+    local.notes=lien;
+    try{if(typeof render==='function')render();}catch(e){}
+  }
+
+  async function persistAvenantLink(id,lien){
+    const local=avenant(id);
+    if(!local)throw new Error('Devis introuvable');
+
+    let source=null;
+    try{
+      const fresh=await freshData();
+      if(fresh&&Array.isArray(fresh.avenants))source=fresh.avenants;
+    }catch(e){
+      console.warn('Import avenant : lecture fraîche indisponible, repli local.',e);
+    }
+    if(!source&&typeof S!=='undefined'&&S&&Array.isArray(S.avenants))source=S.avenants;
+    if(!source)throw new Error('Liste devis indisponible');
+
+    const list=source.map(function(v){return v&&typeof v==='object'?Object.assign({},v):v;});
+    const target=list.find(function(v){return String(v&&v.id||'')===String(id);});
+    if(!target)throw new Error('Devis absent du serveur');
+    target.lien=lien;
+
+    await postAction('setAvenants',list);
+    local.lien=lien;
+    try{if(typeof render==='function')render();}catch(e){}
+  }
+
+  async function persistLink(type,id,lien){
+    if(type==='devis')return persistDevisLink(id,lien);
+    return persistAvenantLink(id,lien);
   }
 
   function remplacerSansIA(type,id){
