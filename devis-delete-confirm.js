@@ -224,14 +224,14 @@
   setTimeout(apply,250);
 })();
 
-/* V47 — la suppression d'un devis se fait uniquement depuis la modale Modifier le devis. */
+/* V51 — la suppression d'un devis se fait uniquement depuis la modale Modifier le devis. */
 (function(){
   'use strict';
 
-  if(window.__yayaDevisDeleteInEditModalV47)return;
-  window.__yayaDevisDeleteInEditModalV47=true;
+  if(window.__yayaDevisDeleteInEditModalV51)return;
+  window.__yayaDevisDeleteInEditModalV51=true;
 
-  const STYLE_ID='yaya-devis-delete-in-edit-modal-v47';
+  const STYLE_ID='yaya-devis-delete-in-edit-modal-v51';
   let current={kind:'',id:''};
 
   function installStyle(){
@@ -242,8 +242,9 @@
       #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
         grid-template-columns:minmax(0,1fr) 90px!important;
       }
-      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-document-delete,
-      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-initial-devis-delete{
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-detail-document-delete,
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-initial-devis-delete,
+      #pane-chantiers .yaya-detail-markets-pane button.yaya-detail-document-delete.yaya-initial-devis-delete{
         display:none!important;
       }
       .yaya-devis-fast-modal .yaya-devis-fast-delete{
