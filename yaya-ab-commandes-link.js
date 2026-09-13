@@ -10,19 +10,40 @@
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
   let activeCard=null;
   let scanTimer=0;
+  let fitRaf=0;
 
   function installStyle(){
     let style=document.getElementById(STYLE_ID);
     if(!style){style=document.createElement('style');style.id=STYLE_ID;document.head.appendChild(style)}
     style.textContent=`
-      .${BLOCK_CLASS}{display:none!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:visible!important;box-shadow:none!important;min-height:0!important}
+      .${BLOCK_CLASS}{display:none!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:hidden!important;box-shadow:none!important;min-height:0!important}
       #pane-chantiers .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
       #pane-chantiers .card > .yaya-detail-commandes-pane,#pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],#pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
       .${BLOCK_CLASS} .yaya-ab-commandes-wait{padding:8px 0!important;color:#708095!important;font-size:12px!important;font-weight:700!important;background:transparent!important;border:0!important}
-      .${FRAME_CLASS}{display:block!important;width:100%!important;height:260px!important;min-height:0!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:hidden!important}
+      .${FRAME_CLASS}{display:block!important;width:100%!important;height:420px!important;min-height:320px!important;max-height:none!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:auto!important}
       #${REFRESH_ID}{height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid #b9dfc5!important;border-radius:8px!important;background:#e8f5ec!important;color:#287a46!important;font-size:13px!important;font-weight:600!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important}
       #${REFRESH_ID}:hover{background:#dff1e5!important;border-color:#a8d6b6!important}
     `;
+  }
+
+  function viewportHeight(){
+    try{return Math.round(window.visualViewport&&window.visualViewport.height||window.innerHeight||720)}catch(_){return window.innerHeight||720}
+  }
+
+  function fitFrame(frame){
+    if(!frame||!frame.isConnected)return;
+    const rect=frame.getBoundingClientRect();
+    const vh=viewportHeight();
+    const top=Math.max(0,Math.round(rect.top));
+    const bottomGap=12;
+    const available=Math.max(320,vh-top-bottomGap);
+    frame.style.setProperty('height',available+'px','important');
+    frame.setAttribute('scrolling','auto');
+  }
+
+  function fitAllFrames(){
+    cancelAnimationFrame(fitRaf);
+    fitRaf=requestAnimationFrame(()=>document.querySelectorAll('.'+FRAME_CLASS).forEach(fitFrame));
   }
 
   function chantierOpen(){
@@ -48,6 +69,7 @@
           const url=new URL(frame.dataset.src||frame.src||AB_COMMANDES_URL);
           url.searchParams.set('_refresh',Date.now());
           frame.src=url.toString();
+          setTimeout(()=>fitFrame(frame),80);
         }
       };
       manage.parentNode.insertBefore(btn,manage);
@@ -90,10 +112,14 @@
   }
 
   function startFrame(block,id,name){
-    const href=linkFor(id,name);let frame=block.querySelector('.'+FRAME_CLASS);if(frame&&frame.dataset.src===href)return;
+    const href=linkFor(id,name);let frame=block.querySelector('.'+FRAME_CLASS);if(frame&&frame.dataset.src===href){fitFrame(frame);return}
     block.querySelectorAll('iframe').forEach(stopIframe);block.querySelectorAll('.yaya-ab-commandes-wait').forEach(x=>x.remove());
     const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement des commandes…';
-    frame=document.createElement('iframe');frame.id='yayaAbCommandesFrame';frame.className=FRAME_CLASS;frame.title='Suivi des commandes chantier';frame.loading='eager';frame.scrolling='no';frame.dataset.src=href;frame.style.setProperty('overflow','hidden','important');block.append(wait,frame);frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove()},{once:true});frame.src=href;
+    frame=document.createElement('iframe');frame.id='yayaAbCommandesFrame';frame.className=FRAME_CLASS;frame.title='Suivi des commandes chantier';frame.loading='eager';frame.scrolling='auto';frame.dataset.src=href;block.append(wait,frame);
+    frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove();fitFrame(frame)},{once:true});
+    frame.src=href;
+    setTimeout(()=>fitFrame(frame),0);
+    setTimeout(()=>fitFrame(frame),120);
   }
 
   function deactivate(card){if(!card)return;card.querySelectorAll(':scope > .'+BLOCK_CLASS).forEach(destroyBlock);if(activeCard===card)activeCard=null}
@@ -101,17 +127,23 @@
     ensureRefreshButton();if(!card||!card.isConnected||!commandesActive(card))return;if(activeCard&&activeCard!==card)deactivate(activeCard);cleanupOtherBlocks(card);activeCard=card;
     const block=ensureBlock(card);if(!block)return;const id=cardId(card),name=chantierName(id,card);
     if(!id&&!name){if(!block.querySelector('.yaya-ab-commandes-wait')){const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement du chantier…';block.appendChild(wait)}return}
-    block.dataset.chantierId=id||'';startFrame(block,id,name);
+    block.dataset.chantierId=id||'';startFrame(block,id,name);fitAllFrames();
   }
 
   function findActiveCard(){const byData=document.querySelector('#pane-chantiers .card[data-yaya-detail-section="commandes"]');if(byData)return byData;const btn=document.querySelector('#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]');return btn?btn.closest('.card'):null}
-  function scanActive(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();const card=findActiveCard();if(card)activate(card);else if(activeCard)deactivate(activeCard)},40)}
-  function handleMessage(e){const d=e&&e.data;if(!d||d.type!=='AB_COMMANDES_HEIGHT')return;const h=Math.max(120,Math.ceil(Number(d.height)||260)+2);document.querySelectorAll('.'+FRAME_CLASS).forEach(frame=>{try{if(frame.contentWindow===e.source){frame.style.setProperty('height',h+'px','important');frame.setAttribute('scrolling','no')}}catch(err){}})}
+  function scanActive(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();const card=findActiveCard();if(card)activate(card);else if(activeCard)deactivate(activeCard);fitAllFrames()},40)}
+  function handleMessage(e){const d=e&&e.data;if(!d||d.type!=='AB_COMMANDES_HEIGHT')return;document.querySelectorAll('.'+FRAME_CLASS).forEach(frame=>{try{if(frame.contentWindow===e.source)fitFrame(frame)}catch(err){}})}
 
   installStyle();cleanupOtherBlocks(null);ensureRefreshButton();
   document.addEventListener('click',e=>{const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section]');if(!btn)return;const card=btn.closest('.card');const key=String(btn.dataset.section||'');if(key==='commandes'){setTimeout(()=>activate(card),0);setTimeout(()=>activate(card),80)}else if(card){setTimeout(()=>deactivate(card),0)}setTimeout(ensureRefreshButton,0)});
   const pane=document.getElementById('pane-chantiers');if(pane){new MutationObserver(records=>{ensureRefreshButton();for(const rec of records){const target=rec.target&&rec.target.nodeType===1?rec.target:null;if(target&&target.closest&&target.closest('.'+BLOCK_CLASS))continue;const relevant=[...rec.addedNodes].some(n=>n&&n.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')));if(relevant){scanActive();break}}}).observe(pane,{childList:true,subtree:true})}
   const watch=new MutationObserver(()=>ensureRefreshButton());watch.observe(document.body,{childList:true,subtree:true});
-  window.addEventListener('message',handleMessage);window.addEventListener('hashchange',scanActive);window.addEventListener('focus',scanActive);window.addEventListener('yaya:data-refreshed',scanActive);setTimeout(scanActive,0);setTimeout(scanActive,300);setTimeout(ensureRefreshButton,800);
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.11-refresh-pastel-inline';
+  window.addEventListener('message',handleMessage);
+  window.addEventListener('hashchange',scanActive);
+  window.addEventListener('focus',scanActive);
+  window.addEventListener('resize',fitAllFrames,{passive:true});
+  window.addEventListener('scroll',fitAllFrames,{passive:true});
+  if(window.visualViewport){window.visualViewport.addEventListener('resize',fitAllFrames,{passive:true});window.visualViewport.addEventListener('scroll',fitAllFrames,{passive:true})}
+  window.addEventListener('yaya:data-refreshed',scanActive);setTimeout(scanActive,0);setTimeout(scanActive,300);setTimeout(ensureRefreshButton,800);setTimeout(fitAllFrames,850);
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.12-viewport-frame';
 })();
