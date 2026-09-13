@@ -24,13 +24,19 @@ jobs:
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
 
-          old = '<script src="evolution-ca-2026-patch.js?v=evo2026-3"><\\/script>'
-          new = old + '<script src="evolution-ca-dashboard-v2.js?v=dashboard-v45"><\\/script>'
-
           if 'evolution-ca-dashboard-v2.js?v=dashboard-v45' not in s:
-              if old not in s:
-                  raise SystemExit('Point insertion evolution introuvable')
-              s = s.replace(old, new, 1)
+              lines = s.splitlines()
+              out = []
+              inserted = False
+              for line in lines:
+                  out.append(line)
+                  if not inserted and 'evolution-ca-2026-patch.js' in line:
+                      indent = line[:len(line)-len(line.lstrip())]
+                      out.append(indent + "'<script src=\"evolution-ca-dashboard-v2.js?v=dashboard-v45\"><\\\\/script>'+" )
+                      inserted = True
+              if not inserted:
+                  raise SystemExit('Ligne evolution introuvable')
+              s = '\n'.join(out) + '\n'
 
           p.write_text(s, encoding='utf-8')
           PY
