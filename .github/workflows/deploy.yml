@@ -96,6 +96,10 @@ jobs:
                       'devis-delete-confirm.js?v=devisconfirm-1',
                       'devis-delete-confirm.js?v=devisconfirm-2'
                   )
+                  text = text.replace(
+                      'finance-edit-actions-fix.js?v=financeeditactions-1',
+                      'finance-edit-actions-fix.js?v=financeeditactions-2'
+                  )
                   if 'chantier-signature-before-sept.js' not in text:
                       prefix = "    '<script src=\"chantier-write-safety.js?v=writeguard-8\">"
                       injected = "    '<script src=\"chantier-signature-before-sept.js?v=beforesept-3\"><\\\\/script>'+\n" + prefix
