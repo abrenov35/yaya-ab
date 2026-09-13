@@ -1,12 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV12)return;
-  window.__yayaFinanceEditActionsV12=true;
+  if(window.__yayaFinanceEditActionsV13)return;
+  window.__yayaFinanceEditActionsV13=true;
 
   let lastAchatId='';
   let deleteBusy=false;
-  const STYLE_ID='yaya-finance-edit-actions-v12';
+  const STYLE_ID='yaya-finance-edit-actions-v13';
 
   function txt(v){return String(v==null?'':v).trim();}
   function sleep(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
@@ -205,10 +205,10 @@
   }
 
   function showDeleteConfirm(id,editModal){
-    document.querySelectorAll('.yaya-edit-delete-confirm-v12').forEach(function(n){n.remove();});
+    document.querySelectorAll('.yaya-edit-delete-confirm-v13').forEach(function(n){n.remove();});
 
     const overlay=document.createElement('div');
-    overlay.className='yaya-edit-delete-confirm-v12';
+    overlay.className='yaya-edit-delete-confirm-v13';
     overlay.style.cssText='position:fixed!important;inset:0!important;background:rgba(15,23,42,.58)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important';
     overlay.innerHTML=''
       +'<div style="background:#fff;border-radius:14px;padding:22px;max-width:410px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.35);font-family:inherit">'
@@ -327,7 +327,9 @@
     showDeleteConfirm(id,modal);
   }
 
-  window.addEventListener('click',handleDelete,true);
+  // Le clic de cette modale est intercepté par d'anciens correctifs Yaya.
+  // Le pointerdown global a été validé en production et passe avant eux.
+  window.addEventListener('pointerdown',handleDelete,true);
 
   function apply(){
     const root=document.getElementById('modalRoot');
@@ -346,7 +348,7 @@
 
   try{
     const original=window.editAchat;
-    if(typeof original==='function'&&!original.__yayaFinanceV12Wrapped){
+    if(typeof original==='function'&&!original.__yayaFinanceV13Wrapped){
       const wrapped=function(id){
         if(id)lastAchatId=String(id);
         const out=original.apply(this,arguments);
@@ -354,7 +356,7 @@
         setTimeout(apply,60);
         return out;
       };
-      wrapped.__yayaFinanceV12Wrapped=true;
+      wrapped.__yayaFinanceV13Wrapped=true;
       window.editAchat=wrapped;
       try{editAchat=wrapped;}catch(e){}
     }
