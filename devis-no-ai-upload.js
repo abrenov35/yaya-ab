@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDevisNoAiUploadV9)return;
-  window.__yayaDevisNoAiUploadV9=true;
+  if(window.__yayaDevisNoAiUploadV10)return;
+  window.__yayaDevisNoAiUploadV10=true;
 
   let uploading=false;
   const nativeFetch=window.fetch.bind(window);
@@ -12,7 +12,7 @@
   const IMAGE_OPTIMIZE_FROM=650*1024;
   const IMAGE_MAX_SIDE=1800;
   const IMAGE_QUALITY=0.82;
-  const UPLOAD_TIMEOUT=40000;
+  const UPLOAD_TIMEOUT=60000;
 
   function apiUrl(){
     try{return typeof API!=='undefined'?API:'';}catch(e){return '';}
@@ -141,7 +141,11 @@
         signal:controller.signal
       });
 
-      if(!response.ok)throw new Error('Erreur serveur '+response.status);
+      if(!response.ok){
+        const err=new Error('Erreur serveur '+response.status);
+        err.status=response.status;
+        throw err;
+      }
       let json;
       try{json=await response.json();}catch(e){throw new Error('Réponse serveur invalide');}
       return json;
@@ -153,13 +157,31 @@
     }
   }
 
+  function shouldFallback(err,json){
+    const message=String((err&&err.message)||(json&&json.error)||'');
+    const status=Number(err&&err.status)||0;
+    return status===404||status===405||/action.*inconnue|action.*introuvable|archiverDevis|non gérée|non geree/i.test(message);
+  }
+
   async function archiveQuote(file){
     const base64=await readBase64(file);
     if(!base64)throw new Error('Document vide ou illisible');
 
-    // Archivage direct sans analyse IA : même chemin que Documents et Commandes.
-    // L'ancien appel extraireDevis lançait un traitement inutile et pouvait dépasser 25 s.
-    const json=await postPayload('archiverDevis',file,base64);
+    let json=null;
+    try{
+      json=await postPayload('archiverDevis',file,base64);
+      if(!json||!json.ok){
+        if(!shouldFallback(null,json))throw new Error(String(json&&json.error||'Archivage impossible'));
+        json=null;
+      }
+    }catch(err){
+      if(!shouldFallback(err,null))throw err;
+    }
+
+    if(!json){
+      emitState('progress','devis','',"Nouvelle tentative d'import");
+      json=await postPayload('extraireDevis',file,base64);
+    }
 
     if(!json||!json.ok)throw new Error(String(json&&json.error||'Archivage impossible'));
     const data=json.data||{};
