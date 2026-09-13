@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV3)return;
-  window.__yayaFinanceEditActionsV3=true;
+  if(window.__yayaFinanceEditActionsV4)return;
+  window.__yayaFinanceEditActionsV4=true;
 
-  const STYLE_ID='yaya-finance-edit-actions-v3';
+  const STYLE_ID='yaya-finance-edit-actions-v4';
   let lastAchatId='';
 
   function txt(v){return String(v==null?'':v).trim();}
@@ -43,7 +43,7 @@
       .achat-edit-modal .yaya-achat-single-save{background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
       .achat-edit-modal .yaya-achat-edit-delete{background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
       .achat-edit-modal .yaya-achat-edit-delete:hover{background:#ffe7e7!important;border-color:#e78d8d!important}
-      .achat-edit-modal .yaya-achat-edit-close{margin-left:auto!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid #d7dee8!important;border-radius:10px!important;background:#fff!important;color:#697586!important;font-size:24px!important;line-height:1!important;cursor:pointer!important}
+      .achat-edit-modal .yaya-achat-edit-close{margin-left:auto!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid #d7dee8!important;border-radius:10px!important;background:#fff!important;color:#697586!important;font-size:24px!important;line-height:1!important;cursor:pointer!important;pointer-events:auto!important}
       @media(max-width:640px){.achat-edit-modal .yaya-finance-edit-actions{gap:8px!important}.achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:12px!important;padding:0 8px!important}}
     `;
     document.head.appendChild(style);
@@ -66,12 +66,12 @@
   function matchAchatFromFields(modal){
     try{
       if(typeof S==='undefined'||!S||!Array.isArray(S.achats))return '';
-      const ch=txt(modal.querySelector('#eaCh')?.value);
-      const type=txt(modal.querySelector('#eaType')?.value);
-      const four=txt(modal.querySelector('#eaFour')?.value);
-      const des=txt(modal.querySelector('#eaDes')?.value);
-      const date=txt(modal.querySelector('#eaDate')?.value);
-      const mt=Number(modal.querySelector('#eaMt')?.value||0);
+      const ch=txt(modal.querySelector('#eaCh')&&modal.querySelector('#eaCh').value);
+      const type=txt(modal.querySelector('#eaType')&&modal.querySelector('#eaType').value);
+      const four=txt(modal.querySelector('#eaFour')&&modal.querySelector('#eaFour').value);
+      const des=txt(modal.querySelector('#eaDes')&&modal.querySelector('#eaDes').value);
+      const date=txt(modal.querySelector('#eaDate')&&modal.querySelector('#eaDate').value);
+      const mt=Number((modal.querySelector('#eaMt')&&modal.querySelector('#eaMt').value)||0);
       const found=S.achats.filter(function(a){
         if(ch&&String(a&&a.chantierId||'')!==ch)return false;
         if(type&&String(a&&a.typeDoc||'')!==type)return false;
@@ -97,18 +97,17 @@
   function closeFinanceModal(modal){
     try{
       if(typeof closeModal==='function')closeModal();
-      else modal.closest('.overlay')?.remove();
-    }catch(e){modal.closest('.overlay')?.remove();}
+      else if(modal&&modal.closest('.overlay'))modal.closest('.overlay').remove();
+    }catch(e){
+      try{if(modal&&modal.closest('.overlay'))modal.closest('.overlay').remove();}catch(_){}
+    }
   }
 
-  function patchHeading(modal,charge){
+  function patchHeadingOnce(modal){
     const heading=modal.querySelector('h5');
-    if(!heading)return;
+    if(!heading||heading.dataset.yayaAchatHeadingV4==='1')return;
+    heading.dataset.yayaAchatHeadingV4='1';
     heading.querySelectorAll('button,[role="button"]').forEach(function(button){button.remove();});
-    if(charge){
-      if(String(heading.textContent||'').trim()!=='Modifier la charge')heading.textContent='Modifier la charge';
-      return;
-    }
     heading.textContent="Modifier l'achat";
     const close=document.createElement('button');
     close.type='button';
@@ -116,153 +115,113 @@
     close.textContent='×';
     close.title='Fermer';
     close.setAttribute('aria-label','Fermer');
-    close.onclick=function(){closeFinanceModal(modal);};
-    heading.appendChild(close);
-  }
-
-  function ensurePjZone(modal){
-    let zone=modal.querySelector('#pj-zone');
-    if(zone)return zone;
-    zone=document.createElement('div');
-    zone.id='pj-zone';
-    zone.style.marginBottom='8px';
-    zone.style.padding='8px 12px';
-    zone.style.border='1.5px dashed #ddd';
-    zone.style.borderRadius='10px';
-    zone.style.display='none';
-    const actions=modal.querySelector('.yaya-finance-edit-actions');
-    if(actions)actions.insertAdjacentElement('beforebegin',zone);
-    else modal.appendChild(zone);
-    return zone;
-  }
-
-  async function deleteAchat(id,modal,button){
-    if(!id)return;
-    if(!window.confirm("Supprimer cet achat de Yaya ?\n\nLe fichier original Drive ou Dropbox sera conservé."))return;
-    let before=[];
-    try{
-      if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('liste achats indisponible');
-      before=S.achats.slice();
-      const next=before.filter(function(a){return String(a&&a.id||'')!==String(id);});
-      if(next.length===before.length)throw new Error('achat introuvable');
-      if(button){button.disabled=true;button.textContent='Suppression…';}
-      S.achats=next;
-      if(typeof render==='function')render();
+    close.onclick=function(event){
+      if(event){event.preventDefault();event.stopPropagation();}
       closeFinanceModal(modal);
-      const ok=typeof apiPost==='function'?await apiPost('setAchats',next):false;
-      if(!ok)throw new Error('enregistrement impossible');
-      toastSafe('Achat supprimé ✓');
-    }catch(err){
-      try{if(typeof S!=='undefined'&&S)S.achats=before;}catch(e){}
-      try{if(typeof render==='function')render();}catch(e){}
-      toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
-    }
+    };
+    heading.appendChild(close);
   }
 
   function patchModal(modal){
     if(!isFinanceEditModal(modal))return;
-    ensureStyle();
-    modal.classList.add('yaya-finance-edit-modal');
+    if(isCharge(modal))return;
+    if(modal.dataset.yayaFinanceActionsV4==='1')return;
 
-    const charge=isCharge(modal);
-    if(!charge)modal.classList.add('achat-edit-modal');
-
-    const save=modal.querySelector('.yaya-achat-single-save')||Array.from(modal.querySelectorAll('button')).find(function(button){
-      const t=String(button.textContent||'').trim();
+    const save=Array.from(modal.querySelectorAll('button')).find(function(button){
       const raw=String(button.getAttribute('onclick')||'');
-      return /saveAchat/.test(raw)||/enregistrer/i.test(t)||/enregistrer/i.test(button.title||'');
+      const label=String(button.textContent||'').trim();
+      return /saveAchat/.test(raw)||/enregistrer/i.test(label);
     });
     if(!save)return;
 
-    patchHeading(modal,charge);
+    modal.dataset.yayaFinanceActionsV4='1';
+    ensureStyle();
+    modal.classList.add('yaya-finance-edit-modal','achat-edit-modal');
+    patchHeadingOnce(modal);
+
     save.title='Enregistrer';
     save.setAttribute('aria-label','Enregistrer');
     save.textContent='Enregistrer';
     save.classList.add('yaya-achat-single-save');
 
-    let actions=modal.querySelector('.yaya-finance-edit-actions');
-    if(!actions){
-      const oldParent=save.parentElement;
-      actions=document.createElement('div');
-      actions.className='yaya-finance-edit-actions';
-      if(oldParent)oldParent.insertAdjacentElement('afterend',actions);
-      else modal.appendChild(actions);
-      actions.appendChild(save);
-    }else if(save.parentElement!==actions){
-      actions.appendChild(save);
-    }
-
-    if(charge)return;
-
-    actions.querySelectorAll('.yaya-finance-edit-cancel,.achat-icon-cancel').forEach(function(b){b.remove();});
     const id=resolveAchatId(modal,save);
     if(id)lastAchatId=id;
 
-    let importer=actions.querySelector('.yaya-achat-edit-import');
-    if(!importer){
-      importer=document.createElement('button');
-      importer.type='button';
-      importer.className='yaya-achat-edit-import';
-      importer.textContent='📎 Importer';
-      importer.title='Changer la pièce jointe';
-      importer.setAttribute('aria-label','Changer la pièce jointe');
-    }
-    actions.insertBefore(importer,save);
+    const oldParent=save.parentElement;
+    let actions=document.createElement('div');
+    actions.className='yaya-finance-edit-actions';
 
-    let del=actions.querySelector('.yaya-achat-edit-delete');
-    if(!del){
-      del=document.createElement('button');
-      del.type='button';
-      del.className='yaya-achat-edit-delete';
-      del.textContent='Supprimer';
-      del.title='Supprimer cet achat';
-      del.setAttribute('aria-label','Supprimer cet achat');
-    }
+    const importer=document.createElement('button');
+    importer.type='button';
+    importer.className='yaya-achat-edit-import';
+    importer.textContent='📎 Importer';
+    importer.title='Changer la pièce jointe';
+    importer.setAttribute('aria-label','Changer la pièce jointe');
+    importer.onclick=function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      const achatId=resolveAchatId(modal,save);
+      if(!achatId){toastSafe('Impossible d’identifier cet achat',true);return;}
+      lastAchatId=achatId;
+      try{
+        if(typeof ajouterPJachat==='function')ajouterPJachat(achatId);
+        else if(typeof remplacerPJ==='function')remplacerPJ('achat',achatId);
+        else toastSafe('Import de pièce jointe indisponible',true);
+      }catch(err){
+        toastSafe('Import impossible : '+String(err&&err.message||err),true);
+      }
+    };
+
+    const del=document.createElement('button');
+    del.type='button';
+    del.className='yaya-achat-edit-delete';
+    del.textContent='Supprimer';
+    del.title='Supprimer cet achat';
+    del.setAttribute('aria-label','Supprimer cet achat');
+    del.onclick=async function(event){
+      event.preventDefault();
+      event.stopPropagation();
+      const achatId=resolveAchatId(modal,save);
+      if(!achatId){toastSafe('Impossible d’identifier cet achat',true);return;}
+      try{
+        if(typeof delAchat!=='function')throw new Error('suppression indisponible');
+        await delAchat(achatId);
+        const stillExists=typeof S!=='undefined'&&S&&Array.isArray(S.achats)&&S.achats.some(function(a){return String(a&&a.id||'')===String(achatId);});
+        if(!stillExists)closeFinanceModal(modal);
+      }catch(err){
+        toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
+      }
+    };
+
+    actions.appendChild(importer);
+    actions.appendChild(save);
     actions.appendChild(del);
+
+    if(oldParent){
+      oldParent.insertAdjacentElement('afterend',actions);
+      Array.from(oldParent.querySelectorAll('button')).forEach(function(button){
+        if(button!==save)button.remove();
+      });
+      if(!oldParent.children.length&&!txt(oldParent.textContent))oldParent.remove();
+    }else{
+      modal.appendChild(actions);
+    }
   }
 
   document.addEventListener('click',function(e){
-    const edit=e.target&&e.target.closest?e.target.closest('[onclick*="editAchat("],#pane-chantiers .yaya-detail-charge-edit'):null;
+    const edit=e.target&&e.target.closest?e.target.closest('[onclick*="editAchat("]'):null;
     if(edit)rememberFromElement(edit);
-  },true);
-
-  document.addEventListener('click',function(e){
-    const importer=e.target&&e.target.closest?e.target.closest('.achat-edit-modal .yaya-achat-edit-import'):null;
-    if(!importer)return;
-    e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-    const modal=importer.closest('.achat-edit-modal');
-    const save=modal&&modal.querySelector('.yaya-achat-single-save');
-    const id=resolveAchatId(modal,save);
-    if(!id){toastSafe('Impossible d’identifier cet achat',true);return;}
-    lastAchatId=id;
-    const zone=ensurePjZone(modal);
-    zone.style.removeProperty('display');
-    zone.removeAttribute('aria-hidden');
-    if(typeof remplacerPJ==='function')remplacerPJ('achat',id);
-    else if(typeof ajouterPJachat==='function')ajouterPJachat(id);
-    else toastSafe('Import de pièce jointe indisponible',true);
-  },true);
-
-  document.addEventListener('click',function(e){
-    const button=e.target&&e.target.closest?e.target.closest('.achat-edit-modal .yaya-achat-edit-delete'):null;
-    if(!button)return;
-    e.preventDefault();e.stopPropagation();if(e.stopImmediatePropagation)e.stopImmediatePropagation();
-    const modal=button.closest('.achat-edit-modal');
-    const save=modal&&modal.querySelector('.yaya-achat-single-save');
-    const id=resolveAchatId(modal,save);
-    if(!id){toastSafe('Impossible d’identifier cet achat',true);return;}
-    deleteAchat(id,modal,button);
   },true);
 
   function wrapEditAchat(){
     try{
       const original=window.editAchat;
-      if(typeof original!=='function'||original.__yayaFinanceV3Wrapped)return;
+      if(typeof original!=='function'||original.__yayaFinanceV4Wrapped)return;
       const wrapped=function(id){
         if(id)lastAchatId=String(id);
         return original.apply(this,arguments);
       };
-      wrapped.__yayaFinanceV3Wrapped=true;
+      wrapped.__yayaFinanceV4Wrapped=true;
       window.editAchat=wrapped;
       try{editAchat=wrapped;}catch(e){}
     }catch(e){}
