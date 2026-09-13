@@ -207,3 +207,175 @@
 
   install();
 })();
+
+/* V46 — page Évolution en deux écrans : graphique puis chiffres + tableau. */
+(function(){
+  'use strict';
+  if(window.__yayaEvolutionSnapV46Boot)return;
+  window.__yayaEvolutionSnapV46Boot=true;
+
+  const STYLE_ID='yaya-evolution-snap-v46';
+  let wheelLock=false;
+  let resizeTimer=0;
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      @media (min-width:761px){
+        #pane-evolution.evo-snap-ready{
+          height:var(--evo-snap-height,680px)!important;
+          max-height:var(--evo-snap-height,680px)!important;
+          overflow-y:auto!important;
+          overflow-x:hidden!important;
+          overscroll-behavior-y:contain;
+          scroll-snap-type:y mandatory;
+          scroll-behavior:smooth;
+          scrollbar-gutter:stable;
+        }
+        #pane-evolution.evo-snap-ready .evo2-shell{display:block!important;min-height:0!important}
+        #pane-evolution.evo-snap-ready .evo2-screen{
+          height:var(--evo-snap-height,680px)!important;
+          min-height:var(--evo-snap-height,680px)!important;
+          max-height:var(--evo-snap-height,680px)!important;
+          box-sizing:border-box;
+          scroll-snap-align:start;
+          scroll-snap-stop:always;
+          padding:2px 2px 8px;
+          display:grid;
+          gap:12px;
+          overflow:hidden;
+        }
+        #pane-evolution.evo-snap-ready .evo2-screen-chart{grid-template-rows:auto minmax(0,1fr)}
+        #pane-evolution.evo-snap-ready .evo2-screen-data{grid-template-rows:auto minmax(0,1fr)}
+        #pane-evolution.evo-snap-ready .evo2-screen-chart>.evo2-card,
+        #pane-evolution.evo-snap-ready .evo2-screen-data>.evo2-card{
+          min-height:0!important;
+          height:100%!important;
+          display:flex!important;
+          flex-direction:column!important;
+        }
+        #pane-evolution.evo-snap-ready .evo2-screen-chart .evo2-chart-scroll{
+          flex:1 1 auto!important;
+          min-height:0!important;
+          overflow-x:auto!important;
+          overflow-y:hidden!important;
+        }
+        #pane-evolution.evo-snap-ready .evo2-screen-chart .evo2-chart{
+          height:100%!important;
+          min-height:360px!important;
+        }
+        #pane-evolution.evo-snap-ready .evo2-screen-chart .evo2-card-head,
+        #pane-evolution.evo-snap-ready .evo2-screen-chart .evo2-legend{flex:0 0 auto}
+        #pane-evolution.evo-snap-ready .evo2-screen-data .evo2-table-head{flex:0 0 auto}
+        #pane-evolution.evo-snap-ready .evo2-screen-data .evo2-table-wrap{
+          flex:1 1 auto!important;
+          min-height:0!important;
+          overflow:auto!important;
+        }
+      }
+      @media (max-width:760px){
+        #pane-evolution .evo2-screen{display:contents!important}
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function viewportHeight(){
+    try{return Math.round((window.visualViewport&&window.visualViewport.height)||window.innerHeight||720);}catch(e){return window.innerHeight||720;}
+  }
+
+  function sizePane(pane){
+    if(!pane||window.innerWidth<=760)return;
+    const rect=pane.getBoundingClientRect();
+    const top=Math.max(0,Math.round(rect.top));
+    const height=Math.max(540,viewportHeight()-top-8);
+    pane.style.setProperty('--evo-snap-height',height+'px');
+  }
+
+  function arrange(){
+    installStyle();
+    const pane=document.getElementById('pane-evolution');
+    const shell=pane&&pane.querySelector('.evo2-shell');
+    if(!pane||!shell)return false;
+
+    sizePane(pane);
+    pane.classList.add('evo-snap-ready');
+
+    if(!shell.querySelector(':scope > .evo2-screen')){
+      const toolbar=shell.querySelector(':scope > .evo2-toolbar');
+      const kpis=shell.querySelector(':scope > .evo2-kpis');
+      const cards=Array.from(shell.querySelectorAll(':scope > .evo2-card'));
+      const chart=cards.find(function(card){return !!card.querySelector('.evo2-card-title');});
+      const table=cards.find(function(card){return !!card.querySelector('.evo2-table-head');});
+      if(!toolbar||!kpis||!chart||!table)return false;
+
+      const screen1=document.createElement('section');
+      screen1.className='evo2-screen evo2-screen-chart';
+      screen1.dataset.evoScreen='1';
+      const screen2=document.createElement('section');
+      screen2.className='evo2-screen evo2-screen-data';
+      screen2.dataset.evoScreen='2';
+
+      screen1.append(toolbar,chart);
+      screen2.append(kpis,table);
+      shell.append(screen1,screen2);
+    }
+
+    if(!pane.dataset.evoSnapWheel){
+      pane.dataset.evoSnapWheel='1';
+      pane.addEventListener('wheel',function(e){
+        if(window.innerWidth<=760||Math.abs(e.deltaY)<8||wheelLock)return;
+        const h=parseFloat(getComputedStyle(pane).getPropertyValue('--evo-snap-height'))||pane.clientHeight||1;
+        const current=Math.round(pane.scrollTop/h);
+        const dir=e.deltaY>0?1:-1;
+        const target=Math.max(0,Math.min(1,current+dir));
+        if(target===current)return;
+        e.preventDefault();
+        wheelLock=true;
+        pane.scrollTo({top:target*h,behavior:'smooth'});
+        setTimeout(function(){wheelLock=false;},520);
+      },{passive:false});
+    }
+
+    return true;
+  }
+
+  function install(){
+    if(!window.__yayaEvolutionDashboardV2Installed||typeof window.renderEvolution!=='function'){
+      setTimeout(install,120);
+      return;
+    }
+
+    if(!window.renderEvolution.__yayaSnapV46){
+      const original=window.renderEvolution;
+      const wrapped=function(){
+        const result=original.apply(this,arguments);
+        requestAnimationFrame(arrange);
+        setTimeout(arrange,80);
+        return result;
+      };
+      wrapped.__yayaSnapV46=true;
+      window.renderEvolution=wrapped;
+    }
+
+    arrange();
+    setTimeout(arrange,160);
+  }
+
+  window.addEventListener('resize',function(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(function(){
+      const pane=document.getElementById('pane-evolution');
+      if(pane)sizePane(pane);
+    },100);
+  },{passive:true});
+  if(window.visualViewport)window.visualViewport.addEventListener('resize',function(){
+    const pane=document.getElementById('pane-evolution');
+    if(pane)sizePane(pane);
+  },{passive:true});
+
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
+  else install();
+})();
