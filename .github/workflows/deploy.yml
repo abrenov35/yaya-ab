@@ -42,6 +42,7 @@ jobs:
               raise SystemExit(f'Version invalide: {current!r}')
 
           new_version = f'{int(m.group(1))}.{int(m.group(2)) + 1}'
+          minor = new_version.split('.')[-1]
           p.write_text(new_version + '\n', encoding='utf-8')
           Path('VERSION.txt').write_text('v' + new_version + '\n', encoding='utf-8')
 
@@ -96,9 +97,10 @@ jobs:
                       'devis-delete-confirm.js?v=devisconfirm-1',
                       'devis-delete-confirm.js?v=devisconfirm-2'
                   )
-                  text = text.replace(
-                      'finance-edit-actions-fix.js?v=financeeditactions-1',
-                      'finance-edit-actions-fix.js?v=financeeditactions-2'
+                  text = re.sub(
+                      r'finance-edit-actions-fix\.js\?v=financeeditactions-[^"<\\]+',
+                      f'finance-edit-actions-fix.js?v=financeeditactions-{minor}',
+                      text
                   )
                   if 'chantier-signature-before-sept.js' not in text:
                       prefix = "    '<script src=\"chantier-write-safety.js?v=writeguard-8\">"
