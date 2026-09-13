@@ -1,0 +1,55 @@
+name: Yaya loader lecteur Commande parent V92
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.event.head_commit.message == 'Yaya - charger lecteur parent CMD V92'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Ajouter le loader au module Commande
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          link=Path('yaya-ab-commandes-link.js')
+          s=link.read_text(encoding='utf-8')
+          marker='__YAYA_CMD_PARENT_PREVIEW_LOADER_V92'
+          if marker not in s:
+              s += r'''
+
+// __YAYA_CMD_PARENT_PREVIEW_LOADER_V92
+;(function(){
+  if(window.__YAYA_CMD_PARENT_PREVIEW_LOADER_V92)return;
+  window.__YAYA_CMD_PARENT_PREVIEW_LOADER_V92=true;
+  const script=document.createElement('script');
+  script.src='ab-commandes-parent-preview.js?v=cmd-parent-92';
+  script.async=false;
+  document.head.appendChild(script);
+})();
+'''
+              link.write_text(s,encoding='utf-8')
+
+          idx=Path('index.html')
+          html=idx.read_text(encoding='utf-8')
+          if 'commandes-link-16' in html:
+              html=html.replace('commandes-link-16','commandes-link-17')
+          elif 'commandes-link-17' not in html:
+              raise SystemExit('version du loader AB COMMANDES introuvable')
+          html=re.sub(r'Yaya v205\.\d+ — AB RENOV 35','Yaya v205.667 — AB RENOV 35',html,count=1)
+          idx.write_text(html,encoding='utf-8')
+          PY
+      - name: Commit publication
+        run: |
+          git config user.name 'abrenov35'
+          git config user.email 'abrenov35@gmail.com'
+          git add yaya-ab-commandes-link.js index.html
+          git commit -m 'Yaya v205.667 - lecteur parent CMD V92 actif' || exit 0
+          git push
