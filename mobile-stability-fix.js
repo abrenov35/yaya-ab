@@ -36,6 +36,7 @@
     }
     @media(max-width:390px){#pane-chantiers .kpis{grid-template-columns:1fr!important}.hdr .tab,.hdr .fiche-inter-tab{padding:0 9px!important;font-size:11.5px!important}.modal{padding-left:10px!important;padding-right:10px!important}}
     @media(max-width:760px) and (orientation:portrait){.hdr{position:static!important;top:auto!important}}
+    @media(max-width:760px) and (orientation:landscape){.hdr{margin-bottom:0!important}body>.body{padding-top:0!important}}
     @media(max-width:760px), (hover:none) and (pointer:coarse){
       html:root .overlay{top:var(--yaya-visible-top,0px)!important;bottom:auto!important;height:var(--yaya-visible-height,100dvh)!important;box-sizing:border-box!important;overflow:hidden!important}
       html:root .overlay .modal{box-sizing:border-box!important;max-height:100%!important;min-height:0!important;overflow-y:auto!important;scroll-behavior:auto!important;scroll-padding:70px 0 90px;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch}
