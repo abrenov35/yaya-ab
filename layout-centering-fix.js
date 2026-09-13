@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-layout-centering-fix-v1';
+  const STYLE_ID='yaya-layout-centering-fix-v2';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -10,14 +10,17 @@
     style.textContent=`
       html,body{
         width:100%!important;
-        max-width:100%!important;
+        max-width:none!important;
+        min-width:0!important;
+        margin:0!important;
         overflow-x:hidden!important;
       }
 
       .hdr{
         width:100%!important;
-        max-width:100vw!important;
+        max-width:100%!important;
         min-width:0!important;
+        box-sizing:border-box!important;
         overflow-x:auto!important;
         overflow-y:hidden!important;
         overscroll-behavior-x:contain!important;
@@ -33,17 +36,57 @@
       }
 
       body > .body{
-        width:min(980px,calc(100% - 24px))!important;
-        max-width:980px!important;
+        width:100%!important;
+        max-width:none!important;
         min-width:0!important;
-        margin-left:auto!important;
-        margin-right:auto!important;
+        margin:0!important;
+        padding-top:10px!important;
+        padding-bottom:26px!important;
+        padding-left:max(6px,env(safe-area-inset-left))!important;
+        padding-right:max(6px,env(safe-area-inset-right))!important;
+        box-sizing:border-box!important;
       }
 
+      body > .body > [id^="pane-"],
       #pane-chantiers,
-      #pane-chantiers > .card{
+      #pane-achats,
+      #pane-documents,
+      #pane-heures,
+      #pane-equipe,
+      #pane-evolution{
+        width:100%!important;
+        max-width:none!important;
+        min-width:0!important;
+        box-sizing:border-box!important;
+      }
+
+      body > .body .card,
+      body > .body .gpanel,
+      body > .body .tblwrap,
+      body > .body .weekbar{
         max-width:100%!important;
         min-width:0!important;
+        box-sizing:border-box!important;
+      }
+
+      .tblwrap{
+        width:100%!important;
+        max-width:100%!important;
+        overflow-x:auto!important;
+        -webkit-overflow-scrolling:touch!important;
+      }
+
+      @media(max-width:760px){
+        body > .body{
+          padding-left:max(4px,env(safe-area-inset-left))!important;
+          padding-right:max(4px,env(safe-area-inset-right))!important;
+        }
+      }
+
+      @media(orientation:landscape) and (max-height:600px){
+        body > .body{
+          padding-top:6px!important;
+        }
       }
 
       .yaya-finance-edit-modal .mfoot{
@@ -368,8 +411,9 @@
   }
 
   function install(){
+    installStyle();
+
     if(isDesktop()){
-      installStyle();
       requestAnimationFrame(resetPageHorizontalScroll);
     }
 
