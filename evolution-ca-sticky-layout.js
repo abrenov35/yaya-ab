@@ -50,7 +50,7 @@
           display:grid!important;
           gap:10px!important;
           background:#f4f6f8!important;
-          padding:2px 2px 0!important;
+          padding:6px 2px 0!important;
         }
         #pane-evolution.evo50-ready .evo50-scroll{
           min-height:0!important;
