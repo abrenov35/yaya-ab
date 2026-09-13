@@ -1,0 +1,48 @@
+name: Install evolution dashboard V45
+
+on:
+  push:
+    paths:
+      - '.github/workflows/install-evolution-dashboard-v45.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Install dashboard script
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+
+          old = '<script src="evolution-ca-2026-patch.js?v=evo2026-3"><\\/script>'
+          new = old + '<script src="evolution-ca-dashboard-v2.js?v=dashboard-v45"><\\/script>'
+
+          if 'evolution-ca-dashboard-v2.js?v=dashboard-v45' not in s:
+              if old not in s:
+                  raise SystemExit('Point insertion evolution introuvable')
+              s = s.replace(old, new, 1)
+
+          p.write_text(s, encoding='utf-8')
+          PY
+
+      - name: Commit V45
+        run: |
+          if git diff --quiet; then
+            echo 'Déjà installé'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html
+          git commit -m 'V45 - activer la nouvelle présentation du CA signé'
+          git push origin main
