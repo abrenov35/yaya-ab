@@ -1,4 +1,4 @@
-// V44 — une seule fenêtre d’aperçu, identique partout à l’affichage Achats
+// V46 — une seule fenêtre d’aperçu, identique partout à l’affichage Achats / Charges
 (function(){
   'use strict';
 
@@ -190,7 +190,7 @@
     }
 
     modal.dataset.yayaPreviewFullscreen='1';
-    modal.dataset.yayaPreviewUnified='v44';
+    modal.dataset.yayaPreviewUnified='v46';
     modal.style.setProperty('width',width+'px','important');
     modal.style.setProperty('height',height+'px','important');
     modal.style.setProperty('max-width',mobile?'calc(100vw - 8px)':'min(1100px,calc(100vw - 16px))','important');
@@ -204,6 +204,22 @@
       stage.style.setProperty('min-height','0','important');
       stage.style.setProperty('width','100%','important');
       stage.style.setProperty('overflow','hidden','important');
+    }
+
+    // Certains PDF (notamment issus du module Commande / OneDrive) sont
+    // dessinés avant que la grande fenêtre soit appliquée. On force alors
+    // un unique recalcul du PDF après mise en plein format, exactement comme
+    // pour les pièces ouvertes depuis Achats / Charges.
+    if(
+      typeof modal.__yayaRedrawPdf==='function' &&
+      modal.dataset.yayaUnifiedPdfRedrawn!=='1'
+    ){
+      modal.dataset.yayaUnifiedPdfRedrawn='1';
+      requestAnimationFrame(function(){
+        try{
+          if(modal.isConnected)modal.__yayaRedrawPdf();
+        }catch(e){}
+      });
     }
   }
 
