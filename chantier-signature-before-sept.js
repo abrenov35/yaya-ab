@@ -1,4 +1,4 @@
-// V41 — affichage robuste des signatures depuis dateSignature (colonne J)
+// V42 — affichage robuste des signatures depuis dateSignature (colonne J)
 (function(){
   'use strict';
 
@@ -31,7 +31,7 @@
   function signatureLabel(c){
     const value=valueToIso(c&&c.dateSignature);
     if(!value)return '';
-    if(value==='2026')return '';
+    if(/^\d{4}$/.test(value))return value;
     if(isSpecial(value))return LABEL;
     const m=value.match(/^(\d{4})-(\d{2})/);
     if(!m)return '';
@@ -105,7 +105,7 @@
 
   function installEditSupport(){
     const previousSync=window.syncEditChSignature;
-    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV41){
+    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV42){
       const wrappedSync=function(){
         const special=document.getElementById('editChSignatureBeforeSept');
         const hidden=document.getElementById('editChSignature');
@@ -115,12 +115,12 @@
         }
         return previousSync.apply(this,arguments);
       };
-      wrappedSync.__yayaSignatureV41=true;
+      wrappedSync.__yayaSignatureV42=true;
       window.syncEditChSignature=wrappedSync;
     }
 
     const previousOpen=window.openExistingChantierModal;
-    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV41)return;
+    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV42)return;
 
     const wrappedOpen=function(){
       const result=previousOpen.apply(this,arguments);
@@ -162,7 +162,7 @@
       apply();
       return result;
     };
-    wrappedOpen.__yayaSignatureV41=true;
+    wrappedOpen.__yayaSignatureV42=true;
     window.openExistingChantierModal=wrappedOpen;
   }
 
