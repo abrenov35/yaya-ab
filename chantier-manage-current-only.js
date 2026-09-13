@@ -6,6 +6,7 @@
   window.__yayaChantierManageCurrentOnlyV1=true;
 
   const STYLE_ID='yaya-manage-current-only-style';
+  const REFRESH_ID='yayaRefreshChantierBtn';
   let installed=false;
   let syncing=false;
 
@@ -27,7 +28,8 @@
       .yaya-manage-info-overlay{display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;box-sizing:border-box!important;overflow:auto!important;}
       .yaya-manage-info-modal{width:min(460px,calc(100vw - 36px))!important;max-width:460px!important;margin:auto!important;position:relative!important;top:auto!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;}
       .yaya-manage-info-box{margin:14px 0;padding:13px 14px;border:1px solid #cbd7e6;border-radius:10px;background:#f7faff;color:#29496d;font-size:12px;line-height:1.5;}
-      @media(max-width:640px){.yaya-manage-info-overlay{padding:12px!important}.yaya-manage-info-modal{width:calc(100vw - 24px)!important;}}
+      #${REFRESH_ID}{margin-right:8px;}
+      @media(max-width:640px){.yaya-manage-info-overlay{padding:12px!important}.yaya-manage-info-modal{width:calc(100vw - 24px)!important;}#${REFRESH_ID}{margin-right:6px;}}
     `;
     document.head.appendChild(style);
   }
@@ -53,6 +55,26 @@
     if(note)note.textContent='Tu modifies le chantier actuellement ouvert. Les nouveaux chantiers et les chantiers Extranet se gèrent dans l’Extranet.';
   }
 
+  function ensureRefreshButton(btn){
+    let refresh=document.getElementById(REFRESH_ID);
+    const hasChantier=!!currentChantierId();
+    if(!refresh){
+      refresh=btn.cloneNode(false);
+      refresh.id=REFRESH_ID;
+      refresh.removeAttribute('onclick');
+      refresh.removeAttribute('aria-haspopup');
+      refresh.textContent='↻ Actualiser';
+      refresh.title='Actualiser la fiche chantier';
+      refresh.setAttribute('aria-label','Actualiser la fiche chantier');
+      refresh.onclick=function(event){
+        if(event){event.preventDefault();event.stopPropagation();}
+        window.location.reload();
+      };
+      btn.parentNode.insertBefore(refresh,btn);
+    }
+    refresh.style.display=hasChantier?'':'none';
+  }
+
   function syncButton(){
     if(syncing)return;
     syncing=true;
@@ -63,6 +85,7 @@
       if(btn.textContent!=='🛠️ Gérer chantier')btn.textContent='🛠️ Gérer chantier';
       if(btn.title!==title)btn.title=title;
       if(btn.getAttribute('aria-label')!==title)btn.setAttribute('aria-label',title);
+      ensureRefreshButton(btn);
     }finally{
       syncing=false;
     }
