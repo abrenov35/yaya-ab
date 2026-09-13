@@ -135,6 +135,50 @@
           padding:0 0 10px!important;
         }
       }
+
+      @media (max-width:760px) and (orientation:portrait){
+        #pane-evolution .evo2-table-wrap{
+          width:100%!important;
+          max-width:100%!important;
+          overflow-x:hidden!important;
+          padding:0 4px 10px!important;
+          box-sizing:border-box!important;
+        }
+        #pane-evolution .evo2-table{
+          width:100%!important;
+          min-width:0!important;
+          max-width:100%!important;
+          table-layout:fixed!important;
+          font-size:8.5px!important;
+        }
+        #pane-evolution .evo2-table th,
+        #pane-evolution .evo2-table td{
+          padding:6px 2px!important;
+          font-size:8px!important;
+          line-height:1.15!important;
+          white-space:normal!important;
+          overflow-wrap:anywhere!important;
+        }
+        #pane-evolution .evo2-table th:first-child,
+        #pane-evolution .evo2-table td:first-child{
+          width:22%!important;
+        }
+        #pane-evolution .evo2-month-cell{
+          gap:3px!important;
+          min-width:0!important;
+        }
+        #pane-evolution .evo2-dot{
+          width:5px!important;
+          height:5px!important;
+          flex:0 0 5px!important;
+        }
+        #pane-evolution .evo2-manual{display:none!important}
+        #pane-evolution .evo2-change{
+          min-width:0!important;
+          padding:2px!important;
+          font-size:8px!important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
