@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaSignatureSheetRefreshV1Installed)return;
+  if(window.__yayaSignatureSheetRefreshV2Installed)return;
+  window.__yayaSignatureSheetRefreshV2Installed=true;
   window.__yayaSignatureSheetRefreshV1Installed=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
@@ -33,6 +34,20 @@
     return hits&&hits.length===1?hits[0]:null;
   }
 
+  async function fetchFreshChantiers(api,signal){
+    // Ne pas utiliser tabs=chantiers : cette route peut renvoyer un tableau vide
+    // alors que l'API complète contient bien les chantiers.
+    const sep=api.includes('?')?'&':'?';
+    const url=api+sep+'_yaya_signature_fresh='+Date.now()+'&_yaya_force=1';
+    const r=await fetch(url,{method:'GET',cache:'no-store',signal:signal});
+    const text=await r.text();
+    if(/^\s*</.test(text))throw new Error('Réponse Yaya temporairement invalide');
+    const json=JSON.parse(text);
+    const rows=json&&json.ok&&json.data&&Array.isArray(json.data.chantiers)?json.data.chantiers:null;
+    if(!rows)throw new Error('Rubrique chantiers absente de la réponse Yaya');
+    return rows;
+  }
+
   async function refreshSignatures(force){
     if(running)return false;
     if(!force&&Date.now()-lastRefreshAt<MIN_REFRESH_MS)return false;
@@ -50,17 +65,10 @@
     running=true;
     lastRefreshAt=Date.now();
     const ctrl=new AbortController();
-    const timer=setTimeout(function(){ctrl.abort();},12000);
+    const timer=setTimeout(function(){ctrl.abort();},16000);
 
     try{
-      const sep=api.includes('?')?'&':'?';
-      const url=api+sep+'tabs=chantiers&_yaya_signature_fresh='+Date.now();
-      const r=await fetch(url,{method:'GET',cache:'no-store',signal:ctrl.signal});
-      const text=await r.text();
-      if(/^\s*</.test(text))throw new Error('Réponse Yaya temporairement invalide');
-      const json=JSON.parse(text);
-      const rows=json&&json.ok&&json.data&&Array.isArray(json.data.chantiers)?json.data.chantiers:null;
-      if(!rows)throw new Error('Rubrique chantiers absente de la réponse Yaya');
+      const rows=await fetchFreshChantiers(api,ctrl.signal);
 
       const byId=new Map();
       const byName=new Map();
@@ -95,8 +103,8 @@
       if(changed||found){
         try{if(typeof render==='function')render();}catch(e){}
       }
-      try{window.dispatchEvent(new CustomEvent('yaya:signature-dates-refreshed',{detail:{found:found,changed:changed}}));}catch(e){}
-      console.info('Yaya signatures Sheet :',found,'lignes lues, changement =',changed);
+      try{window.dispatchEvent(new CustomEvent('yaya:signature-dates-refreshed',{detail:{found:found,total:rows.length,changed:changed}}));}catch(e){}
+      console.info('Yaya signatures Sheet :',found,'/',rows.length,'lignes lues, changement =',changed);
       return true;
     }catch(err){
       console.warn('Lecture fraîche des dates de signature ignorée :',err);
