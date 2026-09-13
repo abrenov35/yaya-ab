@@ -223,3 +223,152 @@
   setTimeout(apply,50);
   setTimeout(apply,250);
 })();
+
+/* V47 — la suppression d'un devis se fait uniquement depuis la modale Modifier le devis. */
+(function(){
+  'use strict';
+
+  if(window.__yayaDevisDeleteInEditModalV47)return;
+  window.__yayaDevisDeleteInEditModalV47=true;
+
+  const STYLE_ID='yaya-devis-delete-in-edit-modal-v47';
+  let current={kind:'',id:''};
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
+        grid-template-columns:minmax(0,1fr) 90px!important;
+      }
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-detail-document-delete,
+      #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row > .yaya-initial-devis-delete{
+        display:none!important;
+      }
+      .yaya-devis-fast-modal .yaya-devis-fast-delete{
+        background:#fff3f3!important;
+        color:#b42318!important;
+        border:1px solid #efb4b4!important;
+      }
+      .yaya-devis-fast-modal .yaya-devis-fast-delete:hover{
+        background:#ffe7e7!important;
+        border-color:#e78d8d!important;
+      }
+      @media(max-width:640px){
+        #pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row{
+          grid-template-columns:minmax(0,1fr) 72px!important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function remember(edit){
+    if(!edit)return;
+    const id=String(edit.dataset.rowId||'').trim();
+    if(!id)return;
+    current={kind:String(edit.dataset.kind||'').trim(),id:id};
+  }
+
+  function contextFromModal(modal){
+    if(!modal)return {kind:'',id:''};
+    const kind=String(modal.dataset.yayaQuoteKind||'').trim();
+    const id=String(modal.dataset.yayaQuoteId||'').trim();
+    if(id)return {kind:kind,id:id};
+    if(current.id)return current;
+    if(modal.querySelector('#edNom,#edNum,#edMt')){
+      try{
+        if(typeof focusChantier!=='undefined'&&focusChantier){
+          return {kind:'main',id:String(focusChantier)};
+        }
+      }catch(e){}
+    }
+    return {kind:'',id:''};
+  }
+
+  function findDeleteButton(ctx){
+    if(!ctx||!ctx.id)return null;
+    const rows=document.querySelectorAll('#pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row');
+    for(const row of rows){
+      const edit=row.querySelector('.yaya-detail-document-edit[data-kind][data-row-id]');
+      if(!edit)continue;
+      if(String(edit.dataset.rowId||'')!==String(ctx.id))continue;
+      if(ctx.kind&&String(edit.dataset.kind||'')!==String(ctx.kind))continue;
+      return row.querySelector('.yaya-initial-devis-delete,.yaya-detail-document-delete');
+    }
+    return null;
+  }
+
+  function decorateModal(){
+    installStyle();
+    const modal=document.querySelector('.yaya-devis-fast-modal');
+    if(!modal)return;
+    const footer=modal.querySelector('.yaya-devis-fast-foot,.mfoot');
+    if(!footer)return;
+    const ctx=contextFromModal(modal);
+    if(ctx.id){
+      modal.dataset.yayaQuoteKind=ctx.kind||'';
+      modal.dataset.yayaQuoteId=ctx.id;
+    }
+
+    let button=footer.querySelector('[data-yaya-delete-from-edit="1"]');
+    if(!button){
+      button=footer.querySelector('#yayaFastCancel,.yaya-devis-fast-cancel');
+      if(!button){
+        button=[...footer.querySelectorAll('button')].find(function(b){return /^annuler$/i.test(String(b.textContent||'').trim());})||null;
+      }
+      if(!button)return;
+      button.dataset.yayaDeleteFromEdit='1';
+      button.classList.add('yaya-devis-fast-delete');
+      button.textContent='Supprimer';
+      button.title='Supprimer ce devis';
+      button.setAttribute('aria-label','Supprimer ce devis');
+    }
+  }
+
+  document.addEventListener('click',function(e){
+    const edit=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-market-row .yaya-detail-document-edit[data-kind][data-row-id]'):null;
+    if(edit)remember(edit);
+    const amount=e.target&&e.target.closest?e.target.closest('#pane-chantiers .yaya-detail-market-row .yaya-detail-charge-cost'):null;
+    if(amount){
+      const row=amount.closest('.yaya-detail-market-row');
+      remember(row&&row.querySelector('.yaya-detail-document-edit[data-kind][data-row-id]'));
+    }
+  },true);
+
+  document.addEventListener('click',function(e){
+    const button=e.target&&e.target.closest?e.target.closest('.yaya-devis-fast-modal [data-yaya-delete-from-edit="1"]'):null;
+    if(!button)return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    const modal=button.closest('.yaya-devis-fast-modal');
+    const ctx=contextFromModal(modal);
+    const hiddenDelete=findDeleteButton(ctx);
+    if(!hiddenDelete){
+      try{if(typeof toast==='function')toast('Suppression du devis indisponible',true);}catch(err){}
+      return;
+    }
+
+    try{if(typeof closeModal==='function')closeModal();}catch(err){}
+    setTimeout(function(){hiddenDelete.click();},0);
+  },true);
+
+  let scheduled=false;
+  function schedule(){
+    if(scheduled)return;
+    scheduled=true;
+    requestAnimationFrame(function(){
+      scheduled=false;
+      installStyle();
+      decorateModal();
+    });
+  }
+
+  installStyle();
+  schedule();
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('yaya:data-refreshed',schedule);
+})();
