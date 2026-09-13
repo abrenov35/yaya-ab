@@ -4,7 +4,7 @@
   const previousVoirPiece=window.voirPiece;
   if(typeof previousVoirPiece!=='function')return;
 
-  const API_FALLBACK='https://script.google.com/macros/s/AKfycbx6IwMFf2plAq7i8qf8qF6f6MMC-1-WynAqn1ZRqCZrVqHeE9a1ygSSTzp5uOf0L3bn/exec';
+  const API_FALLBACK='https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
   let pdfJsPromise=null;
 
   function apiUrl(){
