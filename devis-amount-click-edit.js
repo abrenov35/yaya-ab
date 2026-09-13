@@ -274,3 +274,22 @@
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();
+
+/* V48 — recharge sans cache les deux correctifs qui peuvent rester bloqués sur une ancienne ressource. */
+(function(){
+  'use strict';
+  if(window.__yayaForceFreshEvolutionDeleteV48)return;
+  window.__yayaForceFreshEvolutionDeleteV48=true;
+
+  function load(src,key){
+    if(document.querySelector('script[data-yaya-fresh-patch="'+key+'"]'))return;
+    const s=document.createElement('script');
+    s.src=src+(src.includes('?')?'&':'?')+'_v48='+Date.now();
+    s.async=false;
+    s.setAttribute('data-yaya-fresh-patch',key);
+    document.head.appendChild(s);
+  }
+
+  load('evolution-ca-2026-patch.js','evolution-v48');
+  load('devis-delete-confirm.js','devis-delete-v48');
+})();
