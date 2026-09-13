@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV5)return;
-  window.__yayaFinanceEditActionsV5=true;
+  if(window.__yayaFinanceEditActionsV6)return;
+  window.__yayaFinanceEditActionsV6=true;
 
-  const STYLE_ID='yaya-finance-edit-actions-v5';
+  const STYLE_ID='yaya-finance-edit-actions-v6';
   let lastAchatId='';
 
   function txt(v){return String(v==null?'':v).trim();}
@@ -12,55 +12,10 @@
     try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
   }
 
-  function isFinanceEditModal(modal){
-    if(!modal)return false;
-    return modal.classList.contains('yaya-finance-edit-modal')
-      || modal.classList.contains('achat-edit-modal')
-      || modal.classList.contains('charge-edit-modal')
-      || !!modal.querySelector('#eaCh,#eaType,#eaFour,#eaDes,#eaDate,#eaMt');
-  }
-
-  function isCharge(modal){
-    if(!modal)return false;
-    if(modal.classList.contains('charge-edit-modal'))return true;
-    const type=modal.querySelector('#eaType');
-    let value=type?String(type.value||''):'';
-    if(type&&type.options&&type.selectedIndex>=0&&type.options[type.selectedIndex]){
-      value+=' '+String(type.options[type.selectedIndex].text||'');
-    }
-    return /sous[-\s]?trait/i.test(value);
-  }
-
-  function ensureStyle(){
-    if(document.getElementById(STYLE_ID))return;
-    const style=document.createElement('style');
-    style.id=STYLE_ID;
-    style.textContent=`
-      .achat-edit-modal .yaya-finance-edit-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin-top:18px!important;align-items:stretch!important}
-      .achat-edit-modal .yaya-finance-edit-actions>button{width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;border-radius:9px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important}
-      .achat-edit-modal .yaya-achat-edit-import{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#249457!important;color:#fff!important;border:1px solid #249457!important}
-      .achat-edit-modal .yaya-achat-edit-import:hover{background:#1f814c!important;border-color:#1f814c!important}
-      .achat-edit-modal .yaya-achat-single-save{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
-      .achat-edit-modal .yaya-achat-edit-delete{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
-      .achat-edit-modal .yaya-achat-edit-delete:hover{background:#ffe7e7!important;border-color:#e78d8d!important}
-      .achat-edit-modal .yaya-achat-edit-close{margin-left:auto!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid #d7dee8!important;border-radius:10px!important;background:#fff!important;color:#697586!important;font-size:24px!important;line-height:1!important;cursor:pointer!important;pointer-events:auto!important}
-      @media(max-width:640px){.achat-edit-modal .yaya-finance-edit-actions{gap:8px!important}.achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:12px!important;padding:0 8px!important}}
-    `;
-    document.head.appendChild(style);
-  }
-
   function idFromOnclick(raw,name){
     const re=new RegExp(name+'\\s*\\(\\s*[\\\'\"]([^\\\'\"]+)[\\\'\"]');
     const m=String(raw||'').match(re);
     return m&&m[1]?String(m[1]):'';
-  }
-
-  function rememberFromElement(el){
-    if(!el)return '';
-    let id=txt(el.dataset&&el.dataset.achatId);
-    if(!id)id=idFromOnclick(el.getAttribute&&el.getAttribute('onclick'),'editAchat');
-    if(id)lastAchatId=id;
-    return id;
   }
 
   function matchAchatFromFields(modal){
@@ -85,13 +40,30 @@
     }catch(e){return '';}
   }
 
-  function resolveAchatId(modal,save){
+  function resolveId(modal,save){
     let id=txt(modal&&modal.dataset&&modal.dataset.yayaAchatId);
     if(!id&&save)id=idFromOnclick(save.getAttribute('onclick'),'saveAchat');
     if(!id&&lastAchatId)id=lastAchatId;
     if(!id)id=matchAchatFromFields(modal);
     if(id&&modal)modal.dataset.yayaAchatId=id;
+    if(id)lastAchatId=id;
     return id;
+  }
+
+  function ensureStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      .achat-edit-modal .yaya-finance-edit-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin-top:18px!important;align-items:stretch!important}
+      .achat-edit-modal .yaya-finance-edit-actions>button{width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;border-radius:9px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important}
+      .achat-edit-modal .yaya-achat-edit-import{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#249457!important;color:#fff!important;border:1px solid #249457!important}
+      .achat-edit-modal .yaya-achat-single-save{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
+      .achat-edit-modal .yaya-achat-edit-delete{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
+      .achat-edit-modal .yaya-achat-edit-close{margin-left:auto!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid #d7dee8!important;border-radius:10px!important;background:#fff!important;color:#697586!important;font-size:24px!important;line-height:1!important;cursor:pointer!important;pointer-events:auto!important}
+      @media(max-width:640px){.achat-edit-modal .yaya-finance-edit-actions{gap:8px!important}.achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:12px!important;padding:0 8px!important}}
+    `;
+    document.head.appendChild(style);
   }
 
   function closeFinanceModal(modal){
@@ -103,14 +75,14 @@
     }
   }
 
-  function patchHeadingOnce(modal){
+  function ensureClose(modal){
     const heading=modal.querySelector('h5');
     if(!heading)return;
-    if(heading.dataset.yayaAchatHeadingV5==='1'&&heading.querySelector('.yaya-achat-edit-close'))return;
-    heading.dataset.yayaAchatHeadingV5='1';
+    let close=heading.querySelector('.yaya-achat-edit-close');
+    if(close)return;
     heading.querySelectorAll('button,[role="button"]').forEach(function(button){button.remove();});
     heading.textContent="Modifier l'achat";
-    const close=document.createElement('button');
+    close=document.createElement('button');
     close.type='button';
     close.className='yaya-achat-edit-close';
     close.textContent='×';
@@ -123,123 +95,122 @@
     heading.appendChild(close);
   }
 
-  function completeActions(actions){
-    return !!(
-      actions
-      && actions.querySelector('.yaya-achat-edit-import')
-      && actions.querySelector('.yaya-achat-single-save')
-      && actions.querySelector('.yaya-achat-edit-delete')
-    );
-  }
+  window.yayaAchatImportButton=function(button){
+    const modal=button&&button.closest?button.closest('.modal'):null;
+    const save=modal&&modal.querySelector('.yaya-achat-single-save');
+    const id=txt(button&&button.dataset&&button.dataset.achatId)||resolveId(modal,save);
+    if(!id){toastSafe('Impossible d’identifier cet achat',true);return false;}
+    try{
+      if(typeof ajouterPJachat==='function')ajouterPJachat(id);
+      else if(typeof remplacerPJ==='function')remplacerPJ('achat',id);
+      else throw new Error('import indisponible');
+    }catch(err){
+      toastSafe('Import impossible : '+String(err&&err.message||err),true);
+    }
+    return false;
+  };
 
-  function patchModal(modal){
-    if(!isFinanceEditModal(modal))return;
-    if(isCharge(modal))return;
+  window.yayaAchatDeleteButton=async function(button){
+    const modal=button&&button.closest?button.closest('.modal'):null;
+    const save=modal&&modal.querySelector('.yaya-achat-single-save');
+    const id=txt(button&&button.dataset&&button.dataset.achatId)||resolveId(modal,save);
+    if(!id){toastSafe('Impossible d’identifier cet achat',true);return false;}
+    try{
+      if(typeof delAchat!=='function')throw new Error('suppression indisponible');
+      await delAchat(id);
+    }catch(err){
+      toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
+    }
+    return false;
+  };
+
+  function ensureActions(modal){
+    if(!modal||!modal.querySelector('#eaCh')||!modal.querySelector('#eaType'))return;
+
+    const type=modal.querySelector('#eaType');
+    let typeText=String(type.value||'');
+    if(type.options&&type.selectedIndex>=0&&type.options[type.selectedIndex])typeText+=' '+String(type.options[type.selectedIndex].text||'');
+    if(/sous[-\s]?trait/i.test(typeText))return;
 
     ensureStyle();
     modal.classList.add('yaya-finance-edit-modal','achat-edit-modal');
-    patchHeadingOnce(modal);
-
-    const existing=modal.querySelector('.yaya-finance-edit-actions');
-    if(completeActions(existing)){
-      modal.dataset.yayaFinanceActionsV5='1';
-      return;
-    }
+    ensureClose(modal);
 
     const save=Array.from(modal.querySelectorAll('button')).find(function(button){
       const raw=String(button.getAttribute('onclick')||'');
-      const label=String(button.textContent||'').trim();
-      return /saveAchat/.test(raw)||/enregistrer/i.test(label)||button.classList.contains('yaya-achat-single-save');
+      const label=txt(button.textContent).toLowerCase();
+      return /saveAchat/.test(raw)||label==='enregistrer'||button.classList.contains('yaya-achat-single-save');
     });
     if(!save)return;
 
+    save.classList.add('yaya-achat-single-save');
+    save.textContent='Enregistrer';
     save.title='Enregistrer';
     save.setAttribute('aria-label','Enregistrer');
-    save.textContent='Enregistrer';
-    save.classList.add('yaya-achat-single-save');
 
-    const id=resolveAchatId(modal,save);
-    if(id)lastAchatId=id;
+    const id=resolveId(modal,save);
+    const footer=save.parentElement;
+    if(!footer)return;
+    footer.classList.add('yaya-finance-edit-actions');
 
-    const oldParent=save.parentElement;
-    const actions=document.createElement('div');
-    actions.className='yaya-finance-edit-actions';
+    Array.from(footer.querySelectorAll('button')).forEach(function(button){
+      if(button===save)return;
+      const label=txt(button.textContent).toLowerCase();
+      if(label==='annuler')button.remove();
+    });
 
-    const importer=document.createElement('button');
-    importer.type='button';
-    importer.className='yaya-achat-edit-import';
-    importer.textContent='📎 Importer';
+    let importer=footer.querySelector('.yaya-achat-edit-import');
+    if(!importer){
+      importer=document.createElement('button');
+      importer.type='button';
+      importer.className='yaya-achat-edit-import';
+      importer.textContent='📎 Importer';
+      footer.insertBefore(importer,save);
+    }
+    importer.dataset.achatId=id||'';
     importer.title='Changer la pièce jointe';
     importer.setAttribute('aria-label','Changer la pièce jointe');
-    importer.onclick=function(event){
-      event.preventDefault();
-      event.stopPropagation();
-      const achatId=resolveAchatId(modal,save);
-      if(!achatId){toastSafe('Impossible d’identifier cet achat',true);return;}
-      lastAchatId=achatId;
-      try{
-        if(typeof ajouterPJachat==='function')ajouterPJachat(achatId);
-        else if(typeof remplacerPJ==='function')remplacerPJ('achat',achatId);
-        else toastSafe('Import de pièce jointe indisponible',true);
-      }catch(err){
-        toastSafe('Import impossible : '+String(err&&err.message||err),true);
-      }
-    };
+    importer.setAttribute('onclick','return window.yayaAchatImportButton(this)');
 
-    const del=document.createElement('button');
-    del.type='button';
-    del.className='yaya-achat-edit-delete';
-    del.textContent='Supprimer';
+    let del=footer.querySelector('.yaya-achat-edit-delete');
+    if(!del){
+      del=document.createElement('button');
+      del.type='button';
+      del.className='yaya-achat-edit-delete';
+      del.textContent='Supprimer';
+      save.insertAdjacentElement('afterend',del);
+    }
+    del.dataset.achatId=id||'';
     del.title='Supprimer cet achat';
     del.setAttribute('aria-label','Supprimer cet achat');
-    del.onclick=async function(event){
-      event.preventDefault();
-      event.stopPropagation();
-      const achatId=resolveAchatId(modal,save);
-      if(!achatId){toastSafe('Impossible d’identifier cet achat',true);return;}
-      try{
-        if(typeof delAchat!=='function')throw new Error('suppression indisponible');
-        await delAchat(achatId);
-        const stillExists=typeof S!=='undefined'&&S&&Array.isArray(S.achats)&&S.achats.some(function(a){return String(a&&a.id||'')===String(achatId);});
-        if(!stillExists)closeFinanceModal(modal);
-      }catch(err){
-        toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
-      }
-    };
+    del.setAttribute('onclick','return window.yayaAchatDeleteButton(this)');
 
-    actions.appendChild(importer);
-    actions.appendChild(save);
-    actions.appendChild(del);
-
-    if(existing&&existing.isConnected){
-      existing.replaceWith(actions);
-    }else if(oldParent&&oldParent.isConnected){
-      oldParent.insertAdjacentElement('afterend',actions);
-      Array.from(oldParent.querySelectorAll('button')).forEach(function(button){
-        if(button!==save)button.remove();
-      });
-      if(!oldParent.children.length&&!txt(oldParent.textContent))oldParent.remove();
-    }else{
-      modal.appendChild(actions);
-    }
-
-    modal.dataset.yayaFinanceActionsV5='1';
+    if(importer.nextElementSibling!==save)footer.insertBefore(importer,save);
+    if(save.nextElementSibling!==del)save.insertAdjacentElement('afterend',del);
   }
 
-  document.addEventListener('click',function(e){
-    const edit=e.target&&e.target.closest?e.target.closest('[onclick*="editAchat("]'):null;
-    if(edit)rememberFromElement(edit);
-  },true);
+  function rememberEditTarget(target){
+    const edit=target&&target.closest?target.closest('[onclick*="editAchat("],.yaya-detail-charge-edit[data-achat-id]'):null;
+    if(!edit)return;
+    let id=txt(edit.dataset&&edit.dataset.achatId);
+    if(!id)id=idFromOnclick(edit.getAttribute('onclick'),'editAchat');
+    if(id)lastAchatId=id;
+  }
+
+  document.addEventListener('pointerdown',function(e){rememberEditTarget(e.target);},true);
+  document.addEventListener('click',function(e){rememberEditTarget(e.target);},true);
 
   function wrapEditAchat(){
     try{
       const original=window.editAchat;
-      if(typeof original!=='function'||original.__yayaFinanceV5Wrapped)return;
+      if(typeof original!=='function'||original.__yayaFinanceV6Wrapped)return;
       const wrapped=function(id){
         if(id)lastAchatId=String(id);
-        return original.apply(this,arguments);
+        const result=original.apply(this,arguments);
+        setTimeout(apply,0);
+        return result;
       };
-      wrapped.__yayaFinanceV5Wrapped=true;
+      wrapped.__yayaFinanceV6Wrapped=true;
       window.editAchat=wrapped;
       try{editAchat=wrapped;}catch(e){}
     }catch(e){}
@@ -249,10 +220,11 @@
     wrapEditAchat();
     const root=document.getElementById('modalRoot');
     if(!root)return;
-    root.querySelectorAll('.overlay .modal').forEach(patchModal);
+    root.querySelectorAll('.overlay .modal').forEach(ensureActions);
   }
 
   apply();
+
   const root=document.getElementById('modalRoot');
   if(root){
     let raf=0;
@@ -261,9 +233,10 @@
       raf=requestAnimationFrame(function(){raf=0;apply();});
     }).observe(root,{childList:true,subtree:true});
   }
+
   window.addEventListener('yaya:data-refreshed',apply);
-  setTimeout(apply,0);
-  setTimeout(apply,250);
-  setTimeout(apply,750);
-  setTimeout(apply,1500);
+  setInterval(function(){
+    const root=document.getElementById('modalRoot');
+    if(root&&root.querySelector('#eaCh'))apply();
+  },180);
 })();
