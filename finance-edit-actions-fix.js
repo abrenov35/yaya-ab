@@ -1,16 +1,14 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV8)return;
-  window.__yayaFinanceEditActionsV8=true;
+  if(window.__yayaFinanceEditActionsV9)return;
+  window.__yayaFinanceEditActionsV9=true;
 
   let lastAchatId='';
-  const STYLE_ID='yaya-finance-edit-actions-v8';
+  const STYLE_ID='yaya-finance-edit-actions-v9';
 
   function txt(v){return String(v==null?'':v).trim();}
-  function toastSafe(message,isError){
-    try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
-  }
+  function toastSafe(message,isError){try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}}
 
   function ensureStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -21,7 +19,7 @@
       .achat-edit-modal .yaya-finance-edit-actions>button{width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;padding:0 12px!important;border-radius:9px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;position:relative!important;transform:none!important}
       .achat-edit-modal .yaya-achat-single-save{background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
       .achat-edit-modal .yaya-achat-edit-delete{background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
-      .achat-edit-modal .yaya-achat-edit-import{display:none!important}
+      .achat-edit-modal .yaya-achat-edit-import,.achat-edit-modal .yaya-test-import{display:none!important}
       @media(max-width:640px){.achat-edit-modal .yaya-finance-edit-actions{gap:8px!important}.achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:12px!important;padding:0 8px!important}}
     `;
     document.head.appendChild(style);
@@ -58,19 +56,31 @@
     let id=txt(btn&&btn.dataset&&btn.dataset.achatId);
     if(!id&&modal)id=txt(modal.dataset&&modal.dataset.yayaAchatId);
     if(!id&&modal){
-      const save=Array.from(modal.querySelectorAll('button')).find(function(b){
-        return /saveAchat/.test(String(b.getAttribute('onclick')||''));
-      });
+      const save=Array.from(modal.querySelectorAll('button')).find(function(b){return /saveAchat/.test(String(b.getAttribute('onclick')||''));});
       if(save)id=idFromOnclick(save.getAttribute('onclick'),'saveAchat');
     }
     if(!id&&lastAchatId)id=lastAchatId;
     if(!id&&modal)id=matchAchatFromFields(modal);
-    if(id){
-      lastAchatId=id;
-      if(modal)modal.dataset.yayaAchatId=id;
-      if(btn)btn.dataset.achatId=id;
-    }
+    if(id){lastAchatId=id;if(modal)modal.dataset.yayaAchatId=id;if(btn)btn.dataset.achatId=id;}
     return id;
+  }
+
+  function removeImporterButtons(modal,save){
+    if(!modal)return;
+    Array.from(modal.querySelectorAll('button')).forEach(function(b){
+      if(b===save||b.classList.contains('yaya-achat-edit-delete')||b.classList.contains('yaya-achat-edit-close'))return;
+      const label=txt(b.textContent);
+      const title=txt(b.getAttribute('title'));
+      const aria=txt(b.getAttribute('aria-label'));
+      if(
+        /importer/i.test(label)||
+        b.classList.contains('yaya-achat-edit-import')||
+        b.classList.contains('yaya-test-import')||
+        /changer.*pi[eè]ce|pi[eè]ce jointe/i.test(title+' '+aria)
+      ){
+        b.remove();
+      }
+    });
   }
 
   window.yayaAchatDeleteButton=function(btn){
@@ -79,12 +89,8 @@
     if(!id){toastSafe('Impossible d’identifier cet achat',true);return false;}
     try{
       if(typeof delAchat!=='function')throw new Error('suppression indisponible');
-      Promise.resolve(delAchat(id)).catch(function(err){
-        toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
-      });
-    }catch(err){
-      toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
-    }
+      Promise.resolve(delAchat(id)).catch(function(err){toastSafe('Suppression impossible : '+String(err&&err.message||err),true);});
+    }catch(err){toastSafe('Suppression impossible : '+String(err&&err.message||err),true);}
     return false;
   };
 
@@ -98,7 +104,6 @@
 
   function ensureModal(modal){
     if(!modal||!modal.querySelector('#eaCh'))return;
-
     ensureStyle();
     modal.classList.add('achat-edit-modal','yaya-finance-edit-modal');
 
@@ -109,6 +114,8 @@
     });
     if(!save)return;
 
+    removeImporterButtons(modal,save);
+
     const id=resolveAchatId(modal,save);
     save.classList.add('yaya-achat-single-save');
     save.textContent='Enregistrer';
@@ -117,9 +124,8 @@
     if(!foot)return;
     foot.classList.add('yaya-finance-edit-actions');
 
-    foot.querySelectorAll('.yaya-achat-edit-import').forEach(function(b){b.remove();});
     Array.from(foot.querySelectorAll('button')).forEach(function(b){
-      if(b!==save&&/^Annuler$/i.test(txt(b.textContent)))b.remove();
+      if(b!==save&&b!==foot.querySelector('.yaya-achat-edit-delete')&&/^Annuler$/i.test(txt(b.textContent)))b.remove();
     });
 
     let del=foot.querySelector('.yaya-achat-edit-delete');
@@ -134,6 +140,7 @@
 
     wireDelete(del);
     if(id)del.dataset.achatId=id;
+    removeImporterButtons(modal,save);
   }
 
   function apply(){
@@ -145,8 +152,7 @@
   document.addEventListener('click',function(e){
     const delBtn=e.target&&e.target.closest?e.target.closest('.yaya-achat-edit-delete'):null;
     if(delBtn){
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault();e.stopPropagation();
       if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
       window.yayaAchatDeleteButton(delBtn);
       return;
@@ -155,22 +161,20 @@
     if(edit){
       const id=idFromOnclick(edit.getAttribute('onclick'),'editAchat');
       if(id)lastAchatId=id;
-      setTimeout(apply,0);
-      setTimeout(apply,60);
+      setTimeout(apply,0);setTimeout(apply,60);
     }
   },true);
 
   try{
     const original=window.editAchat;
-    if(typeof original==='function'&&!original.__yayaFinanceV8Wrapped){
+    if(typeof original==='function'&&!original.__yayaFinanceV9Wrapped){
       const wrapped=function(id){
         if(id)lastAchatId=String(id);
         const out=original.apply(this,arguments);
-        setTimeout(apply,0);
-        setTimeout(apply,60);
+        setTimeout(apply,0);setTimeout(apply,60);
         return out;
       };
-      wrapped.__yayaFinanceV8Wrapped=true;
+      wrapped.__yayaFinanceV9Wrapped=true;
       window.editAchat=wrapped;
       try{editAchat=wrapped;}catch(e){}
     }
@@ -182,7 +186,7 @@
     new MutationObserver(function(){
       if(raf)return;
       raf=requestAnimationFrame(function(){raf=0;apply();});
-    }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['onclick','class']});
+    }).observe(root,{childList:true,subtree:true,attributes:true,characterData:true,attributeFilter:['onclick','class','title','aria-label']});
   }
 
   apply();
