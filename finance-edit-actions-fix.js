@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV4)return;
-  window.__yayaFinanceEditActionsV4=true;
+  if(window.__yayaFinanceEditActionsV5)return;
+  window.__yayaFinanceEditActionsV5=true;
 
-  const STYLE_ID='yaya-finance-edit-actions-v4';
+  const STYLE_ID='yaya-finance-edit-actions-v5';
   let lastAchatId='';
 
   function txt(v){return String(v==null?'':v).trim();}
@@ -38,10 +38,10 @@
     style.textContent=`
       .achat-edit-modal .yaya-finance-edit-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;margin-top:18px!important;align-items:stretch!important}
       .achat-edit-modal .yaya-finance-edit-actions>button{width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;border-radius:9px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important}
-      .achat-edit-modal .yaya-achat-edit-import{background:#249457!important;color:#fff!important;border:1px solid #249457!important}
+      .achat-edit-modal .yaya-achat-edit-import{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#249457!important;color:#fff!important;border:1px solid #249457!important}
       .achat-edit-modal .yaya-achat-edit-import:hover{background:#1f814c!important;border-color:#1f814c!important}
-      .achat-edit-modal .yaya-achat-single-save{background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
-      .achat-edit-modal .yaya-achat-edit-delete{background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
+      .achat-edit-modal .yaya-achat-single-save{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
+      .achat-edit-modal .yaya-achat-edit-delete{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
       .achat-edit-modal .yaya-achat-edit-delete:hover{background:#ffe7e7!important;border-color:#e78d8d!important}
       .achat-edit-modal .yaya-achat-edit-close{margin-left:auto!important;width:40px!important;height:40px!important;padding:0!important;border:1px solid #d7dee8!important;border-radius:10px!important;background:#fff!important;color:#697586!important;font-size:24px!important;line-height:1!important;cursor:pointer!important;pointer-events:auto!important}
       @media(max-width:640px){.achat-edit-modal .yaya-finance-edit-actions{gap:8px!important}.achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:12px!important;padding:0 8px!important}}
@@ -105,8 +105,9 @@
 
   function patchHeadingOnce(modal){
     const heading=modal.querySelector('h5');
-    if(!heading||heading.dataset.yayaAchatHeadingV4==='1')return;
-    heading.dataset.yayaAchatHeadingV4='1';
+    if(!heading)return;
+    if(heading.dataset.yayaAchatHeadingV5==='1'&&heading.querySelector('.yaya-achat-edit-close'))return;
+    heading.dataset.yayaAchatHeadingV5='1';
     heading.querySelectorAll('button,[role="button"]').forEach(function(button){button.remove();});
     heading.textContent="Modifier l'achat";
     const close=document.createElement('button');
@@ -122,22 +123,35 @@
     heading.appendChild(close);
   }
 
+  function completeActions(actions){
+    return !!(
+      actions
+      && actions.querySelector('.yaya-achat-edit-import')
+      && actions.querySelector('.yaya-achat-single-save')
+      && actions.querySelector('.yaya-achat-edit-delete')
+    );
+  }
+
   function patchModal(modal){
     if(!isFinanceEditModal(modal))return;
     if(isCharge(modal))return;
-    if(modal.dataset.yayaFinanceActionsV4==='1')return;
+
+    ensureStyle();
+    modal.classList.add('yaya-finance-edit-modal','achat-edit-modal');
+    patchHeadingOnce(modal);
+
+    const existing=modal.querySelector('.yaya-finance-edit-actions');
+    if(completeActions(existing)){
+      modal.dataset.yayaFinanceActionsV5='1';
+      return;
+    }
 
     const save=Array.from(modal.querySelectorAll('button')).find(function(button){
       const raw=String(button.getAttribute('onclick')||'');
       const label=String(button.textContent||'').trim();
-      return /saveAchat/.test(raw)||/enregistrer/i.test(label);
+      return /saveAchat/.test(raw)||/enregistrer/i.test(label)||button.classList.contains('yaya-achat-single-save');
     });
     if(!save)return;
-
-    modal.dataset.yayaFinanceActionsV4='1';
-    ensureStyle();
-    modal.classList.add('yaya-finance-edit-modal','achat-edit-modal');
-    patchHeadingOnce(modal);
 
     save.title='Enregistrer';
     save.setAttribute('aria-label','Enregistrer');
@@ -148,7 +162,7 @@
     if(id)lastAchatId=id;
 
     const oldParent=save.parentElement;
-    let actions=document.createElement('div');
+    const actions=document.createElement('div');
     actions.className='yaya-finance-edit-actions';
 
     const importer=document.createElement('button');
@@ -197,7 +211,9 @@
     actions.appendChild(save);
     actions.appendChild(del);
 
-    if(oldParent){
+    if(existing&&existing.isConnected){
+      existing.replaceWith(actions);
+    }else if(oldParent&&oldParent.isConnected){
       oldParent.insertAdjacentElement('afterend',actions);
       Array.from(oldParent.querySelectorAll('button')).forEach(function(button){
         if(button!==save)button.remove();
@@ -206,6 +222,8 @@
     }else{
       modal.appendChild(actions);
     }
+
+    modal.dataset.yayaFinanceActionsV5='1';
   }
 
   document.addEventListener('click',function(e){
@@ -216,12 +234,12 @@
   function wrapEditAchat(){
     try{
       const original=window.editAchat;
-      if(typeof original!=='function'||original.__yayaFinanceV4Wrapped)return;
+      if(typeof original!=='function'||original.__yayaFinanceV5Wrapped)return;
       const wrapped=function(id){
         if(id)lastAchatId=String(id);
         return original.apply(this,arguments);
       };
-      wrapped.__yayaFinanceV4Wrapped=true;
+      wrapped.__yayaFinanceV5Wrapped=true;
       window.editAchat=wrapped;
       try{editAchat=wrapped;}catch(e){}
     }catch(e){}
@@ -243,6 +261,9 @@
       raf=requestAnimationFrame(function(){raf=0;apply();});
     }).observe(root,{childList:true,subtree:true});
   }
+  window.addEventListener('yaya:data-refreshed',apply);
   setTimeout(apply,0);
   setTimeout(apply,250);
+  setTimeout(apply,750);
+  setTimeout(apply,1500);
 })();
