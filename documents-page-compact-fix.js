@@ -71,3 +71,91 @@
   new MutationObserver(()=>requestAnimationFrame(compact)).observe(root,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',compact);
 })();
+
+/* V70 — Modifier le document : Supprimer remplace Annuler. */
+(function(){
+  'use strict';
+  if(window.__yayaDocumentEditDeleteV70)return;
+  window.__yayaDocumentEditDeleteV70=true;
+
+  let currentDocumentId='';
+
+  function rememberFromElement(el){
+    if(!el)return;
+    const raw=String(el.getAttribute&&el.getAttribute('onclick')||'');
+    const match=raw.match(/editDocument\(['\"]([^'\"]+)/);
+    if(match&&match[1])currentDocumentId=String(match[1]);
+    if(el.dataset&&el.dataset.rowId&&el.classList.contains('yaya-detail-document-edit')){
+      currentDocumentId=String(el.dataset.rowId);
+    }
+  }
+
+  function installWrapper(){
+    if(typeof window.editDocument!=='function')return false;
+    if(window.editDocument.__yayaDeleteV70)return true;
+    const original=window.editDocument;
+    const wrapped=function(id){
+      currentDocumentId=String(id||'');
+      const result=original.apply(this,arguments);
+      setTimeout(decorateModal,0);
+      return result;
+    };
+    wrapped.__yayaDeleteV70=true;
+    window.editDocument=wrapped;
+    return true;
+  }
+
+  function decorateModal(){
+    const modal=[...document.querySelectorAll('#modalRoot .modal')].find(function(m){
+      return /Modifier le document/i.test(String(m.querySelector('h5')?.textContent||''));
+    });
+    if(!modal)return;
+
+    const footer=modal.querySelector('.mfoot');
+    if(!footer)return;
+
+    let button=[...footer.querySelectorAll('button')].find(function(b){
+      return /^Annuler$/i.test(String(b.textContent||'').trim());
+    });
+    if(!button&&footer.querySelector('[data-yaya-document-delete="1"]'))return;
+    if(!button)return;
+
+    const id=currentDocumentId;
+    button.removeAttribute('onclick');
+    button.dataset.yayaDocumentDelete='1';
+    button.textContent='Supprimer';
+    button.title='Supprimer ce document de Yaya';
+    button.setAttribute('aria-label','Supprimer ce document de Yaya');
+    button.style.setProperty('background','#fff3f3','important');
+    button.style.setProperty('color','#b42318','important');
+    button.style.setProperty('border','1px solid #efb4b4','important');
+    button.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      const docId=String(id||currentDocumentId||'');
+      if(!docId){
+        try{if(typeof toast==='function')toast('Document introuvable',true);}catch(err){}
+        return false;
+      }
+      try{if(typeof closeModal==='function')closeModal();}catch(err){}
+      setTimeout(function(){
+        if(typeof window.delDocument==='function')window.delDocument(docId);
+      },0);
+      return false;
+    };
+  }
+
+  document.addEventListener('click',function(e){
+    const el=e.target&&e.target.closest?e.target.closest('[onclick*="editDocument("],.yaya-detail-document-edit[data-row-id]'):null;
+    if(el)rememberFromElement(el);
+  },true);
+
+  installWrapper();
+  setTimeout(installWrapper,50);
+  setTimeout(installWrapper,250);
+
+  new MutationObserver(function(){
+    if(installWrapper())requestAnimationFrame(decorateModal);
+  }).observe(document.documentElement,{childList:true,subtree:true});
+})();
