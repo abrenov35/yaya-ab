@@ -102,6 +102,11 @@ jobs:
                       f'finance-edit-actions-fix.js?v=financeeditactions-{minor}',
                       text
                   )
+                  text = re.sub(
+                      r'devis-no-ai-upload\.js\?v=[^"<\\]+',
+                      f'devis-no-ai-upload.js?v=noai-{minor}',
+                      text
+                  )
                   if 'chantier-signature-before-sept.js' not in text:
                       prefix = "    '<script src=\"chantier-write-safety.js?v=writeguard-8\">"
                       injected = "    '<script src=\"chantier-signature-before-sept.js?v=beforesept-3\"><\\\\/script>'+\n" + prefix
