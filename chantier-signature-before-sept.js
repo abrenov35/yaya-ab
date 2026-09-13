@@ -1,4 +1,4 @@
-// V39 — affichage robuste des signatures depuis dateSignature (colonne J)
+// V40 — affichage robuste des signatures depuis dateSignature (colonne J)
 (function(){
   'use strict';
 
@@ -32,6 +32,7 @@
     const value=valueToIso(c&&c.dateSignature);
     if(!value)return '';
     if(isSpecial(value))return LABEL;
+    if(/^\d{4}$/.test(value))return 'Signé : '+value;
     const m=value.match(/^(\d{4})-(\d{2})/);
     if(!m)return '';
     const d=new Date(Number(m[1]),Number(m[2])-1,1);
@@ -104,7 +105,7 @@
 
   function installEditSupport(){
     const previousSync=window.syncEditChSignature;
-    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV39){
+    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV40){
       const wrappedSync=function(){
         const special=document.getElementById('editChSignatureBeforeSept');
         const hidden=document.getElementById('editChSignature');
@@ -114,12 +115,12 @@
         }
         return previousSync.apply(this,arguments);
       };
-      wrappedSync.__yayaSignatureV39=true;
+      wrappedSync.__yayaSignatureV40=true;
       window.syncEditChSignature=wrappedSync;
     }
 
     const previousOpen=window.openExistingChantierModal;
-    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV39)return;
+    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV40)return;
 
     const wrappedOpen=function(){
       const result=previousOpen.apply(this,arguments);
@@ -161,7 +162,7 @@
       apply();
       return result;
     };
-    wrappedOpen.__yayaSignatureV39=true;
+    wrappedOpen.__yayaSignatureV40=true;
     window.openExistingChantierModal=wrappedOpen;
   }
 
