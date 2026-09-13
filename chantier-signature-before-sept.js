@@ -1,4 +1,4 @@
-// V37 — affichage stable des signatures depuis dateSignature (colonne J)
+// V39 — affichage robuste des signatures depuis dateSignature (colonne J)
 (function(){
   'use strict';
 
@@ -28,27 +28,83 @@
     return String(v).trim();
   }
 
-  function signatureHtml(c){
+  function signatureLabel(c){
     const value=valueToIso(c&&c.dateSignature);
     if(!value)return '';
-    if(isSpecial(value)){
-      return '<span class="signature-date">'+LABEL+'</span>';
-    }
+    if(isSpecial(value))return LABEL;
     const m=value.match(/^(\d{4})-(\d{2})/);
     if(!m)return '';
     const d=new Date(Number(m[1]),Number(m[2])-1,1);
     const lib=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-    const txt=lib.charAt(0).toUpperCase()+lib.slice(1);
-    return '<span class="signature-date">Signé : '+txt+'</span>';
+    return 'Signé : '+lib.charAt(0).toUpperCase()+lib.slice(1);
+  }
+
+  function signatureHtml(c){
+    const label=signatureLabel(c);
+    return label?'<span class="signature-date">'+label+'</span>':'';
   }
 
   function installDisplay(){
     window.signatureChantierHtml=signatureHtml;
   }
 
+  function chantierIdFromTop(top){
+    if(!top)return '';
+    const nodes=top.querySelectorAll('[onclick]');
+    for(const node of nodes){
+      const code=String(node.getAttribute('onclick')||'');
+      const m=code.match(/(?:toggleChantier|editMontantDevis|restaurerChantier|delChantier)\(['"]([^'"]+)['"]/);
+      if(m&&m[1])return m[1];
+    }
+    return '';
+  }
+
+  function ensureCardSignatures(){
+    let chantiers=[];
+    try{
+      chantiers=(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))?S.chantiers:[];
+    }catch(e){return;}
+    if(!chantiers.length)return;
+
+    document.querySelectorAll('#pane-chantiers .card > .top').forEach(function(top){
+      const cid=chantierIdFromTop(top);
+      if(!cid)return;
+      const chantier=chantiers.find(function(c){return String(c&&c.id||'')===String(cid);});
+      if(!chantier)return;
+
+      const label=signatureLabel(chantier);
+      let badge=top.querySelector('.signature-date');
+
+      if(!label){
+        if(badge&&badge.classList.contains('yaya-column-j-signature'))badge.remove();
+        return;
+      }
+
+      if(!badge){
+        badge=document.createElement('span');
+        badge.className='signature-date yaya-column-j-signature';
+        const spacer=top.querySelector('.spacer');
+        if(spacer)spacer.insertAdjacentElement('afterend',badge);
+        else top.appendChild(badge);
+      }
+      badge.textContent=label;
+    });
+  }
+
+  let paintPending=false;
+  function schedulePaint(){
+    if(paintPending)return;
+    paintPending=true;
+    requestAnimationFrame(function(){
+      paintPending=false;
+      installDisplay();
+      ensureCardSignatures();
+    });
+  }
+
   function installEditSupport(){
     const previousSync=window.syncEditChSignature;
-    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV37){
+    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV39){
       const wrappedSync=function(){
         const special=document.getElementById('editChSignatureBeforeSept');
         const hidden=document.getElementById('editChSignature');
@@ -58,12 +114,12 @@
         }
         return previousSync.apply(this,arguments);
       };
-      wrappedSync.__yayaSignatureV37=true;
+      wrappedSync.__yayaSignatureV39=true;
       window.syncEditChSignature=wrappedSync;
     }
 
     const previousOpen=window.openExistingChantierModal;
-    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV37)return;
+    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV39)return;
 
     const wrappedOpen=function(){
       const result=previousOpen.apply(this,arguments);
@@ -105,14 +161,27 @@
       apply();
       return result;
     };
-    wrappedOpen.__yayaSignatureV37=true;
+    wrappedOpen.__yayaSignatureV39=true;
     window.openExistingChantierModal=wrappedOpen;
   }
 
   function install(){
     installDisplay();
     installEditSupport();
-    try{if(typeof render==='function')render();}catch(e){}
+    schedulePaint();
+  }
+
+  window.addEventListener('yaya:data-refreshed',schedulePaint);
+  window.addEventListener('yaya:signature-dates-refreshed',schedulePaint);
+  window.addEventListener('focus',schedulePaint);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)schedulePaint();});
+
+  if(document.body){
+    new MutationObserver(schedulePaint).observe(document.body,{childList:true,subtree:true});
+  }else{
+    document.addEventListener('DOMContentLoaded',function(){
+      new MutationObserver(schedulePaint).observe(document.body,{childList:true,subtree:true});
+    },{once:true});
   }
 
   if(document.readyState==='loading'){
@@ -120,6 +189,5 @@
   }else{
     setTimeout(install,0);
   }
-  setTimeout(install,300);
-  setTimeout(install,1200);
+  [300,1200,3000].forEach(function(ms){setTimeout(install,ms);});
 })();
