@@ -373,3 +373,37 @@
   new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();
+
+/* V52 — aucune croix de suppression visible dans les lignes du module Marché. */
+(function(){
+  'use strict';
+
+  if(window.__yayaHideMarketRowDeleteV52)return;
+  window.__yayaHideMarketRowDeleteV52=true;
+
+  function hideDeleteButtons(){
+    document.querySelectorAll(
+      '#pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-detail-document-delete,'+
+      '#pane-chantiers .yaya-detail-markets-pane .yaya-detail-market-row .yaya-initial-devis-delete'
+    ).forEach(function(btn){
+      btn.style.setProperty('display','none','important');
+      btn.style.setProperty('visibility','hidden','important');
+      btn.style.setProperty('pointer-events','none','important');
+      btn.setAttribute('aria-hidden','true');
+      btn.tabIndex=-1;
+    });
+  }
+
+  let raf=0;
+  function schedule(){
+    if(raf)return;
+    raf=requestAnimationFrame(function(){
+      raf=0;
+      hideDeleteButtons();
+    });
+  }
+
+  hideDeleteButtons();
+  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true,attributes:true,attributeFilter:['class','style']});
+  window.addEventListener('yaya:data-refreshed',schedule);
+})();
