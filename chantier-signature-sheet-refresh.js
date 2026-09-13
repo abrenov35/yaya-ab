@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaSignatureSheetRefreshV3Installed)return;
+  if(window.__yayaSignatureSheetRefreshV4Installed)return;
+  window.__yayaSignatureSheetRefreshV4Installed=true;
   window.__yayaSignatureSheetRefreshV3Installed=true;
   window.__yayaSignatureSheetRefreshV2Installed=true;
   window.__yayaSignatureSheetRefreshV1Installed=true;
@@ -55,16 +56,38 @@
     return hits&&hits.length===1?hits[0]:null;
   }
 
-  async function fetchFreshChantiers(api,signal){
-    // Ne pas utiliser tabs=chantiers : cette route peut renvoyer un tableau vide
-    // alors que l'API complète contient bien les chantiers.
-    const sep=api.includes('?')?'&':'?';
-    const url=api+sep+'_yaya_signature_fresh='+Date.now()+'&_yaya_force=1';
+  async function fetchJson(url,signal){
     const r=await fetch(url,{method:'GET',cache:'no-store',signal:signal});
     const text=await r.text();
     if(/^\s*</.test(text))throw new Error('Réponse Yaya temporairement invalide');
     const json=JSON.parse(text);
-    const rows=json&&json.ok&&json.data&&Array.isArray(json.data.chantiers)?json.data.chantiers:null;
+    if(!json||!json.ok)throw new Error((json&&json.error)||'Réponse Yaya invalide');
+    return json;
+  }
+
+  async function fetchFreshChantiers(api,signal){
+    const sep=api.includes('?')?'&':'?';
+    const stamp=Date.now();
+
+    // Route canonique : elle lit directement l'onglet chantiers et inclut
+    // désormais les colonnes I/J (dateDemarrage/dateSignature).
+    try{
+      const json=await fetchJson(
+        api+sep+'tabs=chantiers&_yaya_signature_fresh='+stamp,
+        signal
+      );
+      const rows=json&&json.data&&Array.isArray(json.data.chantiers)?json.data.chantiers:null;
+      if(rows&&rows.length)return rows;
+    }catch(err){
+      console.warn('Lecture ciblée chantiers impossible, repli API complète :',err);
+    }
+
+    // Repli uniquement si la route ciblée est indisponible.
+    const json=await fetchJson(
+      api+sep+'_yaya_signature_fresh='+stamp+'&_yaya_force=1',
+      signal
+    );
+    const rows=json&&json.data&&Array.isArray(json.data.chantiers)?json.data.chantiers:null;
     if(!rows)throw new Error('Rubrique chantiers absente de la réponse Yaya');
     return rows;
   }
