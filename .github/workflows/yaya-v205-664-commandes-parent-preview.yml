@@ -1,0 +1,37 @@
+name: Yaya v205.664 lecteur Commande parent
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.event.head_commit.message == 'Yaya v205.664 - activer lecteur Commande parent'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Activer le lecteur parent et la version Yaya
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old=r'<script src="yaya-ab-commandes-link.js?v=commandes-link-16"><\/script>'
+          add=r'<script src="ab-commandes-parent-preview.js?v=cmd-parent-92"><\/script>'
+          if add not in s:
+              if old not in s:
+                  raise SystemExit('marqueur AB COMMANDES introuvable')
+              s=s.replace(old, old+add, 1)
+          s=s.replace('Yaya v205.663 — AB RENOV 35','Yaya v205.664 — AB RENOV 35')
+          p.write_text(s,encoding='utf-8')
+          PY
+      - name: Commit index
+        run: |
+          git config user.name 'abrenov35'
+          git config user.email 'abrenov35@gmail.com'
+          git add index.html
+          git commit -m 'Yaya v205.664 - publier lecteur Commande parent' || exit 0
+          git push
