@@ -1,12 +1,15 @@
 (function(){
   'use strict';
 
-  if(window.__yayaSignatureSheetRefreshV2Installed)return;
+  if(window.__yayaSignatureSheetRefreshV3Installed)return;
+  window.__yayaSignatureSheetRefreshV3Installed=true;
   window.__yayaSignatureSheetRefreshV2Installed=true;
   window.__yayaSignatureSheetRefreshV1Installed=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   const MIN_REFRESH_MS=60000;
+  const SPECIAL='AVANT_2026-09';
+  const SPECIAL_LABEL='Signé avant Sept. 2026';
   let running=false;
   let lastRefreshAt=0;
   let waitAttempts=0;
@@ -24,6 +27,24 @@
   function localChantiers(){
     try{return typeof S!=='undefined'&&S&&Array.isArray(S.chantiers)?S.chantiers:null;}
     catch(e){return null;}
+  }
+
+  function signatureLabel(c){
+    const value=String(c&&c.dateSignature||'').trim();
+    if(!value)return '';
+    if(value.toUpperCase()===SPECIAL)return SPECIAL_LABEL;
+    const m=value.match(/^(\d{4})-(\d{2})/);
+    if(!m)return '';
+    const d=new Date(Number(m[1]),Number(m[2])-1,1);
+    const lib=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+    return 'Signé : '+lib.charAt(0).toUpperCase()+lib.slice(1);
+  }
+
+  function installSignatureRenderer(){
+    window.signatureChantierHtml=function(c){
+      const label=signatureLabel(c);
+      return label?'<span class="signature-date">'+label+'</span>':'';
+    };
   }
 
   function remoteMatch(local,byId,byName){
@@ -62,6 +83,7 @@
       return false;
     }
 
+    installSignatureRenderer();
     running=true;
     lastRefreshAt=Date.now();
     const ctrl=new AbortController();
@@ -100,9 +122,8 @@
         try{localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(S));}catch(e){}
       }
 
-      if(changed||found){
-        try{if(typeof render==='function')render();}catch(e){}
-      }
+      installSignatureRenderer();
+      try{if(typeof render==='function')render();}catch(e){console.warn('Rendu signatures ignoré :',e);}
       try{window.dispatchEvent(new CustomEvent('yaya:signature-dates-refreshed',{detail:{found:found,total:rows.length,changed:changed}}));}catch(e){}
       console.info('Yaya signatures Sheet :',found,'/',rows.length,'lignes lues, changement =',changed);
       return true;
@@ -115,6 +136,7 @@
     }
   }
 
+  installSignatureRenderer();
   window.yayaRefreshSignatureDates=function(){return refreshSignatures(true);};
 
   setTimeout(function(){refreshSignatures(true);},350);
