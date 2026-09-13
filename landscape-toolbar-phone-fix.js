@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-landscape-phone-toolbar-v1';
+  const STYLE_ID='yaya-landscape-phone-toolbar-v2';
   const INNER_STYLE_ID='yaya-fiche-inter-landscape-phone-v1';
 
   function installOuterStyle(){
@@ -16,8 +16,13 @@
           gap:5px!important;
           width:100%!important;
           max-width:100vw!important;
+          margin-bottom:0!important;
           padding:5px 6px!important;
           overflow:hidden!important;
+        }
+        .body{
+          margin-top:0!important;
+          padding-top:0!important;
         }
         .hdr .brand{
           flex:0 0 auto!important;
