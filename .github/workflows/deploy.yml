@@ -50,7 +50,7 @@ jobs:
           if guard_path.exists():
               guard = guard_path.read_text(encoding='utf-8')
               guard = guard.replace(
-                  "  function notesWithSignature(notes,signature){\n    const clean=cleanNotes(notes);\n    const sig=signatureMonth(signature);\n    if(!sig)return clean;\n    return (clean?clean+'\\n':'')+'[[YAYA_SIG:'+sig+']]';\n  }",
+                  "  function notesWithSignature(notes,signature){\n    const clean=cleanNotes(notes);\n    const sig=signatureMonth(signature);\n    if(!sig)return clean;\n    return (clean?'\\n':'')+'[[YAYA_SIG:'+sig+']]';\n  }",
                   "  function notesWithSignature(notes,signature){\n    return cleanNotes(notes);\n  }"
               )
               guard = guard.replace(
@@ -91,6 +91,10 @@ jobs:
                   text = text.replace(
                       'chantier-signature-before-sept.js?v=beforesept-2',
                       'chantier-signature-before-sept.js?v=beforesept-3'
+                  )
+                  text = text.replace(
+                      'devis-delete-confirm.js?v=devisconfirm-1',
+                      'devis-delete-confirm.js?v=devisconfirm-2'
                   )
                   if 'chantier-signature-before-sept.js' not in text:
                       prefix = "    '<script src=\"chantier-write-safety.js?v=writeguard-8\">"
