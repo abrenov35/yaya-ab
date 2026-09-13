@@ -5,6 +5,8 @@
   const BLOCK_CLASS='yaya-ab-commandes-link';
   const FRAME_CLASS='yaya-ab-commandes-frame';
   const REFRESH_ID='yayaRefreshChantierBtn';
+  const MANAGE_ID='yayaManageChantierCardBtn';
+  const RESTORE_KEY='YAYA_REFRESH_COMMANDES_CHANTIER_V1';
   const OWNER='ab-commandes-v49';
   const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
   let activeCard=null;
@@ -34,8 +36,14 @@
     return !!document.querySelector('#pane-chantiers .card .yaya-detail-section-tabs');
   }
 
+  function currentChantierId(){
+    try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim()}catch(e){}
+    const card=findActiveCard()||document.querySelector('#pane-chantiers .card .yaya-detail-section-tabs')?.closest('.card');
+    return cardId(card);
+  }
+
   function ensureRefreshButton(){
-    const manage=document.getElementById('yayaCreateChantierBtn');
+    const manage=document.getElementById(MANAGE_ID);
     if(!manage||!manage.parentNode)return;
     let btn=document.getElementById(REFRESH_ID);
     if(!btn){
@@ -44,10 +52,14 @@
       btn.removeAttribute('onclick');
       btn.removeAttribute('aria-haspopup');
       btn.textContent='↻ Actualiser';
-      btn.title='Actualiser la fiche chantier';
-      btn.setAttribute('aria-label','Actualiser la fiche chantier');
+      btn.title='Actualiser les commandes de ce chantier';
+      btn.setAttribute('aria-label','Actualiser les commandes de ce chantier');
       btn.onclick=function(e){
         if(e){e.preventDefault();e.stopPropagation();}
+        const id=currentChantierId();
+        if(id){
+          try{sessionStorage.setItem(RESTORE_KEY,JSON.stringify({id:id,section:'commandes',at:Date.now()}))}catch(_){ }
+        }
         window.location.reload();
       };
       manage.parentNode.insertBefore(btn,manage);
@@ -199,6 +211,35 @@
     return btn?btn.closest('.card'):null;
   }
 
+  function restoreAfterReload(){
+    let state=null;
+    try{state=JSON.parse(sessionStorage.getItem(RESTORE_KEY)||'null')}catch(_){ }
+    if(!state||!state.id)return;
+    if(Date.now()-Number(state.at||0)>30000){try{sessionStorage.removeItem(RESTORE_KEY)}catch(_){ }return}
+
+    let tries=0;
+    const run=function(){
+      tries++;
+      try{
+        const current=(typeof focusChantier!=='undefined'&&focusChantier)?String(focusChantier):'';
+        if(current!==String(state.id)&&typeof toggleChantier==='function'){
+          toggleChantier(String(state.id));
+        }
+      }catch(_){ }
+
+      const card=document.querySelector('#pane-chantiers .card .yaya-detail-section-tabs')?.closest('.card');
+      const tab=card&&card.querySelector(':scope > .yaya-detail-section-tabs [data-section="commandes"]');
+      if(tab){
+        try{sessionStorage.removeItem(RESTORE_KEY)}catch(_){ }
+        tab.click();
+        setTimeout(()=>activate(card),80);
+        return;
+      }
+      if(tries<40)setTimeout(run,100);
+    };
+    setTimeout(run,120);
+  }
+
   function scanActive(){
     clearTimeout(scanTimer);
     scanTimer=setTimeout(()=>{
@@ -226,6 +267,7 @@
   installStyle();
   cleanupOtherBlocks(null);
   ensureRefreshButton();
+  restoreAfterReload();
 
   document.addEventListener('click',e=>{
     const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section]');
@@ -254,6 +296,9 @@
     }).observe(pane,{childList:true,subtree:true});
   }
 
+  const watch=new MutationObserver(()=>ensureRefreshButton());
+  watch.observe(document.body,{childList:true,subtree:true});
+
   window.addEventListener('message',handleMessage);
   window.addEventListener('hashchange',scanActive);
   window.addEventListener('focus',scanActive);
@@ -262,5 +307,5 @@
   setTimeout(scanActive,300);
   setTimeout(ensureRefreshButton,800);
 
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.9-refresh-button';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.10-refresh-restore-commandes';
 })();
