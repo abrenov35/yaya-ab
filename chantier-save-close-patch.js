@@ -1,7 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierEditButtonsFixV3Installed)return;
+  if(window.__yayaChantierEditButtonsFixV4Installed)return;
+  window.__yayaChantierEditButtonsFixV4Installed=true;
   window.__yayaChantierEditButtonsFixV3Installed=true;
 
   const busyButtons=new WeakSet();
@@ -50,14 +51,20 @@
     }catch(e){return null;}
   }
 
-  function readValues(c){
-    try{if(typeof window.syncEditChSignature==='function')window.syncEditChSignature();}catch(e){}
+  function payloadSansSignature(){
+    try{
+      return (Array.isArray(S&&S.chantiers)?S.chantiers:[]).map(function(item){
+        const copie=Object.assign({},item);
+        delete copie.dateSignature;
+        return copie;
+      });
+    }catch(e){return [];}
+  }
 
+  function readValues(c){
     const nom=document.getElementById('editChNom');
-    const sig=document.getElementById('editChSignature');
-    const dem=document.getElementById('editChDemarrage');
     const mt=document.getElementById('editChMarcheHT');
-    if(!c||!nom||!sig||!mt)return {ok:false};
+    if(!c||!nom||!mt)return {ok:false};
 
     const name=String(nom.value||'').trim();
     if(!name){
@@ -77,8 +84,6 @@
     return {
       ok:true,
       nom:name,
-      dateSignature:String(sig.value||''),
-      dateDemarrageEstime:dem?String(dem.value||''):'',
       montantMarcheHT:montant
     };
   }
@@ -99,14 +104,10 @@
 
     const before={
       nom:c.nom,
-      dateSignature:c.dateSignature,
-      dateDemarrageEstime:c.dateDemarrageEstime,
       montantMarcheHT:c.montantMarcheHT
     };
 
     c.nom=values.nom;
-    c.dateSignature=values.dateSignature;
-    c.dateDemarrageEstime=values.dateDemarrageEstime;
     c.montantMarcheHT=values.montantMarcheHT;
 
     if(button){
@@ -121,13 +122,12 @@
 
     try{
       if(typeof apiPost!=='function')throw new Error('API Yaya indisponible');
-      const result=await apiPost('setChantiers',S.chantiers);
+      // dateSignature est volontairement absente : la colonne J du Sheet reste souveraine.
+      const result=await apiPost('setChantiers',payloadSansSignature());
       if(result===false)throw new Error('Enregistrement refusé');
       if(typeof toast==='function')toast('Chantier mis à jour ✓');
     }catch(err){
       c.nom=before.nom;
-      c.dateSignature=before.dateSignature;
-      c.dateDemarrageEstime=before.dateDemarrageEstime;
       c.montantMarcheHT=before.montantMarcheHT;
       try{if(typeof render==='function')render();}catch(e){}
       if(typeof toast==='function')toast('Enregistrement impossible : aucune modification conservée',true);
