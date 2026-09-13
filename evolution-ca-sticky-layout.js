@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  if(window.__yayaEvolutionStickyV49Boot)return;
-  window.__yayaEvolutionStickyV49Boot=true;
+  if(window.__yayaEvolutionStickyV50Boot)return;
+  window.__yayaEvolutionStickyV50Boot=true;
 
-  const STYLE_ID='yaya-evolution-sticky-v49';
+  const STYLE_ID='yaya-evolution-sticky-v50';
   let observer=null;
   let resizeTimer=0;
 
@@ -15,23 +15,28 @@
       #pane-evolution .evo2-sub{display:none!important}
       #pane-evolution .evo2-kpi-green{display:none!important}
       #pane-evolution .evo2-kpis{grid-template-columns:repeat(3,minmax(0,1fr))!important}
-      #pane-evolution .evo2-signed-count{
-        display:block;
-        margin-top:2px;
-        font-size:8px;
-        line-height:1.05;
-        font-weight:900;
-        color:#0b7a68;
-        white-space:nowrap;
+      #pane-evolution .evo2-bar .evo2-signed-count{
+        position:absolute!important;
+        inset:0!important;
+        display:grid!important;
+        place-items:center!important;
+        margin:0!important;
+        color:#fff!important;
+        font-size:14px!important;
+        line-height:1!important;
+        font-weight:900!important;
+        text-shadow:0 1px 3px rgba(0,0,0,.35)!important;
+        pointer-events:none!important;
+        z-index:3!important;
       }
 
       @media (min-width:761px){
-        #pane-evolution.evo49-ready{
-          height:var(--evo49-height,680px)!important;
-          max-height:var(--evo49-height,680px)!important;
+        #pane-evolution.evo50-ready{
+          height:var(--evo50-height,680px)!important;
+          max-height:var(--evo50-height,680px)!important;
           overflow:hidden!important;
         }
-        #pane-evolution.evo49-ready .evo2-shell{
+        #pane-evolution.evo50-ready .evo2-shell{
           height:100%!important;
           min-height:0!important;
           display:grid!important;
@@ -39,7 +44,7 @@
           gap:10px!important;
           overflow:hidden!important;
         }
-        #pane-evolution.evo49-ready .evo49-fixed{
+        #pane-evolution.evo50-ready .evo50-fixed{
           position:relative!important;
           z-index:5!important;
           display:grid!important;
@@ -47,7 +52,7 @@
           background:#f4f6f8!important;
           padding:2px 2px 0!important;
         }
-        #pane-evolution.evo49-ready .evo49-scroll{
+        #pane-evolution.evo50-ready .evo50-scroll{
           min-height:0!important;
           height:100%!important;
           overflow-y:auto!important;
@@ -57,7 +62,7 @@
           scroll-behavior:smooth!important;
           scrollbar-gutter:stable;
         }
-        #pane-evolution.evo49-ready .evo49-page{
+        #pane-evolution.evo50-ready .evo50-page{
           height:100%!important;
           min-height:100%!important;
           max-height:100%!important;
@@ -69,29 +74,29 @@
           padding:2px 2px 8px!important;
           overflow:hidden!important;
         }
-        #pane-evolution.evo49-ready .evo49-page>.evo2-card{
+        #pane-evolution.evo50-ready .evo50-page>.evo2-card{
           flex:1 1 auto!important;
           min-height:0!important;
           height:100%!important;
           display:flex!important;
           flex-direction:column!important;
         }
-        #pane-evolution.evo49-ready .evo49-chart .evo2-chart-scroll{
+        #pane-evolution.evo50-ready .evo50-chart .evo2-chart-scroll{
           flex:1 1 auto!important;
           min-height:0!important;
           overflow-x:auto!important;
           overflow-y:hidden!important;
         }
-        #pane-evolution.evo49-ready .evo49-chart .evo2-chart{
+        #pane-evolution.evo50-ready .evo50-chart .evo2-chart{
           height:100%!important;
           min-height:330px!important;
         }
-        #pane-evolution.evo49-ready .evo49-chart .evo2-card-head,
-        #pane-evolution.evo49-ready .evo49-chart .evo2-legend,
-        #pane-evolution.evo49-ready .evo49-table .evo2-table-head{
+        #pane-evolution.evo50-ready .evo50-chart .evo2-card-head,
+        #pane-evolution.evo50-ready .evo50-chart .evo2-legend,
+        #pane-evolution.evo50-ready .evo50-table .evo2-table-head{
           flex:0 0 auto!important;
         }
-        #pane-evolution.evo49-ready .evo49-table .evo2-table-wrap{
+        #pane-evolution.evo50-ready .evo50-table .evo2-table-wrap{
           flex:1 1 auto!important;
           min-height:0!important;
           overflow:auto!important;
@@ -100,28 +105,29 @@
 
       @media (max-width:760px){
         #pane-evolution .evo2-kpis{grid-template-columns:1fr 1fr!important}
-        #pane-evolution.evo49-ready{
+        #pane-evolution .evo2-bar .evo2-signed-count{font-size:12px!important}
+        #pane-evolution.evo50-ready{
           height:auto!important;
           max-height:none!important;
           overflow:visible!important;
         }
-        #pane-evolution.evo49-ready .evo2-shell{
+        #pane-evolution.evo50-ready .evo2-shell{
           height:auto!important;
           display:grid!important;
           grid-template-rows:auto!important;
           overflow:visible!important;
         }
-        #pane-evolution.evo49-ready .evo49-fixed{
+        #pane-evolution.evo50-ready .evo50-fixed{
           position:static!important;
           background:transparent!important;
           padding:0!important;
         }
-        #pane-evolution.evo49-ready .evo49-scroll{
+        #pane-evolution.evo50-ready .evo50-scroll{
           height:auto!important;
           overflow:visible!important;
           scroll-snap-type:none!important;
         }
-        #pane-evolution.evo49-ready .evo49-page{
+        #pane-evolution.evo50-ready .evo50-page{
           height:auto!important;
           min-height:0!important;
           max-height:none!important;
@@ -180,29 +186,28 @@
     const months=Array.from(pane.querySelectorAll('.evo2-month'));
 
     months.forEach(function(monthEl,i){
-      const value=monthEl.querySelector('.evo2-value');
-      if(!value)return;
-
-      let countEl=value.querySelector('.evo2-signed-count');
-      const show=year>2026||(year===2026&&i>=8);
-
-      if(!show){
-        if(countEl)countEl.remove();
-        return;
-      }
-
-      if(!countEl){
-        countEl=document.createElement('span');
-        countEl.className='evo2-signed-count';
-        value.appendChild(countEl);
-      }
-
+      const currentBar=Array.from(monthEl.querySelectorAll('.evo2-bar')).find(function(bar){
+        return !bar.classList.contains('previous');
+      });
+      let countEl=monthEl.querySelector('.evo2-signed-count');
       const count=counts[i]||0;
-      const label=count+' '+(count===1?'chantier':'chantiers');
-      if(countEl.textContent!==label)countEl.textContent=label;
+      const show=(year>2026||(year===2026&&i>=8))&&count>0;
+
+      if(!show||!currentBar){
+        if(countEl)countEl.remove();
+      }else{
+        if(!countEl){
+          countEl=document.createElement('span');
+          countEl.className='evo2-signed-count';
+        }
+        if(countEl.parentNode!==currentBar)currentBar.appendChild(countEl);
+        const label=String(count);
+        if(countEl.textContent!==label)countEl.textContent=label;
+        currentBar.setAttribute('data-signed-count',label);
+      }
 
       const trophy=monthEl.querySelector('.evo2-trophy');
-      if(trophy)trophy.style.bottom='calc(var(--bar-height) + 39px)';
+      if(trophy)trophy.style.bottom='calc(var(--bar-height) + 23px)';
     });
   }
 
@@ -217,17 +222,17 @@
   function sizePane(pane){
     if(!pane)return;
     if(window.innerWidth<=760){
-      pane.style.removeProperty('--evo49-height');
+      pane.style.removeProperty('--evo50-height');
       return;
     }
     const top=Math.max(0,Math.round(pane.getBoundingClientRect().top));
     const height=Math.max(560,viewportHeight()-top-8);
-    pane.style.setProperty('--evo49-height',height+'px');
+    pane.style.setProperty('--evo50-height',height+'px');
   }
 
   function installWheel(scroll){
-    if(!scroll||scroll.dataset.evo49Wheel==='1')return;
-    scroll.dataset.evo49Wheel='1';
+    if(!scroll||scroll.dataset.evo50Wheel==='1')return;
+    scroll.dataset.evo50Wheel='1';
     let lock=false;
 
     scroll.addEventListener('wheel',function(e){
@@ -256,12 +261,12 @@
 
     applyDisplayTweaks(pane);
     sizePane(pane);
-    pane.classList.remove('evo-snap-ready','evo47-ready','evo48-ready');
-    pane.classList.add('evo49-ready');
+    pane.classList.remove('evo-snap-ready','evo47-ready','evo48-ready','evo49-ready');
+    pane.classList.add('evo50-ready');
     pane.scrollTop=0;
 
-    let fixed=shell.querySelector(':scope > .evo49-fixed');
-    let scroll=shell.querySelector(':scope > .evo49-scroll');
+    let fixed=shell.querySelector(':scope > .evo50-fixed');
+    let scroll=shell.querySelector(':scope > .evo50-scroll');
 
     if(fixed&&scroll){
       installWheel(scroll);
@@ -276,22 +281,22 @@
     if(!toolbar||!kpis||!chart||!table)return false;
 
     fixed=document.createElement('div');
-    fixed.className='evo49-fixed';
+    fixed.className='evo50-fixed';
     fixed.dataset.evoBlock='1';
     fixed.append(toolbar,kpis);
 
     const chartPage=document.createElement('section');
-    chartPage.className='evo49-page evo49-chart';
+    chartPage.className='evo50-page evo50-chart';
     chartPage.dataset.evoBlock='2';
     chartPage.append(chart);
 
     const tablePage=document.createElement('section');
-    tablePage.className='evo49-page evo49-table';
+    tablePage.className='evo50-page evo50-table';
     tablePage.dataset.evoBlock='3';
     tablePage.append(table);
 
     scroll=document.createElement('div');
-    scroll.className='evo49-scroll';
+    scroll.className='evo50-scroll';
     scroll.append(chartPage,tablePage);
 
     shell.replaceChildren(fixed,scroll);
