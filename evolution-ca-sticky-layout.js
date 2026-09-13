@@ -198,7 +198,8 @@
       }
 
       const count=counts[i]||0;
-      countEl.textContent=count+' '+(count===1?'chantier':'chantiers');
+      const label=count+' '+(count===1?'chantier':'chantiers');
+      if(countEl.textContent!==label)countEl.textContent=label;
 
       const trophy=monthEl.querySelector('.evo2-trophy');
       if(trophy)trophy.style.bottom='calc(var(--bar-height) + 39px)';
