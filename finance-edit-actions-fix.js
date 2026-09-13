@@ -1,12 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV11)return;
-  window.__yayaFinanceEditActionsV11=true;
+  if(window.__yayaFinanceEditActionsV12)return;
+  window.__yayaFinanceEditActionsV12=true;
 
   let lastAchatId='';
-  const pendingDelete=new Set();
-  const STYLE_ID='yaya-finance-edit-actions-v11';
+  let deleteBusy=false;
+  const STYLE_ID='yaya-finance-edit-actions-v12';
 
   function txt(v){return String(v==null?'':v).trim();}
   function sleep(ms){return new Promise(function(resolve){setTimeout(resolve,ms);});}
@@ -30,7 +30,6 @@
       .achat-edit-modal .yaya-finance-edit-actions>button{width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;padding:0 12px!important;border-radius:9px!important;font-weight:750!important;cursor:pointer!important;pointer-events:auto!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;align-items:center!important;justify-content:center!important;position:relative!important;transform:none!important}
       .achat-edit-modal .yaya-achat-single-save{background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
       .achat-edit-modal .yaya-achat-edit-delete{background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
-      .achat-edit-modal .yaya-achat-edit-delete[data-yaya-confirm-delete="1"]{background:#b42318!important;color:#fff!important;border-color:#b42318!important}
       .achat-edit-modal .yaya-achat-edit-import,.achat-edit-modal .yaya-test-import{display:none!important}
       @media(max-width:640px){.achat-edit-modal .yaya-finance-edit-actions{gap:8px!important}.achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:12px!important;padding:0 8px!important}}
     `;
@@ -73,6 +72,7 @@
     }
     if(!id&&lastAchatId)id=lastAchatId;
     if(!id&&modal)id=matchAchatFromFields(modal);
+    id=txt(id);
     if(id){
       lastAchatId=id;
       if(modal)modal.dataset.yayaAchatId=id;
@@ -81,125 +81,180 @@
     return id;
   }
 
-  function updateCache(freshOrList){
+  function updateCache(data){
     try{
       const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
       const cached=raw?JSON.parse(raw):{};
-      if(freshOrList&&Array.isArray(freshOrList.achats)){
-        Object.keys(freshOrList).forEach(function(k){cached[k]=freshOrList[k];});
-      }else{
-        cached.achats=Array.isArray(freshOrList)?freshOrList:[];
+      if(data&&Array.isArray(data.achats)){
+        Object.keys(data).forEach(function(k){cached[k]=data[k];});
+      }else if(Array.isArray(data)){
+        cached.achats=data;
       }
       localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
     }catch(e){}
   }
 
-  function resetDeleteButton(btn,label){
-    if(!btn||!document.contains(btn))return;
-    btn.disabled=false;
-    btn.dataset.yayaConfirmDelete='';
-    btn.textContent=label||'Supprimer';
+  function applyFresh(data){
+    if(!data||!Array.isArray(data.achats))return;
+    try{
+      if(typeof S!=='undefined'&&S){
+        Object.keys(data).forEach(function(k){S[k]=data[k];});
+      }
+    }catch(e){}
+    updateCache(data);
+    try{if(typeof render==='function')render();}catch(e){}
+    try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
   }
 
   async function freshData(){
     if(typeof apiGet!=='function')return null;
     try{
-      const fresh=await apiGet(true);
-      return fresh&&Array.isArray(fresh.achats)?fresh:null;
+      const data=await apiGet(true);
+      return data&&Array.isArray(data.achats)?data:null;
     }catch(e){
       console.warn('Yaya suppression achat — lecture serveur impossible',e);
       return null;
     }
   }
 
-  async function postAchats(list){
+  async function directPost(list){
     if(typeof API==='undefined'||!API)throw new Error('API Yaya introuvable');
-    const response=await fetch(API,{
+    const r=await fetch(API,{
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
       body:JSON.stringify({action:'setAchats',data:list})
     });
-    const body=await response.text();
-    let json;
-    try{json=JSON.parse(body);}catch(e){throw new Error('réponse serveur invalide');}
-    if(!json||!json.ok)throw new Error(json&&json.error?json.error:'suppression refusée');
+    const text=await r.text();
+    let j;
+    try{j=JSON.parse(text);}catch(e){throw new Error('réponse Google non JSON');}
+    if(!j||!j.ok)throw new Error(j&&j.error?j.error:'écriture refusée');
     return true;
   }
 
-  async function deleteAchatDirect(btn,id){
-    id=String(id||'');
-    if(!id||pendingDelete.has(id))return false;
-    pendingDelete.add(id);
-    btn.disabled=true;
-    btn.textContent='Suppression…';
+  async function writeAchats(list){
+    ensureSyncState();
+    let firstError=null;
 
-    let lastError=null;
+    if(typeof apiPost==='function'){
+      try{
+        const ok=await apiPost('setAchats',list);
+        if(ok)return true;
+        firstError=new Error('apiPost a refusé l’écriture');
+      }catch(e){
+        firstError=e;
+      }
+    }
+
     try{
-      let current=await freshData();
-      let source=current&&Array.isArray(current.achats)
-        ?current.achats.slice()
+      await directPost(list);
+      return true;
+    }catch(e){
+      if(firstError)console.warn('Yaya suppression achat — apiPost :',firstError);
+      throw e;
+    }
+  }
+
+  async function deleteAchatPersist(id,statusNode){
+    id=txt(id);
+    if(!id)throw new Error('identifiant achat absent');
+    if(deleteBusy)throw new Error('une suppression est déjà en cours');
+    deleteBusy=true;
+
+    try{
+      let fresh=await freshData();
+      let source=fresh&&Array.isArray(fresh.achats)
+        ?fresh.achats.slice()
         :((typeof S!=='undefined'&&S&&Array.isArray(S.achats))?S.achats.slice():[]);
 
-      if(!source.some(function(a){return String(a&&a.id||'')===id;})){
-        throw new Error('achat introuvable sur le serveur');
+      const wanted=function(a){return txt(a&&a.id)===id;};
+      if(!source.some(wanted)){
+        if(fresh)applyFresh(fresh);
+        return {ok:true,already:true};
       }
 
       for(let attempt=1;attempt<=3;attempt++){
-        const after=source.filter(function(a){return String(a&&a.id||'')!==id;});
-        if(after.length===source.length)throw new Error('achat introuvable');
+        const after=source.filter(function(a){return !wanted(a);});
+        if(statusNode)statusNode.textContent='Suppression… tentative '+attempt+'/3';
 
-        try{
-          await postAchats(after);
-        }catch(err){
-          lastError=err;
-          if(attempt===3)throw err;
-          await sleep(500*attempt);
-          const retryFresh=await freshData();
-          if(retryFresh&&Array.isArray(retryFresh.achats))source=retryFresh.achats.slice();
-          continue;
-        }
+        await writeAchats(after);
+        await sleep(700*attempt);
 
-        await sleep(450*attempt);
-        const verification=await freshData();
-
-        if(!verification){
+        const verify=await freshData();
+        if(verify&&Array.isArray(verify.achats)){
+          if(!verify.achats.some(wanted)){
+            applyFresh(verify);
+            return {ok:true,already:false};
+          }
+          source=verify.achats.slice();
+        }else{
           try{S.achats=after;}catch(e){}
           updateCache(after);
-          try{if(typeof closeModal==='function')closeModal();}catch(e){}
           try{if(typeof render==='function')render();}catch(e){}
-          toastSafe('Charge supprimée de Yaya — fichier conservé ✓');
-          return true;
+          return {ok:true,unverified:true};
         }
-
-        const stillThere=verification.achats.some(function(a){return String(a&&a.id||'')===id;});
-        if(!stillThere){
-          try{
-            if(typeof S!=='undefined'&&S){
-              Object.keys(verification).forEach(function(k){S[k]=verification[k];});
-            }
-          }catch(e){}
-          updateCache(verification);
-          try{if(typeof closeModal==='function')closeModal();}catch(e){}
-          try{if(typeof render==='function')render();}catch(e){}
-          try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed'));}catch(e){}
-          toastSafe('Charge supprimée de Yaya — fichier conservé ✓');
-          return true;
-        }
-
-        lastError=new Error('la ligne est toujours présente après enregistrement');
-        source=verification.achats.slice();
-        if(attempt<3)await sleep(500*attempt);
       }
 
-      throw lastError||new Error('suppression non confirmée par le serveur');
-    }catch(err){
-      console.error('Yaya suppression achat :',err);
-      toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
-      resetDeleteButton(btn,'Échec — réessayer');
-      return false;
+      throw new Error('la ligne est toujours présente dans le Sheet après 3 écritures');
     }finally{
-      pendingDelete.delete(id);
+      deleteBusy=false;
     }
+  }
+
+  function closeConfirm(overlay){
+    if(overlay&&overlay.parentNode)overlay.parentNode.removeChild(overlay);
+  }
+
+  function showDeleteConfirm(id,editModal){
+    document.querySelectorAll('.yaya-edit-delete-confirm-v12').forEach(function(n){n.remove();});
+
+    const overlay=document.createElement('div');
+    overlay.className='yaya-edit-delete-confirm-v12';
+    overlay.style.cssText='position:fixed!important;inset:0!important;background:rgba(15,23,42,.58)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important';
+    overlay.innerHTML=''
+      +'<div style="background:#fff;border-radius:14px;padding:22px;max-width:410px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.35);font-family:inherit">'
+      +'<div style="font-size:17px;font-weight:800;color:#162D49;margin-bottom:10px">Supprimer cet achat de Yaya ?</div>'
+      +'<div style="font-size:13px;line-height:1.5;color:#556579;margin-bottom:18px">Le fichier original Drive / Dropbox sera conservé. Seule la ligne Yaya sera supprimée.</div>'
+      +'<div data-yaya-delete-status style="font-size:12px;color:#64748b;min-height:18px;margin-bottom:10px"></div>'
+      +'<div style="display:flex;gap:10px;justify-content:flex-end">'
+      +'<button type="button" data-yaya-delete-cancel style="padding:10px 15px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;cursor:pointer">Annuler</button>'
+      +'<button type="button" data-yaya-delete-ok style="padding:10px 15px;border-radius:8px;border:0;background:#b42318;color:#fff;font-weight:800;cursor:pointer">Supprimer de Yaya</button>'
+      +'</div></div>';
+
+    const cancel=overlay.querySelector('[data-yaya-delete-cancel]');
+    const ok=overlay.querySelector('[data-yaya-delete-ok]');
+    const status=overlay.querySelector('[data-yaya-delete-status]');
+
+    cancel.onclick=function(){if(!deleteBusy)closeConfirm(overlay);};
+    overlay.addEventListener('click',function(e){if(e.target===overlay&&!deleteBusy)closeConfirm(overlay);});
+
+    ok.onclick=async function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(deleteBusy)return;
+      ok.disabled=true;
+      cancel.disabled=true;
+      status.textContent='Suppression en cours…';
+
+      try{
+        const result=await deleteAchatPersist(id,status);
+        status.style.color='#166534';
+        status.textContent=result.already?'Déjà supprimé du Sheet ✓':'Suppression confirmée dans le Sheet ✓';
+        toastSafe('Charge supprimée de Yaya — fichier conservé ✓');
+        await sleep(350);
+        closeConfirm(overlay);
+        try{if(typeof closeModal==='function')closeModal();else if(editModal&&editModal.closest('.overlay'))editModal.closest('.overlay').remove();}catch(e){}
+      }catch(err){
+        console.error('Yaya suppression achat :',err);
+        status.style.color='#b42318';
+        status.textContent='Échec : '+String(err&&err.message||err);
+        ok.disabled=false;
+        cancel.disabled=false;
+        ok.textContent='Réessayer';
+      }
+    };
+
+    document.body.appendChild(overlay);
+    setTimeout(function(){try{ok.focus();}catch(e){}},0);
   }
 
   function removeImporterButtons(modal,save){
@@ -254,7 +309,6 @@
     del.onclick=null;
     del.style.pointerEvents='auto';
     if(id)del.dataset.achatId=id;
-    removeImporterButtons(modal,save);
   }
 
   function handleDelete(event){
@@ -270,18 +324,7 @@
 
     const id=resolveAchatId(modal,btn);
     if(!id){toastSafe('Impossible d’identifier cet achat',true);return;}
-
-    if(btn.dataset.yayaConfirmDelete!=='1'){
-      btn.dataset.yayaConfirmDelete='1';
-      btn.textContent='Confirmer suppression';
-      clearTimeout(btn.__yayaDeleteTimer);
-      btn.__yayaDeleteTimer=setTimeout(function(){resetDeleteButton(btn);},12000);
-      return;
-    }
-
-    clearTimeout(btn.__yayaDeleteTimer);
-    btn.dataset.yayaConfirmDelete='';
-    deleteAchatDirect(btn,id);
+    showDeleteConfirm(id,modal);
   }
 
   window.addEventListener('click',handleDelete,true);
@@ -303,7 +346,7 @@
 
   try{
     const original=window.editAchat;
-    if(typeof original==='function'&&!original.__yayaFinanceV11Wrapped){
+    if(typeof original==='function'&&!original.__yayaFinanceV12Wrapped){
       const wrapped=function(id){
         if(id)lastAchatId=String(id);
         const out=original.apply(this,arguments);
@@ -311,7 +354,7 @@
         setTimeout(apply,60);
         return out;
       };
-      wrapped.__yayaFinanceV11Wrapped=true;
+      wrapped.__yayaFinanceV12Wrapped=true;
       window.editAchat=wrapped;
       try{editAchat=wrapped;}catch(e){}
     }
@@ -323,7 +366,7 @@
     new MutationObserver(function(){
       if(raf)return;
       raf=requestAnimationFrame(function(){raf=0;apply();});
-    }).observe(root,{childList:true,subtree:true,attributes:true,characterData:true,attributeFilter:['onclick','class','title','aria-label']});
+    }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['onclick','class','title','aria-label']});
   }
 
   ensureSyncState();
