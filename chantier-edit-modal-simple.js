@@ -1,11 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaChantierEditModalSimpleV4)return;
+  if(window.__yayaChantierEditModalSimpleV5)return;
+  window.__yayaChantierEditModalSimpleV5=true;
   window.__yayaChantierEditModalSimpleV4=true;
   window.__yayaChantierEditModalSimpleV3=true;
 
-  const STYLE_ID='yaya-chantier-edit-modal-simple-v4';
+  const STYLE_ID='yaya-chantier-edit-modal-simple-v5';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
@@ -40,12 +41,34 @@
     if(!done)h5.insertBefore(document.createTextNode('Modifier le chantier'),h5.firstChild||null);
   }
 
+  function removeFieldByInput(modal,id){
+    const input=modal&&modal.querySelector('#'+id);
+    if(!input)return;
+    const label=input.closest('label');
+    if(label)label.remove();
+    else input.remove();
+  }
+
   function removeForbiddenFields(modal){
     if(!modal)return;
-    const input=modal.querySelector('#editChDemarrage');
-    const label=input&&input.closest('label');
-    if(label)label.remove();
-    else if(input)input.remove();
+
+    // Date de démarrage : gérée hors de cette modale.
+    removeFieldByInput(modal,'editChDemarrage');
+
+    // Date/mention de signature : désormais gérée uniquement dans la colonne J du Sheet.
+    // On retire le bloc complet « Signé le », mois/année et l'ancien choix spécial.
+    const month=modal.querySelector('#editChSignatureMonth');
+    const year=modal.querySelector('#editChSignatureYear');
+    const hidden=modal.querySelector('#editChSignature');
+    const special=modal.querySelector('#editChSignatureBeforeSept');
+    const signatureInput=month||year||hidden||special;
+    if(signatureInput){
+      const label=signatureInput.closest('label');
+      if(label)label.remove();
+      else {
+        [month,year,hidden,special].forEach(function(el){if(el)el.remove();});
+      }
+    }
   }
 
   function simplify(){
@@ -63,6 +86,16 @@
   function getChantier(cid){
     try{return Array.isArray(S&&S.chantiers)?S.chantiers.find(function(c){return String(c&&c.id)===String(cid);})||null:null;}
     catch(e){return null;}
+  }
+
+  function payloadSansSignature(){
+    try{
+      return (Array.isArray(S&&S.chantiers)?S.chantiers:[]).map(function(item){
+        const copie=Object.assign({},item);
+        delete copie.dateSignature;
+        return copie;
+      });
+    }catch(e){return [];}
   }
 
   function toastSafe(message,isError){
@@ -101,7 +134,7 @@
       let ok=false;
       try{
         if(typeof window.apiPost==='function'){
-          ok=!!(await window.apiPost('setChantiers',S.chantiers));
+          ok=!!(await window.apiPost('setChantiers',payloadSansSignature()));
         }
       }catch(e){ok=false;}
 
@@ -123,21 +156,13 @@
       if(!c)return;
 
       const nom=document.getElementById('editChNom');
-      const sigMonth=document.getElementById('editChSignatureMonth');
-      const sigYear=document.getElementById('editChSignatureYear');
       const mt=document.getElementById('editChMarcheHT');
-      if(!nom||!sigMonth||!sigYear||!mt)return;
+      if(!nom||!mt)return;
 
       const name=String(nom.value||'').trim();
       if(!name){
         try{toast('Indique le nom du chantier',true);}catch(e){}
         nom.focus();
-        return;
-      }
-
-      if((sigMonth.value&&!sigYear.value)||(!sigMonth.value&&sigYear.value)){
-        try{toast('Choisis le mois et l’année de signature',true);}catch(e){}
-        (sigMonth.value?sigYear:sigMonth).focus();
         return;
       }
 
@@ -149,18 +174,16 @@
         return;
       }
 
-      const signature=(sigMonth.value&&sigYear.value)?String(sigYear.value)+'-'+String(sigMonth.value):'';
-
-      // Chantier créé dans Yaya : nom, Signé le et CA HT sont modifiables.
+      // La date/mention de signature n'est plus modifiable dans Yaya.
+      // La colonne J du Sheet reste la source unique et n'est jamais écrasée ici.
       c.nom=name;
-      c.dateSignature=signature;
       c.montantMarcheHT=montant;
 
       const btn=document.getElementById('editChSave');
       if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
 
       let ok=false;
-      try{ok=await apiPost('setChantiers',S.chantiers);}catch(e){ok=false;}
+      try{ok=await apiPost('setChantiers',payloadSansSignature());}catch(e){ok=false;}
 
       if(ok){
         try{closeModal();}catch(e){}
