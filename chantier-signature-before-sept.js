@@ -1,4 +1,4 @@
-// V42 — affichage robuste des signatures depuis dateSignature (colonne J)
+// V43 — affichage des signatures en lecture seule depuis dateSignature (colonne J)
 (function(){
   'use strict';
 
@@ -34,10 +34,13 @@
     if(/^\d{4}$/.test(value))return value;
     if(isSpecial(value))return LABEL;
     const m=value.match(/^(\d{4})-(\d{2})/);
-    if(!m)return '';
-    const d=new Date(Number(m[1]),Number(m[2])-1,1);
-    const lib=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
-    return 'Signé : '+lib.charAt(0).toUpperCase()+lib.slice(1);
+    if(m){
+      const d=new Date(Number(m[1]),Number(m[2])-1,1);
+      const lib=d.toLocaleDateString('fr-FR',{month:'long',year:'numeric'});
+      return 'Signé : '+lib.charAt(0).toUpperCase()+lib.slice(1);
+    }
+    // Toute autre terminologie saisie manuellement en colonne J est affichée telle quelle.
+    return value;
   }
 
   function signatureHtml(c){
@@ -103,72 +106,8 @@
     });
   }
 
-  function installEditSupport(){
-    const previousSync=window.syncEditChSignature;
-    if(typeof previousSync==='function'&&!previousSync.__yayaSignatureV42){
-      const wrappedSync=function(){
-        const special=document.getElementById('editChSignatureBeforeSept');
-        const hidden=document.getElementById('editChSignature');
-        if(special&&special.checked){
-          if(hidden)hidden.value=SPECIAL;
-          return SPECIAL;
-        }
-        return previousSync.apply(this,arguments);
-      };
-      wrappedSync.__yayaSignatureV42=true;
-      window.syncEditChSignature=wrappedSync;
-    }
-
-    const previousOpen=window.openExistingChantierModal;
-    if(typeof previousOpen!=='function'||previousOpen.__yayaSignatureV42)return;
-
-    const wrappedOpen=function(){
-      const result=previousOpen.apply(this,arguments);
-      const month=document.getElementById('editChSignatureMonth');
-      const year=document.getElementById('editChSignatureYear');
-      const hidden=document.getElementById('editChSignature');
-      if(!month||!year||!hidden)return result;
-
-      const fields=month.closest('.yaya-signature-fields')||month.parentElement;
-      const label=fields&&fields.closest('label');
-      if(!label)return result;
-
-      let checkbox=document.getElementById('editChSignatureBeforeSept');
-      if(!checkbox){
-        const row=document.createElement('label');
-        row.style.cssText='display:flex;align-items:center;gap:7px;font-size:12px;font-weight:600;margin:2px 0 6px;cursor:pointer';
-        row.innerHTML='<input id="editChSignatureBeforeSept" type="checkbox" style="width:16px;height:16px"> <span>'+LABEL+'</span>';
-        label.insertBefore(row,fields);
-        checkbox=row.querySelector('input');
-      }
-
-      checkbox.checked=isSpecial(hidden.value);
-
-      function apply(){
-        const on=checkbox.checked;
-        month.disabled=on;
-        year.disabled=on;
-        month.style.opacity=on?'.45':'1';
-        year.style.opacity=on?'.45':'1';
-        if(on){
-          hidden.value=SPECIAL;
-        }else{
-          if(isSpecial(hidden.value))hidden.value='';
-          if(typeof window.syncEditChSignature==='function')window.syncEditChSignature();
-        }
-      }
-
-      checkbox.onchange=apply;
-      apply();
-      return result;
-    };
-    wrappedOpen.__yayaSignatureV42=true;
-    window.openExistingChantierModal=wrappedOpen;
-  }
-
   function install(){
     installDisplay();
-    installEditSupport();
     schedulePaint();
   }
 
