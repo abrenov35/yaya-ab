@@ -55,15 +55,47 @@ function isTombstone(id){return tombstones().some(x=>String(x)===String(id));}
 function post(data){const b=new URLSearchParams();Object.entries(data||{}).forEach(([k,v])=>b.append(k,v==null?'':String(v)));return fetch(GAS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b});}
 
 function injectStyle(){
-  if(document.getElementById('ycn-edit-modal-v5-style'))return;
-  const s=document.createElement('style');s.id='ycn-edit-modal-v5-style';s.textContent=`
-    #ycnEditModal .ycn-dialog-actions{display:flex!important;gap:10px!important;align-items:center!important;flex-wrap:wrap!important}
-    #ycnEditModal .ycn-save-v5{background:#0f4f8d!important;border:1px solid #0f4f8d!important;color:#fff!important;opacity:1!important;box-shadow:0 1px 3px rgba(15,79,141,.25)!important;font-weight:850!important}
-    #ycnEditModal .ycn-save-v5:disabled{background:#8eb2d6!important;border-color:#8eb2d6!important;color:#fff!important;opacity:1!important}
-    #ycnEditModal .ycn-delete-v5{margin-right:auto!important;background:#fff2f1!important;border:1px solid #e9a39e!important;color:#b42318!important;font-weight:850!important}
-    #ycnEditModal .ycn-doc-v5{background:#eef6ff!important;border:1px solid #b8d3ef!important;color:#0f4f8d!important;font-weight:850!important}
+  let s=document.getElementById('ycn-edit-modal-v5-style');
+  if(!s){s=document.createElement('style');s.id='ycn-edit-modal-v5-style';document.head.appendChild(s);}
+  s.textContent=`
+    #ycnEditModal{background:rgba(18,35,57,.58)!important;backdrop-filter:blur(3px)!important;padding:18px!important}
+    #ycnEditModal .ycn-dialog{width:min(680px,calc(100vw - 28px))!important;max-height:92vh!important;padding:0!important;overflow:auto!important;border:1px solid #dbe4ee!important;border-radius:20px!important;background:#fff!important;box-shadow:0 30px 90px rgba(12,31,54,.32)!important}
+    #ycnEditModal .ycn-dialog-head{position:sticky!important;top:0!important;z-index:2!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;margin:0!important;padding:19px 22px 16px!important;border-bottom:1px solid #e8eef5!important;background:linear-gradient(180deg,#ffffff 0%,#f9fbfe 100%)!important}
+    #ycnEditModal .ycn-dialog-head h3{margin:0!important;color:#1c3553!important;font-size:21px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:-.015em!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+    #ycnEditModal .ycn-close{width:38px!important;height:38px!important;flex:0 0 38px!important;border:1px solid #aec0d4!important;border-radius:10px!important;background:#fff!important;color:#25415f!important;font-size:22px!important;line-height:1!important;box-shadow:0 1px 3px rgba(16,24,40,.08)!important;cursor:pointer!important}
+    #ycnEditModal .ycn-close:hover{background:#f1f6fb!important}
+    #ycnEditModal #ycnEditForm{padding:20px 22px 22px!important}
+    #ycnEditModal .ycn-form-grid{display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px 16px!important}
+    #ycnEditModal .ycn-field{display:grid!important;gap:7px!important}
+    #ycnEditModal .ycn-field.full{grid-column:1/-1!important}
+    #ycnEditModal .ycn-field>span{color:#5d7188!important;font-size:11.5px!important;font-weight:850!important;letter-spacing:.01em!important}
+    #ycnEditModal .ycn-field input,#ycnEditModal .ycn-field select,#ycnEditModal .ycn-field textarea{width:100%!important;border:1px solid #c7d4e2!important;border-radius:10px!important;background:#fff!important;color:#253950!important;font:inherit!important;font-size:14px!important;outline:none!important;transition:border-color .15s,box-shadow .15s,background .15s!important}
+    #ycnEditModal .ycn-field input,#ycnEditModal .ycn-field select{height:44px!important;padding:0 12px!important}
+    #ycnEditModal .ycn-field textarea{min-height:96px!important;padding:11px 12px!important;resize:vertical!important}
+    #ycnEditModal .ycn-field input:focus,#ycnEditModal .ycn-field select:focus,#ycnEditModal .ycn-field textarea:focus{border-color:#4f86bd!important;box-shadow:0 0 0 3px rgba(79,134,189,.13)!important;background:#fcfeff!important}
+    #ycnEditModal .ycn-url-v5{position:relative!important}
+    #ycnEditModal .ycn-url-v5 input{padding-left:12px!important;background:#fbfdff!important}
+    #ycnEditModal .ycn-dialog-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:9px!important;flex-wrap:wrap!important;margin-top:20px!important;padding-top:16px!important;border-top:1px solid #e9eef4!important}
+    #ycnEditModal .ycn-dialog-actions .ycn-btn{min-height:40px!important;padding:0 14px!important;border-radius:9px!important;font-size:12px!important;font-weight:850!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important}
+    #ycnEditModal .ycn-save-v5{background:#0f568f!important;border:1px solid #0f568f!important;color:#fff!important;opacity:1!important;box-shadow:0 3px 8px rgba(15,86,143,.22)!important}
+    #ycnEditModal .ycn-save-v5:hover{background:#0c4878!important;border-color:#0c4878!important}
+    #ycnEditModal .ycn-save-v5:disabled{background:#90b2d1!important;border-color:#90b2d1!important;color:#fff!important;opacity:1!important}
+    #ycnEditModal .ycn-doc-v5{background:#eef6ff!important;border:1px solid #b3cde8!important;color:#0f568f!important;font-weight:850!important}
+    #ycnEditModal .ycn-doc-v5:hover{background:#e3f0fc!important;border-color:#93b8dc!important}
+    #ycnEditModal .ycn-delete-v5{margin-right:auto!important;background:#fff4f3!important;border:1px solid #efb2ac!important;color:#b42318!important;font-weight:850!important}
+    #ycnEditModal .ycn-delete-v5:hover{background:#ffeae8!important}
     #ycnEditModal .ycn-url-v5 input{width:100%!important}
-  `;document.head.appendChild(s);
+    @media(max-width:620px){
+      #ycnEditModal{padding:8px!important}
+      #ycnEditModal .ycn-dialog{width:100%!important;border-radius:15px!important}
+      #ycnEditModal .ycn-dialog-head{padding:16px!important}
+      #ycnEditModal #ycnEditForm{padding:16px!important}
+      #ycnEditModal .ycn-form-grid{grid-template-columns:1fr!important;gap:12px!important}
+      #ycnEditModal .ycn-field.full{grid-column:auto!important}
+      #ycnEditModal .ycn-dialog-actions .ycn-btn{flex:1 1 auto!important}
+      #ycnEditModal .ycn-delete-v5{margin-right:0!important}
+    }
+  `;
 }
 
 function captureRow(e){
@@ -72,10 +104,11 @@ function captureRow(e){
 }
 document.addEventListener('pointerdown',captureRow,true);
 
-function matchNewOrder(snapshot){
+function matchNewOrder(snapshot,beforeIds){
   const list=readState().orders||[];
   if(snapshot.id){const exact=list.find(o=>String(o?.id||'')===String(snapshot.id));if(exact)return exact;}
   const candidates=list.filter(o=>
+    (!beforeIds||!beforeIds.has(String(o?.id||''))) &&
     txt(o?.produit||o?.designation)===snapshot.produit &&
     txt(o?.fournisseur)===snapshot.fournisseur &&
     txt(o?.qte)===snapshot.qte &&
@@ -96,7 +129,7 @@ function persistUrlAfterCore(snapshot,url){
 function updateTitle(modal){
   const title=modal.querySelector('#ycnEditTitle'),product=modal.querySelector('#ycnProduit');
   if(!title||!product)return;
-  title.textContent=txt(product.value)||'Nouvelle commande';
+  title.textContent=txt(product.value)||(activeId?'Commande':'Nouvelle commande');
 }
 function ensureUrlField(modal){
   let field=modal.querySelector('.ycn-url-v5');
@@ -139,13 +172,29 @@ function deleteOrder(modal){
   toast('Commande supprimée — serveur en arrière-plan');
   post({action:'delete',id}).then(()=>toast('Commande supprimée','ok')).catch(()=>toast('Suppression serveur à contrôler','err'));
 }
-function openDocuments(){
-  const id=String(activeId||'');
-  if(!id){toast('Enregistre d’abord la commande','err');return;}
-  const row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');
-  const btn=row?.querySelector('[data-ycn-doc]');
+function openDocuments(idOverride){
+  const id=String(idOverride||activeId||'');
+  if(!id){toast('Commande non enregistrée','err');return;}
+  let row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');
+  let btn=row?.querySelector('[data-ycn-doc]');
+  if(!btn){try{window.YayaCommandesNativeEmbed?.render();}catch(_){ }row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');btn=row?.querySelector('[data-ycn-doc]');}
   if(!btn){toast('Module document indisponible','err');return;}
   btn.click();
+}
+function saveThenOpenDocuments(modal){
+  const form=modal.querySelector('#ycnEditForm');if(!form)return;
+  if(activeId){openDocuments(activeId);return;}
+  const snapshot=currentSnapshot(modal);
+  if(!snapshot.produit){modal.querySelector('#ycnProduit')?.focus();return;}
+  const beforeIds=new Set((readState().orders||[]).map(o=>String(o?.id||'')));
+  form.requestSubmit();
+  let attempt=0;
+  const waitCreated=()=>{
+    const created=matchNewOrder(snapshot,beforeIds);
+    if(created?.id){activeId=String(created.id);setTimeout(()=>openDocuments(activeId),20);return;}
+    if(attempt++<14)setTimeout(waitCreated,35);else toast('Commande enregistrée — ouvre Documents depuis la ligne','err');
+  };
+  setTimeout(waitCreated,20);
 }
 
 function enhanceModal(){
@@ -153,19 +202,21 @@ function enhanceModal(){
   const modal=document.getElementById('ycnEditModal');if(!modal||!modal.classList.contains('show'))return;
   const product=modal.querySelector('#ycnProduit'),form=modal.querySelector('#ycnEditForm');if(!product||!form)return;
   const urlInput=ensureUrlField(modal);const o=activeId?findOrder(activeId):null;
-  if(urlInput && urlInput.dataset.loadedFor!==String(activeId||'NEW')){
-    urlInput.value=o?orderUrl(o):'';urlInput.dataset.loadedFor=String(activeId||'NEW');
+  const modeKey=String(activeId||'NEW');
+  if(urlInput && urlInput.dataset.loadedFor!==modeKey){
+    urlInput.value=o?orderUrl(o):'';urlInput.dataset.loadedFor=modeKey;
   }
   updateTitle(modal);
   if(!product.dataset.ycnTitleV5){product.addEventListener('input',()=>updateTitle(modal));product.dataset.ycnTitleV5='1';}
   const actions=modal.querySelector('.ycn-dialog-actions');if(!actions)return;
-  const save=actions.querySelector('button[type="submit"]');if(save)save.classList.add('ycn-save-v5');
+  const save=actions.querySelector('button[type="submit"]');if(save){save.classList.add('ycn-save-v5');save.textContent='Enregistrer';}
   let del=actions.querySelector('.ycn-delete-v5');
   if(!del){del=document.createElement('button');del.type='button';del.className='ycn-btn ycn-delete-v5';del.textContent='Supprimer';actions.insertBefore(del,actions.firstChild);del.onclick=()=>deleteOrder(modal);}
   del.style.display=activeId?'inline-flex':'none';
   let doc=actions.querySelector('.ycn-doc-v5');
-  if(!doc){doc=document.createElement('button');doc.type='button';doc.className='ycn-btn ycn-doc-v5';doc.textContent='Ajouter document';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(doc,cancel||save);doc.onclick=openDocuments;}
-  doc.style.display=activeId?'inline-flex':'none';
+  if(!doc){doc=document.createElement('button');doc.type='button';doc.className='ycn-btn ycn-doc-v5';doc.textContent='Ajouter document';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(doc,cancel||save);doc.onclick=()=>saveThenOpenDocuments(modal);}
+  doc.style.display='inline-flex';
+  doc.textContent='Ajouter document';
   if(!form.dataset.ycnUrlSubmitV5){
     form.addEventListener('submit',()=>{
       const snapshot=currentSnapshot(modal),url=txt(modal.querySelector('#ycnUrlV5')?.value);
@@ -188,5 +239,5 @@ const obs=new MutationObserver(records=>{
 });
 obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 window.addEventListener('yaya:data-refreshed',schedule);
-window.__YAYA_COMMANDES_EDIT_MODAL_V5_VERSION='5.1-product-url-save-delete-doc';
+window.__YAYA_COMMANDES_EDIT_MODAL_V5_VERSION='5.2-single-modal-premium-url-doc';
 })();
