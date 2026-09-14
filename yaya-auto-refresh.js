@@ -1,11 +1,135 @@
 (function(){
   'use strict';
 
-  // Synchronisation automatique volontairement désactivée.
-  // Les lectures initiales et les enregistrements manuels restent disponibles.
-  window.__YAYA_AUTO_SYNC_STOPPED=true;
+  // V205.784 — synchronisation légère des achats.
+  // Toutes les 2 s, on lit uniquement les révisions Yaya.
+  // Si la révision achats change, on recharge uniquement l'onglet achats.
+  const POLL_MS=2000;
+  const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
+  const CACHE_META_KEY='YAYA_CACHE_META_V2';
+  let busy=false;
+  let lastAchatsRev='';
+  let timer=null;
+
+  function getApi(){
+    try{
+      return (typeof API==='string'&&API)?API:'';
+    }catch(e){
+      return '';
+    }
+  }
+
+  function cacheRev(){
+    try{
+      const raw=localStorage.getItem(CACHE_META_KEY);
+      const meta=raw?JSON.parse(raw):null;
+      return String(meta&&meta.tabs&&meta.tabs.achats||'');
+    }catch(e){
+      return '';
+    }
+  }
+
+  async function fetchJson(params){
+    const api=getApi();
+    if(!api)throw new Error('API Yaya indisponible');
+    const sep=api.includes('?')?'&':'?';
+    const url=api+sep+params+'&_yaya_live='+Date.now();
+    const ctrl=new AbortController();
+    const timeout=setTimeout(()=>ctrl.abort(),8000);
+    try{
+      const r=await fetch(url,{method:'GET',cache:'no-store',signal:ctrl.signal});
+      const txt=await r.text();
+      const j=JSON.parse(txt);
+      if(!j||!j.ok)throw new Error(j&&j.error||'Réponse Yaya invalide');
+      return j;
+    }finally{
+      clearTimeout(timeout);
+    }
+  }
+
+  function saveCacheAchats(achats,meta){
+    try{
+      const raw=localStorage.getItem(CACHE_DATA_KEY);
+      const cached=raw?JSON.parse(raw):{};
+      if(cached&&typeof cached==='object'){
+        cached.achats=achats;
+        localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(cached));
+      }
+      if(meta&&meta.tabs){
+        localStorage.setItem(CACHE_META_KEY,JSON.stringify(meta));
+      }
+    }catch(e){}
+  }
+
+  async function refreshAchats(){
+    if(busy)return false;
+    busy=true;
+    try{
+      const j=await fetchJson('tabs=achats');
+      const achats=j&&j.data&&Array.isArray(j.data.achats)?j.data.achats:null;
+      if(!achats)return false;
+
+      if(typeof S!=='undefined'&&S){
+        S.achats=achats;
+      }
+
+      saveCacheAchats(achats,j.meta);
+      if(j.meta&&j.meta.tabs){
+        lastAchatsRev=String(j.meta.tabs.achats||lastAchatsRev||'');
+      }
+
+      if(typeof render==='function'){
+        const y=window.scrollY;
+        render();
+        try{window.scrollTo(0,y);}catch(e){}
+      }
+
+      try{
+        window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['achats'],source:'live-achats'}}));
+      }catch(e){}
+      return true;
+    }catch(e){
+      console.warn('Yaya achats · actualisation différée :',e);
+      return false;
+    }finally{
+      busy=false;
+    }
+  }
+
+  async function poll(){
+    if(document.hidden||busy)return;
+    busy=true;
+    try{
+      const j=await fetchJson('mode=meta');
+      const rev=String(j&&j.meta&&j.meta.tabs&&j.meta.tabs.achats||'');
+      if(!rev)return;
+      if(!lastAchatsRev){
+        lastAchatsRev=rev;
+        return;
+      }
+      if(rev!==lastAchatsRev){
+        busy=false;
+        await refreshAchats();
+      }
+    }catch(e){
+      console.warn('Yaya achats · contrôle révision différé :',e);
+    }finally{
+      busy=false;
+    }
+  }
+
+  lastAchatsRev=cacheRev();
+  window.__YAYA_AUTO_SYNC_STOPPED=false;
   window.__yayaSmartRefreshInstalled=true;
-  window.yayaSmartRefreshNow=async function(){return null;};
+  window.yayaSmartRefreshNow=refreshAchats;
+
+  // Une lecture achats au démarrage garantit que même un cache ancien est corrigé.
+  setTimeout(refreshAchats,700);
+  timer=setInterval(poll,POLL_MS);
+
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden)setTimeout(poll,100);
+  });
 })();
 
 // Fiche chantier : un seul onglet visuel « Documents & mails ».
