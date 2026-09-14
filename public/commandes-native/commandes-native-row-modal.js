@@ -90,5 +90,13 @@ const observer=new MutationObserver(records=>{
 });
 observer.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
-window.__YAYA_CMD_ROW_MODAL_VERSION='1.0-line-click-modal';
+window.__YAYA_CMD_ROW_MODAL_VERSION='1.1-line-click-modal';
+
+if(!document.querySelector('script[data-ycn-edit-modal-v5]')){
+  const s=document.createElement('script');
+  s.src='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=5';
+  s.async=true;
+  s.dataset.ycnEditModalV5='1';
+  document.head.appendChild(s);
+}
 })();
