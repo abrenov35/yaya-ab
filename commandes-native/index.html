@@ -4,14 +4,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Yaya — Commandes native</title>
-  <link rel="stylesheet" href="commandes-native.css?v=2">
+  <link rel="stylesheet" href="../public/commandes-native/commandes-native.css?v=5">
 </head>
 <body>
   <main class="cmd-page">
     <header class="cmd-head">
-      <div>
-        <h1>Commandes</h1>
-        <p>Version native Yaya — test isolé</p>
+      <div class="cmd-head-title-wrap">
+        <button id="cmdBack" class="cmd-back" type="button" hidden>← Chantiers</button>
+        <div>
+          <h1 id="cmdTitle">Commandes</h1>
+          <p id="cmdSubtitle">Version native Yaya — test isolé</p>
+        </div>
       </div>
       <div class="cmd-head-actions">
         <button id="cmdAdd" class="cmd-btn cmd-btn-green">+ Ajouter</button>
@@ -19,7 +22,7 @@
       </div>
     </header>
 
-    <section class="cmd-filters">
+    <section id="cmdFilters" class="cmd-filters">
       <input id="cmdSearch" type="search" placeholder="Rechercher un chantier, un produit, un fournisseur…">
       <select id="cmdStatus"><option value="">Tous les statuts</option></select>
     </section>
@@ -82,7 +85,7 @@
 
   <div id="cmdToast" class="cmd-toast" aria-live="polite"></div>
 
-  <script src="commandes-native.js?v=2"></script>
-  <script src="commandes-documents.js?v=3"></script>
+  <script src="../public/commandes-native/commandes-native.js?v=5"></script>
+  <script src="../public/commandes-native/commandes-documents.js?v=4"></script>
 </body>
 </html>
