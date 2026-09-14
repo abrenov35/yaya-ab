@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Yaya — Commandes native</title>
-  <link rel="stylesheet" href="commandes-native.css?v=4">
+  <link rel="stylesheet" href="commandes-native.css?v=5">
 </head>
 <body>
   <main class="cmd-page">
@@ -85,7 +85,27 @@
 
   <div id="cmdToast" class="cmd-toast" aria-live="polite"></div>
 
-  <script src="commandes-native.js?v=4"></script>
-  <script src="commandes-documents.js?v=3"></script>
+  <script src="commandes-native.js?v=5"></script>
+  <script>
+  (()=>{
+    const NativeMutationObserver=window.MutationObserver;
+    window.MutationObserver=class extends NativeMutationObserver{
+      constructor(callback){
+        super((records,observer)=>{
+          const relevant=records.some(record=>{
+            if(record.type!=='childList')return false;
+            return [...record.addedNodes,...record.removedNodes].some(node=>
+              node&&node.nodeType===1&&(
+                node.matches?.('.cmd-row')||node.querySelector?.('.cmd-row')
+              )
+            );
+          });
+          if(relevant)callback(records,observer);
+        });
+      }
+    };
+  })();
+  </script>
+  <script src="commandes-documents.js?v=5"></script>
 </body>
 </html>
