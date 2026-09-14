@@ -23,31 +23,13 @@
     #pane-documents > .note{margin:8px 0 6px!important;color:#162D49!important;opacity:1!important;font-size:11px!important;font-weight:800!important}
     #pane-documents > .card{margin:0!important;padding:0!important;background:#fff!important;border:0!important;border-radius:0!important;box-shadow:none!important}
 
-    ${ROW_SELECTOR}{
-      cursor:pointer!important;
-      outline:none!important;
-      box-shadow:none!important;
-      transition:background .08s ease!important;
-    }
-    ${DETAIL_ROW}{
-      border-left:0!important;
-      border-right:0!important;
-      border-top:0!important;
-      border-bottom:1px solid #dfe6ee!important;
-    }
+    ${ROW_SELECTOR}{cursor:pointer!important;outline:none!important;box-shadow:none!important;transition:background .08s ease!important}
+    ${DETAIL_ROW}{border-left:0!important;border-right:0!important;border-top:0!important;border-bottom:1px solid #dfe6ee!important}
     ${GLOBAL_ROW}:hover,${DETAIL_ROW}:hover{background:#f4f8fc!important;outline:none!important;box-shadow:none!important}
-    ${GLOBAL_ROW}:focus,${DETAIL_ROW}:focus,
-    ${GLOBAL_ROW}:focus-visible,${DETAIL_ROW}:focus-visible{outline:none!important;box-shadow:none!important}
+    ${GLOBAL_ROW}:focus,${DETAIL_ROW}:focus,${GLOBAL_ROW}:focus-visible,${DETAIL_ROW}:focus-visible{outline:none!important;box-shadow:none!important}
 
-    .yaya-mail-body-modal .yaya-mail-body-meta{
-      display:grid!important;gap:5px!important;margin:0 0 14px!important;padding:12px 14px!important;
-      border:1px solid #d7e1ec!important;border-radius:10px!important;background:#f7f9fc!important;color:#24364d!important;font-size:12px!important;
-    }
-    .yaya-mail-body-modal .yaya-mail-body-content{
-      max-height:58vh!important;overflow:auto!important;padding:15px 16px!important;border:1px solid #d7e1ec!important;
-      border-radius:10px!important;background:#fff!important;color:#1f2937!important;font-size:13px!important;line-height:1.55!important;
-      white-space:pre-wrap!important;overflow-wrap:anywhere!important;
-    }
+    .yaya-mail-body-modal .yaya-mail-body-meta{display:grid!important;gap:5px!important;margin:0 0 14px!important;padding:12px 14px!important;border:1px solid #d7e1ec!important;border-radius:10px!important;background:#f7f9fc!important;color:#24364d!important;font-size:12px!important}
+    .yaya-mail-body-modal .yaya-mail-body-content{max-height:58vh!important;overflow:auto!important;padding:15px 16px!important;border:1px solid #d7e1ec!important;border-radius:10px!important;background:#fff!important;color:#1f2937!important;font-size:13px!important;line-height:1.55!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important}
   `;
 
   function text(v){return String(v==null?'':v).trim();}
@@ -216,4 +198,15 @@
   schedule();
   setTimeout(function(){observePane(document.getElementById('pane-documents'));observePane(document.getElementById('pane-chantiers'));schedule();},80);
   window.addEventListener('yaya:data-refreshed',schedule);
+})();
+
+(function(){
+  'use strict';
+  if(window.__yayaMailReadActionsLoaderV6)return;
+  window.__yayaMailReadActionsLoaderV6=true;
+  const s=document.createElement('script');
+  s.src='mail-subject-edit.js?v=mailreadactions-6';
+  s.async=false;
+  s.onerror=()=>console.error('Yaya : chargement actions mail V6 impossible');
+  document.head.appendChild(s);
 })();
