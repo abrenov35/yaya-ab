@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-mail-chantier-section-fix-v13';
+  const STYLE_ID='yaya-mail-chantier-section-fix-v14';
 
   function installStyle(){
-    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9','yaya-mail-chantier-section-fix-v10','yaya-mail-chantier-section-fix-v11','yaya-mail-chantier-section-fix-v12'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9','yaya-mail-chantier-section-fix-v10','yaya-mail-chantier-section-fix-v11','yaya-mail-chantier-section-fix-v12','yaya-mail-chantier-section-fix-v13'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
     let s=document.getElementById(STYLE_ID);
     if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
     s.textContent=`
@@ -31,6 +31,32 @@
     try{if(typeof objetMailYaya==='function')return String(objetMailYaya(d)||'');}catch(e){}
     return String(d.objetMail||d.mailSubject||d.emailSubject||d.subject||d.objet||'Objet non renseigné');
   }
+
+  // Certains anciens mails enregistrés dans Yaya ne portent pas exactement type="MAIL".
+  // On les reconnaît avec les mêmes indices que l'affichage historique puis on normalise
+  // uniquement l'objet chargé en mémoire. Aucun enregistrement serveur n'est déclenché ici.
+  function isMailDocument(d){
+    if(!d)return false;
+    try{if(typeof documentIssuMailYaya==='function'&&documentIssuMailYaya(d))return true;}catch(e){}
+    const upper=v=>String(v||'').trim().toUpperCase();
+    if(upper(d.type)==='MAIL'||upper(d.origineMail)==='MAIL'||upper(d.origine)==='MAIL')return true;
+    if(d.contenuMail||d.corpsMail||d.expediteur||d.from||d.objetMail||d.mailSubject||d.emailSubject)return true;
+    return /\b(?:envoy[eé]|sent|from|objet)\s*:/i.test(String(d.titre||d.objet||''));
+  }
+  function normalizeMailTypes(){
+    try{
+      if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return false;
+      let changed=false;
+      S.documents.forEach(d=>{
+        if(isMailDocument(d)&&String(d.type||'').trim().toUpperCase()!=='MAIL'){
+          d.type='MAIL';
+          changed=true;
+        }
+      });
+      return changed;
+    }catch(e){return false;}
+  }
+
   function rebuildActions(row,id){
     const actions=row.querySelector('.message-actions');if(!actions||!id)return;
     if(row.dataset.yayaMailActionsFixed==='1'&&actions.children.length===3)return;
@@ -43,6 +69,7 @@
     );
   }
   function normalize(){
+    const typesChanged=normalizeMailTypes();
     document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
       const card=row.closest('.card');if(!card)return;
       if(row.dataset.yayaMailSource==='1'){
@@ -61,6 +88,11 @@
       }
       rebuildActions(row,id);row.dataset.yayaMailActionsFixed='1';
     });
+    if(typesChanged){
+      setTimeout(()=>{
+        try{window.dispatchEvent(new Event('yaya:data-refreshed'));}catch(e){}
+      },0);
+    }
   }
   let scheduled=false;
   function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;normalize();});}
