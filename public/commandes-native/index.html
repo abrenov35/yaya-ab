@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Yaya — Commandes native</title>
-  <link rel="stylesheet" href="commandes-native.css?v=1">
+  <link rel="stylesheet" href="commandes-native.css?v=2">
 </head>
 <body>
   <main class="cmd-page">
@@ -13,7 +13,10 @@
         <h1>Commandes</h1>
         <p>Version native Yaya — test isolé</p>
       </div>
-      <button id="cmdRefresh" class="cmd-btn">Actualiser</button>
+      <div class="cmd-head-actions">
+        <button id="cmdAdd" class="cmd-btn cmd-btn-green">+ Ajouter</button>
+        <button id="cmdRefresh" class="cmd-btn">Actualiser</button>
+      </div>
     </header>
 
     <section class="cmd-filters">
@@ -25,6 +28,60 @@
     <section id="cmdList" class="cmd-list"></section>
   </main>
 
-  <script src="commandes-native.js?v=1"></script>
+  <div id="cmdModal" class="cmd-modal" aria-hidden="true">
+    <div class="cmd-dialog" role="dialog" aria-modal="true" aria-labelledby="cmdModalTitle">
+      <div class="cmd-dialog-head">
+        <h2 id="cmdModalTitle">Ajouter une commande</h2>
+        <button id="cmdModalClose" class="cmd-close" type="button" aria-label="Fermer">×</button>
+      </div>
+
+      <form id="cmdForm" autocomplete="off">
+        <div class="cmd-form-grid">
+          <label class="cmd-field cmd-full">
+            <span>Chantier</span>
+            <select id="cmdFChantier" required></select>
+          </label>
+          <label class="cmd-field cmd-full">
+            <span>Produit / besoin</span>
+            <input id="cmdFProduit" required>
+          </label>
+          <label class="cmd-field">
+            <span>Quantité</span>
+            <input id="cmdFQte">
+          </label>
+          <label class="cmd-field">
+            <span>Fournisseur</span>
+            <input id="cmdFFournisseur">
+          </label>
+          <label class="cmd-field">
+            <span>Responsable</span>
+            <select id="cmdFResponsable">
+              <option value="">—</option>
+              <option>Solenn</option>
+              <option>Mathieu</option>
+              <option>Morvan</option>
+              <option>Younès</option>
+            </select>
+          </label>
+          <label class="cmd-field">
+            <span>Statut</span>
+            <select id="cmdFStatus"></select>
+          </label>
+          <label class="cmd-field cmd-full">
+            <span>Note</span>
+            <textarea id="cmdFNotes" rows="3"></textarea>
+          </label>
+        </div>
+        <div class="cmd-dialog-actions">
+          <button id="cmdCancel" class="cmd-btn cmd-btn-light" type="button">Annuler</button>
+          <button class="cmd-btn" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="cmdToast" class="cmd-toast" aria-live="polite"></div>
+
+  <script src="commandes-native.js?v=2"></script>
 </body>
 </html>
