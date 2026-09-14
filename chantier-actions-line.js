@@ -6,7 +6,8 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers button[onclick="fermerFocus()"]{
+      #pane-chantiers button[onclick="fermerFocus()"],
+      #pane-chantiers .card button[onclick*="reload()"]{
         display:none!important;
       }
       #pane-chantiers .chantier-fin-toolbar > .chantier-archive-btn{
@@ -138,10 +139,11 @@
     return onclick.includes('delChantier') || txt==='supprimer' || txt==='supprimer chantier';
   }
 
-  function removeCloseButtons(root){
+  function removeUtilityButtons(root){
     if(!root)return;
     root.querySelectorAll('button').forEach(function(btn){
-      if(String(btn.textContent||'').trim().toLowerCase()==='fermer')btn.remove();
+      const txt=String(btn.textContent||'').replace(/^[^A-Za-zÀ-ÿ]+/,'').trim().toLowerCase();
+      if(txt==='fermer'||txt==='actualiser')btn.remove();
     });
   }
 
@@ -150,14 +152,14 @@
     toolbar.querySelectorAll('.chantier-command-btn,.chantier-expense-btn').forEach(button=>button.remove());
     toolbar.querySelectorAll('button').forEach(button=>{
       const onclick=String(button.getAttribute('onclick')||'');
-      if(onclick.includes('openAvenant(')||onclick.includes('openDocumentModal('))button.remove();
+      if(onclick.includes('openAvenant(')||onclick.includes('openDocumentModal(')||onclick.includes('reload()'))button.remove();
     });
     styleLeftActionButtons(toolbar);
   }
 
   function cleanCard(card){
     if(!card)return;
-    removeCloseButtons(card);
+    removeUtilityButtons(card);
     const toolbar=card.querySelector('.chantier-fin-toolbar');
     const top=card.querySelector('.top');
     if(toolbar)cleanToolbar(toolbar);
@@ -180,13 +182,20 @@
   function apply(){
     const pane=document.getElementById('pane-chantiers');
     if(!pane)return;
-    removeCloseButtons(pane);
+    removeUtilityButtons(pane);
     pane.querySelectorAll('.chantier-fin-toolbar').forEach(cleanToolbar);
     pane.querySelectorAll('.card').forEach(cleanCard);
   }
 
-  const obs=new MutationObserver(()=>apply());
-  obs.observe(document.documentElement,{childList:true,subtree:true});
+  function installObserver(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane){setTimeout(installObserver,120);return;}
+    if(pane.dataset.yayaActionsObserver==='1')return;
+    pane.dataset.yayaActionsObserver='1';
+    new MutationObserver(()=>apply()).observe(pane,{childList:true,subtree:true});
+  }
+
+  installObserver();
   setTimeout(apply,50);
   setTimeout(apply,300);
   setTimeout(apply,1000);
