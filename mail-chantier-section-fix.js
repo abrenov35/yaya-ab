@@ -1,56 +1,14 @@
 (function(){
   'use strict';
-  const STYLE_ID='yaya-mail-chantier-section-fix-v15';
 
-  function installStyle(){
-    ['yaya-mail-chantier-section-fix-v4','yaya-mail-chantier-section-fix-v5','yaya-mail-chantier-section-fix-v6','yaya-mail-chantier-section-fix-v7','yaya-mail-chantier-section-fix-v8','yaya-mail-chantier-section-fix-v9','yaya-mail-chantier-section-fix-v10','yaya-mail-chantier-section-fix-v11','yaya-mail-chantier-section-fix-v12','yaya-mail-chantier-section-fix-v13','yaya-mail-chantier-section-fix-v14'].forEach(id=>{const old=document.getElementById(id);if(old)old.remove();});
-    let s=document.getElementById(STYLE_ID);
-    if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
-    s.textContent=`
-      #pane-chantiers .message-ligne[data-yaya-mail-source="1"]{display:none!important}
-      #pane-chantiers .message-ligne{grid-template-columns:90px max-content minmax(0,1fr) 82px 112px!important;align-items:center!important;column-gap:10px!important;width:100%!important;height:44px!important;min-height:44px!important;max-height:44px!important;padding:5px 8px!important;overflow:visible!important;box-sizing:border-box!important}
-      #pane-chantiers .message-ligne>.b-mail{width:90px!important;height:26px!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:0 8px!important;margin:0!important;border:1px solid #e6bfae!important;border-radius:7px!important;background:#fff!important;color:#8a3b12!important;font-size:10.5px!important;font-weight:800!important;white-space:nowrap!important}
-      #pane-chantiers .message-ligne>.message-categorie{display:inline-flex!important;width:max-content!important;min-width:0!important;max-width:180px!important;justify-self:start!important;align-self:center!important;height:26px!important;align-items:center!important;justify-content:flex-start!important;padding:0 8px!important;margin:0!important;border:0!important;border-radius:6px!important;background:#f4edf9!important;color:#5f397f!important;font-size:11.5px!important;font-weight:700!important;text-align:left!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;box-shadow:none!important}
-      #pane-chantiers .message-ligne>.message-apercu{display:block!important;min-width:0!important;width:100%!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-      #pane-chantiers#pane-chantiers .message-ligne>.message-date{display:flex!important;align-items:center!important;justify-content:center!important;height:28px!important;margin:0!important;color:#9aa6b2!important;font-size:9px!important;font-weight:400!important;opacity:.64!important;white-space:nowrap!important}
-      #pane-chantiers#pane-chantiers#pane-chantiers .message-ligne>.message-actions{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:6px!important;align-items:center!important;justify-content:flex-start!important;width:112px!important;min-width:112px!important;height:32px!important;margin:0!important;overflow:visible!important}
-      #pane-chantiers#pane-chantiers#pane-chantiers .message-ligne>.message-actions>button{position:static!important;visibility:visible!important;opacity:1!important;grid-column:auto!important;grid-row:auto!important;flex:0 0 28px!important;width:28px!important;min-width:28px!important;max-width:28px!important;height:28px!important;min-height:28px!important;max-height:28px!important;padding:0!important;margin:0!important;border-radius:7px!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;transform:none!important;font-size:0!important;line-height:1!important}
-      #pane-chantiers .message-ligne>.message-actions .yaya-mail-view{border:1px solid #a9c8e8!important;background:#f3f8fd!important;color:#174d7d!important}
-      #pane-chantiers .message-ligne>.message-actions .yaya-mail-edit{border:1px solid #a8d5b5!important;background:#f2faf4!important;color:#26703b!important}
-      #pane-chantiers .message-ligne>.message-actions .yaya-mail-delete{border:1px solid #e6a7a7!important;background:#fff3f3!important;color:#c83c3c!important}
-      #pane-chantiers#pane-chantiers .message-ligne>.message-actions>button.btn2.message-view-btn.yaya-mail-view::before{content:'👁️'!important;font-size:14px!important;line-height:1!important}
-      #pane-chantiers .message-ligne>.message-actions .yaya-mail-edit::before{content:'✏️'!important;font-size:13px!important}
-      #pane-chantiers .message-ligne>.message-actions .yaya-mail-delete::before{content:'❌'!important;font-size:12px!important}
-
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row{
-        display:grid!important;
-        grid-template-columns:minmax(150px,.85fr) minmax(260px,1.8fr) 92px 28px 28px 28px!important;
-        align-items:center!important;
-        gap:8px!important;
-        min-height:42px!important;
-        padding:7px 10px!important;
-        border-bottom:1px solid #e6ebf1!important;
-      }
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:last-child{border-bottom:0!important}
-      #pane-chantiers .yaya-detail-mails-pane .yaya-mail-sender,
-      #pane-chantiers .yaya-detail-mails-pane .yaya-mail-subject{min-width:0!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
-      @media(max-width:760px){
-        #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row{grid-template-columns:minmax(110px,.8fr) minmax(180px,1.5fr) 72px 28px 28px 28px!important;gap:6px!important;padding:7px 6px!important}
-      }
-    `;
-  }
-
-  function mailId(row){const raw=[...row.querySelectorAll('[onclick]')].map(x=>x.getAttribute('onclick')||'').join(' ');const m=raw.match(/(?:voirMessageYaya|editDocument|delDocument)\(['\"]([^'\"]+)/);return m&&m[1]?String(m[1]):'';}
-  function mailData(id){try{return typeof S!=='undefined'&&S&&Array.isArray(S.documents)?S.documents.find(d=>String(d.id)===String(id)):null;}catch(e){return null;}}
-  function objet(d){
-    if(!d)return '';
-    try{if(typeof objetMailYaya==='function')return String(objetMailYaya(d)||'');}catch(e){}
-    return String(d.objetMail||d.mailSubject||d.emailSubject||d.subject||d.objet||'Objet non renseigné');
-  }
+  // Compatibilité légère : normaliser uniquement les données mail.
+  // Le rendu des mails est déjà assuré par chantier-detail-section-tabs.
+  // Aucun MutationObserver global ici : il ralentissait chaque ouverture et navigation.
+  if(window.__yayaMailDataNormalizerV16)return;
+  window.__yayaMailDataNormalizerV16=true;
 
   function isMailDocument(d){
     if(!d)return false;
-    try{if(typeof documentIssuMailYaya==='function'&&documentIssuMailYaya(d))return true;}catch(e){}
     const upper=v=>String(v||'').trim().toUpperCase();
     if(upper(d.type)==='MAIL'||upper(d.origineMail)==='MAIL'||upper(d.origine)==='MAIL')return true;
     if(d.contenuMail||d.corpsMail||d.expediteur||d.from||d.objetMail||d.mailSubject||d.emailSubject)return true;
@@ -61,35 +19,18 @@
     const raw=String(value==null?'':value).trim();
     if(!raw)return '';
     try{
-      if(typeof window.yayaCanonicalChantierId==='function'){
-        return String(window.yayaCanonicalChantierId(raw)||raw);
-      }
+      if(typeof window.yayaCanonicalChantierId==='function')return String(window.yayaCanonicalChantierId(raw)||raw);
     }catch(e){}
-    const aliases={
-      'mtiureohm15c':'C454','planning-12':'C458','msm3za2i1tpw':'C459','mtqylt0du6sy':'C460',
-      'mtk4fpwm5tka':'C461','mtlmue3aefv2':'C462','planning-28':'C463','mrrui7k8nrtg':'C464',
-      'mthmmenk2njd':'C465','mrsvjujxia59':'C466','mtovzolwurte':'C468','mrrum5gnhn92':'C469','mrrp7dywt2x7':'C473'
-    };
-    return aliases[raw]||raw;
+    return raw;
   }
 
-  function cardId(card){
-    if(!card)return '';
-    const attrs=[...card.querySelectorAll('[onclick]')].map(el=>String(el.getAttribute('onclick')||''));
-    for(const raw of attrs){
-      const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);
-      if(m&&m[1])return canonicalId(m[1]);
-    }
-    try{if(typeof focusChantier!=='undefined'&&focusChantier)return canonicalId(focusChantier);}catch(e){}
-    return '';
-  }
-
-  function normalizeMailTypes(){
+  function normalize(){
     try{
       if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return false;
       let changed=false;
       S.documents.forEach(d=>{
-        if(d&&d.chantierId){
+        if(!d)return;
+        if(d.chantierId){
           const cid=canonicalId(d.chantierId);
           if(cid&&String(d.chantierId)!==cid){d.chantierId=cid;changed=true;}
         }
@@ -102,131 +43,16 @@
     }catch(e){return false;}
   }
 
-  function escapeHtml(value){
-    return String(value==null?'':value)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-  }
-
-  function mailSender(row){
-    try{if(typeof nomMailYaya==='function')return String(nomMailYaya(row)||'');}catch(e){}
-    return String(row.nomMail||row.expediteur||row.from||row.sujet||'Expéditeur non renseigné').replace(/<.*$/,'').trim();
-  }
-
-  function mailSubject(row){
-    try{if(typeof objetMailYaya==='function')return String(objetMailYaya(row)||'');}catch(e){}
-    let value=String(row.objetMail||row.mailSubject||row.emailSubject||row.subject||row.objet||'').trim();
-    if(!value){
-      const titre=String(row.titre||'').replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim();
-      const m=titre.match(/(?:^|\s)Objet\s*:\s*(.+?)(?:\s{2,}|$)/i);
-      value=m&&m[1]?m[1]:titre.slice(0,140);
-    }
-    return value.replace(/^objet\s*:\s*/i,'').trim()||'Objet non renseigné';
-  }
-
-  function mailDate(row){
-    const raw=String(row&&row.date||'').slice(0,10);
-    const p=raw.split('-');
-    return p.length===3?p.reverse().join('/'):raw;
-  }
-
-  function ensureMergedMailPanes(){
-    try{
-      if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return;
-      const pane=document.getElementById('pane-chantiers');
-      if(!pane)return;
-      pane.querySelectorAll('.card:has(> .yaya-detail-section-tabs)').forEach(card=>{
-        const cid=cardId(card);
-        if(!cid)return;
-        const rows=S.documents.filter(d=>canonicalId(d&&d.chantierId)===cid&&isMailDocument(d))
-          .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.id||'').localeCompare(String(a.id||'')));
-        let mailPane=card.querySelector(':scope > .yaya-detail-mails-pane');
-        const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
-        if(!mailPane&&tabs){
-          mailPane=document.createElement('div');
-          mailPane.className='yaya-detail-section-node yaya-detail-mails-pane';
-          mailPane.dataset.section='mail';
-          tabs.insertAdjacentElement('afterend',mailPane);
-        }
-        if(!mailPane)return;
-        mailPane.dataset.empty=rows.length?'0':'1';
-        const signature=JSON.stringify(rows.map(r=>[r.id||'',r.chantierId||'',r.date||'',mailSender(r),mailSubject(r)]));
-        if(mailPane.dataset.yayaCanonicalMailSignature!==signature){
-          mailPane.innerHTML=rows.map(r=>{
-            const id=String(r.id||'');
-            const sender=mailSender(r);
-            const subject=mailSubject(r);
-            const date=mailDate(r)||'—';
-            return '<div class="yaya-detail-document-row yaya-detail-mail-row" data-mail-id="'+escapeHtml(id)+'">'
-              +'<strong class="yaya-mail-sender" title="'+escapeHtml(sender)+'">'+escapeHtml(sender)+'</strong>'
-              +'<span class="yaya-mail-subject" title="'+escapeHtml(subject)+'">'+escapeHtml(subject)+'</span>'
-              +'<span class="yaya-detail-charge-cost">'+escapeHtml(date)+'</span>'
-              +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" onclick="voirMessageYaya('+JSON.stringify(id).replace(/"/g,'&quot;')+')">👁</button>'
-              +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" onclick="editDocument('+JSON.stringify(id).replace(/"/g,'&quot;')+')">✏️</button>'
-              +'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" onclick="delDocument('+JSON.stringify(id).replace(/"/g,'&quot;')+')">🗑️</button>'
-              +'</div>';
-          }).join('');
-          mailPane.dataset.yayaCanonicalMailSignature=signature;
-        }
-        const active=String(card.dataset.yayaDetailSection||'');
-        if(rows.length&&(active==='documents'||active==='mail')){
-          mailPane.style.setProperty('display','block','important');
-        }else{
-          mailPane.style.removeProperty('display');
-        }
-        const emptyDoc=card.querySelector(':scope > .yaya-detail-empty-pane[data-section="documents"]');
-        if(emptyDoc&&rows.length&&(active==='documents'||active==='mail')){
-          emptyDoc.style.setProperty('display','none','important');
-        }
-      });
-    }catch(e){console.warn('Affichage mails chantier ignoré :',e);}
-  }
-
-  function rebuildActions(row,id){
-    const actions=row.querySelector('.message-actions');if(!actions||!id)return;
-    if(row.dataset.yayaMailActionsFixed==='1'&&actions.children.length===3)return;
-    actions.innerHTML='';
-    const make=(cls,title,code)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.title=title;b.setAttribute('aria-label',title);b.setAttribute('onclick',code);return b;};
-    actions.append(
-      make('btn2 message-view-btn yaya-mail-view','Voir le message','voirMessageYaya('+JSON.stringify(id)+')'),
-      make('btn2 yaya-mail-edit','Modifier le mail','editDocument('+JSON.stringify(id)+')'),
-      make('x yaya-mail-delete','Supprimer le mail','delDocument('+JSON.stringify(id)+')')
-    );
-  }
-
-  function normalize(){
-    const typesChanged=normalizeMailTypes();
-    document.querySelectorAll('#pane-chantiers .message-ligne').forEach(row=>{
-      const card=row.closest('.card');if(!card)return;
-      if(row.dataset.yayaMailSource==='1'){
-        row.style.setProperty('display','none','important');
-        return;
-      }
-      row.classList.add('yaya-detail-section-node');
-      row.dataset.section='mail';
-      row.style.removeProperty('display');
-      row.style.setProperty('overflow','visible','important');
-      const id=mailId(row);const d=mailData(id);const apercu=row.querySelector('.message-apercu');
-      if(apercu&&d){
-        const valeur=objet(d)||'Objet non renseigné';
-        apercu.textContent=valeur;
-        apercu.title=valeur;
-      }
-      rebuildActions(row,id);row.dataset.yayaMailActionsFixed='1';
-    });
-    ensureMergedMailPanes();
-    if(typesChanged){
+  function run(allowRedispatch){
+    const changed=normalize();
+    if(changed&&allowRedispatch){
       setTimeout(()=>{
-        try{window.dispatchEvent(new Event('yaya:data-refreshed'));}catch(e){}
+        try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['documents'],source:'mail-normalizer'}}));}catch(e){}
       },0);
     }
   }
 
-  let scheduled=false;
-  function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(()=>{scheduled=false;normalize();});}
-  function run(){installStyle();schedule();}
-  run();setTimeout(run,300);setTimeout(run,1000);setTimeout(run,2200);
-  document.addEventListener('click',function(e){if(e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab'))setTimeout(schedule,0);},false);
-  new MutationObserver(schedule).observe(document.body||document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',schedule);
+  run(false);
+  setTimeout(()=>run(false),500);
+  window.addEventListener('yaya:data-refreshed',()=>run(true));
 })();
