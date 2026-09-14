@@ -1,15 +1,17 @@
 (function(){
   'use strict';
 
-  // V205.784 — synchronisation légère des achats.
-  // Toutes les 2 s, on lit uniquement les révisions Yaya.
-  // Si la révision achats change, on recharge uniquement l'onglet achats.
+  // V205.788 — synchronisation légère des données alimentées par Yaya Mail.
+  // Achats + Charges reposent sur S.achats.
+  // Documents + Mails reposent sur S.documents.
+  // Toutes les 2 s, on lit seulement les révisions ; seules les tables modifiées sont rechargées.
   const POLL_MS=2000;
+  const WATCHED=['achats','documents'];
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   const CACHE_META_KEY='YAYA_CACHE_META_V2';
   let busy=false;
-  let lastAchatsRev='';
   let timer=null;
+  const lastRev={achats:'',documents:''};
 
   function getApi(){
     try{
@@ -19,14 +21,14 @@
     }
   }
 
-  function cacheRev(){
+  function readCachedRevisions(){
     try{
       const raw=localStorage.getItem(CACHE_META_KEY);
       const meta=raw?JSON.parse(raw):null;
-      return String(meta&&meta.tabs&&meta.tabs.achats||'');
-    }catch(e){
-      return '';
-    }
+      WATCHED.forEach(tab=>{
+        lastRev[tab]=String(meta&&meta.tabs&&meta.tabs[tab]||'');
+      });
+    }catch(e){}
   }
 
   async function fetchJson(params){
@@ -47,50 +49,64 @@
     }
   }
 
-  function saveCacheAchats(achats,meta){
+  function saveCacheTab(tab,rows,meta){
     try{
       const raw=localStorage.getItem(CACHE_DATA_KEY);
       const cached=raw?JSON.parse(raw):{};
       if(cached&&typeof cached==='object'){
-        cached.achats=achats;
+        cached[tab]=rows;
         localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(cached));
       }
-      if(meta&&meta.tabs){
-        localStorage.setItem(CACHE_META_KEY,JSON.stringify(meta));
+
+      if(meta&&typeof meta==='object'){
+        let oldMeta={};
+        try{oldMeta=JSON.parse(localStorage.getItem(CACHE_META_KEY)||'{}')||{};}catch(e){}
+        const merged={...oldMeta,...meta,tabs:{...(oldMeta.tabs||{}),...(meta.tabs||{})}};
+        localStorage.setItem(CACHE_META_KEY,JSON.stringify(merged));
       }
     }catch(e){}
   }
 
-  async function refreshAchats(){
+  async function refreshTabs(tabs){
     if(busy)return false;
+    const wanted=(Array.isArray(tabs)&&tabs.length?tabs:WATCHED).filter(tab=>WATCHED.includes(tab));
+    if(!wanted.length)return false;
+
     busy=true;
+    const updated=[];
     try{
-      const j=await fetchJson('tabs=achats');
-      const achats=j&&j.data&&Array.isArray(j.data.achats)?j.data.achats:null;
-      if(!achats)return false;
+      for(const tab of wanted){
+        try{
+          const j=await fetchJson('tabs='+encodeURIComponent(tab));
+          const rows=j&&j.data&&Array.isArray(j.data[tab])?j.data[tab]:null;
+          if(!rows)continue;
 
-      if(typeof S!=='undefined'&&S){
-        S.achats=achats;
+          if(typeof S!=='undefined'&&S){
+            S[tab]=rows;
+          }
+
+          saveCacheTab(tab,rows,j.meta);
+          if(j.meta&&j.meta.tabs){
+            lastRev[tab]=String(j.meta.tabs[tab]||lastRev[tab]||'');
+          }
+          updated.push(tab);
+        }catch(e){
+          console.warn('Yaya '+tab+' · actualisation différée :',e);
+        }
       }
 
-      saveCacheAchats(achats,j.meta);
-      if(j.meta&&j.meta.tabs){
-        lastAchatsRev=String(j.meta.tabs.achats||lastAchatsRev||'');
-      }
-
-      if(typeof render==='function'){
+      if(updated.length&&typeof render==='function'){
         const y=window.scrollY;
         render();
         try{window.scrollTo(0,y);}catch(e){}
       }
 
-      try{
-        window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['achats'],source:'live-achats'}}));
-      }catch(e){}
-      return true;
-    }catch(e){
-      console.warn('Yaya achats · actualisation différée :',e);
-      return false;
+      if(updated.length){
+        try{
+          window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:updated,source:'live-yaya-mail'}}));
+        }catch(e){}
+      }
+      return updated.length>0;
     }finally{
       busy=false;
     }
@@ -101,30 +117,37 @@
     busy=true;
     try{
       const j=await fetchJson('mode=meta');
-      const rev=String(j&&j.meta&&j.meta.tabs&&j.meta.tabs.achats||'');
-      if(!rev)return;
-      if(!lastAchatsRev){
-        lastAchatsRev=rev;
-        return;
-      }
-      if(rev!==lastAchatsRev){
+      const metaTabs=j&&j.meta&&j.meta.tabs||{};
+      const changed=[];
+
+      WATCHED.forEach(tab=>{
+        const rev=String(metaTabs[tab]||'');
+        if(!rev)return;
+        if(!lastRev[tab]){
+          lastRev[tab]=rev;
+          return;
+        }
+        if(rev!==lastRev[tab])changed.push(tab);
+      });
+
+      if(changed.length){
         busy=false;
-        await refreshAchats();
+        await refreshTabs(changed);
       }
     }catch(e){
-      console.warn('Yaya achats · contrôle révision différé :',e);
+      console.warn('Yaya Mail · contrôle des révisions différé :',e);
     }finally{
       busy=false;
     }
   }
 
-  lastAchatsRev=cacheRev();
+  readCachedRevisions();
   window.__YAYA_AUTO_SYNC_STOPPED=false;
   window.__yayaSmartRefreshInstalled=true;
-  window.yayaSmartRefreshNow=refreshAchats;
+  window.yayaSmartRefreshNow=function(){return refreshTabs(WATCHED);};
 
-  // Une lecture achats au démarrage garantit que même un cache ancien est corrigé.
-  setTimeout(refreshAchats,700);
+  // Au démarrage, on corrige immédiatement un éventuel cache ancien.
+  setTimeout(()=>refreshTabs(WATCHED),700);
   timer=setInterval(poll,POLL_MS);
 
   document.addEventListener('visibilitychange',()=>{
