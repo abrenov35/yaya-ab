@@ -5,6 +5,7 @@ const STYLE_ID='yaya-ab-commandes-direct-style';
 const BLOCK_CLASS='yaya-ab-commandes-direct';
 const REFRESH_ID='yayaRefreshChantierBtn';
 const MANAGE_ID='yayaManageChantierCardBtn';
+const DELETE_CONFIRM_ID='ycnDeleteConfirmPretty';
 const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.css?v=3';
 const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=1';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=1';
@@ -12,7 +13,7 @@ const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.
 const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=4';
 const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=6';
 const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=1';
-let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null;
+let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
 
 function installBaseStyle(){
  let s=document.getElementById(STYLE_ID);
@@ -26,6 +27,75 @@ function installBaseStyle(){
  .${BLOCK_CLASS} .yaya-cmd-direct-wait{padding:10px 2px;color:#708095;font-size:12px;font-weight:700}
  #${REFRESH_ID}{height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid #b9dfc5!important;border-radius:8px!important;background:#e8f5ec!important;color:#287a46!important;font-size:13px!important;font-weight:600!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important}
  #${REFRESH_ID}:hover{background:#dff1e5!important;border-color:#a8d6b6!important}`;
+}
+
+function installDeleteConfirmPatch(){
+ if(deleteConfirmInstalled)return;
+ deleteConfirmInstalled=true;
+ const style=document.createElement('style');
+ style.id='ycn-delete-confirm-pretty-style';
+ style.textContent=`
+  #${DELETE_CONFIRM_ID}{position:fixed;inset:0;z-index:50000;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(14,29,48,.58);backdrop-filter:blur(5px)}
+  #${DELETE_CONFIRM_ID}.show{display:flex}
+  #${DELETE_CONFIRM_ID} .ycn-del-card{width:min(430px,calc(100vw - 28px));overflow:hidden;border:1px solid #e0e7ef;border-radius:18px;background:#fff;box-shadow:0 28px 90px rgba(10,28,50,.34);animation:ycnDelIn .14s ease-out}
+  #${DELETE_CONFIRM_ID} .ycn-del-top{display:flex;align-items:flex-start;gap:14px;padding:22px 22px 14px}
+  #${DELETE_CONFIRM_ID} .ycn-del-icon{width:42px;height:42px;flex:0 0 42px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#fff0ee;color:#b42318;font-size:22px;font-weight:900}
+  #${DELETE_CONFIRM_ID} .ycn-del-copy{min-width:0;flex:1}
+  #${DELETE_CONFIRM_ID} .ycn-del-title{margin:1px 0 7px;color:#20364f;font-size:18px;line-height:1.2;font-weight:900}
+  #${DELETE_CONFIRM_ID} .ycn-del-text{margin:0;color:#63758a;font-size:13px;line-height:1.5}
+  #${DELETE_CONFIRM_ID} .ycn-del-name{display:block;margin-top:5px;color:#243b55;font-weight:850;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #${DELETE_CONFIRM_ID} .ycn-del-actions{display:flex;justify-content:flex-end;gap:9px;padding:16px 22px 20px;border-top:1px solid #edf1f5;background:#fbfcfe}
+  #${DELETE_CONFIRM_ID} button{min-width:105px;height:40px;padding:0 15px;border-radius:10px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+  #${DELETE_CONFIRM_ID} .ycn-del-cancel{border:1px solid #c8d4e0;background:#fff;color:#38506a}
+  #${DELETE_CONFIRM_ID} .ycn-del-confirm{border:1px solid #c92a20;background:#c92a20;color:#fff;box-shadow:0 4px 10px rgba(201,42,32,.2)}
+  #${DELETE_CONFIRM_ID} .ycn-del-confirm:hover{background:#ad2018;border-color:#ad2018}
+  #${DELETE_CONFIRM_ID} .ycn-del-cancel:hover{background:#f3f7fb}
+  @keyframes ycnDelIn{from{opacity:.3;transform:translateY(7px) scale(.985)}to{opacity:1;transform:none}}
+  @media(max-width:520px){#${DELETE_CONFIRM_ID}{padding:10px}#${DELETE_CONFIRM_ID} .ycn-del-actions{display:grid;grid-template-columns:1fr 1fr}#${DELETE_CONFIRM_ID} button{width:100%;min-width:0}}
+ `;
+ document.head.appendChild(style);
+ function closeConfirm(){document.getElementById(DELETE_CONFIRM_ID)?.classList.remove('show');}
+ function ensureConfirm(){
+   let m=document.getElementById(DELETE_CONFIRM_ID);if(m)return m;
+   m=document.createElement('div');m.id=DELETE_CONFIRM_ID;m.innerHTML=`
+    <div class="ycn-del-card" role="dialog" aria-modal="true" aria-labelledby="ycnDelTitle">
+      <div class="ycn-del-top">
+        <div class="ycn-del-icon">×</div>
+        <div class="ycn-del-copy">
+          <h3 class="ycn-del-title" id="ycnDelTitle">Supprimer la commande ?</h3>
+          <p class="ycn-del-text">Cette commande sera supprimée de Yaya.<span class="ycn-del-name"></span></p>
+        </div>
+      </div>
+      <div class="ycn-del-actions">
+        <button type="button" class="ycn-del-cancel">Annuler</button>
+        <button type="button" class="ycn-del-confirm">Supprimer</button>
+      </div>
+    </div>`;
+   document.body.appendChild(m);
+   m.querySelector('.ycn-del-cancel').onclick=closeConfirm;
+   m.onclick=e=>{if(e.target===m)closeConfirm();};
+   return m;
+ }
+ document.addEventListener('click',e=>{
+   const btn=e.target?.closest?.('#ycnEditModal .ycn-delete-v5');
+   if(!btn)return;
+   e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();
+   const edit=document.getElementById('ycnEditModal');
+   const product=String(edit?.querySelector('#ycnProduit')?.value||'').trim()||'Commande';
+   const m=ensureConfirm();
+   m.querySelector('.ycn-del-name').textContent='« '+product+' »';
+   const confirmBtn=m.querySelector('.ycn-del-confirm');
+   confirmBtn.onclick=()=>{
+     closeConfirm();
+     const nativeConfirm=window.confirm;
+     window.confirm=()=>true;
+     try{if(typeof btn.onclick==='function')btn.onclick();}
+     finally{window.confirm=nativeConfirm;}
+   };
+   m.classList.add('show');
+   setTimeout(()=>confirmBtn.focus(),20);
+ },true);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(DELETE_CONFIRM_ID)?.classList.contains('show'))closeConfirm();});
 }
 
 function ensureRowModalPatch(){
@@ -106,9 +176,9 @@ function ensureRefreshButton(){
 function findActiveCard(){const c=document.querySelector('#pane-chantiers .card[data-yaya-detail-section="commandes"]');if(c)return c;const b=document.querySelector('#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]');return b?b.closest('.card'):null;}
 function scan(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();const card=findActiveCard();if(card)mountCard(card);},35);}
 
-installBaseStyle();ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureEditV5Patch();ensureCreateV6Patch();ensureRefreshButton();
+installBaseStyle();installDeleteConfirmPatch();ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureEditV5Patch();ensureCreateV6Patch();ensureRefreshButton();
 document.addEventListener('click',e=>{const b=e.target?.closest?.('.yaya-detail-section-tab[data-section]');if(!b)return;const card=b.closest('.card');if(String(b.dataset.section||'')==='commandes'){setTimeout(()=>mountCard(card),0);setTimeout(()=>mountCard(card),80);}setTimeout(ensureRefreshButton,0);});
 const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);window.addEventListener('focus',scan);window.addEventListener('yaya:data-refreshed',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.8-create-followup-url-doc';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.10-pretty-delete-confirm';
 })();
