@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>Yaya — Commandes native</title>
+  <link rel="stylesheet" href="commandes-native.css?v=1">
+</head>
+<body>
+  <main class="cmd-page">
+    <header class="cmd-head">
+      <div>
+        <h1>Commandes</h1>
+        <p>Version native Yaya — test isolé</p>
+      </div>
+      <button id="cmdRefresh" class="cmd-btn">Actualiser</button>
+    </header>
+
+    <section class="cmd-filters">
+      <input id="cmdSearch" type="search" placeholder="Rechercher un chantier, un produit, un fournisseur…">
+      <select id="cmdStatus"><option value="">Tous les statuts</option></select>
+    </section>
+
+    <div id="cmdState" class="cmd-state">Chargement du cache local…</div>
+    <section id="cmdList" class="cmd-list"></section>
+  </main>
+
+  <script src="commandes-native.js?v=1"></script>
+</body>
+</html>
