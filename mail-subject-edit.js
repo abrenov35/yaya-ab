@@ -1,200 +1,236 @@
 (function(){
   'use strict';
+  if(window.__yayaMailReadActionsV6)return;
+  window.__yayaMailReadActionsV6=true;
 
-  if(window.__yayaMailSubjectEditV5)return;
-  window.__yayaMailSubjectEditV5=true;
+  const STYLE_ID='yaya-mail-read-actions-style-v6';
+  let lastMailId='';
 
-  const STYLE_ID='yaya-mail-subject-edit-style-v5';
+  function text(v){return String(v==null?'':v).trim();}
+  function esc(v){
+    return String(v==null?'':v).replace(/[&<>"']/g,ch=>({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[ch]));
+  }
+  function getDoc(id){
+    try{
+      return (typeof S!=='undefined'&&S&&Array.isArray(S.documents))
+        ? S.documents.find(d=>String(d&&d.id||'')===String(id))||null
+        : null;
+    }catch(e){return null;}
+  }
+  function mailSender(d){
+    try{if(typeof window.nomMailYaya==='function')return text(window.nomMailYaya(d));}catch(e){}
+    return text(d&&(d.nomMail||d.expediteur||d.from||d.sujet))||'Expéditeur non renseigné';
+  }
+  function mailSubject(d){
+    try{if(typeof window.objetMailYaya==='function')return text(window.objetMailYaya(d));}catch(e){}
+    return text(d&&(d.objetMail||d.mailSubject||d.emailSubject||d.subject||d.objet||d.titre))||'Objet non renseigné';
+  }
 
   function installStyle(){
     if(document.getElementById(STYLE_ID))return;
-    ['yaya-mail-subject-edit-style-v1','yaya-mail-subject-edit-style-v2','yaya-mail-subject-edit-style-v3','yaya-mail-subject-edit-style-v4'].forEach(function(id){
-      const old=document.getElementById(id);if(old)old.remove();
-    });
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers .yaya-detail-mails-pane .yaya-mail-subject[data-yaya-mail-edit="1"],
-      #pane-chantiers .yaya-detail-mails-pane .yaya-mail-sender[data-yaya-mail-view="1"]{
-        cursor:pointer!important;
+      #modalRoot .yaya-mail-read-actions{
+        display:flex!important;align-items:center!important;justify-content:space-between!important;
+        gap:10px!important;margin-top:16px!important;padding-top:14px!important;
+        border-top:1px solid #dce4ee!important;
       }
-      #pane-chantiers .yaya-detail-mails-pane .yaya-mail-subject[data-yaya-mail-edit="1"]:hover,
-      #pane-chantiers .yaya-detail-mails-pane .yaya-mail-sender[data-yaya-mail-view="1"]:hover{
-        text-decoration:underline!important;
-        text-underline-offset:3px!important;
+      #modalRoot .yaya-mail-read-actions-right{display:flex!important;gap:8px!important;margin-left:auto!important}
+      #modalRoot .yaya-mail-read-edit{
+        min-height:38px!important;padding:0 15px!important;border:1px solid #9fc0e4!important;
+        border-radius:9px!important;background:#edf5ff!important;color:#16558f!important;
+        font-weight:800!important;cursor:pointer!important;
       }
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-edit,
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-view{
-        display:none!important;
+      #modalRoot .yaya-mail-read-delete{
+        min-height:38px!important;padding:0 15px!important;border:1px solid #e7a39c!important;
+        border-radius:9px!important;background:#fff3f2!important;color:#c92a21!important;
+        font-weight:800!important;cursor:pointer!important;
       }
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-delete{
-        margin-left:8px!important;
-        color:#d92d20!important;
-        border-color:#f1a8a1!important;
-        background:#fff7f6!important;
-        font-weight:700!important;
-        font-size:0!important;
+      #modalRoot .yaya-mail-subject-modal{
+        width:min(520px,calc(100vw - 28px))!important;max-width:520px!important;
+        padding:0!important;overflow:hidden!important;border-radius:16px!important;
       }
-      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-document-delete::before{
-        content:'×'!important;
-        font-size:20px!important;
-        line-height:1!important;
-        color:#d92d20!important;
+      #modalRoot .yaya-mail-subject-head{
+        display:flex!important;align-items:center!important;justify-content:space-between!important;
+        gap:12px!important;padding:18px 20px!important;background:#173e69!important;color:#fff!important;
       }
-      #modalRoot .modal[data-yaya-mail-edit-modal="1"] #edDocType,
-      #modalRoot .modal[data-yaya-mail-edit-modal="1"] .mrow[data-yaya-mail-type-row="1"]{
-        display:none!important;
+      #modalRoot .yaya-mail-subject-head strong{font-size:17px!important}
+      #modalRoot .yaya-mail-subject-head button{
+        width:34px!important;height:34px!important;padding:0!important;display:inline-flex!important;
+        align-items:center!important;justify-content:center!important;border:1px solid rgba(255,255,255,.35)!important;
+        border-radius:9px!important;background:rgba(255,255,255,.10)!important;color:#fff!important;
+        font-size:20px!important;cursor:pointer!important;
       }
+      #modalRoot .yaya-mail-subject-body{padding:20px!important;background:#fff!important}
+      #modalRoot .yaya-mail-subject-body label{
+        display:block!important;margin-bottom:7px!important;color:#304760!important;font-size:12px!important;font-weight:800!important;
+      }
+      #modalRoot .yaya-mail-subject-body #edDocTitre{
+        width:100%!important;box-sizing:border-box!important;min-height:46px!important;padding:0 13px!important;
+        border:1.5px solid #b8c8d9!important;border-radius:10px!important;background:#fff!important;
+        color:#1e3047!important;font-size:14px!important;outline:none!important;
+      }
+      #modalRoot .yaya-mail-subject-body #edDocTitre:focus{
+        border-color:#2f6fae!important;box-shadow:0 0 0 3px rgba(47,111,174,.13)!important;
+      }
+      #modalRoot .yaya-mail-subject-foot{
+        display:flex!important;justify-content:flex-end!important;gap:9px!important;padding:14px 20px 18px!important;
+        border-top:1px solid #e4eaf1!important;background:#f8fafc!important;
+      }
+      #modalRoot .yaya-mail-subject-cancel,#modalRoot .yaya-mail-subject-save{
+        min-height:39px!important;padding:0 16px!important;border-radius:9px!important;font-weight:800!important;cursor:pointer!important;
+      }
+      #modalRoot .yaya-mail-subject-cancel{border:1px solid #c8d3df!important;background:#fff!important;color:#31465e!important}
+      #modalRoot .yaya-mail-subject-save{border:1px solid #145b96!important;background:#145b96!important;color:#fff!important}
     `;
     document.head.appendChild(style);
   }
 
-  function prepare(row){
-    if(!row)return;
-    const subject=row.querySelector('.yaya-mail-subject');
-    const sender=row.querySelector('.yaya-mail-sender');
-    const edit=row.querySelector('.yaya-detail-document-edit[data-mail-id]');
-    const view=row.querySelector('.yaya-detail-document-view[data-mail-id]');
-    const del=row.querySelector('.yaya-detail-document-delete');
-    const id=String((edit&&edit.dataset.mailId)||(view&&view.dataset.mailId)||'').trim();
-    if(!subject||!id)return;
-
-    subject.dataset.yayaMailEdit='1';
-    subject.dataset.mailId=id;
-    subject.setAttribute('role','button');
-    subject.setAttribute('tabindex','0');
-    subject.setAttribute('title','Modifier le mail');
-    subject.setAttribute('aria-label','Modifier le mail');
-
-    if(sender){
-      sender.dataset.yayaMailView='1';
-      sender.dataset.mailId=id;
-      sender.setAttribute('role','button');
-      sender.setAttribute('tabindex','0');
-      sender.setAttribute('title','Voir le mail');
-      sender.setAttribute('aria-label','Voir le mail');
+  function idFromRow(row){
+    if(!row)return '';
+    for(const v of [row.dataset&&row.dataset.mailId,row.dataset&&row.dataset.id]){
+      if(text(v))return text(v);
     }
-
-    if(edit){
-      edit.style.setProperty('display','none','important');
-      edit.setAttribute('aria-hidden','true');
+    const data=row.querySelector('[data-mail-id],[data-id]');
+    if(data){
+      const id=text(data.dataset&&(data.dataset.mailId||data.dataset.id));
+      if(id)return id;
     }
-    if(view){
-      view.style.setProperty('display','none','important');
-      view.setAttribute('aria-hidden','true');
-      view.tabIndex=-1;
-    }
-    if(del){
-      del.setAttribute('title','Supprimer');
-      del.setAttribute('aria-label','Supprimer');
-    }
+    const raw=[...row.querySelectorAll('[onclick]')].map(el=>String(el.getAttribute('onclick')||'')).join(' ');
+    const m=raw.match(/(?:voirMessageYaya|editDocument|delDocument)\(['"]([^'"]+)/i);
+    return m&&m[1]?text(m[1]):'';
   }
 
-  function patchMailEditModal(){
-    const type=document.getElementById('edDocType');
-    if(!type)return;
-    if(String(type.value||'').trim().toUpperCase()!=='MAIL')return;
+  function openSubjectEditor(id){
+    id=text(id);
+    const d=getDoc(id);
+    const root=document.getElementById('modalRoot');
+    if(!d||!root)return;
 
-    const modal=type.closest('.modal');
-    if(!modal)return;
-    modal.dataset.yayaMailEditModal='1';
+    const sender=mailSender(d);
+    let subject=mailSubject(d);
+    if(subject==='Objet non renseigné')subject='';
 
-    const row=type.closest('.mrow');
-    if(row){
-      row.dataset.yayaMailTypeRow='1';
-      row.style.setProperty('display','none','important');
-    }else{
-      type.style.setProperty('display','none','important');
-    }
+    root.innerHTML=''
+      +'<div class="overlay yaya-mail-subject-overlay">'
+      +'<div class="modal yaya-mail-subject-modal">'
+      +'<div class="yaya-mail-subject-head"><strong>Modifier l’objet</strong>'
+      +'<button type="button" class="yaya-mail-subject-close" aria-label="Fermer">×</button></div>'
+      +'<div class="yaya-mail-subject-body">'
+      +'<input type="hidden" id="edDocCh" value="'+esc(d.chantierId||'')+'">'
+      +'<input type="hidden" id="edDocType" value="'+esc(d.type||'MAIL')+'">'
+      +'<input type="hidden" id="edDocSujet" value="'+esc(sender)+'">'
+      +'<label for="edDocTitre">Objet du mail</label>'
+      +'<input id="edDocTitre" type="text" value="'+esc(subject)+'" autocomplete="off" placeholder="Saisir l’objet du mail">'
+      +'</div>'
+      +'<div class="yaya-mail-subject-foot">'
+      +'<button type="button" class="yaya-mail-subject-cancel">Annuler</button>'
+      +'<button type="button" class="yaya-mail-subject-save">Enregistrer</button>'
+      +'</div></div></div>';
+
+    const back=()=>{if(typeof window.voirMessageYaya==='function')window.voirMessageYaya(id);};
+    root.querySelector('.yaya-mail-subject-close')?.addEventListener('click',back);
+    root.querySelector('.yaya-mail-subject-cancel')?.addEventListener('click',back);
+    root.querySelector('.yaya-mail-subject-overlay')?.addEventListener('click',e=>{if(e.target===e.currentTarget)back();});
+    root.querySelector('.yaya-mail-subject-save')?.addEventListener('click',()=>{
+      const input=document.getElementById('edDocTitre');
+      if(!input)return;
+      if(!text(input.value)){
+        try{if(typeof toast==='function')toast('Indique un objet',true);}catch(e){}
+        input.focus();
+        return;
+      }
+      if(typeof window.saveDocumentEdit==='function'){
+        window.saveDocumentEdit(id);
+        return;
+      }
+      try{if(typeof toast==='function')toast('Enregistrement indisponible',true);}catch(e){}
+    });
+
+    requestAnimationFrame(()=>document.getElementById('edDocTitre')?.focus());
   }
 
-  function patch(){
-    installStyle();
-    document.querySelectorAll('#pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row').forEach(prepare);
-    patchMailEditModal();
+  function deleteFromRead(id){
+    id=text(id);
+    if(typeof closeModal==='function')closeModal();
+    setTimeout(()=>{
+      try{
+        if(typeof window.delDocument==='function'){window.delDocument(id);return;}
+        if(typeof delDocument==='function')delDocument(id);
+      }catch(e){
+        try{if(typeof toast==='function')toast('Suppression indisponible',true);}catch(_){}
+      }
+    },0);
   }
 
-  function stop(event){
-    if(!event)return;
-    event.preventDefault();
-    event.stopPropagation();
-    if(typeof event.stopImmediatePropagation==='function')event.stopImmediatePropagation();
-  }
-
-  function openEdit(subject,event){
-    const id=String(subject&&subject.dataset&&subject.dataset.mailId||'').trim();
+  function enhanceReadModal(id){
+    id=text(id||lastMailId);
     if(!id)return;
-    stop(event);
+    const root=document.getElementById('modalRoot');
+    if(!root)return;
+    const modal=root.querySelector('.message-modal,.yaya-mail-body-modal');
+    if(!modal||modal.dataset.yayaMailReadActions==='1')return;
+    modal.dataset.yayaMailReadActions='1';
 
-    try{
-      if(typeof window.editDocument==='function'){
-        window.editDocument(id);
-        setTimeout(patchMailEditModal,0);
-        return;
-      }
-      if(typeof editDocument==='function'){
-        editDocument(id);
-        setTimeout(patchMailEditModal,0);
-      }
-    }catch(err){
-      try{if(typeof toast==='function')toast('Modification du mail indisponible',true);}catch(e){}
-    }
+    const bar=document.createElement('div');
+    bar.className='yaya-mail-read-actions';
+
+    const del=document.createElement('button');
+    del.type='button';
+    del.className='yaya-mail-read-delete';
+    del.textContent='Supprimer';
+    del.addEventListener('click',()=>deleteFromRead(id));
+
+    const right=document.createElement('div');
+    right.className='yaya-mail-read-actions-right';
+
+    const edit=document.createElement('button');
+    edit.type='button';
+    edit.className='yaya-mail-read-edit';
+    edit.textContent='Modifier l’objet';
+    edit.addEventListener('click',()=>openSubjectEditor(id));
+
+    right.appendChild(edit);
+    bar.append(del,right);
+    modal.appendChild(bar);
   }
 
-  function openMail(sender,event){
-    const id=String(sender&&sender.dataset&&sender.dataset.mailId||'').trim();
-    if(!id)return;
-    stop(event);
-
-    try{
-      if(typeof window.voirMessageYaya==='function'){
-        window.voirMessageYaya(id);
-        return;
-      }
-      if(typeof voirMessageYaya==='function'){
-        voirMessageYaya(id);
-        return;
-      }
-      const row=sender.closest('.yaya-detail-mail-row');
-      const view=row&&row.querySelector('.yaya-detail-document-view[data-mail-id]');
-      if(view)view.click();
-    }catch(err){
-      try{if(typeof toast==='function')toast('Visualisation du mail indisponible',true);}catch(e){}
-    }
+  function wrapView(){
+    const current=window.voirMessageYaya;
+    if(typeof current!=='function'||current.__yayaMailReadActionsV6)return;
+    const wrapped=function(id){
+      lastMailId=text(id);
+      const result=current.apply(this,arguments);
+      requestAnimationFrame(()=>enhanceReadModal(lastMailId));
+      return result;
+    };
+    wrapped.__yayaMailReadActionsV6=true;
+    window.voirMessageYaya=wrapped;
   }
+
+  installStyle();
+  wrapView();
 
   document.addEventListener('click',function(event){
-    const subject=event.target&&event.target.closest
-      ?event.target.closest('#pane-chantiers .yaya-detail-mails-pane .yaya-mail-subject[data-yaya-mail-edit="1"]')
-      :null;
-    if(subject){openEdit(subject,event);return;}
+    const target=event.target;
+    if(!target||!target.closest)return;
 
-    const sender=event.target&&event.target.closest
-      ?event.target.closest('#pane-chantiers .yaya-detail-mails-pane .yaya-mail-sender[data-yaya-mail-view="1"]')
-      :null;
-    if(sender)openMail(sender,event);
+    const direct=target.closest('[data-mail-id]');
+    if(direct&&text(direct.dataset&&direct.dataset.mailId)){
+      lastMailId=text(direct.dataset.mailId);
+      requestAnimationFrame(()=>enhanceReadModal(lastMailId));
+      return;
+    }
+
+    if(target.closest('button,a,input,select,textarea,label'))return;
+
+    const row=target.closest('#pane-chantiers .yaya-detail-mail-row,#pane-chantiers .yaya-detail-document-row,#pane-documents .achligne.ligR');
+    const id=idFromRow(row);
+    if(!id)return;
+    lastMailId=id;
+    requestAnimationFrame(()=>enhanceReadModal(id));
   },true);
-
-  document.addEventListener('keydown',function(event){
-    if(event.key!=='Enter'&&event.key!==' ')return;
-    const subject=event.target&&event.target.closest
-      ?event.target.closest('#pane-chantiers .yaya-detail-mails-pane .yaya-mail-subject[data-yaya-mail-edit="1"]')
-      :null;
-    if(subject){openEdit(subject,event);return;}
-
-    const sender=event.target&&event.target.closest
-      ?event.target.closest('#pane-chantiers .yaya-detail-mails-pane .yaya-mail-sender[data-yaya-mail-view="1"]')
-      :null;
-    if(sender)openMail(sender,event);
-  },true);
-
-  let raf=0;
-  function schedule(){
-    if(raf)return;
-    raf=requestAnimationFrame(function(){raf=0;patch();});
-  }
-
-  schedule();
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('yaya:data-refreshed',schedule);
 })();
