@@ -102,3 +102,45 @@
   window.addEventListener('yaya:data-refreshed',()=>setTimeout(refresh,0));
   window.addEventListener('hashchange',()=>setTimeout(refresh,0));
 })();
+
+// V205.723 : le bouton « Actualiser » doit réellement relire le serveur.
+// Au premier affichage Yaya peut utiliser son cache local pour rester rapide ;
+// mais un appel manuel à reload() ne doit jamais relire ce même cache périmé.
+(function(){
+  'use strict';
+
+  function installFreshReload(){
+    if(typeof window.reload!=='function'){
+      setTimeout(installFreshReload,120);
+      return;
+    }
+    if(window.reload.__yayaForceFreshV723)return;
+
+    const originalReload=window.reload;
+    const wrappedReload=async function(){
+      const originalApiGet=window.apiGet;
+      if(typeof originalApiGet!=='function'){
+        return originalReload.apply(this,arguments);
+      }
+
+      const freshApiGet=function(forceNetwork){
+        return originalApiGet(forceNetwork===undefined?true:forceNetwork);
+      };
+
+      window.apiGet=freshApiGet;
+      try{
+        return await originalReload.apply(this,arguments);
+      }finally{
+        if(window.apiGet===freshApiGet)window.apiGet=originalApiGet;
+      }
+    };
+
+    wrappedReload.__yayaForceFreshV723=true;
+    wrappedReload.__yayaOriginalReload=originalReload;
+    window.reload=wrappedReload;
+  }
+
+  installFreshReload();
+  setTimeout(installFreshReload,300);
+  setTimeout(installFreshReload,900);
+})();
