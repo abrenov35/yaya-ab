@@ -64,6 +64,131 @@
   white-space:nowrap;
 }
 
+/* Modale documents commande */
+#ycnDocModal{background:rgba(15,31,52,.55)!important;backdrop-filter:blur(2px)}
+#ycnDocModal .ycn-dialog{
+  width:min(640px,calc(100vw - 28px))!important;
+  max-height:min(760px,92vh)!important;
+  display:flex!important;
+  flex-direction:column!important;
+  gap:14px!important;
+  padding:22px!important;
+  border:1px solid #d7e1ec!important;
+  border-radius:18px!important;
+  background:#fff!important;
+  box-shadow:0 28px 85px rgba(13,35,61,.28)!important;
+}
+#ycnDocModal .ycn-dialog-head{
+  order:0!important;
+  margin:0!important;
+  padding:0 0 4px!important;
+  border-bottom:0!important;
+}
+#ycnDocModal .ycn-dialog-head h3{
+  margin:0!important;
+  color:#21334d!important;
+  font-size:20px!important;
+  font-weight:900!important;
+  letter-spacing:-.01em!important;
+}
+#ycnDocModal .ycn-close{
+  width:36px!important;height:36px!important;
+  border:1px solid #aebfd2!important;
+  border-radius:9px!important;
+  background:#f8fbff!important;
+  color:#213a59!important;
+  box-shadow:0 1px 2px rgba(16,24,40,.06)!important;
+}
+#ycnDocFile{
+  order:1!important;
+  width:100%!important;
+  min-height:54px!important;
+  padding:8px!important;
+  border:1px dashed #aebfd2!important;
+  border-radius:11px!important;
+  background:#f8fbff!important;
+  color:#42546b!important;
+  font-size:12px!important;
+  cursor:pointer!important;
+}
+#ycnDocFile::file-selector-button{
+  min-height:36px!important;
+  margin-right:10px!important;
+  padding:0 13px!important;
+  border:1px solid #b8cbe0!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#173a60!important;
+  font-weight:850!important;
+  cursor:pointer!important;
+}
+#ycnDocModal .ycn-doc-list{
+  order:2!important;
+  display:grid!important;
+  gap:9px!important;
+  margin:0!important;
+  max-height:330px!important;
+  overflow:auto!important;
+}
+#ycnDocModal .ycn-doc-item{
+  grid-template-columns:minmax(0,1fr) auto auto!important;
+  gap:8px!important;
+  min-height:48px!important;
+  padding:8px 10px!important;
+  border:1px solid #dce5ef!important;
+  border-radius:10px!important;
+  background:#fbfdff!important;
+  box-shadow:0 1px 2px rgba(16,24,40,.03)!important;
+}
+#ycnDocModal .ycn-doc-item a{
+  color:#175ea7!important;
+  font-size:12px!important;
+  font-weight:850!important;
+}
+#ycnDocModal .ycn-doc-item button{
+  min-height:32px!important;
+  padding:0 10px!important;
+  border:1px solid #ccd9e7!important;
+  border-radius:8px!important;
+  background:#fff!important;
+  color:#23405f!important;
+  font-size:11px!important;
+  font-weight:850!important;
+  cursor:pointer!important;
+}
+#ycnDocModal .ycn-doc-item button:last-child{
+  color:#b42318!important;
+  border-color:#efc6c1!important;
+  background:#fff7f6!important;
+}
+#ycnDocModal .ycn-dialog-actions{
+  order:3!important;
+  display:flex!important;
+  justify-content:flex-end!important;
+  align-items:center!important;
+  gap:9px!important;
+  margin:2px 0 0!important;
+  padding-top:12px!important;
+  border-top:1px solid #edf1f5!important;
+}
+#ycnDocModal .ycn-dialog-actions .ycn-btn{
+  min-height:38px!important;
+  padding:0 15px!important;
+  border-radius:9px!important;
+}
+#ycnDocModal #ycnDocSend{
+  background:#0f4f8d!important;
+  border-color:#0f4f8d!important;
+  color:#fff!important;
+  box-shadow:0 2px 5px rgba(15,79,141,.22)!important;
+}
+#ycnDocModal #ycnDocSend:disabled{
+  background:#c9d8e8!important;
+  border-color:#c9d8e8!important;
+  color:#fff!important;
+  opacity:1!important;
+}
+
 @media(max-width:1200px){
   .ycn-row.open .ycn-row-detail{grid-template-columns:1fr}
   .ycn-detail-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -76,8 +201,13 @@
   .yaya-cmd-native-root .ycn-toolbar .ycn-btn.primary{min-height:32px!important;padding:0 10px!important;font-size:11px!important}
   .ycn-detail-grid{grid-template-columns:1fr 1fr}
   .ycn-box.note{grid-column:1/-1}
+  #ycnDocModal{padding:8px!important}
+  #ycnDocModal .ycn-dialog{width:100%!important;padding:16px!important;border-radius:14px!important}
+  #ycnDocModal .ycn-dialog-actions{flex-wrap:wrap!important}
+  #ycnDocModal .ycn-dialog-actions .ycn-btn{flex:1!important}
 }
 @media(max-width:520px){
   .ycn-detail-grid{grid-template-columns:1fr}
   .ycn-box.note{grid-column:auto}
+  #ycnDocModal .ycn-doc-item{grid-template-columns:minmax(0,1fr) auto!important}
 }
