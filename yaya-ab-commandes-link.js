@@ -5,7 +5,7 @@ const STYLE_ID='yaya-ab-commandes-direct-style';
 const BLOCK_CLASS='yaya-ab-commandes-direct';
 const REFRESH_ID='yayaRefreshChantierBtn';
 const MANAGE_ID='yayaManageChantierCardBtn';
-const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.css?v=1';
+const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.css?v=2';
 const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=1';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null;
 
@@ -83,5 +83,5 @@ installBaseStyle();ensureRefreshButton();
 document.addEventListener('click',e=>{const b=e.target?.closest?.('.yaya-detail-section-tab[data-section]');if(!b)return;const card=b.closest('.card');if(String(b.dataset.section||'')==='commandes'){setTimeout(()=>mountCard(card),0);setTimeout(()=>mountCard(card),80);}setTimeout(ensureRefreshButton,0);});
 const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);window.addEventListener('focus',scan);window.addEventListener('yaya:data-refreshed',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.0-direct-dom-no-iframe';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.1-direct-dom-compact-line';
 })();
