@@ -1,11 +1,11 @@
 (function(){
   'use strict';
 
-  if(window.__yayaVisualizationModalCenterV1)return;
-  window.__yayaVisualizationModalCenterV1=true;
+  if(window.__yayaVisualizationModalCenterV2)return;
+  window.__yayaVisualizationModalCenterV2=true;
 
   const ROOT_ID='modalRoot';
-  const STYLE_ID='yaya-visualization-modal-center-v1';
+  const STYLE_ID='yaya-visualization-modal-center-v2';
   let raf=0;
 
   function installStyle(){
@@ -30,6 +30,22 @@
         position:sticky!important;
         top:0!important;
         z-index:50!important;
+      }
+      #${ROOT_ID} .yaya-view-modal-centered > .yaya-mail-read-actions.yaya-read-actions-top,
+      #${ROOT_ID} .yaya-view-modal-centered > .yaya-read-actions.yaya-read-actions-top{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:space-between!important;
+        gap:10px!important;
+        margin:8px 0 14px!important;
+        padding:0 0 12px!important;
+        border-top:0!important;
+        border-bottom:1px solid #dce4ee!important;
+        background:#fff!important;
+      }
+      #${ROOT_ID} .yaya-view-modal-centered > .yaya-read-actions.yaya-read-actions-top .yaya-delete,
+      #${ROOT_ID} .yaya-view-modal-centered > .yaya-mail-read-actions.yaya-read-actions-top .yaya-mail-read-delete{
+        margin-right:auto!important;
       }
     `;
     document.head.appendChild(style);
@@ -66,7 +82,8 @@
     if(
       modal.classList.contains('piece-preview-modal')||
       modal.classList.contains('yaya-mail-body-modal')||
-      modal.classList.contains('yaya-document-read-modal')
+      modal.classList.contains('yaya-document-read-modal')||
+      modal.classList.contains('message-modal')
     )return true;
 
     if(modal.querySelector('.piece-preview-stage,.piece-pdf-pages,.piece-image-stage,.piece-drive-pages-stage'))return true;
@@ -79,10 +96,26 @@
     return /^(aperçu|visualisation|lecture|pi[eè]ce jointe|document|[ée]change chantier)/i.test(title)&&!hasEditor;
   }
 
+  function moveMailActionsTop(modal){
+    if(!modal)return;
+    if(!modal.classList.contains('message-modal')&&!modal.classList.contains('yaya-mail-body-modal'))return;
+
+    const head=modal.querySelector(':scope > h5');
+    const bar=modal.querySelector(':scope > .yaya-mail-read-actions,:scope > .yaya-read-actions');
+    if(!head||!bar)return;
+
+    bar.classList.add('yaya-read-actions-top');
+    if(bar.previousElementSibling!==head){
+      head.insertAdjacentElement('afterend',bar);
+    }
+  }
+
   function applyModal(modal){
     if(!isVisualizationModal(modal))return;
     const overlay=modal.closest('.overlay');
     if(!overlay)return;
+
+    moveMailActionsTop(modal);
 
     const vp=viewport();
     const top=safeTop();
