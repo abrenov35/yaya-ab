@@ -1,5 +1,10 @@
 @import url('./commandes-native-embed.css?v=1');
 
+/* Nouvelle commande : l'URL se renseigne uniquement dans la seconde modale */
+#ycnEditModal:has(.ycn-delete-v5[style*="display: none"]) .ycn-url-v5{
+  display:none!important;
+}
+
 /* Bandeau COMMANDES identique aux autres sections chantier */
 .yaya-cmd-native-root .ycn-statusline{
   display:none!important;
