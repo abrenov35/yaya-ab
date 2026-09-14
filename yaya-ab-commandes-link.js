@@ -1,155 +1,87 @@
 (function(){
-  'use strict';
+'use strict';
 
-  const STYLE_ID='yaya-ab-commandes-link-style';
-  const BLOCK_CLASS='yaya-ab-commandes-link';
-  const FRAME_CLASS='yaya-ab-commandes-frame';
-  const REFRESH_ID='yayaRefreshChantierBtn';
-  const MANAGE_ID='yayaManageChantierCardBtn';
-  const OWNER='yaya-commandes-native-v1';
-  const AB_COMMANDES_URL='https://abrenov35.github.io/yaya-ab/commandes-native/';
-  let activeCard=null;
-  let scanTimer=0;
-  let fitRaf=0;
+const STYLE_ID='yaya-ab-commandes-direct-style';
+const BLOCK_CLASS='yaya-ab-commandes-direct';
+const REFRESH_ID='yayaRefreshChantierBtn';
+const MANAGE_ID='yayaManageChantierCardBtn';
+const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.css?v=1';
+const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=1';
+let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null;
 
-  function installStyle(){
-    let style=document.getElementById(STYLE_ID);
-    if(!style){style=document.createElement('style');style.id=STYLE_ID;document.head.appendChild(style)}
-    style.textContent=`
-      .${BLOCK_CLASS}{display:none!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;overflow:hidden!important;box-shadow:none!important;min-height:0!important}
-      #pane-chantiers .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
-      #pane-chantiers .card > .yaya-detail-commandes-pane,#pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],#pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
-      .${BLOCK_CLASS} .yaya-ab-commandes-wait{padding:8px 0!important;color:#708095!important;font-size:12px!important;font-weight:700!important;background:transparent!important;border:0!important}
-      .${FRAME_CLASS}{display:block!important;width:100%!important;height:420px!important;min-height:320px!important;max-height:none!important;border:0!important;border-radius:0!important;background:#fff!important;overflow:auto!important}
-      #${REFRESH_ID}{height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid #b9dfc5!important;border-radius:8px!important;background:#e8f5ec!important;color:#287a46!important;font-size:13px!important;font-weight:600!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important}
-      #${REFRESH_ID}:hover{background:#dff1e5!important;border-color:#a8d6b6!important}
-    `;
-  }
+function installBaseStyle(){
+ let s=document.getElementById(STYLE_ID);
+ if(!s){s=document.createElement('style');s.id=STYLE_ID;document.head.appendChild(s);}
+ s.textContent=`
+ .${BLOCK_CLASS}{display:none!important;width:100%!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;min-height:0!important}
+ #pane-chantiers .card[data-yaya-detail-section="commandes"] > .${BLOCK_CLASS}{display:block!important}
+ #pane-chantiers .card > .yaya-detail-commandes-pane,
+ #pane-chantiers .card > .yaya-detail-section-action-row[data-section="commandes"],
+ #pane-chantiers .card > .yaya-detail-empty-pane[data-section="commandes"]{display:none!important}
+ .${BLOCK_CLASS} .yaya-cmd-direct-wait{padding:10px 2px;color:#708095;font-size:12px;font-weight:700}
+ #${REFRESH_ID}{height:34px!important;padding:0 14px!important;margin-right:8px!important;border:1px solid #b9dfc5!important;border-radius:8px!important;background:#e8f5ec!important;color:#287a46!important;font-size:13px!important;font-weight:600!important;box-shadow:0 1px 2px rgba(16,24,40,.05)!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:5px!important}
+ #${REFRESH_ID}:hover{background:#dff1e5!important;border-color:#a8d6b6!important}`;
+}
 
-  function viewportHeight(){
-    try{return Math.round(window.visualViewport&&window.visualViewport.height||window.innerHeight||720)}catch(_){return window.innerHeight||720}
-  }
+function loadAssets(){
+ if(window.YayaCommandesNativeEmbed)return Promise.resolve(window.YayaCommandesNativeEmbed);
+ if(assetsPromise)return assetsPromise;
+ assetsPromise=new Promise((resolve,reject)=>{
+   if(!document.querySelector('link[data-ycn-embed-css]')){
+     const l=document.createElement('link');l.rel='stylesheet';l.href=CSS_URL;l.dataset.ycnEmbedCss='1';document.head.appendChild(l);
+   }
+   const existing=document.querySelector('script[data-ycn-embed-js]');
+   if(existing){
+     const timer=setInterval(()=>{if(window.YayaCommandesNativeEmbed){clearInterval(timer);resolve(window.YayaCommandesNativeEmbed);}},20);
+     setTimeout(()=>{clearInterval(timer);if(!window.YayaCommandesNativeEmbed)reject(new Error('Module Commandes indisponible'));},5000);
+     return;
+   }
+   const s=document.createElement('script');s.src=JS_URL;s.async=true;s.dataset.ycnEmbedJs='1';s.onload=()=>window.YayaCommandesNativeEmbed?resolve(window.YayaCommandesNativeEmbed):reject(new Error('Module Commandes invalide'));s.onerror=()=>reject(new Error('Chargement Commandes impossible'));document.head.appendChild(s);
+ });
+ return assetsPromise;
+}
 
-  function fitFrame(frame){
-    if(!frame||!frame.isConnected)return;
-    const rect=frame.getBoundingClientRect();
-    const vh=viewportHeight();
-    const top=Math.max(0,Math.round(rect.top));
-    const bottomGap=12;
-    const available=Math.max(320,vh-top-bottomGap);
-    frame.style.setProperty('height',available+'px','important');
-    frame.setAttribute('scrolling','auto');
-  }
+function chantierOpen(){try{if(typeof focusChantier!=='undefined'&&focusChantier)return true}catch(_){}return !!document.querySelector('#pane-chantiers .card .yaya-detail-section-tabs');}
+function commandesActive(card){if(!card||!card.isConnected)return false;if(String(card.dataset.yayaDetailSection||'')==='commandes')return true;const tab=card.querySelector(':scope > .yaya-detail-section-tabs [data-section="commandes"]');return !!(tab&&(tab.classList.contains('on')||tab.classList.contains('active')||tab.getAttribute('aria-selected')==='true'));}
+function cardId(card){if(!card)return '';for(const el of card.querySelectorAll('[onclick]')){const raw=String(el.getAttribute('onclick')||''),m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);if(m&&m[1])return String(m[1]).trim();}try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim()}catch(_){}return '';}
+function chantierName(id,card){try{if(typeof S!=='undefined'&&Array.isArray(S.chantiers)){const c=S.chantiers.find(x=>String(x.id||'')===String(id||''));if(c&&c.nom)return String(c.nom).trim();}}catch(_){}for(const sel of [':scope > .top b',':scope > .top strong',':scope > div:first-child b',':scope > div:first-child strong']){const el=card?.querySelector(sel),txt=String(el?.textContent||'').trim();if(txt)return txt;}return '';}
 
-  function fitAllFrames(){
-    cancelAnimationFrame(fitRaf);
-    fitRaf=requestAnimationFrame(()=>document.querySelectorAll('.'+FRAME_CLASS).forEach(fitFrame));
-  }
+function ensureBlock(card){
+ const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');if(!tabs)return null;
+ let block=card.querySelector(':scope > .'+BLOCK_CLASS);
+ if(!block){block=document.createElement('div');block.className='yaya-detail-section-node '+BLOCK_CLASS;block.dataset.section='commandes';tabs.insertAdjacentElement('afterend',block);}
+ else if(tabs.nextElementSibling!==block)tabs.insertAdjacentElement('afterend',block);
+ return block;
+}
 
-  function chantierOpen(){
-    try{if(typeof focusChantier!=='undefined'&&focusChantier)return true}catch(e){}
-    return !!document.querySelector('#pane-chantiers .card .yaya-detail-section-tabs');
-  }
+async function mountCard(card){
+ if(!card||!card.isConnected||!commandesActive(card))return;
+ const id=cardId(card),name=chantierName(id,card),block=ensureBlock(card);if(!block)return;
+ if(!id&&!name){block.innerHTML='<div class="yaya-cmd-direct-wait">Chargement du chantier…</div>';return;}
+ if(activeBlock&&activeBlock!==block){try{window.YayaCommandesNativeEmbed?.unmount(activeBlock);}catch(_){} }
+ activeCard=card;activeBlock=block;
+ if(!block.dataset.ycnReady)block.innerHTML='<div class="yaya-cmd-direct-wait">Chargement des commandes…</div>';
+ try{
+   const api=await loadAssets();
+   if(!block.isConnected)return;
+   if(block.dataset.ycnReady==='1')api.setChantier(id,name);else{block.dataset.ycnReady='1';api.mount(block,id,name);}
+ }catch(err){block.innerHTML='<div class="yaya-cmd-direct-wait">Commandes indisponibles : '+String(err?.message||err)+'</div>';}
+}
 
-  function ensureRefreshButton(){
-    const manage=document.getElementById(MANAGE_ID);
-    if(!manage||!manage.parentNode)return;
-    let btn=document.getElementById(REFRESH_ID);
-    if(!btn){
-      btn=document.createElement('button');
-      btn.id=REFRESH_ID;
-      btn.type='button';
-      btn.innerHTML='↻&nbsp; Actualiser';
-      btn.title='Actualiser les commandes de ce chantier';
-      btn.setAttribute('aria-label','Actualiser les commandes de ce chantier');
-      btn.onclick=function(e){
-        if(e){e.preventDefault();e.stopPropagation();}
-        const frame=document.getElementById('yayaAbCommandesFrame')||document.querySelector('.'+FRAME_CLASS);
-        if(frame){
-          const url=new URL(frame.dataset.src||frame.src||AB_COMMANDES_URL);
-          url.searchParams.set('_refresh',Date.now());
-          frame.src=url.toString();
-          setTimeout(()=>fitFrame(frame),80);
-        }
-      };
-      manage.parentNode.insertBefore(btn,manage);
-    }else if(btn.nextSibling!==manage){manage.parentNode.insertBefore(btn,manage)}
-    btn.style.display=chantierOpen()?'inline-flex':'none';
-  }
+function ensureRefreshButton(){
+ const manage=document.getElementById(MANAGE_ID);if(!manage||!manage.parentNode)return;
+ let btn=document.getElementById(REFRESH_ID);
+ if(!btn){btn=document.createElement('button');btn.id=REFRESH_ID;btn.type='button';btn.innerHTML='↻&nbsp; Actualiser';btn.title='Actualiser les commandes de ce chantier';btn.onclick=async e=>{e?.preventDefault();e?.stopPropagation();if(btn.disabled)return;btn.disabled=true;const old=btn.innerHTML;btn.innerHTML='Actualisation…';try{await window.YayaCommandesNativeEmbed?.refresh();}finally{btn.disabled=false;btn.innerHTML=old;}};manage.parentNode.insertBefore(btn,manage);}
+ else if(btn.nextSibling!==manage)manage.parentNode.insertBefore(btn,manage);
+ btn.style.display=chantierOpen()?'inline-flex':'none';
+}
 
-  function commandesActive(card){
-    if(!card||!card.isConnected)return false;
-    if(String(card.dataset.yayaDetailSection||'')==='commandes')return true;
-    const tab=card.querySelector(':scope > .yaya-detail-section-tabs [data-section="commandes"]');
-    return !!(tab&&(tab.classList.contains('on')||tab.classList.contains('active')||tab.getAttribute('aria-selected')==='true'));
-  }
+function findActiveCard(){const c=document.querySelector('#pane-chantiers .card[data-yaya-detail-section="commandes"]');if(c)return c;const b=document.querySelector('#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]');return b?b.closest('.card'):null;}
+function scan(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();const card=findActiveCard();if(card)mountCard(card);},35);}
 
-  function cardId(card){
-    if(!card)return '';
-    const nodes=[...card.querySelectorAll('[onclick]')];
-    for(const el of nodes){const raw=String(el.getAttribute('onclick')||'');const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);if(m&&m[1])return String(m[1]).trim()}
-    try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier).trim()}catch(e){}
-    return '';
-  }
-
-  function chantierName(id,card){
-    try{if(typeof S!=='undefined'&&Array.isArray(S.chantiers)){const c=S.chantiers.find(x=>String(x.id||'')===String(id||''));if(c&&c.nom)return String(c.nom).trim()}}catch(e){}
-    for(const sel of [':scope > .top b',':scope > .top strong',':scope > div:first-child b',':scope > div:first-child strong']){const el=card&&card.querySelector(sel),txt=String(el&&el.textContent||'').trim();if(txt)return txt}
-    return '';
-  }
-
-  function linkFor(id,name){
-    const url=new URL(AB_COMMANDES_URL);
-    if(id)url.searchParams.set('chantierId',String(id));
-    if(name)url.searchParams.set('chantierName',String(name));
-    url.searchParams.set('embed','1');
-    return url.toString();
-  }
-  function stopIframe(frame){if(!frame)return;try{frame.src='about:blank'}catch(e){}frame.remove()}
-  function destroyBlock(block){if(!block)return;block.querySelectorAll('iframe').forEach(stopIframe);block.remove()}
-  function cleanupOtherBlocks(keepCard){document.querySelectorAll('#pane-chantiers .'+BLOCK_CLASS).forEach(block=>{if(keepCard&&block.parentElement===keepCard)return;destroyBlock(block)})}
-
-  function ensureBlock(card){
-    const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');if(!tabs)return null;
-    const blocks=[...card.querySelectorAll(':scope > .'+BLOCK_CLASS)];let block=blocks[0]||null;blocks.slice(1).forEach(destroyBlock);
-    if(!block){block=document.createElement('div');block.className='yaya-detail-section-node '+BLOCK_CLASS;block.dataset.section='commandes';block.dataset.abCommandesOwner=OWNER;tabs.insertAdjacentElement('afterend',block)}
-    else{block.className='yaya-detail-section-node '+BLOCK_CLASS;block.dataset.section='commandes';block.dataset.abCommandesOwner=OWNER;if(tabs.nextElementSibling!==block)tabs.insertAdjacentElement('afterend',block)}
-    return block;
-  }
-
-  function startFrame(block,id,name){
-    const href=linkFor(id,name);let frame=block.querySelector('.'+FRAME_CLASS);if(frame&&frame.dataset.src===href){fitFrame(frame);return}
-    block.querySelectorAll('iframe').forEach(stopIframe);block.querySelectorAll('.yaya-ab-commandes-wait').forEach(x=>x.remove());
-    const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement des commandes…';
-    frame=document.createElement('iframe');frame.id='yayaAbCommandesFrame';frame.className=FRAME_CLASS;frame.title='Suivi des commandes chantier';frame.loading='eager';frame.scrolling='auto';frame.dataset.src=href;block.append(wait,frame);
-    frame.addEventListener('load',()=>{if(wait.isConnected)wait.remove();fitFrame(frame)},{once:true});
-    frame.src=href;
-    setTimeout(()=>fitFrame(frame),0);
-    setTimeout(()=>fitFrame(frame),120);
-  }
-
-  function deactivate(card){if(!card)return;card.querySelectorAll(':scope > .'+BLOCK_CLASS).forEach(destroyBlock);if(activeCard===card)activeCard=null}
-  function activate(card){
-    ensureRefreshButton();if(!card||!card.isConnected||!commandesActive(card))return;if(activeCard&&activeCard!==card)deactivate(activeCard);cleanupOtherBlocks(card);activeCard=card;
-    const block=ensureBlock(card);if(!block)return;const id=cardId(card),name=chantierName(id,card);
-    if(!id&&!name){if(!block.querySelector('.yaya-ab-commandes-wait')){const wait=document.createElement('div');wait.className='yaya-ab-commandes-wait';wait.textContent='Chargement du chantier…';block.appendChild(wait)}return}
-    block.dataset.chantierId=id||'';startFrame(block,id,name);fitAllFrames();
-  }
-
-  function findActiveCard(){const byData=document.querySelector('#pane-chantiers .card[data-yaya-detail-section="commandes"]');if(byData)return byData;const btn=document.querySelector('#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]');return btn?btn.closest('.card'):null}
-  function scanActive(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();const card=findActiveCard();if(card)activate(card);else if(activeCard)deactivate(activeCard);fitAllFrames()},40)}
-  function handleMessage(e){const d=e&&e.data;if(!d||d.type!=='AB_COMMANDES_HEIGHT')return;document.querySelectorAll('.'+FRAME_CLASS).forEach(frame=>{try{if(frame.contentWindow===e.source)fitFrame(frame)}catch(err){}})}
-
-  installStyle();cleanupOtherBlocks(null);ensureRefreshButton();
-  document.addEventListener('click',e=>{const btn=e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab[data-section]');if(!btn)return;const card=btn.closest('.card');const key=String(btn.dataset.section||'');if(key==='commandes'){setTimeout(()=>activate(card),0);setTimeout(()=>activate(card),80)}else if(card){setTimeout(()=>deactivate(card),0)}setTimeout(ensureRefreshButton,0)});
-  const pane=document.getElementById('pane-chantiers');if(pane){new MutationObserver(records=>{ensureRefreshButton();for(const rec of records){const target=rec.target&&rec.target.nodeType===1?rec.target:null;if(target&&target.closest&&target.closest('.'+BLOCK_CLASS))continue;const relevant=[...rec.addedNodes].some(n=>n&&n.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')));if(relevant){scanActive();break}}}).observe(pane,{childList:true,subtree:true})}
-  const watch=new MutationObserver(()=>ensureRefreshButton());watch.observe(document.body,{childList:true,subtree:true});
-  window.addEventListener('message',handleMessage);
-  window.addEventListener('hashchange',scanActive);
-  window.addEventListener('focus',scanActive);
-  window.addEventListener('resize',fitAllFrames,{passive:true});
-  window.addEventListener('scroll',fitAllFrames,{passive:true});
-  if(window.visualViewport){window.visualViewport.addEventListener('resize',fitAllFrames,{passive:true});window.visualViewport.addEventListener('scroll',fitAllFrames,{passive:true})}
-  window.addEventListener('yaya:data-refreshed',scanActive);setTimeout(scanActive,0);setTimeout(scanActive,300);setTimeout(ensureRefreshButton,800);setTimeout(fitAllFrames,850);
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='5.0-native-yaya';
+installBaseStyle();ensureRefreshButton();
+document.addEventListener('click',e=>{const b=e.target?.closest?.('.yaya-detail-section-tab[data-section]');if(!b)return;const card=b.closest('.card');if(String(b.dataset.section||'')==='commandes'){setTimeout(()=>mountCard(card),0);setTimeout(()=>mountCard(card),80);}setTimeout(ensureRefreshButton,0);});
+const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
+window.addEventListener('hashchange',scan);window.addEventListener('focus',scan);window.addEventListener('yaya:data-refreshed',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.0-direct-dom-no-iframe';
 })();
