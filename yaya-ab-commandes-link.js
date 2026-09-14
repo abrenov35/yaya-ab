@@ -9,6 +9,7 @@ const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.c
 const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=1';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=1';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=3';
+const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=4';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null;
 
 function installBaseStyle(){
@@ -33,9 +34,13 @@ function ensureActionsPatch(){
  if(window.__YAYA_COMMANDES_NATIVE_ACTIONS_V3||document.querySelector('script[data-ycn-actions-v3]'))return;
  const s=document.createElement('script');s.src=ACTIONS_URL;s.async=true;s.dataset.ycnActionsV3='1';document.head.appendChild(s);
 }
+function ensureLineV4Patch(){
+ if(window.__YAYA_COMMANDES_LINE_V4||document.querySelector('script[data-ycn-line-v4]'))return;
+ const s=document.createElement('script');s.src=LINE_V4_URL;s.async=true;s.dataset.ycnLineV4='1';document.head.appendChild(s);
+}
 
 function loadAssets(){
- if(window.YayaCommandesNativeEmbed){ensureRowModalPatch();ensureActionsPatch();return Promise.resolve(window.YayaCommandesNativeEmbed);}
+ if(window.YayaCommandesNativeEmbed){ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();return Promise.resolve(window.YayaCommandesNativeEmbed);}
  if(assetsPromise)return assetsPromise;
  assetsPromise=new Promise((resolve,reject)=>{
    if(!document.querySelector('link[data-ycn-embed-css]')){
@@ -43,11 +48,11 @@ function loadAssets(){
    }
    const existing=document.querySelector('script[data-ycn-embed-js]');
    if(existing){
-     const timer=setInterval(()=>{if(window.YayaCommandesNativeEmbed){clearInterval(timer);ensureRowModalPatch();ensureActionsPatch();resolve(window.YayaCommandesNativeEmbed);}},20);
+     const timer=setInterval(()=>{if(window.YayaCommandesNativeEmbed){clearInterval(timer);ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();resolve(window.YayaCommandesNativeEmbed);}},20);
      setTimeout(()=>{clearInterval(timer);if(!window.YayaCommandesNativeEmbed)reject(new Error('Module Commandes indisponible'));},5000);
      return;
    }
-   const s=document.createElement('script');s.src=JS_URL;s.async=true;s.dataset.ycnEmbedJs='1';s.onload=()=>{if(window.YayaCommandesNativeEmbed){ensureRowModalPatch();ensureActionsPatch();resolve(window.YayaCommandesNativeEmbed);}else reject(new Error('Module Commandes invalide'));};s.onerror=()=>reject(new Error('Chargement Commandes impossible'));document.head.appendChild(s);
+   const s=document.createElement('script');s.src=JS_URL;s.async=true;s.dataset.ycnEmbedJs='1';s.onload=()=>{if(window.YayaCommandesNativeEmbed){ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();resolve(window.YayaCommandesNativeEmbed);}else reject(new Error('Module Commandes invalide'));};s.onerror=()=>reject(new Error('Chargement Commandes impossible'));document.head.appendChild(s);
  });
  return assetsPromise;
 }
@@ -76,7 +81,7 @@ async function mountCard(card){
    const api=await loadAssets();
    if(!block.isConnected)return;
    if(block.dataset.ycnReady==='1')api.setChantier(id,name);else{block.dataset.ycnReady='1';api.mount(block,id,name);}
-   ensureRowModalPatch();ensureActionsPatch();
+   ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();
  }catch(err){block.innerHTML='<div class="yaya-cmd-direct-wait">Commandes indisponibles : '+String(err?.message||err)+'</div>';}
 }
 
@@ -91,9 +96,9 @@ function ensureRefreshButton(){
 function findActiveCard(){const c=document.querySelector('#pane-chantiers .card[data-yaya-detail-section="commandes"]');if(c)return c;const b=document.querySelector('#pane-chantiers .yaya-detail-section-tab[data-section="commandes"].on,#pane-chantiers .yaya-detail-section-tab[data-section="commandes"][aria-selected="true"]');return b?b.closest('.card'):null;}
 function scan(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();const card=findActiveCard();if(card)mountCard(card);},35);}
 
-installBaseStyle();ensureRowModalPatch();ensureActionsPatch();ensureRefreshButton();
+installBaseStyle();ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureRefreshButton();
 document.addEventListener('click',e=>{const b=e.target?.closest?.('.yaya-detail-section-tab[data-section]');if(!b)return;const card=b.closest('.card');if(String(b.dataset.section||'')==='commandes'){setTimeout(()=>mountCard(card),0);setTimeout(()=>mountCard(card),80);}setTimeout(ensureRefreshButton,0);});
 const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);window.addEventListener('focus',scan);window.addEventListener('yaya:data-refreshed',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.3-pieces-preview-url';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.4-line-v4-status-iframe-url';
 })();
