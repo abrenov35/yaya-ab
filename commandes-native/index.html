@@ -86,6 +86,26 @@
   <div id="cmdToast" class="cmd-toast" aria-live="polite"></div>
 
   <script src="../public/commandes-native/commandes-native.js?v=5"></script>
-  <script src="../public/commandes-native/commandes-documents.js?v=4"></script>
+  <script>
+  (()=>{
+    const NativeMutationObserver=window.MutationObserver;
+    window.MutationObserver=class extends NativeMutationObserver{
+      constructor(callback){
+        super((records,observer)=>{
+          const relevant=records.some(record=>{
+            if(record.type!=='childList')return false;
+            return [...record.addedNodes,...record.removedNodes].some(node=>
+              node&&node.nodeType===1&&(
+                node.matches?.('.cmd-row')||node.querySelector?.('.cmd-row')
+              )
+            );
+          });
+          if(relevant)callback(records,observer);
+        });
+      }
+    };
+  })();
+  </script>
+  <script src="../public/commandes-native/commandes-documents.js?v=5"></script>
 </body>
 </html>
