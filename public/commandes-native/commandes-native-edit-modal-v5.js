@@ -57,10 +57,11 @@ function post(data){const b=new URLSearchParams();Object.entries(data||{}).forEa
 function injectStyle(){
   if(document.getElementById('ycn-edit-modal-v5-style'))return;
   const s=document.createElement('style');s.id='ycn-edit-modal-v5-style';s.textContent=`
-    #ycnEditModal .ycn-dialog-actions{display:flex!important;gap:10px!important;align-items:center!important}
+    #ycnEditModal .ycn-dialog-actions{display:flex!important;gap:10px!important;align-items:center!important;flex-wrap:wrap!important}
     #ycnEditModal .ycn-save-v5{background:#0f4f8d!important;border:1px solid #0f4f8d!important;color:#fff!important;opacity:1!important;box-shadow:0 1px 3px rgba(15,79,141,.25)!important;font-weight:850!important}
     #ycnEditModal .ycn-save-v5:disabled{background:#8eb2d6!important;border-color:#8eb2d6!important;color:#fff!important;opacity:1!important}
     #ycnEditModal .ycn-delete-v5{margin-right:auto!important;background:#fff2f1!important;border:1px solid #e9a39e!important;color:#b42318!important;font-weight:850!important}
+    #ycnEditModal .ycn-doc-v5{background:#eef6ff!important;border:1px solid #b8d3ef!important;color:#0f4f8d!important;font-weight:850!important}
     #ycnEditModal .ycn-url-v5 input{width:100%!important}
   `;document.head.appendChild(s);
 }
@@ -138,6 +139,14 @@ function deleteOrder(modal){
   toast('Commande supprimée — serveur en arrière-plan');
   post({action:'delete',id}).then(()=>toast('Commande supprimée','ok')).catch(()=>toast('Suppression serveur à contrôler','err'));
 }
+function openDocuments(){
+  const id=String(activeId||'');
+  if(!id){toast('Enregistre d’abord la commande','err');return;}
+  const row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');
+  const btn=row?.querySelector('[data-ycn-doc]');
+  if(!btn){toast('Module document indisponible','err');return;}
+  btn.click();
+}
 
 function enhanceModal(){
   scheduled=false;injectStyle();
@@ -154,6 +163,9 @@ function enhanceModal(){
   let del=actions.querySelector('.ycn-delete-v5');
   if(!del){del=document.createElement('button');del.type='button';del.className='ycn-btn ycn-delete-v5';del.textContent='Supprimer';actions.insertBefore(del,actions.firstChild);del.onclick=()=>deleteOrder(modal);}
   del.style.display=activeId?'inline-flex':'none';
+  let doc=actions.querySelector('.ycn-doc-v5');
+  if(!doc){doc=document.createElement('button');doc.type='button';doc.className='ycn-btn ycn-doc-v5';doc.textContent='Ajouter document';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(doc,cancel||save);doc.onclick=openDocuments;}
+  doc.style.display=activeId?'inline-flex':'none';
   if(!form.dataset.ycnUrlSubmitV5){
     form.addEventListener('submit',()=>{
       const snapshot=currentSnapshot(modal),url=txt(modal.querySelector('#ycnUrlV5')?.value);
@@ -176,5 +188,5 @@ const obs=new MutationObserver(records=>{
 });
 obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 window.addEventListener('yaya:data-refreshed',schedule);
-window.__YAYA_COMMANDES_EDIT_MODAL_V5_VERSION='5.0-product-url-save-delete';
+window.__YAYA_COMMANDES_EDIT_MODAL_V5_VERSION='5.1-product-url-save-delete-doc';
 })();
