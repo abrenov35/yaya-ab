@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-documents-view-only-css-v8';
+  const STYLE_ID='yaya-documents-view-only-css-v9';
   let style=document.getElementById(STYLE_ID);
   if(!style){style=document.createElement('style');style.id=STYLE_ID;document.head.appendChild(style);}
 
@@ -24,20 +24,55 @@
 
     ${GLOBAL_ROW},${DETAIL_ROW}{
       cursor:pointer!important;
-      transition:background .12s ease,box-shadow .12s ease!important;
+      outline:none!important;
+      box-shadow:none!important;
+      transition:background .12s ease!important;
+    }
+    ${DETAIL_ROW}{
+      border-left:0!important;
+      border-right:0!important;
+      border-top:0!important;
+      border-bottom:1px solid #dfe6ee!important;
     }
     ${GLOBAL_ROW}:hover,${DETAIL_ROW}:hover{
-      background:#eef5fc!important;
-      box-shadow:inset 3px 0 0 #2b6ea8!important;
+      background:#f4f8fc!important;
+      outline:none!important;
+      box-shadow:none!important;
     }
-    ${GLOBAL_ROW}:focus,${DETAIL_ROW}:focus{
-      outline:2px solid #77a9d4!important;
-      outline-offset:-2px!important;
-      background:#eef5fc!important;
+    ${GLOBAL_ROW}:focus,${DETAIL_ROW}:focus,
+    ${GLOBAL_ROW}:focus-visible,${DETAIL_ROW}:focus-visible{
+      outline:none!important;
+      box-shadow:none!important;
+    }
+
+    .yaya-mail-body-modal .yaya-mail-body-meta{
+      display:grid!important;
+      gap:5px!important;
+      margin:0 0 14px!important;
+      padding:12px 14px!important;
+      border:1px solid #d7e1ec!important;
+      border-radius:10px!important;
+      background:#f7f9fc!important;
+      color:#24364d!important;
+      font-size:12px!important;
+    }
+    .yaya-mail-body-modal .yaya-mail-body-content{
+      max-height:58vh!important;
+      overflow:auto!important;
+      padding:15px 16px!important;
+      border:1px solid #d7e1ec!important;
+      border-radius:10px!important;
+      background:#fff!important;
+      color:#1f2937!important;
+      font-size:13px!important;
+      line-height:1.55!important;
+      white-space:pre-wrap!important;
+      overflow-wrap:anywhere!important;
     }
   `;
 
   function text(v){return String(v==null?'':v).trim();}
+  function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));}
 
   function rowId(row){
     if(!row)return '';
@@ -102,6 +137,31 @@
     return /Objet non renseign[eé]|\bMAIL\b/i.test(String(row&&row.textContent||''));
   }
 
+  function isGmailUrl(url){
+    return /^(?:https?:\/\/)?(?:mail\.)?google\.com\/mail\//i.test(text(url)) || /mail\.google\.com/i.test(text(url));
+  }
+
+  function attachmentUrl(row,d,mail){
+    const explicit=[
+      d&&d.lienPieceJointe,
+      d&&d.pieceJointeUrl,
+      d&&d.attachmentUrl,
+      d&&d.fichierUrl,
+      d&&d.fileUrl,
+      d&&d.oneDriveWebUrl,
+      d&&d.dropboxUrl
+    ].map(text).find(Boolean);
+    if(explicit)return explicit;
+
+    const direct=directPiece(row);
+    if(direct && (!mail || !isGmailUrl(direct)))return direct;
+
+    const generic=text(d&&d.lien);
+    if(generic && (!mail || !isGmailUrl(generic)))return generic;
+
+    return '';
+  }
+
   function openPiece(url){
     url=text(url);
     if(!url)return false;
@@ -111,7 +171,40 @@
     return true;
   }
 
-  function openMail(id){
+  function mailSubject(d){
+    return text(d&&(d.objetMail||d.mailSubject||d.emailSubject||d.subject||d.objet||d.sujet))||'Objet non renseigné';
+  }
+  function mailSender(d){
+    return text(d&&(d.nomMail||d.expediteur||d.from||d.sender))||'Expéditeur non renseigné';
+  }
+  function mailBody(d){
+    if(!d)return '';
+    const raw=d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody||d.body||d.contenu||d.message||'';
+    if(!raw)return '';
+    const holder=document.createElement('div');
+    holder.innerHTML=String(raw);
+    return text(holder.textContent||holder.innerText||raw);
+  }
+
+  function openMailBody(d,id){
+    const body=mailBody(d);
+    if(body){
+      const root=document.getElementById('modalRoot');
+      if(!root)return false;
+      const sujet=mailSubject(d);
+      const sender=mailSender(d);
+      const date=text(d&&d.date);
+      root.innerHTML=''
+        +'<div class="overlay">'
+        +'<div class="modal yaya-mail-body-modal" style="max-width:760px">'
+        +'<h5>'+esc(sujet)+'<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
+        +'<div class="yaya-mail-body-meta"><div><b>De :</b> '+esc(sender)+'</div>'+(date?'<div><b>Date :</b> '+esc(date)+'</div>':'')+'</div>'
+        +'<div class="yaya-mail-body-content">'+esc(body)+'</div>'
+        +'<div class="mfoot" style="justify-content:flex-end"><button type="button" class="btnp" onclick="closeModal()">Fermer</button></div>'
+        +'</div></div>';
+      return true;
+    }
+
     id=text(id);
     if(!id)return false;
     try{if(typeof voirMessageYaya==='function'){voirMessageYaya(id);return true;}}catch(e){}
@@ -122,27 +215,30 @@
   function openRow(row){
     const id=rowId(row);
     const d=dataForRow(row);
+    const mail=isMail(row,d);
 
-    // Une pièce jointe est toujours prioritaire.
-    const piece=directPiece(row)||text(d&&d.lien);
+    // Pour un mail, un lien Gmail n'est PAS une pièce jointe : Gmail refuse l'iframe.
+    const piece=attachmentUrl(row,d,mail);
     if(piece)return openPiece(piece);
 
-    // Mail sans pièce jointe : on ouvre le corps du message.
-    if(id&&isMail(row,d))return openMail(id);
+    // Mail sans PJ : lecture du corps du message directement dans Yaya.
+    if(id&&mail)return openMailBody(d,id);
 
     return false;
   }
 
   function decorate(){
     document.querySelectorAll(GLOBAL_ROW+','+DETAIL_ROW).forEach(row=>{
-      row.setAttribute('role','button');
-      row.setAttribute('tabindex','0');
+      row.removeAttribute('tabindex');
+      row.removeAttribute('role');
+      row.style.setProperty('outline','none','important');
+      row.style.setProperty('box-shadow','none','important');
       const d=dataForRow(row);
-      const piece=directPiece(row)||text(d&&d.lien);
-      row.title=piece?'Cliquer pour ouvrir la pièce jointe':'Cliquer pour lire le message';
+      const mail=isMail(row,d);
+      const piece=attachmentUrl(row,d,mail);
+      row.title=piece?'Cliquer pour ouvrir la pièce jointe':(mail?'Cliquer pour lire le message':'Cliquer pour ouvrir');
     });
 
-    // Titre de la section dans la fiche chantier.
     document.querySelectorAll('#pane-chantiers .yaya-detail-section-action-row[data-section="documents"] .yaya-detail-section-action-title').forEach(el=>{
       el.textContent='DOCUMENTS & MAILS';
     });
@@ -159,15 +255,6 @@
     if(e.target.closest('button,a,input,select,textarea,label'))return;
     e.preventDefault();
     e.stopPropagation();
-    openRow(row);
-  },true);
-
-  document.addEventListener('keydown',function(e){
-    if(e.key!=='Enter'&&e.key!==' ')return;
-    const row=findRow(e.target);
-    if(!row)return;
-    if(e.target.closest('button,a,input,select,textarea,label'))return;
-    e.preventDefault();
     openRow(row);
   },true);
 
