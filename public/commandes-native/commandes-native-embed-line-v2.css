@@ -3,426 +3,169 @@
 /* =========================================================
    COMMANDES — bandeau
    ========================================================= */
-.yaya-cmd-native-root .ycn-statusline{
-  display:none!important;
-}
+.yaya-cmd-native-root .ycn-statusline{display:none!important}
 .yaya-cmd-native-root .ycn-toolbar{
-  min-height:48px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  gap:12px!important;
-  margin:0 0 18px!important;
-  padding:7px 10px 7px 14px!important;
-  border:1px solid #cbd8e6!important;
-  border-radius:10px!important;
-  background:#eef4fb!important;
-  box-shadow:none!important;
+  min-height:48px!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;
+  margin:0 0 18px!important;padding:7px 10px 7px 14px!important;border:1px solid #cbd8e6!important;border-radius:10px!important;
+  background:#eef4fb!important;box-shadow:none!important
 }
-.yaya-cmd-native-root .ycn-toolbar::before{
-  content:'COMMANDES';
-  color:#162d49!important;
-  font-size:13px!important;
-  font-weight:900!important;
-  letter-spacing:.02em!important;
-}
+.yaya-cmd-native-root .ycn-toolbar::before{content:'COMMANDES';color:#162d49!important;font-size:13px!important;font-weight:900!important;letter-spacing:.02em!important}
 .yaya-cmd-native-root .ycn-toolbar .ycn-btn.primary{
-  min-height:34px!important;
-  padding:0 13px!important;
-  border:1px solid #b8cbe0!important;
-  border-radius:8px!important;
-  background:#fff!important;
-  color:#173a60!important;
-  box-shadow:0 1px 2px rgba(16,24,40,.04)!important;
-  font-size:11.5px!important;
-  font-weight:850!important;
+  min-height:34px!important;padding:0 13px!important;border:1px solid #b8cbe0!important;border-radius:8px!important;background:#fff!important;
+  color:#173a60!important;box-shadow:0 1px 2px rgba(16,24,40,.04)!important;font-size:11.5px!important;font-weight:850!important
 }
-.yaya-cmd-native-root .ycn-toolbar .ycn-btn.primary:hover{
-  background:#f8fbff!important;
-  border-color:#9fb8d2!important;
-}
+.yaya-cmd-native-root .ycn-toolbar .ycn-btn.primary:hover{background:#f8fbff!important;border-color:#9fb8d2!important}
 
 /* =========================================================
    COMMANDES — lignes compactes
    ========================================================= */
-.ycn-row.open .ycn-row-detail{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) auto;
-  align-items:end;
-  gap:10px;
-}
-.ycn-detail-grid{
-  grid-template-columns:minmax(130px,1.2fr) minmax(130px,1.2fr) minmax(80px,.65fr) minmax(95px,.8fr) minmax(140px,1.05fr) minmax(80px,.65fr) minmax(150px,1.35fr);
-  gap:8px;
-  align-items:stretch;
-}
-.ycn-box{
-  padding:8px 9px;
-  min-height:58px;
-}
+.ycn-row.open .ycn-row-detail{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px}
+.ycn-detail-grid{grid-template-columns:minmax(130px,1.2fr) minmax(130px,1.2fr) minmax(80px,.65fr) minmax(95px,.8fr) minmax(140px,1.05fr) minmax(80px,.65fr) minmax(150px,1.35fr);gap:8px;align-items:stretch}
+.ycn-box{padding:8px 9px;min-height:58px}
 .ycn-box.note{grid-column:auto}
-.ycn-actions{
-  margin-top:0;
-  align-self:end;
-  flex-wrap:nowrap;
-  white-space:nowrap;
-}
+.ycn-actions{margin-top:0;align-self:end;flex-wrap:nowrap;white-space:nowrap}
 
 /* =========================================================
-   MODALE COMMANDE — version unique / premium
-   URL TOUJOURS VISIBLE
+   MODALE COMMANDE — PREMIUM / CONTRASTE
+   uniquement visuel, aucune logique métier modifiée
    ========================================================= */
-#ycnCreateFollowupV6{
-  display:none!important;
-}
+#ycnCreateFollowupV6{display:none!important}
 #ycnEditModal{
-  background:rgba(17,31,49,.62)!important;
-  backdrop-filter:blur(7px)!important;
-  -webkit-backdrop-filter:blur(7px)!important;
-  padding:18px!important;
+  background:rgba(9,22,38,.68)!important;
+  backdrop-filter:blur(9px)!important;-webkit-backdrop-filter:blur(9px)!important;
+  padding:20px!important
 }
 #ycnEditModal .ycn-dialog{
-  width:min(760px,calc(100vw - 28px))!important;
-  max-height:92vh!important;
-  padding:0!important;
-  overflow:auto!important;
-  border:1px solid rgba(185,202,220,.92)!important;
-  border-radius:22px!important;
-  background:#fff!important;
-  box-shadow:0 32px 95px rgba(8,24,43,.36)!important;
+  position:relative!important;width:min(780px,calc(100vw - 30px))!important;max-height:93vh!important;padding:0!important;overflow:auto!important;
+  border:1px solid rgba(117,145,177,.42)!important;border-radius:22px!important;background:#f4f7fb!important;
+  box-shadow:0 34px 100px rgba(3,18,35,.46),0 0 0 1px rgba(255,255,255,.05)!important
 }
 #ycnEditModal .ycn-dialog-head{
-  position:sticky!important;
-  top:0!important;
-  z-index:3!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  gap:16px!important;
-  margin:0!important;
-  padding:20px 24px!important;
-  border-bottom:1px solid #dce7f2!important;
-  background:linear-gradient(135deg,#f7fbff 0%,#edf5fd 100%)!important;
+  position:sticky!important;top:0!important;z-index:5!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:16px!important;
+  margin:0!important;padding:22px 24px!important;border-bottom:0!important;
+  background:linear-gradient(120deg,#15395f 0%,#1c527f 56%,#2875a8 100%)!important;
+  box-shadow:0 10px 24px rgba(14,48,78,.16)!important
 }
-#ycnEditModal .ycn-dialog-head::before{
-  content:'';
-  position:absolute;
-  left:0;
-  top:0;
-  bottom:0;
-  width:5px;
-  background:#1664a7;
+#ycnEditModal .ycn-dialog-head::after{
+  content:'';position:absolute;left:24px;right:24px;bottom:0;height:1px;background:rgba(255,255,255,.17)
 }
 #ycnEditModal .ycn-dialog-head h3{
-  margin:0!important;
-  color:#173451!important;
-  font-size:22px!important;
-  line-height:1.2!important;
-  font-weight:900!important;
-  letter-spacing:-.02em!important;
-  overflow:hidden!important;
-  text-overflow:ellipsis!important;
-  white-space:nowrap!important;
+  margin:0!important;color:#fff!important;font-size:23px!important;line-height:1.2!important;font-weight:900!important;letter-spacing:-.025em!important;
+  overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;text-shadow:0 1px 1px rgba(0,0,0,.08)!important
 }
 #ycnEditModal .ycn-close{
-  width:40px!important;
-  height:40px!important;
-  flex:0 0 40px!important;
-  border:1px solid #b9cadd!important;
-  border-radius:11px!important;
-  background:#fff!important;
-  color:#24425f!important;
-  font-size:23px!important;
-  line-height:1!important;
-  box-shadow:0 2px 6px rgba(15,42,69,.08)!important;
-  cursor:pointer!important;
+  width:40px!important;height:40px!important;flex:0 0 40px!important;border:1px solid rgba(255,255,255,.38)!important;border-radius:11px!important;
+  background:rgba(255,255,255,.12)!important;color:#fff!important;font-size:23px!important;line-height:1!important;
+  box-shadow:0 3px 10px rgba(3,25,48,.16)!important;cursor:pointer!important;transition:.15s ease!important
 }
-#ycnEditModal .ycn-close:hover{
-  background:#edf5fd!important;
-  border-color:#8faecb!important;
-}
-#ycnEditModal #ycnEditForm{
-  padding:22px 24px 24px!important;
-  background:#fff!important;
-}
+#ycnEditModal .ycn-close:hover{background:rgba(255,255,255,.23)!important;border-color:rgba(255,255,255,.62)!important;transform:translateY(-1px)!important}
+
+#ycnEditModal #ycnEditForm{padding:20px 22px 22px!important;background:#f4f7fb!important}
 #ycnEditModal .ycn-form-grid{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:15px 16px!important;
-  padding:18px!important;
-  border:1px solid #e3ebf4!important;
-  border-radius:16px!important;
-  background:#f8fbfe!important;
+  display:grid!important;grid-template-columns:1fr 1fr!important;gap:14px 16px!important;
+  padding:18px!important;border:1px solid #dce6f0!important;border-radius:17px!important;background:#fff!important;
+  box-shadow:0 7px 22px rgba(19,50,82,.065)!important
 }
-#ycnEditModal .ycn-field{
-  display:grid!important;
-  gap:7px!important;
-  min-width:0!important;
-}
-#ycnEditModal .ycn-field.full{
-  grid-column:1/-1!important;
-}
+#ycnEditModal .ycn-field{display:grid!important;gap:7px!important;min-width:0!important}
+#ycnEditModal .ycn-field.full{grid-column:1/-1!important}
 #ycnEditModal .ycn-field>span{
-  color:#536b84!important;
-  font-size:11px!important;
-  font-weight:900!important;
-  letter-spacing:.035em!important;
-  text-transform:uppercase!important;
+  color:#425b75!important;font-size:10.5px!important;font-weight:900!important;letter-spacing:.055em!important;text-transform:uppercase!important
 }
 #ycnEditModal .ycn-field input,
 #ycnEditModal .ycn-field select,
 #ycnEditModal .ycn-field textarea{
-  width:100%!important;
-  box-sizing:border-box!important;
-  border:1px solid #c7d6e5!important;
-  border-radius:11px!important;
-  background:#fff!important;
-  color:#23384f!important;
-  font:inherit!important;
-  font-size:14px!important;
-  outline:none!important;
-  box-shadow:0 1px 2px rgba(16,24,40,.025)!important;
-  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease!important;
+  width:100%!important;box-sizing:border-box!important;border:1px solid #c4d2e0!important;border-radius:11px!important;background:#fff!important;color:#1e334b!important;
+  font:inherit!important;font-size:14px!important;outline:none!important;box-shadow:0 1px 2px rgba(10,28,48,.025)!important;
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease,transform .15s ease!important
 }
 #ycnEditModal .ycn-field input,
-#ycnEditModal .ycn-field select{
-  height:45px!important;
-  padding:0 12px!important;
-}
-#ycnEditModal .ycn-field textarea{
-  min-height:86px!important;
-  max-height:170px!important;
-  padding:11px 12px!important;
-  resize:vertical!important;
-}
+#ycnEditModal .ycn-field select{height:46px!important;padding:0 13px!important}
+#ycnEditModal .ycn-field textarea{min-height:96px!important;max-height:190px!important;padding:12px 13px!important;resize:vertical!important;line-height:1.45!important}
+#ycnEditModal .ycn-field input:hover,
+#ycnEditModal .ycn-field select:hover,
+#ycnEditModal .ycn-field textarea:hover{border-color:#9fb5ca!important;background:#fcfdff!important}
 #ycnEditModal .ycn-field input:focus,
 #ycnEditModal .ycn-field select:focus,
-#ycnEditModal .ycn-field textarea:focus{
-  border-color:#2f78b7!important;
-  box-shadow:0 0 0 3px rgba(47,120,183,.12)!important;
-  background:#fff!important;
-}
-#ycnEditModal .ycn-form-grid>.ycn-field:first-child input{
-  height:48px!important;
-  font-size:15px!important;
-  font-weight:750!important;
-  border-color:#b9cde0!important;
-}
+#ycnEditModal .ycn-field textarea:focus{border-color:#2472ad!important;box-shadow:0 0 0 3px rgba(36,114,173,.13)!important;background:#fff!important}
 
-/* URL : visible en création ET modification */
+/* Produit / besoin : champ principal */
+#ycnEditModal .ycn-form-grid>.ycn-field:first-child{
+  position:relative!important;padding:13px 14px 14px!important;border:1px solid #d3e1ed!important;border-radius:13px!important;
+  background:linear-gradient(180deg,#fbfdff 0%,#f4f8fc 100%)!important
+}
+#ycnEditModal .ycn-form-grid>.ycn-field:first-child::before{
+  content:'';position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:#1f6fa7
+}
+#ycnEditModal .ycn-form-grid>.ycn-field:first-child input{height:48px!important;font-size:15px!important;font-weight:800!important;border-color:#b7cadc!important;color:#173a60!important}
+
+/* URL : vraie carte fonctionnelle */
 #ycnEditModal .ycn-url-v5{
-  display:grid!important;
-  grid-column:1/-1!important;
-  padding:12px!important;
-  border:1px solid #d7e5f2!important;
-  border-radius:12px!important;
-  background:#eef6fd!important;
+  display:grid!important;grid-column:1/-1!important;gap:8px!important;position:relative!important;
+  padding:13px 14px 14px 16px!important;border:1px solid #bdd8ee!important;border-radius:13px!important;
+  background:linear-gradient(135deg,#eef7ff 0%,#f7fbff 100%)!important;box-shadow:inset 4px 0 0 #2b7bb7!important
 }
-#ycnEditModal .ycn-url-v5>span::before{
-  content:'↗  ';
-  color:#1664a7;
-}
-#ycnEditModal .ycn-url-v5 input{
-  width:100%!important;
-  background:#fff!important;
-  border-color:#b9cfe3!important;
-}
+#ycnEditModal .ycn-url-v5>span{color:#225d8a!important}
+#ycnEditModal .ycn-url-v5>span::before{content:'↗  ';color:#176da9;font-size:12px!important}
+#ycnEditModal .ycn-url-v5 input{width:100%!important;background:#fff!important;border-color:#aac7df!important;color:#14598d!important}
+#ycnEditModal .ycn-url-v5 input::placeholder{color:#8ca5bb!important}
 
+/* Note : bloc distinct pour mieux respirer */
+#ycnEditModal #ycnNotes{background:#fffdf9!important;border-color:#d9d2c7!important}
+#ycnEditModal #ycnNotes:focus{border-color:#b58a4b!important;box-shadow:0 0 0 3px rgba(181,138,75,.12)!important}
+#ycnEditModal #ycnNotes.closest{background:#fff}
+#ycnEditModal .ycn-field:has(#ycnNotes){
+  grid-column:1/-1!important;padding:13px 14px 14px!important;border:1px solid #e6dfd4!important;border-radius:13px!important;background:#fffaf3!important
+}
+#ycnEditModal .ycn-field:has(#ycnNotes)>span{color:#725a38!important}
+
+/* Footer d'actions */
 #ycnEditModal .ycn-dialog-actions{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:flex-end!important;
-  gap:10px!important;
-  flex-wrap:wrap!important;
-  margin-top:18px!important;
-  padding:17px 2px 0!important;
-  border-top:1px solid #e6edf5!important;
+  display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:10px!important;flex-wrap:wrap!important;
+  margin-top:16px!important;padding:16px 2px 0!important;border-top:1px solid #dce5ee!important
 }
 #ycnEditModal .ycn-dialog-actions .ycn-btn{
-  min-height:42px!important;
-  padding:0 16px!important;
-  border-radius:10px!important;
-  font-size:12px!important;
-  font-weight:900!important;
-  cursor:pointer!important;
-  box-shadow:0 2px 5px rgba(16,24,40,.06)!important;
+  min-height:43px!important;padding:0 17px!important;border-radius:10px!important;font-size:12px!important;font-weight:900!important;cursor:pointer!important;
+  box-shadow:0 2px 6px rgba(16,24,40,.07)!important;transition:.15s ease!important
 }
+#ycnEditModal .ycn-dialog-actions .ycn-btn:hover{transform:translateY(-1px)!important}
 #ycnEditModal .ycn-doc-v5{
-  background:#eaf4ff!important;
-  border:1px solid #9fc3e4!important;
-  color:#10538c!important;
+  display:inline-flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;
+  background:#e9f4ff!important;border:1px solid #9fc5e6!important;color:#0f568f!important;box-shadow:0 3px 9px rgba(31,103,159,.09)!important
 }
-#ycnEditModal .ycn-doc-v5::before{
-  content:'＋ ';
-  font-size:15px;
-  line-height:1;
-}
-#ycnEditModal .ycn-doc-v5:hover{
-  background:#ddecfb!important;
-  border-color:#78a9d4!important;
-}
+#ycnEditModal .ycn-doc-v5::before{content:'＋ '!important;font-size:15px!important;line-height:1!important}
+#ycnEditModal .ycn-doc-v5:hover{background:#dceeff!important;border-color:#78abd6!important}
 #ycnEditModal .ycn-save-v5{
-  background:#105b96!important;
-  border:1px solid #105b96!important;
-  color:#fff!important;
-  opacity:1!important;
-  box-shadow:0 4px 10px rgba(16,91,150,.24)!important;
+  min-width:104px!important;background:linear-gradient(180deg,#1768a5 0%,#10588f 100%)!important;border:1px solid #0f558b!important;color:#fff!important;
+  opacity:1!important;box-shadow:0 5px 13px rgba(16,88,143,.25)!important
 }
-#ycnEditModal .ycn-save-v5:hover{
-  background:#0b4c80!important;
-  border-color:#0b4c80!important;
-}
-#ycnEditModal .ycn-save-v5:disabled{
-  background:#90b1cf!important;
-  border-color:#90b1cf!important;
-  color:#fff!important;
-  opacity:1!important;
-}
-#ycnEditModal .ycn-delete-v5{
-  margin-right:auto!important;
-  background:#fff3f2!important;
-  border:1px solid #efb1aa!important;
-  color:#b42318!important;
-}
-#ycnEditModal .ycn-delete-v5:hover{
-  background:#ffe6e3!important;
-}
-#ycnEditModal [data-ycn-close="edit"]{
-  background:#fff!important;
-  border:1px solid #cad6e3!important;
-  color:#334d67!important;
-}
+#ycnEditModal .ycn-save-v5:hover{background:linear-gradient(180deg,#135f99 0%,#0b4c7d 100%)!important;border-color:#0b4c7d!important}
+#ycnEditModal .ycn-save-v5:disabled{background:#8eafca!important;border-color:#8eafca!important;color:#fff!important;opacity:1!important;transform:none!important}
+#ycnEditModal .ycn-delete-v5{margin-right:auto!important;background:#fff3f2!important;border:1px solid #edaaa3!important;color:#b42318!important}
+#ycnEditModal .ycn-delete-v5:hover{background:#ffe5e2!important;border-color:#df9189!important}
+#ycnEditModal [data-ycn-close="edit"]{background:#fff!important;border:1px solid #c7d3df!important;color:#354e68!important}
 
 /* =========================================================
    MODALE DOCUMENTS
    ========================================================= */
-#ycnDocModal{
-  background:rgba(15,31,52,.55)!important;
-  backdrop-filter:blur(2px)!important;
-}
+#ycnDocModal{background:rgba(15,31,52,.58)!important;backdrop-filter:blur(4px)!important}
 #ycnDocModal .ycn-dialog{
-  width:min(640px,calc(100vw - 28px))!important;
-  max-height:min(760px,92vh)!important;
-  display:flex!important;
-  flex-direction:column!important;
-  gap:14px!important;
-  padding:22px!important;
-  border:1px solid #d7e1ec!important;
-  border-radius:18px!important;
-  background:#fff!important;
-  box-shadow:0 28px 85px rgba(13,35,61,.28)!important;
+  width:min(640px,calc(100vw - 28px))!important;max-height:min(760px,92vh)!important;display:flex!important;flex-direction:column!important;gap:14px!important;
+  padding:22px!important;border:1px solid #d4e0eb!important;border-radius:18px!important;background:#fff!important;box-shadow:0 28px 85px rgba(13,35,61,.32)!important
 }
-#ycnDocModal .ycn-dialog-head{
-  order:0!important;
-  margin:0!important;
-  padding:0 0 4px!important;
-  border-bottom:0!important;
-}
-#ycnDocModal .ycn-dialog-head h3{
-  margin:0!important;
-  color:#21334d!important;
-  font-size:20px!important;
-  font-weight:900!important;
-  letter-spacing:-.01em!important;
-}
-#ycnDocModal .ycn-close{
-  width:36px!important;
-  height:36px!important;
-  border:1px solid #aebfd2!important;
-  border-radius:9px!important;
-  background:#f8fbff!important;
-  color:#213a59!important;
-  box-shadow:0 1px 2px rgba(16,24,40,.06)!important;
-}
-#ycnDocFile{
-  order:1!important;
-  width:100%!important;
-  min-height:54px!important;
-  padding:8px!important;
-  border:1px dashed #aebfd2!important;
-  border-radius:11px!important;
-  background:#f8fbff!important;
-  color:#42546b!important;
-  font-size:12px!important;
-  cursor:pointer!important;
-}
-#ycnDocFile::file-selector-button{
-  min-height:36px!important;
-  margin-right:10px!important;
-  padding:0 13px!important;
-  border:1px solid #b8cbe0!important;
-  border-radius:8px!important;
-  background:#fff!important;
-  color:#173a60!important;
-  font-weight:850!important;
-  cursor:pointer!important;
-}
-#ycnDocModal .ycn-doc-list{
-  order:2!important;
-  display:grid!important;
-  gap:9px!important;
-  margin:0!important;
-  max-height:330px!important;
-  overflow:auto!important;
-}
-#ycnDocModal .ycn-doc-item{
-  grid-template-columns:minmax(0,1fr) auto auto!important;
-  gap:8px!important;
-  min-height:48px!important;
-  padding:8px 10px!important;
-  border:1px solid #dce5ef!important;
-  border-radius:10px!important;
-  background:#fbfdff!important;
-  box-shadow:0 1px 2px rgba(16,24,40,.03)!important;
-}
-#ycnDocModal .ycn-doc-item a{
-  color:#175ea7!important;
-  font-size:12px!important;
-  font-weight:850!important;
-}
-#ycnDocModal .ycn-doc-item button{
-  min-height:32px!important;
-  padding:0 10px!important;
-  border:1px solid #ccd9e7!important;
-  border-radius:8px!important;
-  background:#fff!important;
-  color:#23405f!important;
-  font-size:11px!important;
-  font-weight:850!important;
-  cursor:pointer!important;
-}
-#ycnDocModal .ycn-doc-item button:last-child{
-  color:#b42318!important;
-  border-color:#efc6c1!important;
-  background:#fff7f6!important;
-}
-#ycnDocModal .ycn-dialog-actions{
-  order:3!important;
-  display:flex!important;
-  justify-content:flex-end!important;
-  align-items:center!important;
-  gap:9px!important;
-  margin:2px 0 0!important;
-  padding-top:12px!important;
-  border-top:1px solid #edf1f5!important;
-}
-#ycnDocModal .ycn-dialog-actions .ycn-btn{
-  min-height:38px!important;
-  padding:0 15px!important;
-  border-radius:9px!important;
-}
-#ycnDocModal #ycnDocSend{
-  background:#0f4f8d!important;
-  border-color:#0f4f8d!important;
-  color:#fff!important;
-  box-shadow:0 2px 5px rgba(15,79,141,.22)!important;
-}
-#ycnDocModal #ycnDocSend:disabled{
-  background:#c9d8e8!important;
-  border-color:#c9d8e8!important;
-  color:#fff!important;
-  opacity:1!important;
-}
+#ycnDocModal .ycn-dialog-head{order:0!important;margin:0!important;padding:0 0 4px!important;border-bottom:0!important}
+#ycnDocModal .ycn-dialog-head h3{margin:0!important;color:#21334d!important;font-size:20px!important;font-weight:900!important;letter-spacing:-.01em!important}
+#ycnDocModal .ycn-close{width:36px!important;height:36px!important;border:1px solid #aebfd2!important;border-radius:9px!important;background:#f8fbff!important;color:#213a59!important;box-shadow:0 1px 2px rgba(16,24,40,.06)!important}
+#ycnDocFile{order:1!important;width:100%!important;min-height:54px!important;padding:8px!important;border:1px dashed #9eb9d4!important;border-radius:11px!important;background:#f5faff!important;color:#42546b!important;font-size:12px!important;cursor:pointer!important}
+#ycnDocFile::file-selector-button{min-height:36px!important;margin-right:10px!important;padding:0 13px!important;border:1px solid #b8cbe0!important;border-radius:8px!important;background:#fff!important;color:#173a60!important;font-weight:850!important;cursor:pointer!important}
+#ycnDocModal .ycn-doc-list{order:2!important;display:grid!important;gap:9px!important;margin:0!important;max-height:330px!important;overflow:auto!important}
+#ycnDocModal .ycn-doc-item{grid-template-columns:minmax(0,1fr) auto auto!important;gap:8px!important;min-height:48px!important;padding:8px 10px!important;border:1px solid #dce5ef!important;border-radius:10px!important;background:#fbfdff!important;box-shadow:0 1px 2px rgba(16,24,40,.03)!important}
+#ycnDocModal .ycn-doc-item a{color:#175ea7!important;font-size:12px!important;font-weight:850!important}
+#ycnDocModal .ycn-doc-item button{min-height:32px!important;padding:0 10px!important;border:1px solid #ccd9e7!important;border-radius:8px!important;background:#fff!important;color:#23405f!important;font-size:11px!important;font-weight:850!important;cursor:pointer!important}
+#ycnDocModal .ycn-doc-item button:last-child{color:#b42318!important;border-color:#efc6c1!important;background:#fff7f6!important}
+#ycnDocModal .ycn-dialog-actions{order:3!important;display:flex!important;justify-content:flex-end!important;align-items:center!important;gap:9px!important;margin:2px 0 0!important;padding-top:12px!important;border-top:1px solid #edf1f5!important}
+#ycnDocModal .ycn-dialog-actions .ycn-btn{min-height:38px!important;padding:0 15px!important;border-radius:9px!important}
+#ycnDocModal #ycnDocSend{background:#0f4f8d!important;border-color:#0f4f8d!important;color:#fff!important;box-shadow:0 2px 5px rgba(15,79,141,.22)!important}
+#ycnDocModal #ycnDocSend:disabled{background:#c9d8e8!important;border-color:#c9d8e8!important;color:#fff!important;opacity:1!important}
 
 @media(max-width:1200px){
   .ycn-row.open .ycn-row-detail{grid-template-columns:1fr}
@@ -444,11 +187,11 @@
 @media(max-width:620px){
   #ycnEditModal{padding:7px!important}
   #ycnEditModal .ycn-dialog{width:100%!important;border-radius:16px!important}
-  #ycnEditModal .ycn-dialog-head{padding:16px 17px!important}
+  #ycnEditModal .ycn-dialog-head{padding:17px 18px!important}
   #ycnEditModal .ycn-dialog-head h3{font-size:19px!important}
-  #ycnEditModal #ycnEditForm{padding:14px!important}
+  #ycnEditModal #ycnEditForm{padding:13px!important}
   #ycnEditModal .ycn-form-grid{grid-template-columns:1fr!important;gap:12px!important;padding:13px!important}
-  #ycnEditModal .ycn-field.full,#ycnEditModal .ycn-url-v5{grid-column:auto!important}
+  #ycnEditModal .ycn-field.full,#ycnEditModal .ycn-url-v5,#ycnEditModal .ycn-field:has(#ycnNotes){grid-column:auto!important}
   #ycnEditModal .ycn-dialog-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:8px!important}
   #ycnEditModal .ycn-dialog-actions .ycn-btn{width:100%!important;justify-content:center!important}
   #ycnEditModal .ycn-delete-v5{margin-right:0!important;grid-column:1/-1!important}
