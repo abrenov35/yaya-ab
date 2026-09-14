@@ -44,58 +44,6 @@
 
       /* Nettoyage des cartes internes éventuelles */
       #pane-chantiers .yaya-chantier-home-row .card{
-      /* =========================================================
-   SUPPRIMER LE BOUTON OEIL DANS LA LISTE CHANTIERS
-   Le nom du chantier reste l'accès d'ouverture.
-========================================================= */
-(function(){
-  'use strict';
-
-  function removeEyes(){
-    const pane=document.getElementById('pane-chantiers');
-    if(!pane)return;
-
-    const rows=Array.from(pane.children||[]);
-    rows.forEach(function(row){
-      const top=row && row.querySelector ? row.querySelector('.top') : null;
-      if(!top)return;
-
-      Array.from(top.querySelectorAll('button,[onclick]')).forEach(function(el){
-        const code=String(el.getAttribute('onclick')||'');
-        const txt=String(el.textContent||'').trim();
-
-        if(/toggleChantier\(/.test(code) || txt==='👁️' || txt==='👁'){
-          try{ el.remove(); }catch(_){}
-        }
-      });
-    });
-  }
-
-  function install(){
-    removeEyes();
-
-    const pane=document.getElementById('pane-chantiers');
-    if(!pane){
-      setTimeout(install,150);
-      return;
-    }
-
-    let raf=0;
-    new MutationObserver(function(){
-      if(raf)return;
-      raf=requestAnimationFrame(function(){
-        raf=0;
-        removeEyes();
-      });
-    }).observe(pane,{childList:true,subtree:true});
-  }
-
-  if(document.readyState==='loading'){
-    document.addEventListener('DOMContentLoaded',install,{once:true});
-  }else{
-    install();
-  }
-})();
         background:transparent !important;
         box-shadow:none !important;
         border:none !important;
@@ -339,6 +287,109 @@
       raf=requestAnimationFrame(function(){
         raf=0;
         apply();
+      });
+    }).observe(pane,{childList:true,subtree:true});
+  }
+
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',install,{once:true});
+  }else{
+    install();
+  }
+})();
+
+/* =========================================================
+   LIGNE CHANTIER ENTIÈREMENT CLIQUABLE
+   Uniquement en vue liste/repliée. Les boutons et contrôles
+   internes gardent leur comportement propre.
+========================================================= */
+(function(){
+  'use strict';
+
+  const STYLE_ID='yaya-chantier-row-click-style-v1';
+
+  function installStyle(){
+    if(document.getElementById(STYLE_ID))return;
+    const style=document.createElement('style');
+    style.id=STYLE_ID;
+    style.textContent=`
+      #pane-chantiers .yaya-chantier-home-row.yaya-row-clickable{
+        cursor:pointer!important;
+        transition:box-shadow .12s ease, transform .12s ease;
+      }
+      #pane-chantiers .yaya-chantier-home-row.yaya-row-clickable:hover{
+        box-shadow:0 3px 10px rgba(22,45,73,.16)!important;
+      }
+      #pane-chantiers .yaya-chantier-home-row.yaya-row-clickable:active{
+        transform:scale(.998);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function isInteractive(target){
+    return !!(target && target.closest && target.closest(
+      'button,a,input,select,textarea,label,[contenteditable="true"],[onclick],.editable'
+    ));
+  }
+
+  function bindRows(){
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane)return;
+
+    Array.from(pane.children||[]).forEach(function(row){
+      const name=row.querySelector&&row.querySelector('.yaya-chantier-name-link[data-yaya-chantier-id]');
+      if(!name)return;
+
+      const id=String(name.dataset.yayaChantierId||'');
+      if(!id)return;
+
+      let opened=false;
+      try{
+        opened=typeof focusChantier!=='undefined' && String(focusChantier||'')===id;
+      }catch(_){}
+
+      row.classList.toggle('yaya-row-clickable',!opened);
+      if(opened)return;
+
+      row.dataset.yayaChantierId=id;
+      if(row.dataset.yayaRowClickBound==='1')return;
+      row.dataset.yayaRowClickBound='1';
+      row.setAttribute('title','Ouvrir le chantier');
+
+      row.addEventListener('click',function(ev){
+        if(isInteractive(ev.target))return;
+
+        const chantierId=String(row.dataset.yayaChantierId||'');
+        if(!chantierId)return;
+
+        try{
+          if(typeof focusChantier!=='undefined' && String(focusChantier||'')===chantierId)return;
+        }catch(_){}
+
+        ev.preventDefault();
+        try{
+          if(typeof toggleChantier==='function')toggleChantier(chantierId);
+        }catch(err){
+          console.warn('Ouverture chantier par la ligne :',err);
+        }
+      });
+    });
+  }
+
+  function install(){
+    installStyle();
+    bindRows();
+
+    const pane=document.getElementById('pane-chantiers');
+    if(!pane){setTimeout(install,150);return;}
+
+    let raf=0;
+    new MutationObserver(function(){
+      if(raf)return;
+      raf=requestAnimationFrame(function(){
+        raf=0;
+        bindRows();
       });
     }).observe(pane,{childList:true,subtree:true});
   }
