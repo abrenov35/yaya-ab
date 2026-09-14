@@ -6,8 +6,8 @@
   const FRAME_CLASS='yaya-ab-commandes-frame';
   const REFRESH_ID='yayaRefreshChantierBtn';
   const MANAGE_ID='yayaManageChantierCardBtn';
-  const OWNER='ab-commandes-v49';
-  const AB_COMMANDES_URL='https://abrenov35.github.io/ab-commandes/';
+  const OWNER='yaya-commandes-native-v1';
+  const AB_COMMANDES_URL='https://abrenov35.github.io/yaya-ab/commandes-native/';
   let activeCard=null;
   let scanTimer=0;
   let fitRaf=0;
@@ -98,7 +98,13 @@
     return '';
   }
 
-  function linkFor(id,name){const url=new URL(AB_COMMANDES_URL);if(id)url.searchParams.set('chantierId',String(id));if(name)url.searchParams.set('chantierName',String(name));url.searchParams.set('embed','1');url.searchParams.set('ui','drive-upload-v3');return url.toString()}
+  function linkFor(id,name){
+    const url=new URL(AB_COMMANDES_URL);
+    if(id)url.searchParams.set('chantierId',String(id));
+    if(name)url.searchParams.set('chantierName',String(name));
+    url.searchParams.set('embed','1');
+    return url.toString();
+  }
   function stopIframe(frame){if(!frame)return;try{frame.src='about:blank'}catch(e){}frame.remove()}
   function destroyBlock(block){if(!block)return;block.querySelectorAll('iframe').forEach(stopIframe);block.remove()}
   function cleanupOtherBlocks(keepCard){document.querySelectorAll('#pane-chantiers .'+BLOCK_CLASS).forEach(block=>{if(keepCard&&block.parentElement===keepCard)return;destroyBlock(block)})}
@@ -145,5 +151,5 @@
   window.addEventListener('scroll',fitAllFrames,{passive:true});
   if(window.visualViewport){window.visualViewport.addEventListener('resize',fitAllFrames,{passive:true});window.visualViewport.addEventListener('scroll',fitAllFrames,{passive:true})}
   window.addEventListener('yaya:data-refreshed',scanActive);setTimeout(scanActive,0);setTimeout(scanActive,300);setTimeout(ensureRefreshButton,800);setTimeout(fitAllFrames,850);
-  window.__YAYA_AB_COMMANDES_LINK_VERSION='4.12-viewport-frame';
+  window.__YAYA_AB_COMMANDES_LINK_VERSION='5.0-native-yaya';
 })();
