@@ -1,11 +1,12 @@
 (function(){
   'use strict';
 
-  if(window.__yayaFinanceEditActionsV14)return;
-  window.__yayaFinanceEditActionsV14=true;
+  // V15: restauration ciblée des boutons de la modale achat/charge.
+  // Important: ne jamais réécrire onclick/textContent du bouton Enregistrer.
+  if(window.__yayaFinanceEditActionsV15)return;
+  window.__yayaFinanceEditActionsV15=true;
 
-  const STYLE_ID='yaya-finance-edit-actions-v14';
-
+  const STYLE_ID='yaya-finance-edit-actions-v15';
   function txt(v){return String(v==null?'':v).trim();}
 
   function ensureStyle(){
@@ -13,45 +14,16 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #modalRoot .overlay:has(.achat-edit-modal){
-        display:flex!important;align-items:center!important;justify-content:center!important;
-        padding:12px!important;box-sizing:border-box!important;overflow:auto!important;
-      }
-      #modalRoot .achat-edit-modal{
-        width:min(720px,calc(100vw - 24px))!important;max-width:720px!important;
-        height:auto!important;min-height:0!important;max-height:calc(100dvh - 24px)!important;
-        margin:auto!important;padding:18px!important;box-sizing:border-box!important;
-        overflow-y:auto!important;border-radius:14px!important;
-      }
-      #modalRoot .achat-edit-modal>h5{
-        display:flex!important;align-items:center!important;justify-content:space-between!important;
-        gap:12px!important;margin:0 0 14px!important;padding:0 0 12px!important;
-      }
-      #modalRoot .achat-edit-modal>h5 button{
-        min-width:auto!important;width:auto!important;height:38px!important;min-height:38px!important;
-        padding:0 14px!important;margin:0!important;border-radius:9px!important;
-      }
-      #modalRoot .achat-edit-modal .yaya-finance-edit-actions{
-        display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-        gap:10px!important;align-items:stretch!important;margin:16px 0 0!important;
-        padding-top:14px!important;border-top:1px solid #dce4ee!important;width:100%!important;
-      }
-      #modalRoot .achat-edit-modal .yaya-finance-edit-actions>button{
-        width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;
-        padding:0 10px!important;border-radius:9px!important;font-weight:800!important;
-        display:inline-flex!important;align-items:center!important;justify-content:center!important;
-        visibility:visible!important;opacity:1!important;cursor:pointer!important;
-      }
+      #modalRoot .yaya-finance-edit-overlay{display:flex!important;align-items:center!important;justify-content:center!important;padding:12px!important;box-sizing:border-box!important;overflow:auto!important}
+      #modalRoot .achat-edit-modal{width:min(720px,calc(100vw - 24px))!important;max-width:720px!important;height:auto!important;min-height:0!important;max-height:calc(100dvh - 24px)!important;margin:auto!important;padding:18px!important;box-sizing:border-box!important;overflow-y:auto!important;border-radius:14px!important}
+      #modalRoot .achat-edit-modal>h5{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin:0 0 14px!important;padding:0 0 12px!important}
+      #modalRoot .achat-edit-modal>h5 button{min-width:auto!important;width:auto!important;height:38px!important;min-height:38px!important;padding:0 14px!important;margin:0!important;border-radius:9px!important}
+      #modalRoot .achat-edit-modal .yaya-finance-edit-actions{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;align-items:stretch!important;margin:16px 0 0!important;padding-top:14px!important;border-top:1px solid #dce4ee!important;width:100%!important}
+      #modalRoot .achat-edit-modal .yaya-finance-edit-actions>button{width:100%!important;min-width:0!important;min-height:46px!important;margin:0!important;padding:0 10px!important;border-radius:9px!important;font-weight:800!important;display:inline-flex!important;align-items:center!important;justify-content:center!important;visibility:visible!important;opacity:1!important;cursor:pointer!important;pointer-events:auto!important}
       #modalRoot .achat-edit-modal .yaya-achat-single-save{background:#064b8e!important;color:#fff!important;border:1px solid #064b8e!important}
       #modalRoot .achat-edit-modal .yaya-achat-edit-delete{background:#fff3f3!important;color:#b42318!important;border:1px solid #efb4b4!important}
       #modalRoot .achat-edit-modal .yaya-achat-edit-close{background:#fff!important;color:#162d49!important;border:1px solid #cbd7e3!important}
-      #modalRoot .achat-edit-modal .yaya-achat-edit-import,#modalRoot .achat-edit-modal .yaya-test-import{display:none!important}
-      @media(max-width:640px){
-        #modalRoot .overlay:has(.achat-edit-modal){padding:7px!important}
-        #modalRoot .achat-edit-modal{width:calc(100vw - 14px)!important;max-width:none!important;max-height:calc(100dvh - 14px)!important;padding:14px!important;border-radius:12px!important}
-        #modalRoot .achat-edit-modal .yaya-finance-edit-actions{gap:7px!important;margin-top:12px!important;padding-top:12px!important}
-        #modalRoot .achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:11.5px!important;padding:0 5px!important}
-      }
+      @media(max-width:640px){#modalRoot .yaya-finance-edit-overlay{padding:7px!important}#modalRoot .achat-edit-modal{width:calc(100vw - 14px)!important;max-width:none!important;max-height:calc(100dvh - 14px)!important;padding:14px!important;border-radius:12px!important}#modalRoot .achat-edit-modal .yaya-finance-edit-actions{gap:7px!important;margin-top:12px!important;padding-top:12px!important}#modalRoot .achat-edit-modal .yaya-finance-edit-actions>button{min-height:44px!important;font-size:11.5px!important;padding:0 5px!important}}
     `;
     document.head.appendChild(style);
   }
@@ -59,47 +31,60 @@
   function isFinanceEdit(modal){
     if(!modal)return false;
     if(modal.querySelector('#eaCh,#eavCh'))return true;
-    const title=txt(modal.querySelector('h5,h4,h3')?.textContent);
+    const title=txt(modal.querySelector('h5,h4,h3')&&modal.querySelector('h5,h4,h3').textContent);
     return /Modifier (?:l['’]achat|la charge)/i.test(title);
   }
 
   function ensureModal(modal){
     if(!isFinanceEdit(modal))return;
     modal.classList.add('achat-edit-modal','yaya-finance-edit-modal');
+    const overlay=modal.closest('.overlay');
+    if(overlay)overlay.classList.add('yaya-finance-edit-overlay');
 
-    const buttons=[...modal.querySelectorAll('button')];
-    const save=buttons.find(b=>/saveAchat|saveAchat2/.test(String(b.getAttribute('onclick')||''))||/^Enregistrer(?:✓)?$/i.test(txt(b.textContent))||b.classList.contains('yaya-achat-single-save'));
+    const buttons=Array.from(modal.querySelectorAll('button'));
+    const save=buttons.find(function(b){
+      return /saveAchat|saveAchat2/.test(String(b.getAttribute('onclick')||'')) || /^Enregistrer(?:✓)?$/i.test(txt(b.textContent)) || b.classList.contains('yaya-achat-single-save');
+    });
     if(!save)return;
-    save.classList.add('yaya-achat-single-save');
-    save.textContent='Enregistrer';
 
-    let foot=save.closest('.mfoot,.yaya-finance-edit-actions')||save.parentElement;
+    // Seulement une classe visuelle. On conserve intégralement le handler d'origine.
+    save.classList.add('yaya-achat-single-save');
+
+    const foot=save.closest('.mfoot,.yaya-finance-edit-actions')||save.parentElement;
     if(!foot)return;
     foot.classList.add('yaya-finance-edit-actions');
 
-    [...foot.querySelectorAll('button')].forEach(b=>{
-      if(b!==save&&/^[×x✕]$/i.test(txt(b.textContent)))b.remove();
+    // Ne supprimer que les anciens boutons parasites x, jamais Enregistrer.
+    Array.from(foot.querySelectorAll('button')).forEach(function(b){
+      if(b!==save && /^[×x✕]$/i.test(txt(b.textContent)))b.remove();
     });
 
-    let del=[...foot.querySelectorAll('button')].find(b=>/^Supprimer$/i.test(txt(b.textContent))||b.classList.contains('yaya-achat-edit-delete'));
+    const del=Array.from(foot.querySelectorAll('button')).find(function(b){return /^Supprimer$/i.test(txt(b.textContent))||b.classList.contains('yaya-achat-edit-delete');});
     if(del)del.classList.add('yaya-achat-edit-delete');
 
-    let close=[...foot.querySelectorAll('button')].find(b=>/^Fermer$/i.test(txt(b.textContent))||b.classList.contains('yaya-achat-edit-close'));
+    let close=Array.from(foot.querySelectorAll('button')).find(function(b){return /^Fermer$/i.test(txt(b.textContent))||b.classList.contains('yaya-achat-edit-close');});
     if(!close){
       close=document.createElement('button');
       close.type='button';
       close.className='yaya-achat-edit-close';
       close.textContent='Fermer';
-      close.onclick=function(){try{if(typeof window.closeModal==='function')window.closeModal();else if(typeof closeModal==='function')closeModal();}catch(e){}};
+      close.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        try{if(typeof window.closeModal==='function')window.closeModal();else if(typeof closeModal==='function')closeModal();else if(overlay)overlay.remove();}catch(err){if(overlay)overlay.remove();}
+      });
       foot.appendChild(close);
     }else close.classList.add('yaya-achat-edit-close');
 
-    [save,del,close].filter(Boolean).forEach(b=>foot.appendChild(b));
+    // Ordre visuel uniquement; les nœuds et handlers existants restent les mêmes.
+    foot.appendChild(save);
+    if(del)foot.appendChild(del);
+    foot.appendChild(close);
   }
 
   function apply(){
     ensureStyle();
-    const root=document.getElementById('modalRoot');if(!root)return;
+    const root=document.getElementById('modalRoot');
+    if(!root)return;
     root.querySelectorAll('.overlay .modal').forEach(ensureModal);
   }
 
