@@ -42,10 +42,10 @@
 
 (function(){
   'use strict';
-  if(window.__yayaMailEditBackgroundSaveLoaderV1)return;
-  window.__yayaMailEditBackgroundSaveLoaderV1=true;
+  if(window.__yayaMailEditBackgroundSaveLoaderV2)return;
+  window.__yayaMailEditBackgroundSaveLoaderV2=true;
   const s=document.createElement('script');
-  s.src='mail-edit-background-save-fix.js?v=mailbg-1';
+  s.src='mail-edit-background-save-fix.js?v=mailbg-2';
   s.async=false;
   s.onerror=function(){console.error('Yaya : correctif enregistrement mail non chargé');};
   document.head.appendChild(s);
