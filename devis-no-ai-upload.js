@@ -10,10 +10,10 @@
 
 (function(){
   'use strict';
-  if(window.__yayaMailDevisPersistenceLoaderV2)return;
-  window.__yayaMailDevisPersistenceLoaderV2=true;
+  if(window.__yayaMailDevisPersistenceLoaderV3)return;
+  window.__yayaMailDevisPersistenceLoaderV3=true;
   const s=document.createElement('script');
-  s.src='mail-devis-persistence-verify.js?v=persist-2';
+  s.src='mail-devis-persistence-verify.js?v=persist-3';
   s.async=false;
   s.onerror=function(){console.error('Yaya : contrôle persistance Mail/Devis non chargé');};
   document.head.appendChild(s);
