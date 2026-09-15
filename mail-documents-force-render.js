@@ -17,4 +17,21 @@
     script.async=false;
     document.head.appendChild(script);
   },0);
+
+  // Fiche chantier : le bouton Commande reste sans compteur.
+  const styleId='yaya-commande-tab-no-count-v1';
+  if(!document.getElementById(styleId)){
+    const style=document.createElement('style');
+    style.id=styleId;
+    style.textContent=`
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="commandes"] small{
+        display:none!important;
+      }
+      #pane-chantiers .yaya-detail-section-tab[data-section="commandes"] small[data-yaya-count]::after{
+        content:none!important;
+        display:none!important;
+      }
+    `;
+    document.head.appendChild(style);
+  }
 })();
