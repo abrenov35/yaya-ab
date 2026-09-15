@@ -1,6 +1,17 @@
 (function(){
   'use strict';
 
+  // Charge la protection anti-écrasement avant les écritures financières en arrière-plan.
+  // Elle fusionne setAchats avec l'état serveur frais et empêche un ancien snapshot
+  // de faire réapparaître une charge supprimée.
+  if(!window.__yayaAchatsConcurrencyGuardV1 && !document.querySelector('script[data-yaya-achats-guard]')){
+    const guard=document.createElement('script');
+    guard.src='achats-concurrency-guard.js?v=guard-2';
+    guard.async=false;
+    guard.dataset.yayaAchatsGuard='1';
+    (document.head||document.documentElement).appendChild(guard);
+  }
+
   if(window.__yayaFinanceBackgroundSaveDeleteV1)return;
   window.__yayaFinanceBackgroundSaveDeleteV1=true;
 
@@ -196,7 +207,6 @@
     document.body.appendChild(overlay);
   }
 
-  // Enregistrement : interception avant le onclick historique qui attend le serveur.
   window.addEventListener('click',function(e){
     const button=e.target?.closest?.('button');
     if(!button)return;
@@ -211,7 +221,6 @@
     fastSave(modal,id);
   },true);
 
-  // Suppression : passe avant le correctif historique V13 et libère l'opérateur immédiatement.
   window.addEventListener('pointerdown',function(e){
     const button=e.target?.closest?.('.yaya-achat-edit-delete');
     if(!button)return;
@@ -223,7 +232,6 @@
     showFastDeleteConfirm(id,modal);
   },true);
 
-  // Sécurité si un ancien bouton appelle directement saveAchat().
   window.saveAchat=function(id){
     const modal=document.querySelector('#modalRoot .modal');
     return fastSave(modal,txt(id));
