@@ -31,3 +31,14 @@
   function install(){try{if(typeof S==='undefined'||!S)return setTimeout(install,150);}catch(e){return setTimeout(install,150);}refresh();if(location.hash==='#mails')openMails();window.addEventListener('yaya:data-refreshed',function(){if(active){hideAllOtherContent();renderMails();}});new MutationObserver(function(){requestAnimationFrame(function(){installStyle();ensurePane();ensureTab();if(active)hideAllOtherContent();});}).observe(document.body,{childList:true,subtree:true});}
   install();
 })();
+
+(function(){
+  'use strict';
+  if(window.__yayaDocumentsMailListRestoreLoaderV1)return;
+  window.__yayaDocumentsMailListRestoreLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='documents-mail-list-restore.js?v=mailrestore-1';
+  s.async=false;
+  s.onerror=function(){console.error('Yaya : chargement de la liste des mails dans Documents impossible');};
+  document.head.appendChild(s);
+})();
