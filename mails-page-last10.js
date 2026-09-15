@@ -50,3 +50,14 @@
   s.onerror=function(){console.error('Yaya : correctif enregistrement mail non chargé');};
   document.head.appendChild(s);
 })();
+
+(function(){
+  'use strict';
+  if(window.__yayaMailModalButtonsAlignLoaderV1)return;
+  window.__yayaMailModalButtonsAlignLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='mail-modal-buttons-align.js?v=align-1';
+  s.async=false;
+  s.onerror=function(){console.error('Yaya : alignement boutons mail non chargé');};
+  document.head.appendChild(s);
+})();
