@@ -18,3 +18,14 @@
   s.onerror=function(){console.error('Yaya : contrôle persistance Mail/Devis non chargé');};
   document.head.appendChild(s);
 })();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-devis-edit-id-fix-v1]'))return;
+  const s=document.createElement('script');
+  s.src='devis-edit-id-fix.js?v=1';
+  s.async=false;
+  s.setAttribute('data-yaya-devis-edit-id-fix-v1','1');
+  s.onerror=function(){console.error('Yaya : correctif identifiant devis non chargé');};
+  document.head.appendChild(s);
+})();
