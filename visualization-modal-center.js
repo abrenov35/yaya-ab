@@ -183,3 +183,14 @@
   s.onerror=()=>console.error('Yaya : chargement du bouton Supprimer des visualisations impossible');
   document.head.appendChild(s);
 })();
+
+(function(){
+  'use strict';
+  if(window.__yayaUnifiedModalMetadataLoaderV1)return;
+  window.__yayaUnifiedModalMetadataLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='modal-unified-metadata-actions.js?v=unifiedmeta-1';
+  s.async=false;
+  s.onerror=()=>console.error('Yaya : chargement des champs Titre / Description impossible');
+  document.head.appendChild(s);
+})();
