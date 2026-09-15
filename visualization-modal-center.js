@@ -96,18 +96,19 @@
     return /^(aperçu|visualisation|lecture|pi[eè]ce jointe|document|[ée]change chantier)/i.test(title)&&!hasEditor;
   }
 
-  function moveMailActionsTop(modal){
+  function moveReadActionsTop(modal){
     if(!modal)return;
-    if(!modal.classList.contains('message-modal')&&!modal.classList.contains('yaya-mail-body-modal'))return;
+    const eligible=modal.classList.contains('message-modal')||
+      modal.classList.contains('yaya-mail-body-modal')||
+      modal.classList.contains('yaya-document-read-modal');
+    if(!eligible)return;
 
     const head=modal.querySelector(':scope > h5');
     const bar=modal.querySelector(':scope > .yaya-mail-read-actions,:scope > .yaya-read-actions');
     if(!head||!bar)return;
 
     bar.classList.add('yaya-read-actions-top');
-    if(bar.previousElementSibling!==head){
-      head.insertAdjacentElement('afterend',bar);
-    }
+    if(bar.previousElementSibling!==head)head.insertAdjacentElement('afterend',bar);
   }
 
   function applyModal(modal){
@@ -115,7 +116,7 @@
     const overlay=modal.closest('.overlay');
     if(!overlay)return;
 
-    moveMailActionsTop(modal);
+    moveReadActionsTop(modal);
 
     const vp=viewport();
     const top=safeTop();
@@ -174,10 +175,10 @@
 
 (function(){
   'use strict';
-  if(window.__yayaVisualizationDeleteLoaderV1)return;
-  window.__yayaVisualizationDeleteLoaderV1=true;
+  if(window.__yayaVisualizationDeleteLoaderV2)return;
+  window.__yayaVisualizationDeleteLoaderV2=true;
   const s=document.createElement('script');
-  s.src='visualization-delete-actions.js?v=viewdelete-1';
+  s.src='visualization-delete-actions.js?v=viewdelete-2';
   s.async=false;
   s.onerror=()=>console.error('Yaya : chargement du bouton Supprimer des visualisations impossible');
   document.head.appendChild(s);
