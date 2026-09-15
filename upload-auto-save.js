@@ -24,10 +24,7 @@
   function isArmed(modal){
     if(!modal||modal.dataset.yayaUploadAutoSaveArmed!=='1')return false;
     const at=Number(modal.dataset.yayaUploadAutoSaveAt||0);
-    if(!at||Date.now()-at>ARM_TTL){
-      modal.dataset.yayaUploadAutoSaveArmed='0';
-      return false;
-    }
+    if(!at||Date.now()-at>ARM_TTL){modal.dataset.yayaUploadAutoSaveArmed='0';return false;}
     return modal.dataset.yayaUploadAutoSaveDone!=='1';
   }
 
@@ -35,8 +32,7 @@
     if(!modal)return null;
     return Array.from(modal.querySelectorAll('button')).find(function(btn){
       const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
-      return /^Enregistrer(?:$|\s|…|\.\.\.)/i.test(text)
-        || btn.classList.contains('yaya-commande-create-save');
+      return /^Enregistrer(?:$|\s|…|\.\.\.)/i.test(text)||btn.classList.contains('yaya-commande-create-save');
     })||null;
   }
 
@@ -48,87 +44,59 @@
 
   function tryAutoSave(modal,attempt){
     if(!isArmed(modal))return;
-    const save=saveButton(modal);
-    if(!save)return;
-
+    const save=saveButton(modal);if(!save)return;
     if(save.disabled||save.getAttribute('aria-busy')==='true'){
-      if((attempt||0)<30){
-        setTimeout(function(){tryAutoSave(modal,(attempt||0)+1);},100);
-      }
+      if((attempt||0)<30)setTimeout(function(){tryAutoSave(modal,(attempt||0)+1);},100);
       return;
     }
-
-    modal.dataset.yayaUploadAutoSaveDone='1';
-    modal.dataset.yayaUploadAutoSaveArmed='0';
-
-    try{
-      save.click();
-    }catch(e){
-      modal.dataset.yayaUploadAutoSaveDone='0';
-    }
+    modal.dataset.yayaUploadAutoSaveDone='1';modal.dataset.yayaUploadAutoSaveArmed='0';
+    try{save.click();}catch(e){modal.dataset.yayaUploadAutoSaveDone='0';}
   }
 
-  function success(modal){
-    if(!isArmed(modal))return;
-    setTimeout(function(){tryAutoSave(modal,0);},60);
-  }
+  function success(modal){if(isArmed(modal))setTimeout(function(){tryAutoSave(modal,0);},60);}
 
   document.addEventListener('click',function(event){
-    const btn=event.target&&event.target.closest?event.target.closest('button'):null;
-    if(!btn)return;
+    const btn=event.target&&event.target.closest?event.target.closest('button'):null;if(!btn)return;
     const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
     if(!/Importer|Déposer|Ajouter une pièce|Remplacer/i.test(text))return;
-    const modal=modalFrom(btn);
-    if(modal)arm(modal);
+    const modal=modalFrom(btn);if(modal)arm(modal);
   },true);
 
   document.addEventListener('change',function(event){
     const input=event.target;
     if(!input||input.tagName!=='INPUT'||String(input.type||'').toLowerCase()!=='file')return;
-    const file=input.files&&input.files[0];
-    if(!file)return;
-    const known=input.id==='avFile'
-      || input.id==='achatFile'
-      || input.id==='docFile'
-      || (input.classList&&input.classList.contains('yaya-commande-create-file'));
+    const file=input.files&&input.files[0];if(!file)return;
+    const known=input.id==='avFile'||input.id==='achatFile'||input.id==='docFile'||(input.classList&&input.classList.contains('yaya-commande-create-file'));
     if(!known)return;
-    const modal=modalFrom(input);
-    if(modal)arm(modal);
+    const modal=modalFrom(input);if(modal)arm(modal);
   },true);
 
   window.addEventListener('yaya:quote-upload-state',function(event){
-    const detail=event&&event.detail||{};
-    const modal=document.querySelector('.yaya-devis-fast-modal');
-    if(!modal)return;
-    if(detail.state==='start')arm(modal);
-    else if(detail.state==='success')success(modal);
-    else if(detail.state==='error')modal.dataset.yayaUploadAutoSaveArmed='0';
+    const detail=event&&event.detail||{};const modal=document.querySelector('.yaya-devis-fast-modal');if(!modal)return;
+    if(detail.state==='start')arm(modal);else if(detail.state==='success')success(modal);else if(detail.state==='error')modal.dataset.yayaUploadAutoSaveArmed='0';
   });
 
   window.addEventListener('yaya:document-upload-state',function(event){
-    const detail=event&&event.detail||{};
-    const modal=document.querySelector('#modalRoot .modal');
-    if(!modal)return;
-    if(detail.state==='success')success(modal);
-    else if(detail.state==='error')modal.dataset.yayaUploadAutoSaveArmed='0';
+    const detail=event&&event.detail||{};const modal=document.querySelector('#modalRoot .modal');if(!modal)return;
+    if(detail.state==='success')success(modal);else if(detail.state==='error')modal.dataset.yayaUploadAutoSaveArmed='0';
   });
 
   const observer=new MutationObserver(function(mutations){
     mutations.forEach(function(mutation){
-      const target=mutation.target&&mutation.target.nodeType===1
-        ? mutation.target
-        : mutation.target&&mutation.target.parentElement;
-      if(!target)return;
-      const modal=modalFrom(target);
-      if(!isArmed(modal))return;
-      const text=String(target.textContent||'').replace(/\s+/g,' ').trim();
-      if(successText(text))success(modal);
+      const target=mutation.target&&mutation.target.nodeType===1?mutation.target:mutation.target&&mutation.target.parentElement;
+      if(!target)return;const modal=modalFrom(target);if(!isArmed(modal))return;
+      const text=String(target.textContent||'').replace(/\s+/g,' ').trim();if(successText(text))success(modal);
     });
   });
+  observer.observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+})();
 
-  observer.observe(document.documentElement,{
-    childList:true,
-    subtree:true,
-    characterData:true
-  });
+// Editions Devis + Mails : effet local immédiat, synchronisation Google persistante en arrière-plan.
+(function(){
+  if(window.__yayaBackgroundEditSyncV1||document.querySelector('script[data-yaya-background-edit-sync-v1]'))return;
+  const s=document.createElement('script');
+  s.src='background-edit-sync.js?v=background-edit-1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-background-edit-sync-v1','1');
+  document.head.appendChild(s);
 })();
