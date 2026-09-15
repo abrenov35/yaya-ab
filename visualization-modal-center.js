@@ -171,3 +171,14 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
 })();
+
+(function(){
+  'use strict';
+  if(window.__yayaVisualizationDeleteLoaderV1)return;
+  window.__yayaVisualizationDeleteLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='visualization-delete-actions.js?v=viewdelete-1';
+  s.async=false;
+  s.onerror=()=>console.error('Yaya : chargement du bouton Supprimer des visualisations impossible');
+  document.head.appendChild(s);
+})();
