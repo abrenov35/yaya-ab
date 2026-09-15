@@ -1,20 +1,27 @@
 (function(){
   'use strict';
-  if(window.__yayaVisualizationDeleteActionsV2)return;
-  window.__yayaVisualizationDeleteActionsV2=true;
+  if(window.__yayaVisualizationDeleteActionsV3)return;
+  window.__yayaVisualizationDeleteActionsV3=true;
 
-  const STYLE_ID='yaya-visualization-delete-actions-v2';
-  let currentDocumentId='';
+  const STYLE_ID='yaya-visualization-delete-actions-v3';
+  let currentTarget=null;
 
   function text(v){return String(v==null?'':v).trim();}
   function docs(){try{return (typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];}catch(e){return [];}}
+  function achats(){try{return (typeof S!=='undefined'&&S&&Array.isArray(S.achats))?S.achats:[];}catch(e){return [];}}
 
   function normalizeUrl(v){
     const s=text(v);if(!s)return '';
     try{
       const u=new URL(s,location.href);u.hash='';
-      return u.toString().replace(/[?&](?:raw|dl)=\d+/gi,'').replace(/[?&]$/,'');
-    }catch(e){return s;}
+      const drive=u.pathname.match(/\/file\/d\/([^/?#]+)/i);
+      if(/(?:^|\.)drive\.google\.com$/i.test(u.hostname)&&drive&&drive[1])return 'drive:'+drive[1];
+      u.searchParams.delete('raw');
+      u.searchParams.delete('dl');
+      u.searchParams.delete('usp');
+      const q=u.searchParams.toString();
+      return u.origin+u.pathname+(q?'?'+q:'');
+    }catch(e){return s.replace(/[?&](?:raw|dl|usp)=[^&#]*/gi,'').replace(/[?&]$/,'');}
   }
 
   function documentUrls(d){
@@ -23,9 +30,20 @@
       .map(normalizeUrl).filter(Boolean);
   }
 
+  function achatUrls(a){
+    if(!a)return [];
+    return [a.lien,a.lienPieceJointe,a.pieceJointeUrl,a.attachmentUrl,a.fichierUrl,a.fileUrl,a.oneDriveWebUrl,a.dropboxUrl]
+      .map(normalizeUrl).filter(Boolean);
+  }
+
   function findDocumentByUrl(url){
     const target=normalizeUrl(url);if(!target)return null;
     return docs().find(d=>documentUrls(d).includes(target))||null;
+  }
+
+  function findAchatByUrl(url){
+    const target=normalizeUrl(url);if(!target)return null;
+    return achats().find(a=>achatUrls(a).includes(target))||null;
   }
 
   function closeModalSafe(){
@@ -38,6 +56,15 @@
     setTimeout(function(){
       try{if(typeof window.delDocument==='function'){window.delDocument(id);return;}}catch(e){}
       try{if(typeof delDocument==='function')delDocument(id);}catch(e){}
+    },0);
+  }
+
+  function deleteAchat(id){
+    id=text(id);if(!id)return;
+    closeModalSafe();
+    setTimeout(function(){
+      try{if(typeof window.delAchat==='function'){window.delAchat(id);return;}}catch(e){}
+      try{if(typeof delAchat==='function')delAchat(id);}catch(e){}
     },0);
   }
 
@@ -56,17 +83,21 @@
   }
 
   function enhancePreview(){
-    const root=document.getElementById('modalRoot');if(!root||!currentDocumentId)return;
+    const root=document.getElementById('modalRoot');if(!root||!currentTarget||!currentTarget.id)return;
     root.querySelectorAll('.piece-preview-modal').forEach(function(modal){
       const head=modal.querySelector('.piece-preview-head');
-      if(!head||head.querySelector('.yaya-view-delete-btn'))return;
-      const btn=document.createElement('button');
-      btn.type='button';
-      btn.className='yaya-view-delete-btn';
-      btn.textContent='Supprimer';
-      btn.dataset.yayaDeleteDocument=currentDocumentId;
-      const close=[...head.querySelectorAll('button')].find(b=>/fermer|×|close/i.test(String(b.textContent||b.getAttribute('aria-label')||'')));
-      if(close)head.insertBefore(btn,close);else head.appendChild(btn);
+      if(!head)return;
+      let btn=head.querySelector('.yaya-view-delete-btn');
+      if(!btn){
+        btn=document.createElement('button');
+        btn.type='button';
+        btn.className='yaya-view-delete-btn';
+        btn.textContent='Supprimer';
+        const close=[...head.querySelectorAll('button')].find(b=>/fermer|×|close/i.test(String(b.textContent||b.getAttribute('aria-label')||'')));
+        if(close)head.insertBefore(btn,close);else head.appendChild(btn);
+      }
+      btn.dataset.yayaDeleteType=currentTarget.type;
+      btn.dataset.yayaDeleteId=currentTarget.id;
     });
   }
 
@@ -74,20 +105,24 @@
     const btn=e.target&&e.target.closest?e.target.closest('.yaya-view-delete-btn'):null;
     if(!btn)return;
     e.preventDefault();e.stopPropagation();
-    deleteDocument(btn.dataset.yayaDeleteDocument);
+    const type=text(btn.dataset.yayaDeleteType);
+    const id=text(btn.dataset.yayaDeleteId);
+    if(type==='achat')deleteAchat(id);
+    else if(type==='document')deleteDocument(id);
   },true);
 
   function wrapVoirPiece(){
     const current=window.voirPiece;
-    if(typeof current!=='function'||current.__yayaVisualizationDeleteWrapped)return;
+    if(typeof current!=='function'||current.__yayaVisualizationDeleteWrappedV3)return;
     const wrapped=function(url){
+      const a=findAchatByUrl(url);
       const d=findDocumentByUrl(url);
-      currentDocumentId=d&&d.id?String(d.id):'';
+      currentTarget=a&&a.id?{type:'achat',id:String(a.id)}:(d&&d.id?{type:'document',id:String(d.id)}:null);
       const result=current.apply(this,arguments);
       requestAnimationFrame(enhancePreview);
       return result;
     };
-    wrapped.__yayaVisualizationDeleteWrapped=true;
+    wrapped.__yayaVisualizationDeleteWrappedV3=true;
     window.voirPiece=wrapped;
   }
 
