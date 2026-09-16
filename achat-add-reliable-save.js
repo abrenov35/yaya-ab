@@ -100,3 +100,13 @@
   s.setAttribute('data-yaya-achat-central-save-v1','1');
   (document.head||document.documentElement).appendChild(s);
 })();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achat-edit-authoritative-v1]'))return;
+  const s=document.createElement('script');
+  s.src='achat-edit-authoritative-save.js?v=1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achat-edit-authoritative-v1','1');
+  (document.head||document.documentElement).appendChild(s);
+})();
