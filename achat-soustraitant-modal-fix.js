@@ -249,7 +249,16 @@
   setTimeout(patchModal,0);
 })();
 
-/* Recharge sans cache les correctifs Documents : l'ancien code contient deux #docLien. */
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achat-required-fields="1"]'))return;
+  const s=document.createElement('script');
+  s.src='achat-create-actions-fix.js?v=required-fields-3-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achat-required-fields','1');
+  document.head.appendChild(s);
+})();
+
 (function(){
   'use strict';
   if(window.__yayaDocumentAttachmentBootstrapV2)return;
