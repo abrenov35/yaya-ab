@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-devis-create-actions-fix-v4';
+  const STYLE_ID='yaya-devis-create-actions-fix-v5';
 
   function installStyle(){
-    ['yaya-devis-create-actions-fix-v1','yaya-devis-create-actions-fix-v2','yaya-devis-create-actions-fix-v3'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
+    ['yaya-devis-create-actions-fix-v1','yaya-devis-create-actions-fix-v2','yaya-devis-create-actions-fix-v3','yaya-devis-create-actions-fix-v4'].forEach(function(id){const old=document.getElementById(id);if(old)old.remove();});
     if(document.getElementById(STYLE_ID))return;
     const style=document.createElement('style');
     style.id=STYLE_ID;
@@ -49,6 +49,17 @@
     const close=buttons.find(function(button){return /^Fermer$/i.test(String(button.textContent||'').trim());});
     if(!upload||!save||!close)return;
     upload.textContent='Importer';save.textContent='Enregistrer';upload.classList.add('yaya-devis-import');
+    if(upload.dataset.yayaFreeImport!=='1'){
+      upload.dataset.yayaFreeImport='1';
+      upload.addEventListener('click',function(){
+        const lib=modal.querySelector('#avLib');
+        if(lib&&!String(lib.value||'').trim()){
+          let numero=0;try{numero=Number(devisNumeroEnCours)||0;}catch(e){}
+          lib.value='Devis '+(numero>0?numero:1);
+          lib.dataset.yayaTemporaryLabel='1';
+        }
+      },true);
+    }
     let footer=modal.querySelector('.yaya-devis-create-actions');
     if(!footer){footer=save.closest('.mfoot');if(!footer){footer=document.createElement('div');modal.appendChild(footer);}footer.classList.add('mfoot','yaya-devis-create-actions');}
     if(save.parentElement!==footer)footer.appendChild(save);if(upload.parentElement!==footer)footer.appendChild(upload);if(close.parentElement!==footer)footer.appendChild(close);
