@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditAuthoritativeSaveV6)return;
+  if(window.__yayaAchatEditAuthoritativeSaveV7)return;
+  window.__yayaAchatEditAuthoritativeSaveV7=true;
   window.__yayaAchatEditAuthoritativeSaveV6=true;
   window.__yayaAchatEditAuthoritativeSaveV5=true;
   window.__yayaAchatEditAuthoritativeSaveV4=true;
@@ -111,6 +112,15 @@
     }catch(e){}
     try{localStorage.removeItem('YAYA_FINANCE_PENDING_ACHATS_V1');}catch(e){}
   }
+  function restoreIfStillCurrent(id,updated,previous){
+    const rows=localRows();
+    const idx=rows.findIndex(function(a){return txt(a&&a.id)===txt(id);});
+    if(idx<0||!same(rows[idx],updated))return;
+    const next=rows.slice();
+    next[idx]=previous;
+    updateLocal(next);
+    try{if(typeof render==='function')render();}catch(e){}
+  }
   function verifyInBackground(id,updated,charge){
     setTimeout(async function(){
       try{
@@ -125,8 +135,6 @@
           updateLocal(checked);
           return;
         }
-        updateLocal(checked);
-        try{if(typeof render==='function')render();}catch(e){}
         toastSafe(charge?'Attention : la charge n’est pas confirmée dans le Sheet':'Attention : l’achat n’est pas confirmé dans le Sheet',true);
       }catch(e){
         console.warn('Yaya — contrôle Sheet en arrière-plan impossible',e);
@@ -145,6 +153,7 @@
     const idx=rows.findIndex(function(a){return txt(a&&a.id)===rowId;});
     if(idx<0){toastSafe(charge?'Charge introuvable':'Achat introuvable',true);return false;}
 
+    const previous=Object.assign({},rows[idx]);
     const updated=buildUpdated(modal,rows[idx]);
     const next=rows.slice();
     next[idx]=updated;
@@ -152,17 +161,19 @@
 
     busy=true;
     setBusy(button,true);
+    updateLocal(next);
+    closeEditModal(modal);
+    try{if(typeof render==='function')render();}catch(e){}
+    toastSafe(charge?'Enregistrement de la charge…':'Enregistrement de l’achat…');
     window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
+
     try{
       await writeOne(updated);
-      updateLocal(next);
-      closeEditModal(modal);
-      try{if(typeof render==='function')render();}catch(e){}
       toastSafe(charge?'Charge modifiée ✓':'Achat modifié ✓');
       verifyInBackground(rowId,updated,charge);
       return true;
     }catch(err){
-      setBusy(button,false);
+      restoreIfStillCurrent(rowId,updated,previous);
       toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
       return false;
     }finally{
@@ -172,6 +183,7 @@
     }
   }
 
+  window.__yayaSaveAchatFast=saveById;
   window.saveAchat=function(id){return saveById(id);};
   try{saveAchat=window.saveAchat;}catch(e){}
 })();
