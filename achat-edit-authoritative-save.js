@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditAuthoritativeSaveV1)return;
-  window.__yayaAchatEditAuthoritativeSaveV1=true;
+  if(window.__yayaAchatEditAuthoritativeSaveV2)return;
+  window.__yayaAchatEditAuthoritativeSaveV2=true;
 
   let busy=false;
 
@@ -42,7 +42,6 @@
     button.classList.remove('yaya-achat-single-save');
     button.removeAttribute('onclick');
     button.textContent='Enregistrement…';
-    button.disabled=true;
     return true;
   }
   function restore(button){
@@ -52,6 +51,7 @@
     button.classList.add('yaya-achat-single-save');
     if(button.dataset.yayaAuthoritativeOnclick)button.setAttribute('onclick',button.dataset.yayaAuthoritativeOnclick);
     delete button.dataset.yayaAuthoritativeEdit;
+    delete button.dataset.yayaAuthoritativeId;
   }
   async function fetchWithTimeout(url,options,timeout){
     const ctrl=new AbortController();
@@ -76,12 +76,9 @@
     },15000);
     const raw=await r.text();
     if(!r.ok)throw new Error('Écriture HTTP '+r.status);
-    try{
-      const j=JSON.parse(raw);
-      if(j&&j.ok===false)throw new Error(j.error||'Écriture refusée');
-    }catch(e){
-      if(e&&/Écriture refusée/.test(String(e.message||'')))throw e;
-    }
+    let j=null;
+    try{j=JSON.parse(raw);}catch(e){}
+    if(j&&j.ok===false)throw new Error(j.error||'Écriture refusée');
     return true;
   }
   function same(a,b){
@@ -109,24 +106,26 @@
     const modal=modalFor(button);
     const id=txt(button.dataset.yayaAuthoritativeId);
     if(!isEditModal(modal)||!id){restore(button);return;}
-    const fresh=await readAchats();
-    const idx=fresh.findIndex(function(a){return txt(a&&a.id)===id;});
-    if(idx<0)throw new Error('Achat introuvable dans le Sheet');
-    const current=fresh[idx];
-    const updated=Object.assign({},current,{
-      chantierId:txt(modal.querySelector('#eaCh').value),
-      typeDoc:txt(modal.querySelector('#eaType').value),
-      fournisseur:txt(modal.querySelector('#eaFour').value),
-      designation:txt(modal.querySelector('#eaDes').value),
-      date:txt(modal.querySelector('#eaDate').value),
-      montantHT:Number(String(modal.querySelector('#eaMt').value||'0').replace(',','.'))||0
-    });
-    if(updated.typeDoc==='Facture sous-traitant')updated.sousTraitant=updated.fournisseur;
-    else if('sousTraitant' in updated)updated.sousTraitant='';
-    const rows=fresh.slice();rows[idx]=updated;
 
     busy=true;
+    button.disabled=true;
     try{
+      const fresh=await readAchats();
+      const idx=fresh.findIndex(function(a){return txt(a&&a.id)===id;});
+      if(idx<0)throw new Error('Achat introuvable dans le Sheet');
+      const current=fresh[idx];
+      const updated=Object.assign({},current,{
+        chantierId:txt(modal.querySelector('#eaCh').value),
+        typeDoc:txt(modal.querySelector('#eaType').value),
+        fournisseur:txt(modal.querySelector('#eaFour').value),
+        designation:txt(modal.querySelector('#eaDes').value),
+        date:txt(modal.querySelector('#eaDate').value),
+        montantHT:Number(String(modal.querySelector('#eaMt').value||'0').replace(',','.'))||0
+      });
+      if(updated.typeDoc==='Facture sous-traitant')updated.sousTraitant=updated.fournisseur;
+      else if('sousTraitant' in updated)updated.sousTraitant='';
+      const rows=fresh.slice();rows[idx]=updated;
+
       await postRows(rows);
       await wait(300);
       let checked=await readAchats();
