@@ -1,40 +1,112 @@
 (function(){
 'use strict';
-if(window.__yayaMarcheCardsV3)return;window.__yayaMarcheCardsV3=true;
-const css=document.createElement('style');css.textContent=`
+if(window.__yayaMarcheModalV4)return;window.__yayaMarcheModalV4=true;
+
+const STYLE_ID='yaya-marche-modal-v4';
+if(!document.getElementById(STYLE_ID)){
+ const css=document.createElement('style');css.id=STYLE_ID;css.textContent=`
 #pane-chantiers .yaya-detail-section-tab[data-section="marche"]{display:none!important}
-#pane-chantiers .yaya-marche-cards{padding:14px 16px 12px}
-#pane-chantiers .yaya-marche-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
-#pane-chantiers .yaya-marche-card{position:relative;border:1px solid #dce5ee;border-radius:13px;background:#fff;padding:18px;box-shadow:0 4px 14px rgba(15,42,76,.06);min-height:245px;display:flex;flex-direction:column}
-#pane-chantiers .yaya-marche-card:first-child{border-color:#bdebd5;background:linear-gradient(135deg,#f7fffb 0%,#fff 72%)}
-#pane-chantiers .yaya-marche-card-top{display:flex;gap:16px;align-items:center;min-height:92px}
-#pane-chantiers .yaya-marche-pdf{width:62px;height:78px;border-radius:9px;background:linear-gradient(145deg,#fff7f7,#ffe8e8);color:#e02020;display:flex;align-items:flex-end;justify-content:center;padding-bottom:9px;font-size:13px;font-weight:950;border:1px solid #ffd3d3;flex:0 0 auto;box-shadow:0 3px 8px rgba(210,30,30,.08)}
-#pane-chantiers .yaya-marche-card-copy{min-width:0}
-#pane-chantiers .yaya-marche-card-name{font-size:17px;font-weight:900;color:#102a4c;line-height:1.2;cursor:pointer;overflow-wrap:anywhere}
-#pane-chantiers .yaya-marche-card-desc{font-size:13px;color:#60738c;margin-top:7px;line-height:1.45;overflow-wrap:anywhere}
-#pane-chantiers .yaya-marche-meta{margin-top:17px;padding-top:14px;border-top:1px solid #edf1f5;font-size:12px;color:#73839a;min-height:31px}
-#pane-chantiers .yaya-marche-actions{display:grid;grid-template-columns:1fr 48px;gap:9px;margin-top:auto;padding-top:16px}
-#pane-chantiers .yaya-marche-btn{height:42px;border:1px solid #d3deea;background:#fff;border-radius:9px;font-size:13px;font-weight:850;cursor:pointer;color:#17365d;display:flex;align-items:center;justify-content:center;transition:.15s ease}
-#pane-chantiers .yaya-marche-btn:hover{transform:translateY(-1px);box-shadow:0 3px 8px rgba(15,42,76,.10)}
-#pane-chantiers .yaya-marche-btn.view{background:linear-gradient(135deg,#1265c5,#07529a);color:#fff;border-color:#07529a}
-#pane-chantiers .yaya-marche-more{font-size:22px;letter-spacing:1px;color:#23456b;padding-bottom:7px}
-#pane-chantiers .yaya-detail-markets-pane>.yaya-detail-market-row{display:none!important}
-#pane-chantiers .yaya-detail-markets-pane>.yaya-marche-cards{display:block!important}
-@media(max-width:1000px){#pane-chantiers .yaya-marche-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:650px){#pane-chantiers .yaya-marche-cards{padding:8px 5px}#pane-chantiers .yaya-marche-grid{grid-template-columns:1fr;gap:10px}#pane-chantiers .yaya-marche-card{min-height:205px;padding:15px}#pane-chantiers .yaya-marche-pdf{width:52px;height:66px}#pane-chantiers .yaya-marche-card-name{font-size:16px}}
-`;
-document.head.appendChild(css);
-function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function build(){
- const pane=document.querySelector('#pane-chantiers .yaya-detail-markets-pane');if(!pane)return;
- const old=pane.querySelector(':scope > .yaya-marche-cards');if(old)old.remove();
- const rows=[...pane.querySelectorAll(':scope > .yaya-detail-market-row')];
- const docs=rows.map(row=>{const edit=row.querySelector('.yaya-detail-document-edit[data-kind][data-row-id]');if(!edit)return null;const name=(row.querySelector('strong')||{}).textContent||'Devis';const desc=(row.querySelector('.yaya-detail-document-desc,.muted,.small')||{}).textContent||'';const view=row.querySelector('.yaya-detail-document-view,.yaya-detail-document-link,[data-yaya-view]');const del=row.querySelector('.yaya-detail-document-delete,.yaya-initial-devis-delete');return{edit,name:name.trim(),desc:desc.trim(),view,del};}).filter(Boolean);
- const box=document.createElement('section');box.className='yaya-marche-cards';box.innerHTML='<div class="yaya-marche-grid"></div>';const grid=box.firstElementChild;
- if(!docs.length)grid.innerHTML='<div style="padding:28px;border:1px dashed #cbd5e1;border-radius:12px;color:#64748b;text-align:center;background:#fff">Aucun devis enregistré</div>';
- docs.forEach((d,i)=>{const card=document.createElement('article');card.className='yaya-marche-card';card.innerHTML=`<div class="yaya-marche-card-top"><div class="yaya-marche-pdf">PDF</div><div class="yaya-marche-card-copy"><div class="yaya-marche-card-name">${esc(d.name||('Devis '+(i+1)))}</div>${d.desc?`<div class="yaya-marche-card-desc">${esc(d.desc)}</div>`:''}</div></div><div class="yaya-marche-meta">${i===0?'Devis principal':'Document du marché'}</div><div class="yaya-marche-actions"><button class="yaya-marche-btn view">Ouvrir</button><button class="yaya-marche-btn yaya-marche-more" title="Modifier">•••</button></div>`;
- const open=()=>{if(d.view)d.view.click();else if(d.edit)d.edit.click();};card.querySelector('.view').onclick=open;card.querySelector('.yaya-marche-card-name').onclick=open;card.querySelector('.yaya-marche-more').onclick=()=>d.edit&&d.edit.click();grid.appendChild(card);});pane.prepend(box);
+#pane-chantiers .stat[data-yaya-marche-modal="1"],#pane-chantiers .yaya-signed-quote-kpi[data-yaya-marche-modal="1"]{cursor:pointer!important}
+#pane-chantiers .stat[data-yaya-marche-modal="1"]:hover{box-shadow:0 4px 14px rgba(15,42,76,.10)!important}
+.yaya-marche-overlay{position:fixed!important;inset:0!important;z-index:100000!important;background:rgba(15,23,42,.58)!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important}
+.yaya-marche-modal{width:min(520px,calc(100vw - 28px))!important;max-width:520px!important;background:#fff!important;border-radius:13px!important;box-shadow:0 20px 65px rgba(15,23,42,.28)!important;overflow:hidden!important;color:#162d49!important}
+.yaya-marche-modal.has-docs{width:90vw!important;max-width:90vw!important;height:90vh!important;display:flex!important;flex-direction:column!important}
+.yaya-marche-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;padding:16px 18px!important;border-bottom:1px solid #e5eaf0!important;background:#fff!important}
+.yaya-marche-title{font-size:18px!important;font-weight:850!important;color:#162d49!important}
+.yaya-marche-actions{display:flex!important;align-items:center!important;gap:9px!important;margin-left:auto!important}
+.yaya-marche-action{min-height:38px!important;padding:0 14px!important;border-radius:8px!important;border:1px solid #c8d4e0!important;background:#fff!important;color:#173b60!important;font-size:12.5px!important;font-weight:800!important;cursor:pointer!important}
+.yaya-marche-action.primary{background:#003d7a!important;border-color:#003d7a!important;color:#fff!important}
+.yaya-marche-empty{padding:34px 22px!important;text-align:center!important;color:#66758a!important;font-size:13px!important}
+.yaya-marche-empty strong{display:block!important;margin-bottom:7px!important;color:#243b58!important;font-size:15px!important}
+.yaya-marche-tabs{display:flex!important;align-items:flex-end!important;gap:5px!important;padding:10px 12px 0!important;overflow-x:auto!important;background:#f7f9fb!important;border-bottom:1px solid #dfe6ee!important;flex:0 0 auto!important}
+.yaya-marche-tab{display:flex!important;align-items:center!important;gap:8px!important;min-height:38px!important;padding:0 9px 0 13px!important;border:1px solid #d5dee8!important;border-bottom:0!important;border-radius:8px 8px 0 0!important;background:#edf1f5!important;color:#4b5f72!important;font-size:12px!important;font-weight:750!important;white-space:nowrap!important;cursor:pointer!important}
+.yaya-marche-tab.on{background:#fff!important;color:#003d7a!important;border-color:#aebfd0!important}
+.yaya-marche-tab-delete{width:24px!important;height:24px!important;padding:0!important;border:0!important;border-radius:6px!important;background:transparent!important;color:#8a98a8!important;font-size:17px!important;line-height:1!important;cursor:pointer!important}
+.yaya-marche-tab-delete:hover{background:#fee2e2!important;color:#b91c1c!important}
+.yaya-marche-view{flex:1 1 auto!important;min-height:0!important;background:#eef1f4!important;position:relative!important}
+.yaya-marche-frame{width:100%!important;height:100%!important;border:0!important;background:#fff!important;display:block!important}
+.yaya-marche-no-preview{height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:25px!important;color:#64748b!important}
+@media(max-width:700px){.yaya-marche-overlay{padding:6px!important}.yaya-marche-modal.has-docs{width:calc(100vw - 12px)!important;max-width:none!important;height:calc(100dvh - 12px)!important}.yaya-marche-head{padding:10px!important;flex-wrap:wrap!important}.yaya-marche-title{font-size:16px!important}.yaya-marche-actions{width:100%!important}.yaya-marche-action{flex:1 1 auto!important;padding:0 9px!important}.yaya-marche-tabs{padding-left:6px!important;padding-right:6px!important}}
+ `;document.head.appendChild(css);
 }
-let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;build();});}
-const obs=new MutationObserver(ms=>{if(ms.every(m=>m.target.closest&&m.target.closest('.yaya-marche-cards')))return;schedule();});obs.observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',schedule);setTimeout(schedule,0);
+
+function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();}
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function list(name){try{return typeof S!=='undefined'&&S&&Array.isArray(S[name])?S[name]:[];}catch(e){return [];}}
+function cardId(card){
+ if(!card)return '';
+ for(const el of card.querySelectorAll('[onclick]')){const raw=String(el.getAttribute('onclick')||'');const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);if(m&&m[1])return String(m[1]);}
+ try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier);}catch(e){}
+ return '';
+}
+function docsFor(cid){
+ const c=list('chantiers').find(x=>String(x&&x.id)===String(cid));if(!c)return [];
+ const docs=[];
+ if(/^https?:\/\//i.test(String(c.notes||'')))docs.push({id:String(cid),kind:'main',label:'Devis 1',url:String(c.notes)});
+ const av=list('avenants').filter(v=>String(v&&v.chantierId)===String(cid));
+ av.forEach((v,i)=>{if(/^https?:\/\//i.test(String(v.lien||'')))docs.push({id:String(v.id||''),kind:'avenant',label:'Devis '+(i+2),url:String(v.lien)});});
+ return docs;
+}
+function closeModal(){const el=document.getElementById('yayaMarcheOverlay');if(el)el.remove();}
+function addDevis(cid){closeModal();if(typeof openAvenant==='function'){openAvenant(cid);return;}if(typeof window.openAvenant==='function')window.openAvenant(cid);}
+async function removeDocument(doc,cid){
+ if(!confirm('Supprimer ce document du marché ?'))return;
+ try{
+  if(doc.kind==='main'){
+   const c=list('chantiers').find(x=>String(x&&x.id)===String(cid));if(!c)return;
+   const before=c.notes;c.notes='';
+   const ok=typeof apiPost==='function'?await apiPost('setChantiers',S.chantiers):false;
+   if(!ok){c.notes=before;throw new Error('save');}
+  }else{
+   const v=list('avenants').find(x=>String(x&&x.id)===String(doc.id));if(!v)return;
+   const before=v.lien;v.lien='';
+   const ok=typeof apiPost==='function'?await apiPost('setAvenants',S.avenants):false;
+   if(!ok){v.lien=before;throw new Error('save');}
+  }
+  try{if(typeof render==='function')render();}catch(e){}
+  openMarche(cid);
+ }catch(e){try{if(typeof toast==='function')toast('Suppression du document impossible',true);}catch(_){} }
+}
+function showDoc(cid,index){
+ const docs=docsFor(cid);if(!docs.length){openMarche(cid);return;}
+ const i=Math.max(0,Math.min(Number(index)||0,docs.length-1));
+ document.querySelectorAll('#yayaMarcheOverlay .yaya-marche-tab').forEach((b,n)=>b.classList.toggle('on',n===i));
+ const view=document.querySelector('#yayaMarcheOverlay .yaya-marche-view');if(!view)return;
+ view.innerHTML='<iframe class="yaya-marche-frame" title="Visualisation du devis" src="'+esc(docs[i].url)+'"></iframe>';
+}
+function openMarche(cid){
+ closeModal();const docs=docsFor(cid);const root=document.getElementById('modalRoot')||document.body;
+ const overlay=document.createElement('div');overlay.id='yayaMarcheOverlay';overlay.className='yaya-marche-overlay';
+ if(!docs.length){
+  overlay.innerHTML='<div class="yaya-marche-modal" role="dialog" aria-modal="true"><div class="yaya-marche-head"><div class="yaya-marche-title">Devis du chantier</div><div class="yaya-marche-actions"><button class="yaya-marche-action primary" data-action="add">Télécharger un devis</button><button class="yaya-marche-action" data-action="close">Fermer</button></div></div><div class="yaya-marche-empty"><strong>Aucun devis enregistré</strong>Ajoutez le premier devis pour ce chantier.</div></div>';
+ }else{
+  const tabs=docs.map((d,i)=>'<button type="button" class="yaya-marche-tab'+(i===0?' on':'')+'" data-index="'+i+'"><span>'+esc(d.label)+'</span><span class="yaya-marche-tab-delete" role="button" aria-label="Supprimer" title="Supprimer" data-delete="'+i+'">×</span></button>').join('');
+  overlay.innerHTML='<div class="yaya-marche-modal has-docs" role="dialog" aria-modal="true"><div class="yaya-marche-head"><div class="yaya-marche-title">Devis du chantier</div><div class="yaya-marche-actions"><button class="yaya-marche-action primary" data-action="add">＋ Ajouter un devis</button><button class="yaya-marche-action" data-action="close">Fermer</button></div></div><div class="yaya-marche-tabs">'+tabs+'</div><div class="yaya-marche-view"></div></div>';
+ }
+ root.appendChild(overlay);
+ overlay.addEventListener('click',e=>{
+  if(e.target===overlay){closeModal();return;}
+  const action=e.target.closest('[data-action]');if(action){if(action.dataset.action==='close')closeModal();else if(action.dataset.action==='add')addDevis(cid);return;}
+  const del=e.target.closest('[data-delete]');if(del){e.preventDefault();e.stopPropagation();const d=docs[Number(del.dataset.delete)];if(d)removeDocument(d,cid);return;}
+  const tab=e.target.closest('.yaya-marche-tab');if(tab)showDoc(cid,Number(tab.dataset.index));
+ });
+ if(docs.length)showDoc(cid,0);
+}
+function decorate(){
+ const pane=document.getElementById('pane-chantiers');if(!pane)return;
+ pane.querySelectorAll('.card').forEach(card=>{
+  const cid=cardId(card);if(!cid)return;
+  const stats=[...card.querySelectorAll(':scope > .kpis .stat')];
+  const market=stats.find(stat=>{const small=stat.querySelector('small');const t=norm(small&&small.textContent);return t==='MARCHE'||t==='MARCHE HT'||t.startsWith('MARCHE ');});
+  const signed=card.querySelector('.yaya-signed-quote-kpi');
+  [market,signed].filter(Boolean).forEach(target=>{
+   target.dataset.yayaMarcheModal='1';target.setAttribute('role','button');target.setAttribute('tabindex','0');
+   if(target._yayaMarcheBound)return;target._yayaMarcheBound=true;
+   target.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMarche(cid);});
+   target.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openMarche(cid);}});
+  });
+ });
+}
+let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;decorate();});}
+decorate();new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',schedule);setTimeout(schedule,250);
 })();
