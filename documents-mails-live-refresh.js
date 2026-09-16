@@ -1,11 +1,13 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierTabsLiveRefreshV7)return;
+  if(window.__yayaChantierTabsLiveRefreshV8)return;
+  window.__yayaChantierTabsLiveRefreshV8=true;
   window.__yayaChantierTabsLiveRefreshV7=true;
   window.__yayaChantierTabsLiveRefreshV6=true;
   window.__yayaChantierTabsLiveRefreshV5=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
+  const dynamicAliases={};
   let inFlight=null;
   let lastRefresh=0;
   let lastFocus='';
@@ -14,11 +16,42 @@
     try{return (typeof API==='string'&&API)?API.trim():'';}catch(e){return '';}
   }
 
+  function normalizeName(v){
+    return String(v==null?'':v).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();
+  }
+
   function canonicalId(v){
-    try{return typeof window.yayaCanonicalChantierId==='function'?String(window.yayaCanonicalChantierId(v)||''):String(v==null?'':v);}catch(e){return String(v==null?'':v);}
+    const raw=String(v==null?'':v).trim();
+    if(!raw)return '';
+    if(dynamicAliases[raw])return String(dynamicAliases[raw]);
+    try{
+      if(typeof window.yayaCanonicalChantierId==='function'){
+        const id=String(window.yayaCanonicalChantierId(raw)||raw);
+        return dynamicAliases[id]?String(dynamicAliases[id]):id;
+      }
+    }catch(e){}
+    return raw;
+  }
+
+  function buildDynamicAliases(localRows,centralRows){
+    const centralByName={};
+    (Array.isArray(centralRows)?centralRows:[]).forEach(function(c){
+      const name=normalizeName(c&&c.nom);
+      const id=String(c&&c.id||'').trim();
+      if(!name||!id)return;
+      if(!centralByName[name])centralByName[name]=[];
+      centralByName[name].push(id);
+    });
+    (Array.isArray(localRows)?localRows:[]).forEach(function(c){
+      const localId=String(c&&c.id||'').trim();
+      const name=normalizeName(c&&c.nom);
+      const matches=centralByName[name]||[];
+      if(localId&&matches.length===1&&localId!==matches[0])dynamicAliases[localId]=matches[0];
+    });
   }
 
   function mergeChantiers(localRows,centralRows){
+    buildDynamicAliases(localRows,centralRows);
     const localById={};
     (Array.isArray(localRows)?localRows:[]).forEach(function(c){
       const id=canonicalId(c&&c.id);
@@ -47,7 +80,7 @@
   }
 
   function currentFocus(){
-    try{return String((typeof focusChantier!=='undefined'&&focusChantier)||'');}catch(e){return '';}
+    try{return canonicalId((typeof focusChantier!=='undefined'&&focusChantier)||'');}catch(e){return '';}
   }
 
   function cardId(card){
@@ -58,7 +91,7 @@
       const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);
       if(m&&m[1])return canonicalId(m[1]);
     }
-    const focus=canonicalId(currentFocus());
+    const focus=currentFocus();
     if(focus&&card.querySelector(':scope > .yaya-detail-section-tabs'))return focus;
     return '';
   }
@@ -111,7 +144,7 @@
     cards.forEach(function(card){
       const cid=cardId(card);
       if(!cid)return;
-      const rows=data.documents.filter(function(d){return canonicalId(d&&d.chantierId)===cid;});
+      const rows=data.documents.filter(function(d){return canonicalId(d&&d.chantierId)===cid&&String(d&&d.type||'').trim().toUpperCase()!=='MAIL';});
       renderDocumentsPane(card,rows);
     });
   }
@@ -154,7 +187,7 @@
           S.achats=data.achats;
           if(Array.isArray(data.commandes))S.commandes=data.commandes;
           const cid=currentFocus();
-          if(cid&&!S.chantiers.some(function(c){return canonicalId(c&&c.id)===canonicalId(cid);})){
+          if(cid&&!S.chantiers.some(function(c){return canonicalId(c&&c.id)===cid;)){
             try{focusChantier=null;}catch(e){}
           }
         }
@@ -164,6 +197,7 @@
         try{if(typeof render==='function')render();}catch(e){}
         setTimeout(function(){forceDocumentsDom(data);},120);
         setTimeout(function(){forceDocumentsDom(data);},420);
+        setTimeout(function(){forceDocumentsDom(data);},900);
         return true;
       }catch(e){
         console.warn('Yaya · synchronisation partagée impossible :',e);
