@@ -14,7 +14,7 @@
     [
       ['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],
       ['mail-documents-force-render.js?v=4','yaya-mail-force-loader'],
-      ['documents-mails-live-refresh.js?v=7','yaya-shared-data-sync-loader']
+      ['documents-mails-live-refresh.js?v=8','yaya-shared-data-sync-loader']
     ].forEach(function(x){
       if(document.querySelector('script[data-'+x[1]+']'))return;
       const s=document.createElement('script');s.src=x[0];s.setAttribute('data-'+x[1],'1');s.async=false;document.head.appendChild(s);
