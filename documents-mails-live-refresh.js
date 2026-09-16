@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierTabsLiveRefreshV5)return;
+  if(window.__yayaChantierTabsLiveRefreshV6)return;
+  window.__yayaChantierTabsLiveRefreshV6=true;
   window.__yayaChantierTabsLiveRefreshV5=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
@@ -12,10 +13,26 @@
     try{return (typeof API==='string'&&API)?API.trim():'';}catch(e){return '';}
   }
 
+  function canonicalId(v){
+    try{return typeof window.yayaCanonicalChantierId==='function'?String(window.yayaCanonicalChantierId(v)||''):String(v==null?'':v);}catch(e){return String(v==null?'':v);}
+  }
+
+  function mergeChantiers(localRows,centralRows){
+    const localById={};
+    (Array.isArray(localRows)?localRows:[]).forEach(function(c){
+      const id=canonicalId(c&&c.id);
+      if(id)localById[id]=c;
+    });
+    return centralRows.map(function(c){
+      const id=canonicalId(c&&c.id);
+      return Object.assign({},localById[id]||{},c||{},id:id||String(c&&c.id||''));
+    });
+  }
+
   function saveCache(data){
     try{
       const cached=JSON.parse(localStorage.getItem(CACHE_DATA_KEY)||'{}')||{};
-      ['documents','achats','commandes'].forEach(function(tab){
+      ['chantiers','documents','achats','commandes'].forEach(function(tab){
         if(Array.isArray(data[tab]))cached[tab]=data[tab];
       });
       localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(cached));
@@ -35,7 +52,7 @@
   function forceDocumentsDom(data){
     const cid=currentFocus();
     if(!cid||!data||!Array.isArray(data.documents))return;
-    const rows=data.documents.filter(function(d){return String(d&&d.chantierId||'')===cid;});
+    const rows=data.documents.filter(function(d){return canonicalId(d&&d.chantierId)===canonicalId(cid);});
     if(!rows.length)return;
 
     const cards=Array.from(document.querySelectorAll('#pane-chantiers .card'));
@@ -88,7 +105,7 @@
     const ctrl=new AbortController();
     const timer=setTimeout(function(){ctrl.abort();},15000);
     try{
-      const url=api+sep+'tabs=documents,achats,commandes&_yaya_shared='+Date.now();
+      const url=api+sep+'tabs=chantiers,documents,achats,commandes&_yaya_shared='+Date.now();
       const r=await fetch(url,{method:'GET',cache:'no-store',signal:ctrl.signal});
       const txt=await r.text();
       const j=JSON.parse(txt);
@@ -106,20 +123,26 @@
     inFlight=(async function(){
       try{
         let data=await fetchShared();
-        if(!Array.isArray(data.documents)||!Array.isArray(data.achats)){
+        if(!Array.isArray(data.chantiers)||!data.chantiers.length||!Array.isArray(data.documents)||!Array.isArray(data.achats)){
           if(typeof apiGet==='function')data=await apiGet(true);
         }
-        if(!data||!Array.isArray(data.documents)||!Array.isArray(data.achats)){
+        if(!data||!Array.isArray(data.chantiers)||!data.chantiers.length||!Array.isArray(data.documents)||!Array.isArray(data.achats)){
           throw new Error('Données partagées incomplètes');
         }
         if(typeof S!=='undefined'&&S){
+          data.chantiers=mergeChantiers(S.chantiers,data.chantiers);
+          S.chantiers=data.chantiers;
           S.documents=data.documents;
           S.achats=data.achats;
           if(Array.isArray(data.commandes))S.commandes=data.commandes;
+          const cid=currentFocus();
+          if(cid&&!S.chantiers.some(function(c){return canonicalId(c&&c.id)===canonicalId(cid);})){
+            try{focusChantier=null;}catch(e){}
+          }
         }
         saveCache(data);
         lastRefresh=Date.now();
-        try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['documents','achats','commandes'],source:'chantier-open'}}));}catch(e){}
+        try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['chantiers','documents','achats','commandes'],source:'central'}}));}catch(e){}
         try{if(typeof render==='function')render();}catch(e){}
         setTimeout(function(){forceDocumentsDom(data);},180);
         return true;
@@ -143,6 +166,14 @@
     }
   }
 
+  function bootRefresh(){
+    if(!apiEndpoint()||typeof S==='undefined'||!S||typeof render!=='function'){
+      setTimeout(bootRefresh,180);
+      return;
+    }
+    refreshShared(true);
+  }
+
   document.addEventListener('click',function(e){
     const target=e.target&&e.target.closest?e.target.closest('#pane-chantiers button,#pane-chantiers .yaya-detail-section-tab[data-section]'):null;
     if(!target)return;
@@ -161,13 +192,15 @@
     }).observe(pane,{childList:true,subtree:true});
   }
 
-  window.addEventListener('focus',function(){if(currentFocus())refreshShared(false);});
-  document.addEventListener('visibilitychange',function(){if(!document.hidden&&currentFocus())refreshShared(false);});
+  window.addEventListener('focus',function(){refreshShared(false);});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshShared(false);});
 
   window.yayaRefreshSharedNow=function(){return refreshShared(true);};
+  window.yayaRefreshChantiersNow=function(){return refreshShared(true);};
   window.yayaRefreshDocumentsNow=function(){return refreshShared(true);};
   window.yayaRefreshAchatsNow=function(){return refreshShared(true);};
   window.yayaRefreshCommandesNow=function(){return refreshShared(true);};
 
   setTimeout(checkFocus,300);
+  setTimeout(bootRefresh,120);
 })();
