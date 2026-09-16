@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaCentralAuthorityV1)return;
+  if(window.__yayaCentralAuthorityV2)return;
+  window.__yayaCentralAuthorityV2=true;
   window.__yayaCentralAuthorityV1=true;
 
   const TABS=['chantiers','salaries','heures','achats','avenants','documents','validations','commandes','DEVIS'];
@@ -44,9 +45,9 @@
   function canSync(){
     if((Number(window.__yayaWriteInFlight)||0)>0)return false;
     const lastWrite=Number(window.__yayaLastWriteAt)||0;
-    if(lastWrite&&Date.now()-lastWrite<2500)return false;
-    const modal=document.querySelector('#modalRoot .overlay');
-    if(modal)return false;
+    if(lastWrite&&Date.now()-lastWrite<5000)return false;
+    if(document.querySelector('#modalRoot .overlay'))return false;
+    if(document.querySelector('[data-yaya-upload-busy="1"],[data-yaya-achat-upload-busy="1"]'))return false;
     return true;
   }
 
@@ -103,11 +104,13 @@
         const j=await fetchCentral();
         applyCentral(j);
         bootDone=true;
-        hideOverlay();
+        if(blocking)hideOverlay();
         return true;
       }catch(e){
         console.error('Yaya · base centrale indisponible :',e);
-        ensureOverlay('Base centrale indisponible. Yaya est bloqué pour éviter de travailler sur des données anciennes.<br><span style="font-weight:500">'+String(e&&e.message||e)+'</span>',true);
+        if(blocking){
+          ensureOverlay('Base centrale indisponible. Yaya est bloqué pour éviter de travailler sur des données anciennes.<br><span style="font-weight:500">'+String(e&&e.message||e)+'</span>',true);
+        }
         return false;
       }
     })();
@@ -139,22 +142,23 @@
     checkLatestVersion().finally(function(){syncNow(true);});
   }
 
-  window.yayaCentralSyncNow=function(){return syncNow(true);};
-  window.yayaRefreshSharedNow=function(){return syncNow(true);};
-  window.yayaRefreshChantiersNow=function(){return syncNow(true);};
-  window.yayaRefreshDocumentsNow=function(){return syncNow(true);};
-  window.yayaRefreshAchatsNow=function(){return syncNow(true);};
-  window.yayaRefreshCommandesNow=function(){return syncNow(true);};
+  window.yayaCentralSyncNow=function(){return syncNow(false);};
+  window.yayaRefreshSharedNow=function(){return syncNow(false);};
+  window.yayaRefreshChantiersNow=function(){return syncNow(false);};
+  window.yayaRefreshDocumentsNow=function(){return syncNow(false);};
+  window.yayaRefreshAchatsNow=function(){return syncNow(false);};
+  window.yayaRefreshCommandesNow=function(){return syncNow(false);};
 
-  window.addEventListener('focus',function(){
-    if(bootDone&&Date.now()-lastSync>5000)syncNow(true);
-  });
-  document.addEventListener('visibilitychange',function(){
-    if(!document.hidden&&bootDone&&Date.now()-lastSync>5000)syncNow(true);
-  });
+  function refreshIfStale(){
+    if(!bootDone||Date.now()-lastSync<60000||!canSync())return;
+    syncNow(false);
+  }
+
+  window.addEventListener('focus',refreshIfStale);
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshIfStale();});
   setInterval(function(){
-    if(!document.hidden&&bootDone&&Date.now()-lastSync>60000&&canSync())syncNow(false);
-  },15000);
+    if(!document.hidden&&bootDone&&Date.now()-lastSync>120000&&canSync())syncNow(false);
+  },30000);
 
   ensureOverlay('Synchronisation de la base centrale…',false);
   setTimeout(boot,0);
