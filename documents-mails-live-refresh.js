@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierTabsLiveRefreshV4)return;
-  window.__yayaChantierTabsLiveRefreshV4=true;
+  if(window.__yayaChantierTabsLiveRefreshV5)return;
+  window.__yayaChantierTabsLiveRefreshV5=true;
 
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   let inFlight=null;
@@ -20,6 +20,65 @@
       });
       localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(cached));
     }catch(e){}
+  }
+
+  function escHtml(v){
+    const el=document.createElement('div');
+    el.textContent=String(v==null?'':v);
+    return el.innerHTML;
+  }
+
+  function currentFocus(){
+    try{return String((typeof focusChantier!=='undefined'&&focusChantier)||'');}catch(e){return '';}
+  }
+
+  function forceDocumentsDom(data){
+    const cid=currentFocus();
+    if(!cid||!data||!Array.isArray(data.documents))return;
+    const rows=data.documents.filter(function(d){return String(d&&d.chantierId||'')===cid;});
+    if(!rows.length)return;
+
+    const cards=Array.from(document.querySelectorAll('#pane-chantiers .card'));
+    const card=cards.find(function(c){
+      const onclick=Array.from(c.querySelectorAll('[onclick]')).map(function(x){return String(x.getAttribute('onclick')||'');}).join(' ');
+      return onclick.indexOf("'"+cid+"'")>=0||onclick.indexOf('"'+cid+'"')>=0;
+    })||cards[0];
+    if(!card)return;
+
+    const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
+    if(!tabs)return;
+    let pane=card.querySelector(':scope > .yaya-detail-documents-pane');
+    if(!pane){
+      pane=document.createElement('div');
+      pane.className='yaya-detail-section-node yaya-detail-documents-pane';
+      pane.dataset.section='documents';
+      tabs.insertAdjacentElement('afterend',pane);
+    }
+
+    pane.dataset.empty='0';
+    pane.innerHTML=rows.slice().sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''));}).map(function(d){
+      const date=String(d.date||'').slice(0,10).split('-').reverse().join('/');
+      const lien=String(d.lien||'');
+      const titre=String(d.sujet||d.titre||'Document');
+      const detail=String(d.titre||'');
+      return '<div class="yaya-detail-document-row" data-yaya-central-doc="1">'
+        +'<strong>'+escHtml(titre)+(detail&&detail!==titre?'<small>'+escHtml(detail)+'</small>':'')+'</strong>'
+        +'<span class="yaya-detail-charge-hours">'+escHtml(d.type||'Document')+'</span>'
+        +'<span class="yaya-detail-charge-cost">'+escHtml(date||'—')+'</span>'
+        +'<button type="button" class="yaya-detail-document-view" data-lien="'+escHtml(lien)+'"'+(lien?'':' disabled')+'>Voir</button>'
+      +'</div>';
+    }).join('');
+
+    pane.querySelectorAll('.yaya-detail-document-view:not(:disabled)').forEach(function(btn){
+      btn.addEventListener('click',function(e){
+        e.preventDefault();e.stopPropagation();
+        const lien=String(btn.dataset.lien||'');
+        if(lien&&typeof voirPiece==='function')voirPiece(lien);
+      });
+    });
+
+    const empty=card.querySelector(':scope > .yaya-detail-empty-pane[data-section="documents"]');
+    if(empty)empty.dataset.empty='0';
   }
 
   async function fetchShared(){
@@ -62,18 +121,16 @@
         lastRefresh=Date.now();
         try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['documents','achats','commandes'],source:'chantier-open'}}));}catch(e){}
         try{if(typeof render==='function')render();}catch(e){}
+        setTimeout(function(){forceDocumentsDom(data);},180);
         return true;
       }catch(e){
         console.warn('Yaya · synchronisation partagée impossible :',e);
+        try{if(typeof toast==='function')toast('Synchronisation Sheet impossible : '+String(e&&e.message||e),true);}catch(_){ }
         return false;
       }
     })();
 
     try{return await inFlight;}finally{inFlight=null;}
-  }
-
-  function currentFocus(){
-    try{return String((typeof focusChantier!=='undefined'&&focusChantier)||'');}catch(e){return '';}
   }
 
   function checkFocus(){
