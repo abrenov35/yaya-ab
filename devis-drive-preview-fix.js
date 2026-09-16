@@ -129,6 +129,7 @@
     const style=document.createElement('style');
     style.id='yaya-devis-drive-preview-fix-style';
     style.textContent=`
+      #yayaDevisViewer .ydd-actions .ydd-btn.primary[data-add]{background:#0057a8!important;border-color:#0057a8!important;color:#fff!important;opacity:1!important;filter:none!important;box-shadow:0 2px 6px rgba(0,87,168,.25)!important}
       #yayaDevisViewer .ydd-drive-loading,
       #yayaDevisViewer .ydd-drive-error{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;color:#526174;background:#fff;font-size:13px}
       #yayaDevisViewer .ydd-drive-stage{position:relative;width:100%;height:100%;min-height:0;background:#eef1f4;overflow:hidden}
