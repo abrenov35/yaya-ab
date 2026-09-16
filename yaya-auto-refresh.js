@@ -2,10 +2,10 @@
   'use strict';
 
   // V8 — sécurité persistance.
-  // Les rafraîchissements automatiques Achats/Documents sont désactivés :
+  // Les rafraîchissements automatiques Achats/Documents/Commandes sont désactivés :
   // ils pouvaient remplacer l'état local S par une lecture serveur concurrente.
   // Une actualisation reste possible uniquement à la demande de l'utilisateur.
-  const WATCHED=['achats','documents'];
+  const WATCHED=['achats','documents','commandes'];
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   const CACHE_META_KEY='YAYA_CACHE_META_V2';
 
@@ -84,4 +84,13 @@
 (function(){
   'use strict';
   function installFreshReload(){if(typeof window.reload!=='function'){setTimeout(installFreshReload,150);return;}if(window.reload.__yayaForceFreshV723)return;const originalReload=window.reload;const wrappedReload=async function(){const originalApiGet=window.apiGet;if(typeof originalApiGet!=='function')return originalReload.apply(this,arguments);const freshApiGet=function(forceNetwork){return originalApiGet(forceNetwork===undefined?true:forceNetwork);};window.apiGet=freshApiGet;try{return await originalReload.apply(this,arguments);}finally{if(window.apiGet===freshApiGet)window.apiGet=originalApiGet;}};wrappedReload.__yayaForceFreshV723=true;wrappedReload.__yayaOriginalReload=originalReload;window.reload=wrappedReload;}installFreshReload();setTimeout(installFreshReload,500);
+})();
+
+(function(){
+  'use strict';
+  if(document.getElementById('yaya-shared-tabs-live-sync'))return;
+  const s=document.createElement('script');
+  s.id='yaya-shared-tabs-live-sync';
+  s.src='documents-mails-live-refresh.js?v=multi-2';
+  document.head.appendChild(s);
 })();
