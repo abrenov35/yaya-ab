@@ -1,9 +1,6 @@
 (function(){
   'use strict';
 
-  // Charge la protection anti-écrasement avant les écritures financières en arrière-plan.
-  // Elle fusionne setAchats avec l'état serveur frais et empêche un ancien snapshot
-  // de faire réapparaître une charge supprimée.
   if(!window.__yayaAchatsConcurrencyGuardV1 && !document.querySelector('script[data-yaya-achats-guard]')){
     const guard=document.createElement('script');
     guard.src='achats-concurrency-guard.js?v=guard-2';
@@ -212,6 +209,7 @@
     if(!button)return;
     const modal=button.closest('.modal');
     if(!modal||!modal.querySelector('#eaCh'))return;
+    if(window.__yayaAchatEditAuthoritativeSaveV4)return;
     const raw=String(button.getAttribute('onclick')||'');
     const isSave=button.classList.contains('yaya-achat-single-save')||/saveAchat/.test(raw)||/^Enregistrer$/i.test(txt(button.textContent));
     if(!isSave)return;
