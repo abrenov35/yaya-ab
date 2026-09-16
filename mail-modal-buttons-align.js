@@ -1,3 +1,9 @@
+/* Correctif global : syncMsg ne doit jamais bloquer un enregistrement si #syncState est absent. */
+window.syncMsg=function(m){
+  const el=document.getElementById('syncState');
+  if(el)el.textContent=m||'';
+};
+
 (function(){
   'use strict';
   if(window.__yayaMailModalButtonsAlignV1)return;
