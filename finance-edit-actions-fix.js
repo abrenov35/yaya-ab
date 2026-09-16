@@ -22,5 +22,13 @@
       if(document.querySelector('script[data-'+x[1]+']'))return;
       const s=document.createElement('script');s.src=x[0];s.setAttribute('data-'+x[1],'1');s.async=false;document.head.appendChild(s);
     });
+    setTimeout(function(){
+      if(document.querySelector('script[data-yaya-achat-create-modal-stable]'))return;
+      const s=document.createElement('script');
+      s.src='achat-create-modal-stable-fix.js?v=1-'+Date.now();
+      s.setAttribute('data-yaya-achat-create-modal-stable','1');
+      s.async=false;
+      document.head.appendChild(s);
+    },300);
   },0);
 })();
