@@ -1,13 +1,14 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditAuthoritativeSaveV4)return;
+  if(window.__yayaAchatEditAuthoritativeSaveV5)return;
+  window.__yayaAchatEditAuthoritativeSaveV5=true;
   window.__yayaAchatEditAuthoritativeSaveV4=true;
 
   let busy=false;
 
   function txt(v){return String(v==null?'':v).trim();}
   function toastSafe(message,isError){try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}}
-  function modalFor(button){return button&&button.closest?button.closest('.modal'):null;}
+  function currentModal(){return document.querySelector('#modalRoot .modal');}
   function isEditModal(modal){return !!(modal&&modal.querySelector('#eaCh')&&modal.querySelector('#eaType')&&modal.querySelector('#eaFour')&&modal.querySelector('#eaDes')&&modal.querySelector('#eaDate')&&modal.querySelector('#eaMt'));}
   function isChargeModal(modal){
     if(!modal)return false;
@@ -15,23 +16,12 @@
     const type=txt(modal.querySelector('#eaType')&&modal.querySelector('#eaType').value);
     return /charge/i.test(title)||type==='Facture sous-traitant';
   }
-  function isSaveButton(button){
-    const modal=modalFor(button);
-    if(!isEditModal(modal))return false;
-    const raw=String(button.getAttribute('onclick')||'');
-    return button.classList.contains('yaya-achat-single-save')||/saveAchat\s*\(/.test(raw)||/^Enregistrer$/i.test(txt(button.textContent));
-  }
-  function extractId(button,modal){
-    let id=txt(button&&button.dataset&&button.dataset.achatId||modal&&modal.dataset&&modal.dataset.yayaAchatId||'');
-    if(id)return id;
-    const raws=[];
-    if(button)raws.push(String(button.getAttribute('onclick')||''));
-    if(modal)Array.from(modal.querySelectorAll('button')).forEach(function(b){raws.push(String(b.getAttribute('onclick')||''));});
-    for(const raw of raws){
-      const m=raw.match(/saveAchat\s*\(\s*['\"]([^'\"]+)['\"]/);
-      if(m&&m[1])return String(m[1]);
-    }
-    return '';
+  function saveButton(modal){
+    if(!modal)return null;
+    return Array.from(modal.querySelectorAll('button')).find(function(b){
+      const raw=String(b.getAttribute('onclick')||'');
+      return b.classList.contains('yaya-achat-single-save')||/saveAchat\s*\(/.test(raw)||/^Enregistrer$/i.test(txt(b.textContent));
+    })||null;
   }
   function setBusy(button,on){
     if(!button)return;
@@ -126,31 +116,31 @@
       try{
         const checked=await readAchats();
         const saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
-        if(same(saved,updated)){
-          updateLocal(checked);
-          return;
-        }
         updateLocal(checked);
-        try{if(typeof render==='function')render();}catch(e){}
-        toastSafe(charge?'Attention : la charge n’est pas confirmée dans le Sheet':'Attention : l’achat n’est pas confirmé dans le Sheet',true);
+        if(!same(saved,updated)){
+          try{if(typeof render==='function')render();}catch(e){}
+          toastSafe(charge?'Attention : la charge n’est pas confirmée dans le Sheet':'Attention : l’achat n’est pas confirmé dans le Sheet',true);
+        }
       }catch(e){
         console.warn('Yaya — contrôle Sheet en arrière-plan impossible',e);
       }
     },250);
   }
-  async function save(button){
-    if(busy)return;
-    const modal=modalFor(button);
+  async function saveById(id){
+    if(busy)return false;
+    const modal=currentModal();
+    if(!isEditModal(modal))return false;
     const charge=isChargeModal(modal);
-    const id=extractId(button,modal);
-    if(!id){toastSafe(charge?'Impossible d’identifier cette charge':'Impossible d’identifier cet achat',true);return;}
+    const rowId=txt(id);
+    if(!rowId){toastSafe(charge?'Impossible d’identifier cette charge':'Impossible d’identifier cet achat',true);return false;}
 
+    const button=saveButton(modal);
     busy=true;
     setBusy(button,true);
     window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
     try{
       const fresh=await readAchats();
-      const idx=fresh.findIndex(function(a){return txt(a&&a.id)===txt(id);});
+      const idx=fresh.findIndex(function(a){return txt(a&&a.id)===rowId;});
       if(idx<0)throw new Error(charge?'Charge introuvable dans le Sheet':'Achat introuvable dans le Sheet');
       const updated=buildUpdated(modal,fresh[idx]);
       const rows=fresh.slice();
@@ -161,10 +151,12 @@
       closeEditModal(modal);
       try{if(typeof render==='function')render();}catch(e){}
       toastSafe(charge?'Charge modifiée ✓':'Achat modifié ✓');
-      verifyInBackground(id,updated,charge);
+      verifyInBackground(rowId,updated,charge);
+      return true;
     }catch(err){
       setBusy(button,false);
       toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
+      return false;
     }finally{
       window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
       window.__yayaLastWriteAt=Date.now();
@@ -172,12 +164,6 @@
     }
   }
 
-  window.addEventListener('click',function(e){
-    const button=e.target&&e.target.closest?e.target.closest('button'):null;
-    if(!button||!isSaveButton(button))return;
-    e.preventDefault();
-    e.stopPropagation();
-    if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
-    save(button);
-  },true);
+  window.saveAchat=function(id){return saveById(id);};
+  try{saveAchat=window.saveAchat;}catch(e){}
 })();
