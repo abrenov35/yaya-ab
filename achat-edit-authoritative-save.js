@@ -9,6 +9,12 @@
   function toastSafe(message,isError){try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}}
   function modalFor(button){return button&&button.closest?button.closest('.modal'):null;}
   function isEditModal(modal){return !!(modal&&modal.querySelector('#eaCh')&&modal.querySelector('#eaType')&&modal.querySelector('#eaFour')&&modal.querySelector('#eaDes')&&modal.querySelector('#eaDate')&&modal.querySelector('#eaMt'));}
+  function isChargeModal(modal){
+    if(!modal)return false;
+    const title=txt(modal.querySelector('h5,h4,h3')&&modal.querySelector('h5,h4,h3').textContent);
+    const type=txt(modal.querySelector('#eaType')&&modal.querySelector('#eaType').value);
+    return /charge/i.test(title)||type==='Facture sous-traitant';
+  }
   function isSaveButton(button){
     const modal=modalFor(button);
     if(!isEditModal(modal))return false;
@@ -36,6 +42,16 @@
     }else{
       button.disabled=false;
       button.textContent=button.dataset.yayaEditText||'Enregistrer';
+    }
+  }
+  function closeEditModal(modal){
+    const overlay=modal&&modal.closest?modal.closest('.overlay'):null;
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
+    if(modal&&modal.isConnected){
+      try{
+        if(overlay&&overlay.isConnected)overlay.remove();
+        else modal.remove();
+      }catch(e){}
     }
   }
   async function fetchWithTimeout(url,options,timeout){
@@ -108,15 +124,16 @@
   async function save(button){
     if(busy)return;
     const modal=modalFor(button);
+    const charge=isChargeModal(modal);
     const id=extractId(button,modal);
-    if(!id){toastSafe('Impossible d’identifier cet achat',true);return;}
+    if(!id){toastSafe(charge?'Impossible d’identifier cette charge':'Impossible d’identifier cet achat',true);return;}
 
     busy=true;
     setBusy(button,true);
     try{
       const fresh=await readAchats();
       const idx=fresh.findIndex(function(a){return txt(a&&a.id)===txt(id);});
-      if(idx<0)throw new Error('Achat introuvable dans le Sheet');
+      if(idx<0)throw new Error(charge?'Charge introuvable dans le Sheet':'Achat introuvable dans le Sheet');
       const updated=buildUpdated(modal,fresh[idx]);
       const rows=fresh.slice();
       rows[idx]=updated;
@@ -133,9 +150,9 @@
       if(!same(saved,updated))throw new Error('La modification n’est pas confirmée dans le Sheet');
 
       updateLocal(checked);
-      try{if(typeof closeModal==='function')closeModal();}catch(e){}
+      closeEditModal(modal);
       try{if(typeof render==='function')render();}catch(e){}
-      toastSafe('Achat modifié dans le Sheet ✓');
+      toastSafe(charge?'Charge modifiée dans le Sheet ✓':'Achat modifié dans le Sheet ✓');
     }catch(err){
       setBusy(button,false);
       toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
