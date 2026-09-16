@@ -19,106 +19,29 @@
     let id=txt(button&&button.dataset&&button.dataset.achatId||modal&&modal.dataset&&modal.dataset.yayaAchatId||'');
     if(id)return id;
     const raws=[];
-    if(button)raws.push(String(button.getAttribute('onclick')||''),String(button.dataset&&button.dataset.yayaDirectSaveOnclick||''));
+    if(button)raws.push(String(button.getAttribute('onclick')||''));
     if(modal)Array.from(modal.querySelectorAll('button')).forEach(function(b){raws.push(String(b.getAttribute('onclick')||''));});
     for(const raw of raws){
       const m=raw.match(/saveAchat\s*\(\s*['\"]([^'\"]+)['\"]/);
       if(m&&m[1])return String(m[1]);
     }
-    return '';
-  }
-  function arm(button){
-    if(!isSaveButton(button)||busy)return false;
-    const modal=modalFor(button);
-    const id=extractId(button,modal);
-    if(!id)return false;
-    button.dataset.yayaAuthoritativeEdit='1';
-    button.dataset.yayaAuthoritativeId=id;
-    button.dataset.yayaAuthoritativeText=button.textContent||'Enregistrer';
-    button.dataset.yayaAuthoritativeOnclick=button.getAttribute('onclick')||'';
-    button.classList.remove('yaya-achat-single-save');
-    button.removeAttribute('onclick');
-    button.textContent='Enregistrement…';
-    return true;
-  }
-  function restore(button){
-    if(!button)return;
-    button.disabled=false;
-    button.textContent=button.dataset.yayaAuthoritativeText||'Enregistrer';
-    button.classList.add('yaya-achat-single-save');
-    if(button.dataset.yayaAuthoritativeOnclick)button.setAttribute('onclick',button.dataset.yayaAuthoritativeOnclick);
-    delete button.dataset.yayaAuthoritativeEdit;
-    delete button.dataset.yayaAuthoritativeId;
-  }
-  async function fetchWithTimeout(url,options,timeout){
-    const ctrl=new AbortController();
-    const timer=setTimeout(function(){ctrl.abort();},timeout||8000);
-    try{return await fetch(url,Object.assign({},options||{},{signal:ctrl.signal,cache:'no-store'}));}
-    finally{clearTimeout(timer);}
-  }
-  function same(a,b){
-    if(!a||!b)return false;
-    return txt(a.id)===txt(b.id)
-      &&txt(a.chantierId)===txt(b.chantierId)
-      &&txt(a.typeDoc)===txt(b.typeDoc)
-      &&txt(a.fournisseur)===txt(b.fournisseur)
-      &&txt(a.designation)===txt(b.designation)
-      &&String(a.date||'').slice(0,10)===String(b.date||'').slice(0,10)
-      &&Math.abs((Number(a.montantHT)||0)-(Number(b.montantHT)||0))<0.001;
-  }
-  function getLocal(id){
-    try{return typeof S!=='undefined'&&S&&Array.isArray(S.achats)?S.achats.find(function(a){return txt(a&&a.id)===txt(id);})||null:null;}catch(e){return null;}
-  }
-  function updateLocalRow(updated){
     try{
       if(typeof S!=='undefined'&&S&&Array.isArray(S.achats)){
-        const idx=S.achats.findIndex(function(a){return txt(a&&a.id)===txt(updated.id);});
-        if(idx>=0)S.achats[idx]=updated;
+        const ch=txt(modal.querySelector('#eaCh').value);
+        const four=txt(modal.querySelector('#eaFour').value);
+        const des=txt(modal.querySelector('#eaDes').value);
+        const date=txt(modal.querySelector('#eaDate').value);
+        const mt=Number(String(modal.querySelector('#eaMt').value||'0').replace(',','.'))||0;
+        const matches=S.achats.filter(function(a){
+          return txt(a&&a.chantierId)===ch&&txt(a&&a.fournisseur)===four&&txt(a&&a.designation)===des&&String(a&&a.date||'').slice(0,10)===date&&Math.abs((Number(a&&a.montantHT)||0)-mt)<0.001;
+        });
+        if(matches.length===1)return txt(matches[0].id);
       }
     }catch(e){}
-    try{
-      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
-      const cached=raw?JSON.parse(raw):{};
-      if(cached&&typeof cached==='object'){
-        cached.achats=typeof S!=='undefined'&&S&&Array.isArray(S.achats)?S.achats:cached.achats;
-        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
-      }
-    }catch(e){}
+    return '';
   }
-  function updateFromServer(rows){
-    try{if(typeof S!=='undefined'&&S)S.achats=rows;}catch(e){}
-    try{
-      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
-      const cached=raw?JSON.parse(raw):{};
-      if(cached&&typeof cached==='object'){
-        cached.achats=rows;
-        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
-      }
-    }catch(e){}
-  }
-  async function postRow(row){
-    const r=await fetchWithTimeout(API,{
-      method:'POST',
-      headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'addAchat',data:row})
-    },8000);
-    const raw=await r.text();
-    if(!r.ok)throw new Error('Écriture HTTP '+r.status);
-    let j=null;
-    try{j=JSON.parse(raw);}catch(e){return null;}
-    if(j&&j.ok===false)throw new Error(j.error||'Écriture refusée');
-    return true;
-  }
-  async function confirmRow(row){
-    const sep=API.indexOf('?')>=0?'&':'?';
-    const r=await fetchWithTimeout(API+sep+'tabs=achats&_yaya_edit_confirm='+Date.now(),{method:'GET'},8000);
-    const raw=await r.text();
-    if(!r.ok)throw new Error('Lecture HTTP '+r.status);
-    let j;try{j=JSON.parse(raw);}catch(e){throw new Error('Réponse serveur invalide');}
-    if(!j||j.ok===false)throw new Error(j&&j.error?j.error:'Lecture achats impossible');
-    const rows=j.data&&Array.isArray(j.data.achats)?j.data.achats:[];
-    const saved=rows.find(function(a){return txt(a&&a.id)===txt(row.id);});
-    return same(saved,row)?rows:null;
+  function currentAchat(id){
+    try{return typeof S!=='undefined'&&S&&Array.isArray(S.achats)?S.achats.find(function(a){return txt(a&&a.id)===txt(id);})||null:null;}catch(e){return null;}
   }
   function buildUpdated(modal,current){
     const updated=Object.assign({},current,{
@@ -133,56 +56,88 @@
     else if('sousTraitant' in updated)updated.sousTraitant='';
     return updated;
   }
+  async function directPost(row){
+    const ctrl=new AbortController();
+    const timer=setTimeout(function(){ctrl.abort();},9000);
+    try{
+      const r=await fetch(API,{
+        method:'POST',
+        headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'addAchat',data:row}),
+        signal:ctrl.signal,
+        cache:'no-store'
+      });
+      const raw=await r.text();
+      if(!r.ok)throw new Error('HTTP '+r.status);
+      if(raw){
+        try{
+          const j=JSON.parse(raw);
+          if(j&&j.ok===false)throw new Error(j.error||'Écriture refusée');
+        }catch(e){
+          if(e&&/Écriture refusée|HTTP/.test(String(e.message||'')))throw e;
+        }
+      }
+      return true;
+    }finally{clearTimeout(timer);}
+  }
+  function updateLocal(id,updated){
+    try{
+      const idx=S.achats.findIndex(function(a){return txt(a&&a.id)===txt(id);});
+      if(idx>=0)S.achats[idx]=updated;
+    }catch(e){}
+    try{
+      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+      const cached=raw?JSON.parse(raw):{};
+      if(cached&&typeof cached==='object'&&Array.isArray(S&&S.achats)){
+        cached.achats=S.achats;
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+      }
+    }catch(e){}
+    try{localStorage.removeItem('YAYA_FINANCE_PENDING_ACHATS_V1');}catch(e){}
+  }
+  function setBusy(button,on){
+    busy=!!on;
+    if(!button)return;
+    if(on){
+      button.dataset.yayaEditOriginalText=button.textContent||'Enregistrer';
+      button.disabled=true;
+      button.textContent='Enregistrement…';
+    }else{
+      button.disabled=false;
+      button.textContent=button.dataset.yayaEditOriginalText||'Enregistrer';
+    }
+  }
   async function save(button){
     if(busy)return;
     const modal=modalFor(button);
-    const id=txt(button.dataset.yayaAuthoritativeId);
-    if(!isEditModal(modal)||!id){restore(button);return;}
-    const current=getLocal(id);
-    if(!current)throw new Error('Achat introuvable');
+    if(!isEditModal(modal))return;
+    const id=extractId(button,modal);
+    if(!id){toastSafe('Impossible d’identifier cet achat',true);return;}
+    const current=currentAchat(id);
+    if(!current){toastSafe('Achat introuvable',true);return;}
     const updated=buildUpdated(modal,current);
 
-    busy=true;
-    button.disabled=true;
+    setBusy(button,true);
     try{
-      let confirmed=false;
-      let serverRows=null;
-      try{
-        const result=await postRow(updated);
-        if(result===true)confirmed=true;
-      }catch(err){
-        if(err&&err.name!=='AbortError'&&!/Réponse|JSON/i.test(String(err.message||'')))throw err;
-      }
-
-      if(!confirmed){
-        serverRows=await confirmRow(updated);
-        if(!serverRows)throw new Error('Modification non confirmée dans le Sheet');
-        confirmed=true;
-      }
-
-      if(serverRows)updateFromServer(serverRows);else updateLocalRow(updated);
-      try{localStorage.removeItem('YAYA_FINANCE_PENDING_ACHATS_V1');}catch(e){}
+      await directPost(updated);
+      updateLocal(id,updated);
       try{if(typeof closeModal==='function')closeModal();}catch(e){}
       try{if(typeof render==='function')render();}catch(e){}
-      toastSafe('Achat modifié dans le Sheet ✓');
-    }finally{
-      busy=false;
+      toastSafe('Achat modifié ✓');
+    }catch(err){
+      setBusy(button,false);
+      toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
+      return;
     }
+    busy=false;
   }
-
-  window.addEventListener('pointerdown',function(e){
-    const button=e.target&&e.target.closest?e.target.closest('button'):null;
-    if(button)arm(button);
-  },true);
 
   window.addEventListener('click',function(e){
     const button=e.target&&e.target.closest?e.target.closest('button'):null;
-    if(!button||button.dataset.yayaAuthoritativeEdit!=='1')return;
-    e.preventDefault();e.stopPropagation();if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
-    save(button).catch(function(err){
-      console.error('Yaya — modification achat non enregistrée :',err);
-      restore(button);
-      toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
-    });
+    if(!button||!isSaveButton(button))return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
+    save(button);
   },true);
 })();
