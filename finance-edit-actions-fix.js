@@ -12,6 +12,7 @@
 
   setTimeout(function(){
     [
+      ['achat-create-actions-fix.js?v=3','yaya-achat-create-actions-loader-v3'],
       ['yaya-central-authoritative-sync.js?v='+Date.now(),'yaya-central-authority-loader'],
       ['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],
       ['mail-documents-force-render.js?v=4','yaya-mail-force-loader'],
