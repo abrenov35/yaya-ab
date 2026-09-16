@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierTabsLiveRefreshV8)return;
+  if(window.__yayaChantierTabsLiveRefreshV9)return;
+  window.__yayaChantierTabsLiveRefreshV9=true;
   window.__yayaChantierTabsLiveRefreshV8=true;
   window.__yayaChantierTabsLiveRefreshV7=true;
   window.__yayaChantierTabsLiveRefreshV6=true;
@@ -14,6 +15,13 @@
 
   function apiEndpoint(){
     try{return (typeof API==='string'&&API)?API.trim():'';}catch(e){return '';}
+  }
+
+  function canRefresh(){
+    if((Number(window.__yayaWriteInFlight)||0)>0)return false;
+    if(document.querySelector('#modalRoot .overlay'))return false;
+    if(document.querySelector('[data-yaya-upload-busy="1"],[data-yaya-achat-upload-busy="1"]'))return false;
+    return true;
   }
 
   function normalizeName(v){
@@ -169,7 +177,8 @@
 
   async function refreshShared(force){
     if(inFlight)return inFlight;
-    if(!force&&Date.now()-lastRefresh<3000)return true;
+    if(!canRefresh())return false;
+    if(!force&&Date.now()-lastRefresh<30000)return true;
 
     inFlight=(async function(){
       try{
@@ -187,7 +196,7 @@
           S.achats=data.achats;
           if(Array.isArray(data.commandes))S.commandes=data.commandes;
           const cid=currentFocus();
-          if(cid&&!S.chantiers.some(function(c){return canonicalId(c&&c.id)===cid;)){
+          if(cid&&!S.chantiers.some(function(c){return canonicalId(c&&c.id)===cid;})){
             try{focusChantier=null;}catch(e){}
           }
         }
@@ -201,7 +210,6 @@
         return true;
       }catch(e){
         console.warn('Yaya · synchronisation partagée impossible :',e);
-        try{if(typeof toast==='function')toast('Synchronisation Sheet impossible : '+String(e&&e.message||e),true);}catch(_){ }
         return false;
       }
     })();
@@ -213,7 +221,7 @@
     const id=currentFocus();
     if(id&&id!==lastFocus){
       lastFocus=id;
-      setTimeout(function(){refreshShared(true);},80);
+      if(canRefresh())setTimeout(function(){refreshShared(true);},80);
     }else if(!id){
       lastFocus='';
     }
@@ -224,14 +232,14 @@
       setTimeout(bootRefresh,180);
       return;
     }
-    refreshShared(true);
+    if(canRefresh())refreshShared(true);
   }
 
   document.addEventListener('click',function(e){
     const target=e.target&&e.target.closest?e.target.closest('#pane-chantiers button,#pane-chantiers .yaya-detail-section-tab[data-section]'):null;
     if(!target)return;
     setTimeout(checkFocus,30);
-    if(target.matches('.yaya-detail-section-tab[data-section]')){
+    if(target.matches('.yaya-detail-section-tab[data-section]')&&canRefresh()){
       setTimeout(function(){refreshShared(true);},80);
     }
   },true);
@@ -244,9 +252,6 @@
       timer=setTimeout(function(){checkFocus();if(typeof S!=='undefined'&&S&&Array.isArray(S.documents))forceDocumentsDom({documents:S.documents});},80);
     }).observe(pane,{childList:true,subtree:true});
   }
-
-  window.addEventListener('focus',function(){refreshShared(false);});
-  document.addEventListener('visibilitychange',function(){if(!document.hidden)refreshShared(false);});
 
   window.yayaRefreshSharedNow=function(){return refreshShared(true);};
   window.yayaRefreshChantiersNow=function(){return refreshShared(true);};
