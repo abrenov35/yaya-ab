@@ -107,7 +107,8 @@
     '<script src="devis-edit-id-fix.js?v=idfix-2"><\\/script>'+
     '<script src="marche-cards-page.js?v=2"><\\/script>'+
     '<script src="devis-auto-save-after-import.js?v=autosave-1"><\\/script>'+
-    '<script src="devis-drive-preview-fix.js?v=3"><\\/script>'+"'+reveal+'</body>'";
+    '<script src="devis-drive-preview-fix.js?v=3"><\\/script>'+
+    '<script src="devis-drive-embed-fallback.js?v=embed-1"><\\/script>'+"'+reveal+'</body>'";
   if(!base.includes(marker))throw new Error('Point insertion aperçu introuvable');
   base=base.replace(marker,replacement);
   document.open();document.write(base);document.close();
