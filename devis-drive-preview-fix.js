@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaDevisDrivePreviewFixV2)return;
-  window.__yayaDevisDrivePreviewFixV2=true;
+  if(window.__yayaDevisDrivePreviewFixV3)return;
+  window.__yayaDevisDrivePreviewFixV3=true;
 
   const API_FALLBACK='https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
   let pdfJsPromise=null;
@@ -37,6 +37,71 @@
     return pdfJsPromise;
   }
 
+  function normalizePayload(raw){
+    let data=raw&&typeof raw==='object'?raw:{};
+    for(let i=0;i<2;i++){
+      if(data&&data.data&&typeof data.data==='object'&&!data.base64&&!data.pdfBase64&&!data.contentBase64&&!data.fileBase64&&!data.dataUrl&&!data.previewUrl){
+        data=data.data;
+      }else break;
+    }
+
+    let base64=String(
+      data.base64||
+      data.pdfBase64||
+      data.contentBase64||
+      data.fileBase64||
+      data.contenuBase64||
+      ''
+    ).trim();
+
+    let mimeType=String(
+      data.mimeType||
+      data.mime||
+      data.contentType||
+      data.typeMime||
+      ''
+    ).trim();
+
+    let filename=String(
+      data.filename||
+      data.fileName||
+      data.name||
+      data.nom||
+      ''
+    ).trim();
+
+    const dataUrl=String(data.dataUrl||data.previewUrl||data.urlData||'').trim();
+    const match=dataUrl.match(/^data:([^;]+);base64,([\s\S]+)$/i);
+    if(!base64&&match){
+      mimeType=mimeType||match[1];
+      base64=match[2];
+    }
+
+    base64=base64
+      .replace(/^data:[^;]+;base64,/i,'')
+      .replace(/\s+/g,'');
+
+    const type=String(data.type||'').toLowerCase();
+    if(!mimeType){
+      if(type==='pdf'||/\.pdf$/i.test(filename)||data.pdfBase64)mimeType='application/pdf';
+      else if(type==='image')mimeType='image/jpeg';
+    }
+    if(!filename){
+      filename=mimeType==='application/pdf'?'devis.pdf':'devis';
+    }
+
+    if(!base64){
+      try{console.warn('Réponse aperçu Drive sans contenu binaire. Champs reçus :',Object.keys(data||{}));}catch(e){}
+      throw new Error('Contenu du fichier non renvoyé par Yaya');
+    }
+
+    return Object.assign({},data,{
+      base64:base64,
+      mimeType:mimeType||'application/octet-stream',
+      filename:filename
+    });
+  }
+
   async function fetchDriveFile(url,id){
     const response=await fetch(apiUrl(),{
       method:'POST',
@@ -49,9 +114,7 @@
     let json;
     try{json=JSON.parse(text);}catch(e){throw new Error('Réponse Yaya invalide');}
     if(!json||json.ok!==true)throw new Error(json&&json.error?json.error:'Lecture Drive indisponible');
-    const data=json.data||{};
-    if(!data.base64)throw new Error('Fichier Drive vide');
-    return data;
+    return normalizePayload(json.data||json);
   }
 
   function base64ToBytes(base64){
