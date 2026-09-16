@@ -121,6 +121,23 @@
     }catch(e){}
     try{localStorage.removeItem('YAYA_FINANCE_PENDING_ACHATS_V1');}catch(e){}
   }
+  function verifyInBackground(id,updated,charge){
+    setTimeout(async function(){
+      try{
+        const checked=await readAchats();
+        const saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
+        if(same(saved,updated)){
+          updateLocal(checked);
+          return;
+        }
+        updateLocal(checked);
+        try{if(typeof render==='function')render();}catch(e){}
+        toastSafe(charge?'Attention : la charge n’est pas confirmée dans le Sheet':'Attention : l’achat n’est pas confirmé dans le Sheet',true);
+      }catch(e){
+        console.warn('Yaya — contrôle Sheet en arrière-plan impossible',e);
+      }
+    },250);
+  }
   async function save(button){
     if(busy)return;
     const modal=modalFor(button);
@@ -130,6 +147,7 @@
 
     busy=true;
     setBusy(button,true);
+    window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
     try{
       const fresh=await readAchats();
       const idx=fresh.findIndex(function(a){return txt(a&&a.id)===txt(id);});
@@ -139,24 +157,17 @@
       rows[idx]=updated;
 
       await writeRows(rows);
-
-      let checked=await readAchats();
-      let saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
-      if(!same(saved,updated)){
-        await writeRows(rows);
-        checked=await readAchats();
-        saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
-      }
-      if(!same(saved,updated))throw new Error('La modification n’est pas confirmée dans le Sheet');
-
-      updateLocal(checked);
+      updateLocal(rows);
       closeEditModal(modal);
       try{if(typeof render==='function')render();}catch(e){}
-      toastSafe(charge?'Charge modifiée dans le Sheet ✓':'Achat modifié dans le Sheet ✓');
+      toastSafe(charge?'Charge modifiée ✓':'Achat modifié ✓');
+      verifyInBackground(id,updated,charge);
     }catch(err){
       setBusy(button,false);
       toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
     }finally{
+      window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+      window.__yayaLastWriteAt=Date.now();
       busy=false;
     }
   }
