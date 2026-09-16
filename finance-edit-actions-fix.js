@@ -14,7 +14,6 @@
     [
       ['achat-create-actions-fix.js?v=3','yaya-achat-create-actions-loader-v3'],
       ['achat-create-central-save-fix.js?v=2-'+Date.now(),'yaya-achat-create-central-save-v2'],
-      ['achat-edit-direct-save-fix.js?v=1-'+Date.now(),'yaya-achat-edit-direct-save-v1'],
       ['achat-add-reliable-save.js?v=1-'+Date.now(),'yaya-achat-add-reliable-save-v1'],
       ['yaya-central-authoritative-sync.js?v='+Date.now(),'yaya-central-authority-loader'],
       ['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],
