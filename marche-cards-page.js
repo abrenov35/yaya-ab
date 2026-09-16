@@ -2,6 +2,7 @@
 'use strict';
 if(window.__yayaMarcheCardsV3)return;window.__yayaMarcheCardsV3=true;
 const css=document.createElement('style');css.textContent=`
+#pane-chantiers .yaya-detail-section-tab[data-section="marche"]{display:none!important}
 #pane-chantiers .yaya-marche-cards{padding:14px 16px 12px}
 #pane-chantiers .yaya-marche-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;align-items:stretch}
 #pane-chantiers .yaya-marche-card{position:relative;border:1px solid #dce5ee;border-radius:13px;background:#fff;padding:18px;box-shadow:0 4px 14px rgba(15,42,76,.06);min-height:245px;display:flex;flex-direction:column}
