@@ -23,4 +23,11 @@
     `;
     document.head.appendChild(style);
   }
+
+  if(!document.querySelector('script[data-yaya-devis-download-toolbar]')){
+    const script=document.createElement('script');
+    script.src='devis-viewer-download-toolbar.js?v=1';
+    script.dataset.yayaDevisDownloadToolbar='1';
+    document.head.appendChild(script);
+  }
 })();
