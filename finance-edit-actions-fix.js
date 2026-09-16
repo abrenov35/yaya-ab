@@ -10,9 +10,12 @@
   function apply(){ensureStyle();const root=document.getElementById('modalRoot');if(!root)return;root.querySelectorAll('.overlay .modal').forEach(ensureModal);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();const root=document.getElementById('modalRoot');if(root){let raf=0;new MutationObserver(function(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;apply();});}).observe(root,{childList:true,subtree:true});}setTimeout(apply,100);setTimeout(apply,500);
 
-  // Charge les correctifs hors cache après les modules Commande/Mail d'origine.
   setTimeout(function(){
-    [['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],['mail-documents-force-render.js?v=4','yaya-mail-force-loader']].forEach(function(x){
+    [
+      ['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],
+      ['mail-documents-force-render.js?v=4','yaya-mail-force-loader'],
+      ['documents-mails-live-refresh.js?v=3','yaya-shared-data-sync-loader']
+    ].forEach(function(x){
       if(document.querySelector('script[data-'+x[1]+']'))return;
       const s=document.createElement('script');s.src=x[0];s.setAttribute('data-'+x[1],'1');s.async=false;document.head.appendChild(s);
     });
