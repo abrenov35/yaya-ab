@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaDevisDrivePreviewFixV1)return;
-  window.__yayaDevisDrivePreviewFixV1=true;
+  if(window.__yayaDevisDrivePreviewFixV2)return;
+  window.__yayaDevisDrivePreviewFixV2=true;
 
   const API_FALLBACK='https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
   let pdfJsPromise=null;
@@ -205,8 +205,9 @@
   }
 
   function scan(root){
-    const scope=root&&root.querySelectorAll?root:document;
-    scope.querySelectorAll('#yayaDevisViewer .ydd-frame').forEach(upgradeFrame);
+    const scope=root&&root.nodeType===1?root:document;
+    if(scope.matches&&scope.matches('#yayaDevisViewer .ydd-frame'))upgradeFrame(scope);
+    if(scope.querySelectorAll)scope.querySelectorAll('#yayaDevisViewer .ydd-frame').forEach(upgradeFrame);
   }
 
   function install(){
