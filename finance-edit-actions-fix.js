@@ -15,6 +15,7 @@
       ['yaya-central-authoritative-sync.js?v='+Date.now(),'yaya-central-authority-loader'],
       ['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],
       ['mail-documents-force-render.js?v=4','yaya-mail-force-loader'],
+      ['documents-central-display-fix.js?v=1','yaya-central-documents-display-loader'],
       ['documents-mails-live-refresh.js?v=8','yaya-shared-data-sync-loader']
     ].forEach(function(x){
       if(document.querySelector('script[data-'+x[1]+']'))return;
