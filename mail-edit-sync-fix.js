@@ -210,6 +210,10 @@
     }
   };
 
+  /* Empêche document-save-lock.js de remplacer ce chemin spécifique aux mails.
+     Cette sauvegarde écrit explicitement objetMail puis appelle setDocuments. */
+  window.saveDocumentEdit.__yayaDirectSave=true;
+
   function mailIdFromButton(btn){
     return String(btn&&((btn.getAttribute('data-mail-id'))||(btn.dataset&&btn.dataset.mailId)||'')||'');
   }
