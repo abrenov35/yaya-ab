@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaDepenseUploadReliableV2)return;
-  window.__yayaDepenseUploadReliableV2=true;
+  if(window.__yayaDepenseUploadReliableV3)return;
+  window.__yayaDepenseUploadReliableV3=true;
 
   const MAX_FILE_SIZE=8*1024*1024;
   const inFlight=new Map();
@@ -52,20 +52,30 @@
     });
   }
 
-  async function post(action,data){
+  async function archiveDirect(file,base64){
     const url=endpoint();
     if(!url)throw new Error('Import indisponible');
     const response=await fetch(url,{
       method:'POST',
       cache:'no-store',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:action,data:data})
+      body:JSON.stringify({
+        action:'archiverDevis',
+        data:{
+          filename:file.name,
+          mimeType:file.type||'application/pdf',
+          base64:base64
+        }
+      })
     });
     const text=await response.text();
     let json;
     try{json=JSON.parse(text);}catch(e){throw new Error('Réponse Yaya invalide');}
     if(!json||json.ok!==true)throw new Error(String(json&&json.error||'Import impossible'));
-    return json.data||{};
+    const data=json.data||{};
+    const lien=String(data.lienDrive||data.lien||'').trim();
+    if(!lien)throw new Error('La pièce jointe n’a pas été archivée');
+    return lien;
   }
 
   function saveLink(lien){
@@ -75,49 +85,6 @@
     try{window.achatLien=value;}catch(e){}
     const modal=modalAchat();
     if(modal)modal.dataset.yayaAchatLien=value;
-  }
-
-  function field(id,value){
-    if(value===undefined||value===null||value==='')return;
-    const el=document.getElementById(id);
-    if(el)el.value=String(value);
-  }
-
-  function applyExtracted(data){
-    data=data||{};
-    field('acFour',data.fournisseur);
-    field('acDes',data.designation);
-    field('acDate',data.date);
-    field('acMt',data.montant_ht);
-
-    const ch=document.getElementById('acCh');
-    if(ch&&!String(ch.value||'').trim()&&data.reference_chantier){
-      try{
-        const ref=String(data.reference_chantier||'').toLowerCase();
-        const list=(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))?S.chantiers:[];
-        const found=list.find(function(c){
-          const nom=String(c&&c.nom||'').toLowerCase();
-          const numero=String(c&&c.numero||'').toLowerCase();
-          return (nom&&(ref.includes(nom)||nom.includes(ref)))||(numero&&ref.includes(numero));
-        });
-        if(found)ch.value=String(found.id||'');
-      }catch(e){}
-    }
-  }
-
-  async function guaranteeArchive(file,base64,extracted){
-    const first=extracted||{};
-    let lien=String(first.lienDrive||first.lien||'').trim();
-    if(lien)return lien;
-
-    const archived=await post('archiverDevis',{
-      filename:file.name,
-      mimeType:file.type||'application/pdf',
-      base64:base64
-    });
-    lien=String(archived.lienDrive||archived.lien||'').trim();
-    if(!lien)throw new Error('La pièce jointe n’a pas été archivée');
-    return lien;
   }
 
   async function uploadDepense(file){
@@ -138,19 +105,7 @@
       const base64=await readBase64(file);
       if(!base64)throw new Error('Document vide ou illisible');
 
-      let extracted={};
-      try{
-        extracted=await post('extraireAchat',{
-          filename:file.name,
-          mimeType:file.type||'application/pdf',
-          base64:base64
-        });
-        applyExtracted(extracted);
-      }catch(err){
-        console.warn('Yaya — extraction dépense ignorée, archivage direct utilisé :',err);
-      }
-
-      const lien=await guaranteeArchive(file,base64,extracted);
+      const lien=await archiveDirect(file,base64);
       saveLink(lien);
 
       setStatus('<span style="color:var(--green)">✓ Pièce jointe enregistrée</span>');
@@ -164,7 +119,7 @@
       try{window.dispatchEvent(new CustomEvent('yaya:achat-upload-state',{detail:{state:'error'}}));}catch(e){}
       return false;
     }).finally(function(){
-      setTimeout(function(){inFlight.delete(key);},1500);
+      setTimeout(function(){inFlight.delete(key);},800);
     });
 
     inFlight.set(key,task);
