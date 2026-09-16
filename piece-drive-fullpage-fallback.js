@@ -94,9 +94,6 @@
     const w=Math.max(1,stage.clientWidth);
     const h=Math.max(1,stage.clientHeight);
 
-    // Le viewer Drive ajuste sa page principalement à la largeur. On lui donne
-    // une grande hauteur logique, puis on réduit visuellement tout le viewer.
-    // Ainsi une feuille A4 complète tient dans la hauteur réelle de la modale.
     const logicalPageWidth=Math.max(220,w-60);
     const logicalPageHeight=logicalPageWidth*1.41421356;
     const chromeAllowance=90;
@@ -150,4 +147,72 @@
   const obs=new MutationObserver(()=>prepare());
   obs.observe(document.documentElement,{childList:true,subtree:true});
   setTimeout(prepare,80);
+})();
+
+(function(){
+  'use strict';
+  if(window.__yayaDriveAttachmentMultipageV1)return;
+  window.__yayaDriveAttachmentMultipageV1=true;
+
+  function driveId(value){
+    const s=String(value||'').trim();
+    let m=s.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
+    if(m&&m[1])return m[1];
+    m=s.match(/[?&]id=([^&#]+)/i);
+    return m&&m[1]?decodeURIComponent(m[1]):'';
+  }
+
+  function previewUrl(id){
+    return 'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
+  }
+
+  const previous=window.voirPiece;
+  if(typeof previous!=='function')return;
+
+  window.voirPiece=function(url){
+    const value=String(url||'').trim();
+    const id=driveId(value);
+    if(!id)return previous.apply(this,arguments);
+
+    const root=document.getElementById('modalRoot');
+    if(!root)return previous.apply(this,arguments);
+
+    root.replaceChildren();
+
+    const overlay=document.createElement('div');
+    overlay.className='overlay piece-preview-overlay';
+    overlay.onclick=function(e){
+      if(e.target===overlay&&typeof window.closeModal==='function')window.closeModal();
+    };
+
+    const modal=document.createElement('div');
+    modal.className='modal piece-modal piece-preview-modal';
+
+    const head=document.createElement('h5');
+    head.className='piece-preview-head';
+
+    const title=document.createElement('span');
+    title.textContent='Pièce jointe';
+
+    const close=document.createElement('button');
+    close.type='button';
+    close.textContent='Fermer';
+    close.onclick=function(){if(typeof window.closeModal==='function')window.closeModal();};
+
+    head.append(title,close);
+
+    const stage=document.createElement('div');
+    stage.className='piece-preview-stage';
+
+    const frame=document.createElement('iframe');
+    frame.title='Visualisation du document';
+    frame.src=previewUrl(id);
+    frame.setAttribute('allow','autoplay');
+    frame.setAttribute('referrerpolicy','no-referrer-when-downgrade');
+
+    stage.appendChild(frame);
+    modal.append(head,stage);
+    overlay.appendChild(modal);
+    root.appendChild(overlay);
+  };
 })();
