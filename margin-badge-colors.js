@@ -66,3 +66,13 @@
   s.setAttribute('data-yaya-achats-label-v1','1');
   document.head.appendChild(s);
 })();
+
+// Navigation chantier : Marché reste dans les données mais n'est plus proposé comme onglet.
+(function(){
+  if(document.querySelector('script[data-yaya-hide-marche-tab]'))return;
+  const s=document.createElement('script');
+  s.src='hide-marche-tab.js?v=2-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-hide-marche-tab','1');
+  document.head.appendChild(s);
+})();
