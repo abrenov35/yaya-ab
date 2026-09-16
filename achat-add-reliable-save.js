@@ -90,3 +90,13 @@
   setTimeout(install,300);
   setTimeout(install,1000);
 })();
+
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-achat-central-save-v1]'))return;
+  const s=document.createElement('script');
+  s.src='achat-create-central-save-fix.js?v=1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-achat-central-save-v1','1');
+  (document.head||document.documentElement).appendChild(s);
+})();
