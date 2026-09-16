@@ -84,6 +84,10 @@ function yayaTabsAction_(action) {
     setDocuments: ["documents"],
     addDocument: ["documents"],
 
+    setDevisDocuments: ["DEVIS"],
+    upsertDevisDocument: ["DEVIS"],
+    deleteDevisDocument: ["DEVIS"],
+
     setHeures: ["heures"],
     setSemaine: ["heures", "validations"]
   };
