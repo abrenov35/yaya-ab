@@ -13,7 +13,7 @@ if(!document.getElementById(STYLE_ID)){
 .yaya-marche-modal.has-docs{width:90vw!important;max-width:90vw!important;height:90vh!important;display:flex!important;flex-direction:column!important}
 .yaya-marche-head{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;padding:16px 18px!important;border-bottom:1px solid #e5eaf0!important;background:#fff!important}
 .yaya-marche-title{font-size:18px!important;font-weight:850!important;color:#162d49!important}
-.yaya-marche-actions{display:flex!important;align-items:center!important;gap:9px!important;margin-left:auto!important}
+.yaya-marche-actions{display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;margin-left:auto!important}
 .yaya-marche-action{min-height:38px!important;padding:0 14px!important;border-radius:8px!important;border:1px solid #c8d4e0!important;background:#fff!important;color:#173b60!important;font-size:12.5px!important;font-weight:800!important;cursor:pointer!important}
 .yaya-marche-action.primary{background:#003d7a!important;border-color:#003d7a!important;color:#fff!important}
 .yaya-marche-empty{padding:34px 22px!important;text-align:center!important;color:#66758a!important;font-size:13px!important}
@@ -25,88 +25,21 @@ if(!document.getElementById(STYLE_ID)){
 .yaya-marche-tab-delete:hover{background:#fee2e2!important;color:#b91c1c!important}
 .yaya-marche-view{flex:1 1 auto!important;min-height:0!important;background:#eef1f4!important;position:relative!important}
 .yaya-marche-frame{width:100%!important;height:100%!important;border:0!important;background:#fff!important;display:block!important}
-.yaya-marche-no-preview{height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;text-align:center!important;padding:25px!important;color:#64748b!important}
-@media(max-width:700px){.yaya-marche-overlay{padding:6px!important}.yaya-marche-modal.has-docs{width:calc(100vw - 12px)!important;max-width:none!important;height:calc(100dvh - 12px)!important}.yaya-marche-head{padding:10px!important;flex-wrap:wrap!important}.yaya-marche-title{font-size:16px!important}.yaya-marche-actions{width:100%!important}.yaya-marche-action{flex:1 1 auto!important;padding:0 9px!important}.yaya-marche-tabs{padding-left:6px!important;padding-right:6px!important}}
+@media(max-width:700px){.yaya-marche-overlay{padding:6px!important}.yaya-marche-modal.has-docs{width:calc(100vw - 12px)!important;max-width:none!important;height:calc(100dvh - 12px)!important}.yaya-marche-head{padding:10px!important;flex-wrap:wrap!important}.yaya-marche-title{font-size:16px!important}.yaya-marche-actions{width:100%!important;margin-left:0!important}.yaya-marche-action{flex:1 1 auto!important;padding:0 9px!important}.yaya-marche-tabs{padding-left:6px!important;padding-right:6px!important}}
  `;document.head.appendChild(css);
 }
-
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/\s+/g,' ').trim();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function unpackLabel(v,fallback){const raw=String(v||'').trim();const i=raw.indexOf(' [[YAYA_DESC:');return (i>=0?raw.slice(0,i).trim():raw)||fallback;}
 function list(name){try{return typeof S!=='undefined'&&S&&Array.isArray(S[name])?S[name]:[];}catch(e){return [];}}
-function cardId(card){
- if(!card)return '';
- for(const el of card.querySelectorAll('[onclick]')){const raw=String(el.getAttribute('onclick')||'');const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);if(m&&m[1])return String(m[1]);}
- try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier);}catch(e){}
- return '';
-}
-function docsFor(cid){
- const c=list('chantiers').find(x=>String(x&&x.id)===String(cid));if(!c)return [];
- const docs=[];
- if(/^https?:\/\//i.test(String(c.notes||'')))docs.push({id:String(cid),kind:'main',label:'Devis 1',url:String(c.notes)});
- const av=list('avenants').filter(v=>String(v&&v.chantierId)===String(cid));
- av.forEach((v,i)=>{if(/^https?:\/\//i.test(String(v.lien||'')))docs.push({id:String(v.id||''),kind:'avenant',label:'Devis '+(i+2),url:String(v.lien)});});
- return docs;
-}
+function cardId(card){if(!card)return '';for(const el of card.querySelectorAll('[onclick]')){const raw=String(el.getAttribute('onclick')||'');const m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);if(m&&m[1])return String(m[1]);}try{if(typeof focusChantier!=='undefined'&&focusChantier)return String(focusChantier);}catch(e){}return '';}
+function docsFor(cid){const c=list('chantiers').find(x=>String(x&&x.id)===String(cid));if(!c)return [];const docs=[];if(/^https?:\/\//i.test(String(c.notes||'')))docs.push({id:String(cid),kind:'main',label:unpackLabel(c.numero,'Devis 1'),url:String(c.notes)});const av=list('avenants').filter(v=>String(v&&v.chantierId)===String(cid));av.forEach((v,i)=>{if(/^https?:\/\//i.test(String(v.lien||'')))docs.push({id:String(v.id||''),kind:'avenant',label:unpackLabel(v.libelle,'Devis '+(i+2)),url:String(v.lien)});});return docs;}
 function closeModal(){const el=document.getElementById('yayaMarcheOverlay');if(el)el.remove();}
 function addDevis(cid){closeModal();if(typeof openAvenant==='function'){openAvenant(cid);return;}if(typeof window.openAvenant==='function')window.openAvenant(cid);}
-async function removeDocument(doc,cid){
- if(!confirm('Supprimer ce document du marché ?'))return;
- try{
-  if(doc.kind==='main'){
-   const c=list('chantiers').find(x=>String(x&&x.id)===String(cid));if(!c)return;
-   const before=c.notes;c.notes='';
-   const ok=typeof apiPost==='function'?await apiPost('setChantiers',S.chantiers):false;
-   if(!ok){c.notes=before;throw new Error('save');}
-  }else{
-   const v=list('avenants').find(x=>String(x&&x.id)===String(doc.id));if(!v)return;
-   const before=v.lien;v.lien='';
-   const ok=typeof apiPost==='function'?await apiPost('setAvenants',S.avenants):false;
-   if(!ok){v.lien=before;throw new Error('save');}
-  }
-  try{if(typeof render==='function')render();}catch(e){}
-  openMarche(cid);
- }catch(e){try{if(typeof toast==='function')toast('Suppression du document impossible',true);}catch(_){} }
-}
-function showDoc(cid,index){
- const docs=docsFor(cid);if(!docs.length){openMarche(cid);return;}
- const i=Math.max(0,Math.min(Number(index)||0,docs.length-1));
- document.querySelectorAll('#yayaMarcheOverlay .yaya-marche-tab').forEach((b,n)=>b.classList.toggle('on',n===i));
- const view=document.querySelector('#yayaMarcheOverlay .yaya-marche-view');if(!view)return;
- view.innerHTML='<iframe class="yaya-marche-frame" title="Visualisation du devis" src="'+esc(docs[i].url)+'"></iframe>';
-}
-function openMarche(cid){
- closeModal();const docs=docsFor(cid);const root=document.getElementById('modalRoot')||document.body;
- const overlay=document.createElement('div');overlay.id='yayaMarcheOverlay';overlay.className='yaya-marche-overlay';
- if(!docs.length){
-  overlay.innerHTML='<div class="yaya-marche-modal" role="dialog" aria-modal="true"><div class="yaya-marche-head"><div class="yaya-marche-title">Devis du chantier</div><div class="yaya-marche-actions"><button class="yaya-marche-action primary" data-action="add">Télécharger un devis</button><button class="yaya-marche-action" data-action="close">Fermer</button></div></div><div class="yaya-marche-empty"><strong>Aucun devis enregistré</strong>Ajoutez le premier devis pour ce chantier.</div></div>';
- }else{
-  const tabs=docs.map((d,i)=>'<button type="button" class="yaya-marche-tab'+(i===0?' on':'')+'" data-index="'+i+'"><span>'+esc(d.label)+'</span><span class="yaya-marche-tab-delete" role="button" aria-label="Supprimer" title="Supprimer" data-delete="'+i+'">×</span></button>').join('');
-  overlay.innerHTML='<div class="yaya-marche-modal has-docs" role="dialog" aria-modal="true"><div class="yaya-marche-head"><div class="yaya-marche-title">Devis du chantier</div><div class="yaya-marche-actions"><button class="yaya-marche-action primary" data-action="add">＋ Ajouter un devis</button><button class="yaya-marche-action" data-action="close">Fermer</button></div></div><div class="yaya-marche-tabs">'+tabs+'</div><div class="yaya-marche-view"></div></div>';
- }
- root.appendChild(overlay);
- overlay.addEventListener('click',e=>{
-  if(e.target===overlay){closeModal();return;}
-  const action=e.target.closest('[data-action]');if(action){if(action.dataset.action==='close')closeModal();else if(action.dataset.action==='add')addDevis(cid);return;}
-  const del=e.target.closest('[data-delete]');if(del){e.preventDefault();e.stopPropagation();const d=docs[Number(del.dataset.delete)];if(d)removeDocument(d,cid);return;}
-  const tab=e.target.closest('.yaya-marche-tab');if(tab)showDoc(cid,Number(tab.dataset.index));
- });
- if(docs.length)showDoc(cid,0);
-}
-function decorate(){
- const pane=document.getElementById('pane-chantiers');if(!pane)return;
- pane.querySelectorAll('.card').forEach(card=>{
-  const cid=cardId(card);if(!cid)return;
-  const stats=[...card.querySelectorAll(':scope > .kpis .stat')];
-  const market=stats.find(stat=>{const small=stat.querySelector('small');const t=norm(small&&small.textContent);return t==='MARCHE'||t==='MARCHE HT'||t.startsWith('MARCHE ');});
-  const signed=card.querySelector('.yaya-signed-quote-kpi');
-  [market,signed].filter(Boolean).forEach(target=>{
-   target.dataset.yayaMarcheModal='1';target.setAttribute('role','button');target.setAttribute('tabindex','0');
-   if(target._yayaMarcheBound)return;target._yayaMarcheBound=true;
-   target.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMarche(cid);});
-   target.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openMarche(cid);}});
-  });
- });
-}
+async function removeDocument(doc,cid){if(!confirm('Supprimer ce document du marché ?'))return;try{if(doc.kind==='main'){const c=list('chantiers').find(x=>String(x&&x.id)===String(cid));if(!c)return;const before=c.notes;c.notes='';const ok=typeof apiPost==='function'?await apiPost('setChantiers',S.chantiers):false;if(!ok){c.notes=before;throw new Error('save');}}else{const v=list('avenants').find(x=>String(x&&x.id)===String(doc.id));if(!v)return;const before=v.lien;v.lien='';const ok=typeof apiPost==='function'?await apiPost('setAvenants',S.avenants):false;if(!ok){v.lien=before;throw new Error('save');}}try{if(typeof render==='function')render();}catch(e){}openMarche(cid);}catch(e){try{if(typeof toast==='function')toast('Suppression du document impossible',true);}catch(_){}}}
+function showDoc(cid,index){const docs=docsFor(cid);if(!docs.length){openMarche(cid);return;}const i=Math.max(0,Math.min(Number(index)||0,docs.length-1));document.querySelectorAll('#yayaMarcheOverlay .yaya-marche-tab').forEach((b,n)=>b.classList.toggle('on',n===i));const view=document.querySelector('#yayaMarcheOverlay .yaya-marche-view');if(!view)return;view.innerHTML='<iframe class="yaya-marche-frame" title="Visualisation du devis" src="'+esc(docs[i].url)+'"></iframe>';}
+function openMarche(cid){closeModal();const docs=docsFor(cid);const root=document.getElementById('modalRoot')||document.body;const overlay=document.createElement('div');overlay.id='yayaMarcheOverlay';overlay.className='yaya-marche-overlay';if(!docs.length){overlay.innerHTML='<div class="yaya-marche-modal" role="dialog" aria-modal="true"><div class="yaya-marche-head"><div class="yaya-marche-title">Devis du chantier</div><div class="yaya-marche-actions"><button class="yaya-marche-action primary" data-action="add">Télécharger un devis</button><button class="yaya-marche-action" data-action="close">Fermer</button></div></div><div class="yaya-marche-empty"><strong>Aucun devis enregistré</strong>Ajoutez le premier devis pour ce chantier.</div></div>';}else{const tabs=docs.map((d,i)=>'<button type="button" class="yaya-marche-tab'+(i===0?' on':'')+'" data-index="'+i+'"><span>'+esc(d.label)+'</span><span class="yaya-marche-tab-delete" role="button" aria-label="Supprimer" title="Supprimer" data-delete="'+i+'">×</span></button>').join('');overlay.innerHTML='<div class="yaya-marche-modal has-docs" role="dialog" aria-modal="true"><div class="yaya-marche-head"><div class="yaya-marche-title">Devis du chantier</div><div class="yaya-marche-actions"><button class="yaya-marche-action primary" data-action="add">＋ Ajouter un devis</button><button class="yaya-marche-action" data-action="close">Fermer</button></div></div><div class="yaya-marche-tabs">'+tabs+'</div><div class="yaya-marche-view"></div></div>';}root.appendChild(overlay);overlay.addEventListener('click',e=>{if(e.target===overlay){closeModal();return;}const action=e.target.closest('[data-action]');if(action){if(action.dataset.action==='close')closeModal();else if(action.dataset.action==='add')addDevis(cid);return;}const del=e.target.closest('[data-delete]');if(del){e.preventDefault();e.stopPropagation();const d=docs[Number(del.dataset.delete)];if(d)removeDocument(d,cid);return;}const tab=e.target.closest('.yaya-marche-tab');if(tab)showDoc(cid,Number(tab.dataset.index));});if(docs.length)showDoc(cid,0);}
+function decorate(){const pane=document.getElementById('pane-chantiers');if(!pane)return;pane.querySelectorAll('.card').forEach(card=>{const cid=cardId(card);if(!cid)return;const stats=[...card.querySelectorAll(':scope > .kpis .stat')];const market=stats.find(stat=>{const small=stat.querySelector('small');const t=norm(small&&small.textContent);return t==='MARCHE'||t==='MARCHE HT'||t.startsWith('MARCHE ');});const signed=card.querySelector('.yaya-signed-quote-kpi');[market,signed].filter(Boolean).forEach(target=>{target.dataset.yayaMarcheModal='1';target.setAttribute('role','button');target.setAttribute('tabindex','0');if(target._yayaMarcheBound)return;target._yayaMarcheBound=true;target.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();openMarche(cid);});target.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openMarche(cid);}});});});}
 let pending=false;function schedule(){if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;decorate();});}
 decorate();new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',schedule);setTimeout(schedule,250);
 })();
