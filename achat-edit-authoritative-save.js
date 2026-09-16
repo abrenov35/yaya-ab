@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditAuthoritativeSaveV5)return;
+  if(window.__yayaAchatEditAuthoritativeSaveV6)return;
+  window.__yayaAchatEditAuthoritativeSaveV6=true;
   window.__yayaAchatEditAuthoritativeSaveV5=true;
   window.__yayaAchatEditAuthoritativeSaveV4=true;
 
@@ -59,22 +60,17 @@
     if(!j||j.ok===false)throw new Error(j&&j.error?j.error:'Lecture achats impossible');
     return j.data&&Array.isArray(j.data.achats)?j.data.achats:[];
   }
-  async function writeRows(rows){
+  async function writeOne(row){
     const r=await fetchWithTimeout(API,{
       method:'POST',
       headers:{'Content-Type':'text/plain;charset=utf-8'},
-      body:JSON.stringify({action:'setAchats',data:rows})
-    },15000);
+      body:JSON.stringify({action:'addAchat',data:row})
+    },12000);
     const raw=await r.text();
     if(!r.ok)throw new Error('Écriture HTTP '+r.status);
-    if(raw){
-      try{
-        const j=JSON.parse(raw);
-        if(j&&j.ok===false)throw new Error(j.error||'Écriture refusée');
-      }catch(e){
-        if(e&&/Écriture refusée/.test(String(e.message||'')))throw e;
-      }
-    }
+    let j;
+    try{j=raw?JSON.parse(raw):{ok:true};}catch(e){throw new Error('Réponse serveur invalide');}
+    if(j&&j.ok===false)throw new Error(j.error||'Écriture refusée');
     return true;
   }
   function same(a,b){
@@ -88,6 +84,7 @@
   }
   function buildUpdated(modal,current){
     const updated=Object.assign({},current,{
+      id:current.id,
       chantierId:txt(modal.querySelector('#eaCh').value),
       typeDoc:txt(modal.querySelector('#eaType').value),
       fournisseur:txt(modal.querySelector('#eaFour').value),
@@ -98,6 +95,9 @@
     if(updated.typeDoc==='Facture sous-traitant')updated.sousTraitant=updated.fournisseur;
     else if('sousTraitant' in updated)updated.sousTraitant='';
     return updated;
+  }
+  function localRows(){
+    try{return typeof S!=='undefined'&&S&&Array.isArray(S.achats)?S.achats:[];}catch(e){return [];}
   }
   function updateLocal(rows){
     try{if(typeof S!=='undefined'&&S)S.achats=rows;}catch(e){}
@@ -114,17 +114,24 @@
   function verifyInBackground(id,updated,charge){
     setTimeout(async function(){
       try{
-        const checked=await readAchats();
-        const saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
-        updateLocal(checked);
+        let checked=await readAchats();
+        let saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
         if(!same(saved,updated)){
-          try{if(typeof render==='function')render();}catch(e){}
-          toastSafe(charge?'Attention : la charge n’est pas confirmée dans le Sheet':'Attention : l’achat n’est pas confirmé dans le Sheet',true);
+          await new Promise(function(resolve){setTimeout(resolve,900);});
+          checked=await readAchats();
+          saved=checked.find(function(a){return txt(a&&a.id)===txt(id);});
         }
+        if(same(saved,updated)){
+          updateLocal(checked);
+          return;
+        }
+        updateLocal(checked);
+        try{if(typeof render==='function')render();}catch(e){}
+        toastSafe(charge?'Attention : la charge n’est pas confirmée dans le Sheet':'Attention : l’achat n’est pas confirmé dans le Sheet',true);
       }catch(e){
         console.warn('Yaya — contrôle Sheet en arrière-plan impossible',e);
       }
-    },250);
+    },350);
   }
   async function saveById(id){
     if(busy)return false;
@@ -134,20 +141,21 @@
     const rowId=txt(id);
     if(!rowId){toastSafe(charge?'Impossible d’identifier cette charge':'Impossible d’identifier cet achat',true);return false;}
 
+    const rows=localRows();
+    const idx=rows.findIndex(function(a){return txt(a&&a.id)===rowId;});
+    if(idx<0){toastSafe(charge?'Charge introuvable':'Achat introuvable',true);return false;}
+
+    const updated=buildUpdated(modal,rows[idx]);
+    const next=rows.slice();
+    next[idx]=updated;
     const button=saveButton(modal);
+
     busy=true;
     setBusy(button,true);
     window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
     try{
-      const fresh=await readAchats();
-      const idx=fresh.findIndex(function(a){return txt(a&&a.id)===rowId;});
-      if(idx<0)throw new Error(charge?'Charge introuvable dans le Sheet':'Achat introuvable dans le Sheet');
-      const updated=buildUpdated(modal,fresh[idx]);
-      const rows=fresh.slice();
-      rows[idx]=updated;
-
-      await writeRows(rows);
-      updateLocal(rows);
+      await writeOne(updated);
+      updateLocal(next);
       closeEditModal(modal);
       try{if(typeof render==='function')render();}catch(e){}
       toastSafe(charge?'Charge modifiée ✓':'Achat modifié ✓');
