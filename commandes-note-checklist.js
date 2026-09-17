@@ -1,25 +1,23 @@
-// NOTE COMMANDES : chaque ligne commence par une puce fine « • ».
-// La zone de note s'adapte automatiquement au nombre de lignes, sans toucher au chargement principal de Yaya.
+// NOTE COMMANDES : puces automatiques et hauteur stable selon le nombre de lignes.
 (function(){
   'use strict';
-  if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1)return;
-  window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1=true;
+  if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V2)return;
+  window.__YAYA_COMMANDES_NOTE_CHECKLIST_V2=true;
 
   const PREFIX='• ';
-  const MIN_HEIGHT=82;
+  const MIN_ROWS=3;
 
-  function autoResize(el){
+  function fitRows(el){
     if(!el)return;
-    el.style.minHeight=MIN_HEIGHT+'px';
+    const rows=Math.max(MIN_ROWS,String(el.value||'').split('\n').length);
+    if(el.rows!==rows)el.rows=rows;
+    el.style.removeProperty('height');
     el.style.overflowY='hidden';
     el.style.resize='none';
-    el.style.height='auto';
-    el.style.height=Math.max(el.scrollHeight,MIN_HEIGHT)+'px';
   }
 
   function normalizeLine(line){
     line=String(line||'');
-    // Migre aussi les anciennes lignes commençant par ☑️ vers la nouvelle puce.
     line=line.replace(/^\s*(?:☑️|☑|•)\s*/, '');
     return PREFIX+line;
   }
@@ -39,21 +37,16 @@
       if(moveCaret){
         try{el.setSelectionRange(after.length,after.length);}catch(_){}
       }
-      el.dispatchEvent(new Event('input',{bubbles:true}));
     }
-    autoResize(el);
+    fitRows(el);
   }
 
   function setup(el){
-    if(!el)return;
-    if(el.dataset.yayaChecklistReady==='1'){
-      autoResize(el);
-      return;
-    }
-    el.dataset.yayaChecklistReady='1';
+    if(!el||el.dataset.yayaChecklistReadyV2==='1')return;
+    el.dataset.yayaChecklistReadyV2='1';
     apply(el,true);
 
-    el.addEventListener('input',function(){autoResize(el);});
+    el.addEventListener('input',function(){fitRows(el);});
 
     el.addEventListener('keydown',function(e){
       if(e.key!=='Enter'||e.shiftKey||e.ctrlKey||e.altKey||e.metaKey)return;
@@ -64,33 +57,30 @@
       el.value=el.value.slice(0,start)+insert+el.value.slice(end);
       const pos=start+insert.length;
       try{el.setSelectionRange(pos,pos);}catch(_){}
+      fitRows(el);
       el.dispatchEvent(new Event('input',{bubbles:true}));
     });
 
     el.addEventListener('blur',function(){apply(el,false);});
-    el.addEventListener('paste',function(){
-      setTimeout(function(){apply(el,false);},0);
-    });
+    el.addEventListener('paste',function(){setTimeout(function(){apply(el,false);},0);});
   }
 
-  function scan(){setup(document.getElementById('ycnNote'));}
+  function scan(){
+    const el=document.getElementById('ycnNote');
+    if(el)setup(el);
+  }
 
   document.addEventListener('click',function(e){
     if(e.target&&e.target.closest&&e.target.closest('[data-ycn-note-cancel]')){
       setTimeout(function(){
         const el=document.getElementById('ycnNote');
-        apply(el,true);
+        if(el){apply(el,true);fitRows(el);}
       },0);
     }
   },true);
 
-  window.addEventListener('resize',function(){
-    autoResize(document.getElementById('ycnNote'));
-  },{passive:true});
-
   const obs=new MutationObserver(scan);
   obs.observe(document.documentElement,{childList:true,subtree:true});
-  document.addEventListener('focusin',scan,true);
   setTimeout(scan,0);
   setTimeout(scan,300);
 })();
