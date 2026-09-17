@@ -111,3 +111,14 @@
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',install,{once:true});
   else install();
 })();
+
+(function(){
+  'use strict';
+  if(window.__yayaCommandeDevisPreviewDownloadLoaderV1)return;
+  window.__yayaCommandeDevisPreviewDownloadLoaderV1=true;
+  const s=document.createElement('script');
+  s.src='commande-devis-preview-download.js?v=1';
+  s.async=false;
+  s.onerror=function(){console.error('Yaya : chargement du bouton Télécharger Commandes / Devis impossible');};
+  document.head.appendChild(s);
+})();
