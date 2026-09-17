@@ -1,14 +1,15 @@
 (function(){
   'use strict';
-  if(window.__yayaPerformanceCoreV1)return;
+  if(window.__yayaPerformanceCoreV2)return;
+  window.__yayaPerformanceCoreV2=true;
   window.__yayaPerformanceCoreV1=true;
 
   /*
-   * Performance core:
-   * - one background refresh only, when the user is idle;
-   * - never re-render while a modal / input is being edited;
-   * - keep explicit manual refresh functions;
-   * - disable the two older live-sync modules that duplicated GET + render work.
+   * Performance core V2:
+   * - un seul rafraîchissement réseau en arrière-plan ;
+   * - aucun rerender si les données serveur n'ont pas changé ;
+   * - aucun GET de contrôle inutile après un démarrage déjà frais ;
+   * - aucun rafraîchissement pendant une saisie, une modale ou une écriture en attente.
    */
   window.__yayaCentralAuthorityV2=true;
   window.__yayaCentralAuthorityV1=true;
@@ -29,7 +30,7 @@
     (document.head||document.documentElement).appendChild(s);
   }
 
-  // Empêche les chargements réseau en double. Les fonctions utiles sont remplacées plus bas.
+  // Empêche les anciens modules de lancer plusieurs GET / render concurrents.
   addScriptMarker(null,'yaya-shared-tabs-live-sync');
   addScriptMarker('data-yaya-central-authority-loader');
   addScriptMarker('data-yaya-shared-data-sync-loader-v9');
@@ -70,6 +71,7 @@
 
   function writingBusy(){
     if((Number(window.__yayaWriteInFlight)||0)>0)return true;
+    if(window.yayaHoursPending)return true;
     if(document.querySelector('[data-yaya-upload-busy="1"],[data-yaya-achat-upload-busy="1"]'))return true;
     return false;
   }
@@ -77,14 +79,30 @@
   function userBusy(){return activeEditor()||modalOpen()||writingBusy();}
   function userIdle(){return !userBusy()&&(Date.now()-lastInteraction)>1200;}
 
-  function saveCache(data){
-    if(!data||typeof data!=='object')return;
-    try{localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(data));}catch(e){}
+  function serializeData(data){
+    try{return JSON.stringify(data);}catch(e){return '';}
   }
 
-  function applyFreshData(data,renderNow){
+  // Retourne true uniquement si le cache a réellement changé.
+  function saveCache(data){
     if(!data||typeof data!=='object')return false;
-    saveCache(data);
+    const raw=serializeData(data);
+    if(!raw)return true;
+    try{
+      const previous=localStorage.getItem(CACHE_DATA_KEY);
+      if(previous===raw)return false;
+      localStorage.setItem(CACHE_DATA_KEY,raw);
+      return true;
+    }catch(e){return true;}
+  }
+
+  function applyFreshData(data,renderNow,forceApply){
+    if(!data||typeof data!=='object')return false;
+    const changed=saveCache(data);
+
+    // En arrière-plan, si le serveur renvoie exactement les mêmes données,
+    // on ne touche ni à S ni au DOM. C'est le gain principal sur les navigations.
+    if(!forceApply&&!changed)return true;
 
     if(typeof S!=='undefined'&&S){
       TABS.forEach(function(tab){
@@ -121,14 +139,13 @@
         const data=await getFreshData();
 
         // Si l’utilisateur a commencé à saisir pendant le GET, on met seulement le cache à jour.
-        // Aucun render ne vient alors ralentir ou remplacer la modale en cours.
         if(!manual&&(userBusy()||(Date.now()-lastInteraction)<700)){
           saveCache(data);
           window.__yayaDeferredFreshDataAt=Date.now();
           return true;
         }
 
-        const ok=applyFreshData(data,true);
+        const ok=applyFreshData(data,true,!!manual);
         if(manual&&ok)toastSafe('Données actualisées ✓');
         return ok;
       }catch(err){
@@ -156,6 +173,9 @@
       return;
     }
 
+    // Si le démarrage vient déjà du réseau, ne pas refaire immédiatement le même GET.
+    if(window.__yayaCachedBoot===false)return;
+
     const run=function(){
       if(userIdle())refreshNow(false);
       else if(bootAttempts<8)setTimeout(scheduleBootRefresh,2200);
@@ -165,10 +185,9 @@
     else setTimeout(run,900);
   }
 
-  // Laisse d’abord l’interface apparaître et devenir saisissable.
+  // Démarrage cache d'abord : contrôle serveur seulement une fois l'interface disponible.
   setTimeout(scheduleBootRefresh,1800);
 
-  // Nettoyage d’un éventuel ancien écran bloquant resté dans le DOM.
   setTimeout(function(){
     const old=document.getElementById('yaya-central-authority-overlay');
     if(old)old.remove();
