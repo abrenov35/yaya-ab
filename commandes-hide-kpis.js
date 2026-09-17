@@ -23,6 +23,31 @@
         opacity:1!important;
         box-shadow:none!important;
       }
+
+      /* Boutons Pièces / URL : bleu pastel sans donnée, vert pastel avec donnée. */
+      .yaya-cmd-native-root .ycn-v4-pieces,
+      .yaya-cmd-native-root .ycn-v4-url{
+        min-width:92px!important;
+        padding:0 14px!important;
+        background:#e8f3ff!important;
+        border-color:#b8d4ef!important;
+        color:#205b8f!important;
+        opacity:1!important;
+      }
+      .yaya-cmd-native-root .ycn-v4-pieces.has,
+      .yaya-cmd-native-root .ycn-v4-url:not(:disabled){
+        background:#e8f5ec!important;
+        border-color:#b9dfc5!important;
+        color:#287a46!important;
+        opacity:1!important;
+      }
+      .yaya-cmd-native-root .ycn-v4-url:disabled{
+        background:#e8f3ff!important;
+        border-color:#b8d4ef!important;
+        color:#205b8f!important;
+        opacity:1!important;
+        cursor:default!important;
+      }
     `;
     document.head.appendChild(style);
   }
