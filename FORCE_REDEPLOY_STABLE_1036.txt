@@ -1,0 +1,1 @@
+Force redeploy of the last known stable Yaya state (v205.1036) after rollback.
