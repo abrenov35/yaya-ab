@@ -11,8 +11,8 @@ def save(path,text,old_text):
     else:
         print('inchangé:',path)
 
-# 1) index.html : tous les correctifs additionnels chargent en defer, dans le même ordre.
-#    On ajoute aussi la file Documents en arrière-plan juste après le verrou document.
+# 1) index.html : les correctifs additionnels chargent en defer, dans le même ordre.
+#    Documents V2 : sauvegarde locale immédiate + synchronisation serveur en arrière-plan.
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 old=s
@@ -26,18 +26,33 @@ if 'const nonBlockingReplacement=' not in s:
         '  base=base.replace(marker,nonBlockingReplacement);',
         1
     )
-if 'documents-background-sync-v1.js?v=1' not in s:
+
+if 'documents-background-sync-v1.js?v=1' in s:
+    s=s.replace('documents-background-sync-v1.js?v=1','documents-background-sync-v1.js?v=2',1)
+
+if 'documents-background-sync-v1.js?v=2' not in s:
     lines=s.splitlines(True)
     pos=next((i for i,line in enumerate(lines) if 'document-save-lock.js?v=doclock-1' in line),None)
     if pos is None:
         raise SystemExit('index.html: document-save-lock introuvable')
     indent=lines[pos][:len(lines[pos])-len(lines[pos].lstrip())]
-    lines.insert(pos+1,indent+'\'<script src="documents-background-sync-v1.js?v=1"><\\/script>\'+\n')
+    two_backslashes='\\\\'
+    lines.insert(pos+1,indent+'\'<script src="documents-background-sync-v1.js?v=2"><'+two_backslashes+'/script>\'+\n')
     s=''.join(lines)
+
+# Le remplacement est injecté dans un autre <script> : il faut DEUX antislashs
+# dans index.html pour que le HTML final contienne bien <\/script> sans fermer
+# prématurément le script générateur.
+s=re.sub(
+    r'(documents-background-sync-v1\.js\?v=2"><)(\\+)(/script>)',
+    lambda m:m.group(1)+'\\\\'+m.group(3),
+    s,
+    count=1
+)
 save('index.html',s,old)
 
-# 2) Le voile de démarrage attend DOMContentLoaded, pas window.load.
-#    Les scripts defer sont donc tous exécutés, mais images/iframes/ressources lentes ne bloquent plus l'utilisateur.
+# 2) Base de production : afficher l'interface dès DOMContentLoaded, pas window.load.
+#    Et ne plus rescanner toute la page à chaque mutation pour les décorations Marché.
 p=Path('index-production-base.html')
 s=p.read_text(encoding='utf-8')
 old=s
@@ -47,9 +62,33 @@ if old_reveal in s:
     s=s.replace(old_reveal,new_reveal,1)
 elif new_reveal not in s:
     raise SystemExit('index-production-base.html: reveal introuvable')
+
+old_base_obs="""    const obs=new MutationObserver(()=>{ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();});
+    obs.observe(document.body,{childList:true,subtree:true});"""
+new_base_obs="""    let yayaBasePatchRaf=0;
+    const obs=new MutationObserver(function(mutations){
+      let relevant=false;
+      outer:for(const mutation of mutations){
+        for(const node of mutation.addedNodes){
+          if(node.nodeType!==1)continue;
+          const el=node;
+          if(el.matches?.('#pane-chantiers,.card,.seclabel,.hdr,.tabs')||el.querySelector?.('#pane-chantiers,.card,.seclabel,.hdr,.tabs')){relevant=true;break outer;}
+        }
+      }
+      if(!relevant||yayaBasePatchRaf)return;
+      yayaBasePatchRaf=requestAnimationFrame(function(){
+        yayaBasePatchRaf=0;
+        ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
+      });
+    });
+    obs.observe(document.body,{childList:true,subtree:true});"""
+if old_base_obs in s:
+    s=s.replace(old_base_obs,new_base_obs,1)
+elif 'yayaBasePatchRaf' not in s:
+    raise SystemExit('index-production-base.html: observer base introuvable')
 save('index-production-base.html',s,old)
 
-# 3) index-legacy : supprime un observer global Avoir inutile grâce à la délégation de clic.
+# 3) index-legacy : supprimer l'observer global Avoir grâce à la délégation de clic.
 p=Path('index-legacy.html')
 s=p.read_text(encoding='utf-8')
 old=s
@@ -72,7 +111,6 @@ if 'YAYA_AVOIR_DELEGATION_V1' not in s:
         raise SystemExit('index-legacy.html: observer Avoir introuvable')
 
 # 4) index-legacy : l'ancien applyPatches scannait tout le DOM à chaque mutation.
-#    Maintenant un seul passage par frame, seulement si un bloc utile a été ajouté.
 old_tail="const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyPatches,0);return r};new MutationObserver(()=>applyPatches()).observe(document.documentElement,{childList:true,subtree:true});setTimeout(applyPatches,100);"
 new_tail="""const _render=window.render;
 let __yayaPatchRaf=0;
@@ -99,7 +137,7 @@ elif '__yayaSchedulePatches' not in s:
     raise SystemExit('index-legacy.html: observer applyPatches introuvable')
 save('index-legacy.html',s,old)
 
-# 5) Onglets chantier : ne rescanner les onglets que si un onglet a réellement été ajouté.
+# 5) Onglets chantier : rescanner uniquement si un onglet a été ajouté.
 p=Path('chantier-tabs-soft-theme.js')
 s=p.read_text(encoding='utf-8')
 old=s
@@ -131,7 +169,7 @@ elif 'outer:for(const mutation of mutations)' not in s:
     raise SystemExit('chantier-tabs-soft-theme.js: observer introuvable')
 save('chantier-tabs-soft-theme.js',s,old)
 
-# 6) Icônes œil : même principe, pas de scan complet pour une mutation sans rapport.
+# 6) Icônes œil : aucun scan si la mutation n'ajoute pas un bouton concerné.
 p=Path('colored-view-eyes.js')
 s=p.read_text(encoding='utf-8')
 old=s
@@ -175,7 +213,7 @@ elif '[...mutation.addedNodes,...mutation.removedNodes]' not in s:
     raise SystemExit('mails-page-last10.js: observer introuvable')
 save('mails-page-last10.js',s,old)
 
-# 8) Correctif mail : observer limité au panneau chantier et seulement aux lignes mail ajoutées.
+# 8) Correctif mail : observer limité au panneau chantier et aux lignes mail ajoutées.
 p=Path('mail-edit-sync-fix.js')
 s=p.read_text(encoding='utf-8')
 old=s
