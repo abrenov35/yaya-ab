@@ -96,8 +96,33 @@
   }
 
   function removeCommandCount(){
-    document.querySelectorAll('.yaya-detail-section-tab[data-section="commandes"] small').forEach(function(el){
-      el.remove();
+    document.querySelectorAll('button').forEach(function(btn){
+      const section=String(btn.dataset&&btn.dataset.section||'').toLowerCase();
+      const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
+      const strong=btn.querySelector('strong');
+      const label=String(strong&&strong.textContent||'').replace(/\s+/g,' ').trim();
+      const isCommande=section==='commandes'||/^commandes?$/i.test(label)||/^commandes?\s+\d+$/i.test(text);
+      if(!isCommande)return;
+
+      btn.querySelectorAll('small,span,b,em').forEach(function(el){
+        const value=String(el.textContent||'').replace(/\s+/g,' ').trim();
+        if(/^\d+$/.test(value))el.remove();
+      });
+
+      Array.from(btn.childNodes).forEach(function(node){
+        if(node.nodeType!==Node.TEXT_NODE)return;
+        const value=String(node.nodeValue||'').trim();
+        if(/^\d+$/.test(value))node.remove();
+      });
+
+      const after=String(btn.textContent||'').replace(/\s+/g,' ').trim();
+      if(/^commandes?\s+\d+$/i.test(after)){
+        if(strong){
+          Array.from(btn.childNodes).forEach(function(node){if(node!==strong)node.remove();});
+        }else{
+          btn.textContent='Commande';
+        }
+      }
     });
   }
 
@@ -159,7 +184,7 @@
 
   refreshUi();
   const observer=new MutationObserver(refreshUi);
-  observer.observe(document.body,{childList:true,subtree:true});
+  observer.observe(document.body,{childList:true,subtree:true,characterData:true});
   window.addEventListener('resize',forcePortraitCommandLayout,{passive:true});
   window.addEventListener('orientationchange',forcePortraitCommandLayout,{passive:true});
 })();
