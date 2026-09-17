@@ -23,7 +23,14 @@ if 'chantier-tabs-soft-theme.js?v=softtabs-10' in s:
 elif 'chantier-tabs-soft-theme.js?v=softtabs-11' not in s:
     raise SystemExit('reference chantier-tabs-soft-theme v10/v11 introuvable')
 
-# 3) Garde aussi le garde-fou final charge apres le theme.
+# 3) Repare une ancienne insertion mal echappee qui peut casser tout le chargeur Yaya.
+bad='commande-tab-no-count-final.js?v=1"><\\/script>'
+good='commande-tab-no-count-final.js?v=1"><\\\\/script>'
+if bad in s:
+    s=s.replace(bad,good,1)
+    print('fermeture script Commande reparee')
+
+# 4) Garde aussi le garde-fou final charge apres le theme.
 new_script='commande-tab-no-count-final.js?v=1'
 if new_script not in s:
     needle='chantier-tabs-soft-theme.js?v=softtabs-11'
