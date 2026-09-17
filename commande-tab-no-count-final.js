@@ -1,5 +1,6 @@
 // Onglet Commande : aucun compteur/chiffre affiche a cote du libelle.
 // Version legere : CSS uniquement, sans observer global du DOM.
+// Correctif de fluidite : aucun traitement pendant la frappe dans les modales.
 (function(){
   'use strict';
   if(window.__YAYA_COMMANDE_TAB_NO_COUNT_FINAL_V2)return;
