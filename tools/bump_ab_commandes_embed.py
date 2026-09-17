@@ -4,7 +4,7 @@ p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
 replacements=[
-    ('commandes-hide-kpis.js?v=15','commandes-hide-kpis.js?v=16'),
+    ('commandes-hide-kpis.js?v=16','commandes-hide-kpis.js?v=17'),
     ('commande-tab-no-count-final.js?v=1','commande-tab-no-count-final.js?v=2'),
 ]
 
@@ -21,6 +21,6 @@ for old,new in replacements:
 
 if changed:
     p.write_text(s,encoding='utf-8')
-    print('correctifs performance Commandes publies')
+    print('note Commandes vide compacte publiee')
 else:
     print('aucun changement necessaire')
