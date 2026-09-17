@@ -95,9 +95,9 @@
     });
   }
 
-  function hideCommandCount(){
+  function removeCommandCount(){
     document.querySelectorAll('.yaya-detail-section-tab[data-section="commandes"] small').forEach(function(el){
-      el.style.setProperty('display','none','important');
+      el.remove();
     });
   }
 
@@ -152,7 +152,7 @@
 
   function refreshUi(){
     renameAddButton();
-    hideCommandCount();
+    removeCommandCount();
     loadNoteChecklist();
     forcePortraitCommandLayout();
   }
