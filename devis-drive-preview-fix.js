@@ -114,10 +114,10 @@
 
 (function(){
   'use strict';
-  if(window.__yayaCommandeDevisPreviewDownloadLoaderV1)return;
-  window.__yayaCommandeDevisPreviewDownloadLoaderV1=true;
+  if(window.__yayaCommandeDevisPreviewDownloadLoaderV2)return;
+  window.__yayaCommandeDevisPreviewDownloadLoaderV2=true;
   const s=document.createElement('script');
-  s.src='commande-devis-preview-download.js?v=1';
+  s.src='commande-devis-preview-download.js?v=2';
   s.async=false;
   s.onerror=function(){console.error('Yaya : chargement du bouton Télécharger Commandes / Devis impossible');};
   document.head.appendChild(s);
