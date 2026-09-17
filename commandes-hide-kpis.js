@@ -177,8 +177,8 @@
         if(node.nodeType!==1)continue;
         const el=node;
         if(
-          el.matches?.('.yaya-cmd-native-root,.yaya-detail-section-tabs,.yaya-detail-section-tab') ||
-          el.querySelector?.('.yaya-cmd-native-root,.yaya-detail-section-tabs,.yaya-detail-section-tab')
+          el.matches?.('.yaya-cmd-native-root,.yaya-detail-section-tabs,.yaya-detail-section-tab,[data-ycn-add]') ||
+          el.querySelector?.('.yaya-cmd-native-root,.yaya-detail-section-tabs,.yaya-detail-section-tab,[data-ycn-add]')
         ){
           relevant=true;
           break outer;
