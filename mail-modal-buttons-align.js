@@ -6,10 +6,10 @@ window.syncMsg=function(m){
 
 (function(){
   'use strict';
-  if(window.__yayaMailModalButtonsAlignV2)return;
-  window.__yayaMailModalButtonsAlignV2=true;
+  if(window.__yayaMailModalButtonsAlignV3)return;
+  window.__yayaMailModalButtonsAlignV3=true;
 
-  const STYLE_ID='yaya-mail-modal-buttons-align-v2';
+  const STYLE_ID='yaya-mail-modal-buttons-align-v3';
   let raf=0;
 
   function installStyle(){
@@ -110,10 +110,10 @@ window.syncMsg=function(m){
 
     close.classList.add('yaya-close');
 
-    /* Garantit l'ordre visuel, même si un autre patch a déplacé les boutons. */
+    /* Garantit l'ordre sans remuer le DOM à chaque passage de l'observer. */
     const edit=actions.querySelector('.yaya-edit');
-    if(edit)actions.appendChild(edit);
-    actions.appendChild(close);
+    if(actions.lastElementChild!==close)actions.appendChild(close);
+    if(edit&&edit.nextElementSibling!==close)actions.insertBefore(edit,close);
   }
 
   function apply(){
