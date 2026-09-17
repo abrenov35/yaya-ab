@@ -252,7 +252,22 @@
       if(await apiPost('setChantiers',S.chantiers))toast('Montant du marché HT enregistré ✓');
       else{c.montantMarcheHT=avant;render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();}
     };
-    const obs=new MutationObserver(()=>{ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();});
+    let yayaBasePatchRaf=0;
+    const obs=new MutationObserver(function(mutations){
+      let relevant=false;
+      outer:for(const mutation of mutations){
+        for(const node of mutation.addedNodes){
+          if(node.nodeType!==1)continue;
+          const el=node;
+          if(el.matches?.('#pane-chantiers,.card,.seclabel,.hdr,.tabs')||el.querySelector?.('#pane-chantiers,.card,.seclabel,.hdr,.tabs')){relevant=true;break outer;}
+        }
+      }
+      if(!relevant||yayaBasePatchRaf)return;
+      yayaBasePatchRaf=requestAnimationFrame(function(){
+        yayaBasePatchRaf=0;
+        ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
+      });
+    });
     obs.observe(document.body,{childList:true,subtree:true});
     render();ensureChantierCreateButton();decorateMarche();cleanAutomaticUploadUI();
   }
