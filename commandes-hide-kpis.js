@@ -48,6 +48,42 @@
         opacity:1!important;
         cursor:default!important;
       }
+
+      /* Téléphone vertical : produit sur la 1re ligne, statut + Pièces + URL sur la 2e. */
+      @media(max-width:760px){
+        .yaya-cmd-native-root .ycn-row-top{
+          grid-template-columns:minmax(0,1fr) minmax(78px,.72fr) minmax(68px,.62fr)!important;
+          gap:6px!important;
+          padding:8px 10px!important;
+        }
+        .yaya-cmd-native-root .ycn-row-summary strong{
+          grid-column:1/-1!important;
+          width:100%!important;
+        }
+        .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{
+          display:none!important;
+        }
+        .yaya-cmd-native-root .ycn-v4-status{
+          grid-column:1!important;
+          width:100%!important;
+          min-width:0!important;
+        }
+        .yaya-cmd-native-root .ycn-v4-pieces{
+          grid-column:2!important;
+          min-width:0!important;
+          width:100%!important;
+          padding:0 8px!important;
+        }
+        .yaya-cmd-native-root .ycn-v4-url{
+          display:inline-flex!important;
+          align-items:center!important;
+          justify-content:center!important;
+          grid-column:3!important;
+          min-width:0!important;
+          width:100%!important;
+          padding:0 8px!important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
