@@ -180,3 +180,14 @@
   scheduleEye(50);
   setTimeout(forceMarcheEyeColor,250);
 })();
+
+// Heures : la liste d'affectation hebdomadaire ne propose que les chantiers actifs.
+(function(){
+  'use strict';
+  if(document.querySelector('script[data-yaya-hours-active-chantiers-filter]'))return;
+  const s=document.createElement('script');
+  s.src='heures-active-chantiers-filter.js?v=1-'+Date.now();
+  s.async=false;
+  s.setAttribute('data-yaya-hours-active-chantiers-filter','1');
+  document.head.appendChild(s);
+})();
