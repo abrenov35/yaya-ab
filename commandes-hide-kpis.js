@@ -1,6 +1,6 @@
 // Masque uniquement les 4 cartes KPI en haut de l'onglet Commandes
 // et renforce la lisibilite du bouton Enregistrer des notes, notamment sur iPhone.
-// Renomme aussi le bouton d'ajout pour expliciter son action.
+// Version optimisee : aucun balayage global du DOM pendant la saisie.
 (function(){
   'use strict';
   const STYLE_ID='yaya-commandes-hide-kpis';
@@ -25,7 +25,6 @@
         box-shadow:none!important;
       }
 
-      /* Boutons Pièces / URL : bleu pastel sans donnée, vert pastel avec donnée. */
       .yaya-cmd-native-root .ycn-v4-pieces,
       .yaya-cmd-native-root .ycn-v4-url{
         min-width:92px!important;
@@ -50,7 +49,6 @@
         cursor:default!important;
       }
 
-      /* Téléphone vertical : produit sur la 1re ligne, statut + Pièces + URL sur la 2e. */
       @media(max-width:760px){
         .yaya-cmd-native-root .ycn-row-top{
           grid-template-columns:minmax(0,1fr) minmax(78px,.72fr) minmax(68px,.62fr)!important;
@@ -89,40 +87,21 @@
     document.head.appendChild(style);
   }
 
-  function renameAddButton(){
-    document.querySelectorAll('.yaya-cmd-native-root [data-ycn-add]').forEach(function(btn){
+  function renameAddButton(root){
+    (root||document).querySelectorAll('.yaya-cmd-native-root [data-ycn-add]').forEach(function(btn){
       if(btn.textContent.trim()!=='+ ajouter une commande')btn.textContent='+ ajouter une commande';
     });
   }
 
   function removeCommandCount(){
-    document.querySelectorAll('button').forEach(function(btn){
-      const section=String(btn.dataset&&btn.dataset.section||'').toLowerCase();
-      const text=String(btn.textContent||'').replace(/\s+/g,' ').trim();
-      const strong=btn.querySelector('strong');
-      const label=String(strong&&strong.textContent||'').replace(/\s+/g,' ').trim();
-      const isCommande=section==='commandes'||/^commandes?$/i.test(label)||/^commandes?\s+\d+$/i.test(text);
-      if(!isCommande)return;
-
-      btn.querySelectorAll('small,span,b,em').forEach(function(el){
+    document.querySelectorAll(
+      '#pane-chantiers .yaya-detail-section-tab[data-section="commandes"],'+
+      '#pane-chantiers .yaya-detail-section-tab.yaya-commande-tab-contrast'
+    ).forEach(function(btn){
+      btn.querySelectorAll(':scope > small,:scope > span').forEach(function(el){
         const value=String(el.textContent||'').replace(/\s+/g,' ').trim();
         if(/^\d+$/.test(value))el.remove();
       });
-
-      Array.from(btn.childNodes).forEach(function(node){
-        if(node.nodeType!==Node.TEXT_NODE)return;
-        const value=String(node.nodeValue||'').trim();
-        if(/^\d+$/.test(value))node.remove();
-      });
-
-      const after=String(btn.textContent||'').replace(/\s+/g,' ').trim();
-      if(/^commandes?\s+\d+$/i.test(after)){
-        if(strong){
-          Array.from(btn.childNodes).forEach(function(node){if(node!==strong)node.remove();});
-        }else{
-          btn.textContent='Commande';
-        }
-      }
     });
   }
 
@@ -136,8 +115,6 @@
     document.head.appendChild(s);
   }
 
-  // Le CSS natif de commandes-native-line-v4 est injecté après ce fichier et masque URL en mobile.
-  // On applique donc les propriétés critiques en style inline !important : elles ne peuvent plus être écrasées.
   function forcePortraitCommandLayout(){
     const mobile=window.matchMedia && window.matchMedia('(max-width:760px)').matches;
     document.querySelectorAll('.yaya-cmd-native-root .ycn-row-top').forEach(function(top){
@@ -176,15 +153,42 @@
   }
 
   function refreshUi(){
-    renameAddButton();
+    renameAddButton(document);
     removeCommandCount();
-    loadNoteChecklist();
     forcePortraitCommandLayout();
   }
 
+  loadNoteChecklist();
   refreshUi();
-  const observer=new MutationObserver(refreshUi);
-  observer.observe(document.body,{childList:true,subtree:true,characterData:true});
+
+  let raf=0;
+  function scheduleRefresh(){
+    if(raf)return;
+    raf=requestAnimationFrame(function(){
+      raf=0;
+      refreshUi();
+    });
+  }
+
+  const observer=new MutationObserver(function(mutations){
+    let relevant=false;
+    outer: for(const mutation of mutations){
+      for(const node of mutation.addedNodes){
+        if(node.nodeType!==1)continue;
+        const el=node;
+        if(
+          el.matches?.('.yaya-cmd-native-root,.yaya-detail-section-tabs,.yaya-detail-section-tab') ||
+          el.querySelector?.('.yaya-cmd-native-root,.yaya-detail-section-tabs,.yaya-detail-section-tab')
+        ){
+          relevant=true;
+          break outer;
+        }
+      }
+    }
+    if(relevant)scheduleRefresh();
+  });
+  observer.observe(document.body,{childList:true,subtree:true});
+
   window.addEventListener('resize',forcePortraitCommandLayout,{passive:true});
   window.addEventListener('orientationchange',forcePortraitCommandLayout,{passive:true});
 })();
