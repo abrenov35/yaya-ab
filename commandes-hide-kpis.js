@@ -34,12 +34,12 @@
   }
 
   function loadNoteChecklist(){
-    if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V2)return;
-    if(document.querySelector('script[data-yaya-note-checklist-v2]'))return;
+    if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V3)return;
+    if(document.querySelector('script[data-yaya-note-checklist-v3]'))return;
     const s=document.createElement('script');
-    s.src='commandes-note-checklist.js?v=4';
+    s.src='commandes-note-checklist.js?v=5';
     s.async=true;
-    s.dataset.yayaNoteChecklistV2='1';
+    s.dataset.yayaNoteChecklistV3='1';
     document.head.appendChild(s);
   }
 
