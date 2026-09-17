@@ -5,11 +5,16 @@
   window.__YAYA_COMMANDES_NOTE_CHECKLIST_V3=true;
 
   const PREFIX='• ';
-  const MIN_ROWS=3;
+  const DEFAULT_MIN_ROWS=3;
+
+  function minRows(el){
+    const root=el && el.closest ? el.closest('.yaya-cmd-native-root') : null;
+    return root && !root.querySelector('.ycn-row') ? 1 : DEFAULT_MIN_ROWS;
+  }
 
   function fitRows(el){
     if(!el)return;
-    const rows=Math.max(MIN_ROWS,String(el.value||'').split('\n').length);
+    const rows=Math.max(minRows(el),String(el.value||'').split('\n').length);
     if(el.rows!==rows)el.rows=rows;
     el.style.removeProperty('height');
     el.style.overflowY='hidden';
@@ -71,7 +76,7 @@
 
   function scan(){
     const el=document.getElementById('ycnNote');
-    if(el)setup(el);
+    if(el){setup(el);fitRows(el);}
   }
 
   document.addEventListener('click',function(e){
