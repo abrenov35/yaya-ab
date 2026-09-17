@@ -255,7 +255,7 @@
     const bestValue=Math.max.apply(null,current.montants.concat([0]));
     const bestMonth=current.montants.indexOf(bestValue);
     const maxChart=Math.max.apply(null,current.montants.concat(year>2026?previous.montants:[],[1]));
-    const axisMax=roundAxis(maxChart);
+    const axisMax=250000;
     const options=Array.from({length:maxYear-2026+1},function(_,i){return 2026+i;}).map(function(y){return '<option value="'+y+'"'+(y===year?' selected':'')+'>'+y+'</option>';}).join('');
 
     const evoText=evolution===null?'Base de départ':((evolution>0?'+':'')+evolution+' %');
