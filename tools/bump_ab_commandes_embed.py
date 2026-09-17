@@ -4,7 +4,7 @@ p=Path('index.html')
 s=p.read_text(encoding='utf-8')
 
 replacements=[
-    ('commandes-hide-kpis.js?v=14','commandes-hide-kpis.js?v=15'),
+    ('commandes-hide-kpis.js?v=15','commandes-hide-kpis.js?v=16'),
     ('commande-tab-no-count-final.js?v=1','commande-tab-no-count-final.js?v=2'),
 ]
 
