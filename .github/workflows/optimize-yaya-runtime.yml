@@ -32,6 +32,21 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
             python tools/optimize_yaya_runtime.py
+            python - <<'PY'
+          from pathlib import Path
+          p=Path('index.html')
+          s=p.read_text(encoding='utf-8')
+          old='evolution-ca-mobile-portrait-force.js?v=portraitforce-1'
+          new='evolution-ca-mobile-portrait-force.js?v=portraitforce-2'
+          if old in s:
+              s=s.replace(old,new,1)
+              p.write_text(s,encoding='utf-8')
+              print('Evolution responsive v2 publiée')
+          elif new in s:
+              print('Evolution responsive v2 déjà publiée')
+          else:
+              raise SystemExit('Chargeur Evolution introuvable')
+          PY
 
             if git diff --quiet; then
               echo "Aucun changement"
