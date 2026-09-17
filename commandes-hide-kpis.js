@@ -37,7 +37,7 @@
     if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1)return;
     if(document.querySelector('script[data-yaya-note-checklist]'))return;
     const s=document.createElement('script');
-    s.src='commandes-note-checklist.js?v=2';
+    s.src='commandes-note-checklist.js?v=3';
     s.async=true;
     s.dataset.yayaNoteChecklist='1';
     document.head.appendChild(s);
