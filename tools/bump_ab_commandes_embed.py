@@ -2,16 +2,17 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-old='commandes-hide-kpis.js?v=13'
-new='commandes-hide-kpis.js?v=14'
 
-if new in s:
-    print('version commandes-hide-kpis deja a jour')
+new_script='commande-tab-no-count-final.js?v=1'
+if new_script in s:
+    print('correctif compteur Commande deja charge')
     raise SystemExit(0)
 
-if old not in s:
-    raise SystemExit('reference commandes-hide-kpis v13 introuvable')
+marker="'<script src=\"chantier-tabs-soft-theme.js?v=softtabs-10\"><\\/script>'+"
+if marker not in s:
+    raise SystemExit('reference chantier-tabs-soft-theme introuvable')
 
-s=s.replace(old,new,1)
+insert=marker+"\n    '<script src=\"commande-tab-no-count-final.js?v=1\"><\\/script>'+"
+s=s.replace(marker,insert,1)
 p.write_text(s,encoding='utf-8')
-print('reference commandes-hide-kpis mise a jour')
+print('correctif compteur Commande ajoute apres le theme des onglets')
