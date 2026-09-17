@@ -1,21 +1,22 @@
-// NOTE COMMANDES : chaque ligne commence par ☑️ et Entrée crée automatiquement une nouvelle ligne ☑️.
+// NOTE COMMANDES : chaque ligne commence par une puce fine « • » et Entrée crée automatiquement une nouvelle ligne.
 (function(){
   'use strict';
   if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1)return;
   window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1=true;
 
-  const PREFIX='☑️ ';
+  const PREFIX='• ';
 
-  function hasPrefix(line){
-    return /^☑️\s*/.test(String(line||''));
+  function normalizeLine(line){
+    line=String(line||'');
+    // Migre aussi les anciennes lignes commençant par ☑️ vers la nouvelle puce.
+    line=line.replace(/^\s*(?:☑️|☑|•)\s*/, '');
+    return PREFIX+line;
   }
 
   function normalizeValue(value){
     const text=String(value||'');
     if(!text)return PREFIX;
-    return text.split('\n').map(function(line){
-      return hasPrefix(line) ? line : PREFIX+line;
-    }).join('\n');
+    return text.split('\n').map(normalizeLine).join('\n');
   }
 
   function apply(el, moveCaret){
@@ -27,6 +28,7 @@
       if(moveCaret){
         try{el.setSelectionRange(after.length,after.length);}catch(_){}
       }
+      el.dispatchEvent(new Event('input',{bubbles:true}));
     }
   }
 
