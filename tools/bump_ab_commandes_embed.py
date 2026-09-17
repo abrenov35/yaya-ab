@@ -2,16 +2,16 @@ from pathlib import Path
 
 p=Path('index.html')
 s=p.read_text(encoding='utf-8')
-old='commandes-hide-kpis.js?v=2'
-new='commandes-hide-kpis.js?v=4'
+old='commandes-hide-kpis.js?v=4'
+new='commandes-hide-kpis.js?v=5'
 
 if new in s:
-    print('version commandes-hide-kpis déjà à jour')
+    print('version commandes-hide-kpis deja a jour')
     raise SystemExit(0)
 
 if old not in s:
-    raise SystemExit('référence commandes-hide-kpis introuvable')
+    raise SystemExit('reference commandes-hide-kpis v4 introuvable')
 
 s=s.replace(old,new,1)
 p.write_text(s,encoding='utf-8')
-print('référence commandes-hide-kpis mise à jour')
+print('reference commandes-hide-kpis mise a jour')
