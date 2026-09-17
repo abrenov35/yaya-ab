@@ -89,7 +89,7 @@
 
   function renameAddButton(root){
     (root||document).querySelectorAll('.yaya-cmd-native-root [data-ycn-add]').forEach(function(btn){
-      if(btn.textContent.trim()!=='+ ajouter une commande')btn.textContent='+ ajouter une commande';
+      if(btn.textContent.trim()!=='+ Ajouter une commande')btn.textContent='+ Ajouter une commande';
     });
   }
 
