@@ -1,10 +1,21 @@
-// NOTE COMMANDES : chaque ligne commence par une puce fine « • » et Entrée crée automatiquement une nouvelle ligne.
+// NOTE COMMANDES : chaque ligne commence par une puce fine « • ».
+// La zone de note s'adapte automatiquement au nombre de lignes, sans toucher au chargement principal de Yaya.
 (function(){
   'use strict';
   if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1)return;
   window.__YAYA_COMMANDES_NOTE_CHECKLIST_V1=true;
 
   const PREFIX='• ';
+  const MIN_HEIGHT=82;
+
+  function autoResize(el){
+    if(!el)return;
+    el.style.minHeight=MIN_HEIGHT+'px';
+    el.style.overflowY='hidden';
+    el.style.resize='none';
+    el.style.height='auto';
+    el.style.height=Math.max(el.scrollHeight,MIN_HEIGHT)+'px';
+  }
 
   function normalizeLine(line){
     line=String(line||'');
@@ -19,7 +30,7 @@
     return text.split('\n').map(normalizeLine).join('\n');
   }
 
-  function apply(el, moveCaret){
+  function apply(el,moveCaret){
     if(!el)return;
     const before=String(el.value||'');
     const after=normalizeValue(before);
@@ -30,12 +41,19 @@
       }
       el.dispatchEvent(new Event('input',{bubbles:true}));
     }
+    autoResize(el);
   }
 
   function setup(el){
-    if(!el||el.dataset.yayaChecklistReady==='1')return;
+    if(!el)return;
+    if(el.dataset.yayaChecklistReady==='1'){
+      autoResize(el);
+      return;
+    }
     el.dataset.yayaChecklistReady='1';
     apply(el,true);
+
+    el.addEventListener('input',function(){autoResize(el);});
 
     el.addEventListener('keydown',function(e){
       if(e.key!=='Enter'||e.shiftKey||e.ctrlKey||e.altKey||e.metaKey)return;
@@ -50,7 +68,9 @@
     });
 
     el.addEventListener('blur',function(){apply(el,false);});
-    el.addEventListener('paste',function(){setTimeout(function(){apply(el,false);},0);});
+    el.addEventListener('paste',function(){
+      setTimeout(function(){apply(el,false);},0);
+    });
   }
 
   function scan(){setup(document.getElementById('ycnNote'));}
@@ -63,6 +83,10 @@
       },0);
     }
   },true);
+
+  window.addEventListener('resize',function(){
+    autoResize(document.getElementById('ycnNote'));
+  },{passive:true});
 
   const obs=new MutationObserver(scan);
   obs.observe(document.documentElement,{childList:true,subtree:true});
