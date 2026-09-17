@@ -19,4 +19,4 @@
 })();
 (function(){'use strict';if(window.__yayaDocumentsMailListRestoreLoaderV1)return;window.__yayaDocumentsMailListRestoreLoaderV1=true;const s=document.createElement('script');s.src='documents-mail-list-restore.js?v=mailrestore-1';s.async=false;document.head.appendChild(s);})();
 (function(){'use strict';if(window.__yayaMailEditBackgroundSaveLoaderV3)return;window.__yayaMailEditBackgroundSaveLoaderV3=true;const s=document.createElement('script');s.src='mail-edit-background-save-fix.js?v=mailbg-3';s.async=false;document.head.appendChild(s);})();
-(function(){'use strict';if(window.__yayaMailModalButtonsAlignLoaderV3)return;window.__yayaMailModalButtonsAlignLoaderV3=true;const s=document.createElement('script');s.src='mail-modal-buttons-align.js?v=align-3';s.async=false;document.head.appendChild(s);})();
+(function(){'use strict';if(window.__yayaMailModalButtonsAlignLoaderV4)return;window.__yayaMailModalButtonsAlignLoaderV4=true;const s=document.createElement('script');s.src='mail-modal-buttons-align.js?v=align-4';s.async=false;document.head.appendChild(s);})();
