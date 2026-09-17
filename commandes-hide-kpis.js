@@ -9,6 +9,7 @@
     style.id=STYLE_ID;
     style.textContent=`
       .ycn-kpis{display:none!important;}
+      .yaya-detail-section-tab[data-section="commandes"] small{display:none!important;}
       .yaya-cmd-native-root .ycn-note-actions [data-ycn-note-save]{
         background:#0b4f86!important;
         border:1px solid #083f6d!important;
