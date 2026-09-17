@@ -74,7 +74,8 @@
           width:100%!important;
           padding:0 8px!important;
         }
-        .yaya-cmd-native-root .ycn-v4-url{
+        /* Sélecteur volontairement plus spécifique que le CSS natif qui masque URL en mobile. */
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url{
           display:inline-flex!important;
           align-items:center!important;
           justify-content:center!important;
