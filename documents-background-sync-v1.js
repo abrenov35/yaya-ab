@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaDocumentsBackgroundSyncV1)return;
+  if(window.__yayaDocumentsBackgroundSyncV2)return;
+  window.__yayaDocumentsBackgroundSyncV2=true;
   window.__yayaDocumentsBackgroundSyncV1=true;
 
   const PENDING_KEY='YAYA_PENDING_DOCUMENT_UPSERT_V1';
@@ -20,6 +21,15 @@
   }
 
   function idOf(d){return String(d&&d.id||'').trim();}
+  function stable(d){
+    try{return JSON.stringify(d||{});}
+    catch(e){return String(d);}
+  }
+  function mapSnapshot(rows){
+    const m=new Map();
+    (Array.isArray(rows)?rows:[]).forEach(function(d){const id=idOf(d);if(id)m.set(id,stable(d));});
+    return m;
+  }
 
   function readPending(){
     try{
@@ -43,6 +53,19 @@
     const store=readPending();
     store.items[id]={token:Date.now()+'_'+Math.random().toString(36).slice(2),savedAt:Date.now(),doc:clone(doc)};
     writePending(store);
+  }
+
+  function queueChanged(captured,beforeMap){
+    if(!Array.isArray(captured))return false;
+    let changed=false;
+    captured.forEach(function(d){
+      const id=idOf(d);if(!id)return;
+      if(!beforeMap.has(id)||beforeMap.get(id)!==stable(d)){
+        queueDoc(d);
+        changed=true;
+      }
+    });
+    return changed;
   }
 
   function mergeById(baseRows,pendingStore){
@@ -110,21 +133,11 @@
     }
   }
 
-  function install(){
-    installTries++;
-    const currentSave=window.saveDocument;
-    const currentPost=window.apiPost;
-    if(typeof currentSave!=='function'||typeof currentPost!=='function'){
-      if(installTries<80)setTimeout(install,120);
-      return;
-    }
-    if(currentSave.__yayaDocumentsBackgroundV1)return;
-
-    const originalSave=currentSave;
-    const originalPost=currentPost;
-
+  function interceptSetDocuments(originalFn,marker){
+    if(typeof originalFn!=='function'||originalFn[marker])return originalFn;
     const wrapped=function(){
-      const beforeIds=new Set(docs().map(idOf).filter(Boolean));
+      const before=mapSnapshot(docs());
+      const originalPost=window.apiPost;
       let captured=null;
       const fakePost=async function(action,data){
         if(String(action)==='setDocuments'&&Array.isArray(data)){
@@ -138,31 +151,52 @@
       window.apiPost=fakePost;
       try{apiPost=fakePost;}catch(e){}
       try{
-        promise=Promise.resolve(originalSave.apply(this,arguments));
+        promise=Promise.resolve(originalFn.apply(this,arguments));
       }catch(err){
         window.apiPost=originalPost;try{apiPost=originalPost;}catch(e){}
         throw err;
       }
       window.apiPost=originalPost;try{apiPost=originalPost;}catch(e){}
 
-      if(captured){
-        captured.forEach(function(d){const id=idOf(d);if(id&&!beforeIds.has(id))queueDoc(d);});
+      if(captured&&queueChanged(captured,before)){
         persistCacheSoon();
         setTimeout(worker,0);
       }
       return promise;
     };
+    wrapped[marker]=true;
+    wrapped.__yayaOriginalFunction=originalFn;
+    return wrapped;
+  }
 
-    wrapped.__yayaDocumentsBackgroundV1=true;
-    wrapped.__yayaOriginalSaveDocument=originalSave;
-    window.saveDocument=wrapped;
-    try{saveDocument=wrapped;}catch(e){}
+  function install(){
+    installTries++;
+    const currentSave=window.saveDocument;
+    const currentApply=window.appliquerModificationDocument;
+    const currentPost=window.apiPost;
+    if(typeof currentSave!=='function'||typeof currentPost!=='function'){
+      if(installTries<80)setTimeout(install,120);
+      return;
+    }
+
+    if(!currentSave.__yayaDocumentsBackgroundV2){
+      const wrappedSave=interceptSetDocuments(currentSave,'__yayaDocumentsBackgroundV2');
+      window.saveDocument=wrappedSave;
+      try{saveDocument=wrappedSave;}catch(e){}
+    }
+
+    if(typeof currentApply==='function'&&!currentApply.__yayaDocumentsEditBackgroundV2){
+      const wrappedApply=interceptSetDocuments(currentApply,'__yayaDocumentsEditBackgroundV2');
+      window.appliquerModificationDocument=wrappedApply;
+      try{appliquerModificationDocument=wrappedApply;}catch(e){}
+    }
 
     mergePendingIntoLocal();
     setTimeout(worker,500);
   }
 
   install();
+  setTimeout(install,400);
   window.addEventListener('online',function(){setTimeout(worker,250);});
   window.addEventListener('focus',function(){mergePendingIntoLocal();setTimeout(worker,500);});
 })();
