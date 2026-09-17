@@ -95,6 +95,12 @@
     });
   }
 
+  function hideCommandCount(){
+    document.querySelectorAll('.yaya-detail-section-tab[data-section="commandes"] small').forEach(function(el){
+      el.style.setProperty('display','none','important');
+    });
+  }
+
   function loadNoteChecklist(){
     if(window.__YAYA_COMMANDES_NOTE_CHECKLIST_V3)return;
     if(document.querySelector('script[data-yaya-note-checklist-v3]'))return;
@@ -146,6 +152,7 @@
 
   function refreshUi(){
     renameAddButton();
+    hideCommandCount();
     loadNoteChecklist();
     forcePortraitCommandLayout();
   }
