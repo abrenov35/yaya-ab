@@ -6,10 +6,10 @@ window.syncMsg=function(m){
 
 (function(){
   'use strict';
-  if(window.__yayaMailModalButtonsAlignV3)return;
-  window.__yayaMailModalButtonsAlignV3=true;
+  if(window.__yayaMailModalButtonsAlignV4)return;
+  window.__yayaMailModalButtonsAlignV4=true;
 
-  const STYLE_ID='yaya-mail-modal-buttons-align-v3';
+  const STYLE_ID='yaya-mail-modal-buttons-align-v4';
   let raf=0;
 
   function installStyle(){
@@ -17,13 +17,18 @@ window.syncMsg=function(m){
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      /* La fermeture du mail se fait dans la barre d'actions : pas de 2e bouton dans le titre. */
+      /* Un seul bouton Fermer : celui de la barre d'actions. */
+      #modalRoot .yaya-mail-body-modal > h5 > .yaya-mail-header-close,
+      #modalRoot .message-modal > h5 > .yaya-mail-header-close,
       #modalRoot .yaya-mail-body-modal > h5 > button[aria-label="Fermer"]{
         display:none!important;
       }
 
-      /* Supprimer à gauche ; Modifier l'objet + Fermer groupés à droite, tous sur la même ligne. */
-      #modalRoot .yaya-mail-body-modal .yaya-read-actions{
+      /* Supprimer à gauche ; Modifier l'objet + Fermer groupés à droite sur UNE ligne. */
+      #modalRoot .yaya-mail-body-modal .yaya-read-actions,
+      #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions,
+      #modalRoot .message-modal .yaya-read-actions,
+      #modalRoot .message-modal .yaya-mail-read-actions{
         display:flex!important;
         flex-direction:row!important;
         align-items:center!important;
@@ -33,16 +38,28 @@ window.syncMsg=function(m){
         width:100%!important;
         box-sizing:border-box!important;
       }
-      #modalRoot .yaya-mail-body-modal .yaya-read-actions .yaya-delete{
+      #modalRoot .yaya-mail-body-modal .yaya-read-actions .yaya-delete,
+      #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions .yaya-delete,
+      #modalRoot .message-modal .yaya-read-actions .yaya-delete,
+      #modalRoot .message-modal .yaya-mail-read-actions .yaya-delete{
         margin:0 auto 0 0!important;
         flex:0 0 auto!important;
       }
       #modalRoot .yaya-mail-body-modal .yaya-read-actions .yaya-edit,
-      #modalRoot .yaya-mail-body-modal .yaya-read-actions .yaya-close{
+      #modalRoot .yaya-mail-body-modal .yaya-read-actions .yaya-close,
+      #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions .yaya-edit,
+      #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions .yaya-close,
+      #modalRoot .message-modal .yaya-read-actions .yaya-edit,
+      #modalRoot .message-modal .yaya-read-actions .yaya-close,
+      #modalRoot .message-modal .yaya-mail-read-actions .yaya-edit,
+      #modalRoot .message-modal .yaya-mail-read-actions .yaya-close{
         margin:0!important;
         flex:0 0 auto!important;
       }
-      #modalRoot .yaya-mail-body-modal .yaya-read-actions button{
+      #modalRoot .yaya-mail-body-modal .yaya-read-actions button,
+      #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions button,
+      #modalRoot .message-modal .yaya-read-actions button,
+      #modalRoot .message-modal .yaya-mail-read-actions button{
         min-height:42px!important;
         height:42px!important;
         display:inline-flex!important;
@@ -51,16 +68,23 @@ window.syncMsg=function(m){
         white-space:nowrap!important;
         box-sizing:border-box!important;
       }
-      #modalRoot .yaya-mail-body-modal .yaya-read-actions .yaya-close{
+      #modalRoot .yaya-mail-body-modal .yaya-close,
+      #modalRoot .message-modal .yaya-close{
         visibility:visible!important;
         opacity:1!important;
       }
 
       @media(max-width:640px){
-        #modalRoot .yaya-mail-body-modal .yaya-read-actions{
+        #modalRoot .yaya-mail-body-modal .yaya-read-actions,
+        #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions,
+        #modalRoot .message-modal .yaya-read-actions,
+        #modalRoot .message-modal .yaya-mail-read-actions{
           gap:6px!important;
         }
-        #modalRoot .yaya-mail-body-modal .yaya-read-actions button{
+        #modalRoot .yaya-mail-body-modal .yaya-read-actions button,
+        #modalRoot .yaya-mail-body-modal .yaya-mail-read-actions button,
+        #modalRoot .message-modal .yaya-read-actions button,
+        #modalRoot .message-modal .yaya-mail-read-actions button{
           min-width:0!important;
           min-height:40px!important;
           height:40px!important;
@@ -82,18 +106,66 @@ window.syncMsg=function(m){
     if(root)root.innerHTML='';
   }
 
+  function label(btn){
+    return String(btn&&((btn.textContent||'')+' '+(btn.getAttribute('aria-label')||''))||'').replace(/\s+/g,' ').trim();
+  }
+
+  function directHeaderClose(modal){
+    const head=modal&&modal.querySelector(':scope > h5');
+    if(!head)return null;
+    return [...head.querySelectorAll(':scope > button')].find(function(b){
+      return /fermer/i.test(label(b));
+    })||null;
+  }
+
+  function findActionButton(modal,re){
+    return [...modal.querySelectorAll('button')].find(function(b){
+      return !b.closest('h5')&&re.test(label(b));
+    })||null;
+  }
+
+  function ensureActions(modal){
+    let actions=modal.querySelector(':scope > .yaya-read-actions,:scope > .yaya-mail-read-actions');
+    if(actions)return actions;
+
+    const del=findActionButton(modal,/^supprimer\b/i);
+    const edit=findActionButton(modal,/^modifier\s+l[’']objet\b/i);
+    if(del&&edit&&del.parentElement===edit.parentElement&&del.parentElement!==modal){
+      actions=del.parentElement;
+      actions.classList.add('yaya-read-actions');
+      return actions;
+    }
+
+    if(del||edit){
+      actions=document.createElement('div');
+      actions.className='yaya-read-actions yaya-mail-read-actions';
+      const head=modal.querySelector(':scope > h5');
+      if(head)head.insertAdjacentElement('afterend',actions);
+      else modal.insertBefore(actions,modal.firstChild);
+      if(del)actions.appendChild(del);
+      if(edit)actions.appendChild(edit);
+      return actions;
+    }
+    return null;
+  }
+
   function normalize(modal){
     if(!modal)return;
-    const actions=modal.querySelector('.yaya-read-actions');
-    if(!actions)return;
 
-    const headerClose=modal.querySelector(':scope > h5 > button[aria-label="Fermer"]');
+    const headerClose=directHeaderClose(modal);
     if(headerClose)headerClose.classList.add('yaya-mail-header-close');
 
+    const actions=ensureActions(modal);
+    if(!actions)return;
+    actions.classList.add('yaya-mail-read-actions');
+
     const buttons=[...actions.querySelectorAll('button')];
-    let close=buttons.find(function(b){
-      return /^Fermer$/i.test(String(b.textContent||'').trim());
-    });
+    let del=buttons.find(function(b){return /^supprimer\b/i.test(label(b));})||null;
+    let edit=buttons.find(function(b){return /^modifier\s+l[’']objet\b/i.test(label(b));})||null;
+    let close=buttons.find(function(b){return /^fermer\b/i.test(label(b));})||null;
+
+    if(del)del.classList.add('yaya-delete');
+    if(edit)edit.classList.add('yaya-edit');
 
     if(!close){
       close=document.createElement('button');
@@ -107,20 +179,19 @@ window.syncMsg=function(m){
       });
       actions.appendChild(close);
     }
-
     close.classList.add('yaya-close');
 
-    /* Garantit l'ordre sans remuer le DOM à chaque passage de l'observer. */
-    const edit=actions.querySelector('.yaya-edit');
-    if(actions.lastElementChild!==close)actions.appendChild(close);
+    /* Ordre stable : Supprimer | espace libre | Modifier l'objet | Fermer. */
+    if(del&&actions.firstElementChild!==del)actions.insertBefore(del,actions.firstElementChild);
     if(edit&&edit.nextElementSibling!==close)actions.insertBefore(edit,close);
+    if(actions.lastElementChild!==close)actions.appendChild(close);
   }
 
   function apply(){
     installStyle();
     const root=document.getElementById('modalRoot');
     if(!root)return;
-    root.querySelectorAll('.yaya-mail-body-modal').forEach(normalize);
+    root.querySelectorAll('.yaya-mail-body-modal,.message-modal').forEach(normalize);
   }
 
   function schedule(){
