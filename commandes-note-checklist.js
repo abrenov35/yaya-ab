@@ -6,17 +6,24 @@
 
   const PREFIX='• ';
   const DEFAULT_MIN_ROWS=3;
+  const EMPTY_MIN_HEIGHT='38px';
+
+  function isEmpty(el){
+    return !String(el?.value||'').trim();
+  }
 
   function minRows(el){
-    const root=el && el.closest ? el.closest('.yaya-cmd-native-root') : null;
-    return root && !root.querySelector('.ycn-row') ? 1 : DEFAULT_MIN_ROWS;
+    return isEmpty(el) ? 1 : DEFAULT_MIN_ROWS;
   }
 
   function fitRows(el){
     if(!el)return;
+    const empty=isEmpty(el);
     const rows=Math.max(minRows(el),String(el.value||'').split('\n').length);
     if(el.rows!==rows)el.rows=rows;
     el.style.removeProperty('height');
+    if(empty)el.style.setProperty('min-height',EMPTY_MIN_HEIGHT);
+    else el.style.removeProperty('min-height');
     el.style.overflowY='hidden';
     el.style.resize='none';
   }
