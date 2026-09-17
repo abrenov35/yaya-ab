@@ -285,8 +285,8 @@
       });
     });
   }
-  if(document.readyState==='complete')setTimeout(show,0);
-  else window.addEventListener('load',function(){setTimeout(show,0);},{once:true});
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(show,0);},{once:true});
+  else setTimeout(show,0);
   setTimeout(function(){
     if(revealed)return;
     revealed=true;

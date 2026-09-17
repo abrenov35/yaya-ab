@@ -3115,16 +3115,13 @@ function convertAvoirBadges(){
 
 // AVOIR : convertir spans en boutons + ecouter tous les taps
 (function(){
-  function activerAvoirs(){
-    document.querySelectorAll('.b-avoir').forEach(function(el){
-      if(el.dataset.avoirOk) return;
-      el.dataset.avoirOk = '1';
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', function(e){ e.stopPropagation(); showAvoirTooltip(el,e); });
-    });
-  }
-  // Observer toute modification du DOM
-  new MutationObserver(activerAvoirs).observe(document.documentElement, {childList:true, subtree:true});
+  const YAYA_AVOIR_DELEGATION_V1=true;
+  document.addEventListener('click',function(e){
+    const el=e.target&&e.target.closest?e.target.closest('.b-avoir'):null;
+    if(!el)return;
+    e.stopPropagation();
+    showAvoirTooltip(el,e);
+  },false);
 })();
 
 function editDocument(id){
@@ -3635,5 +3632,23 @@ window.closeModal=function(){
   const root=document.getElementById('modalRoot');
   if(root)root.replaceChildren();
 };
-const _render=window.render;if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);setTimeout(applyPatches,0);return r};new MutationObserver(()=>applyPatches()).observe(document.documentElement,{childList:true,subtree:true});setTimeout(applyPatches,100);
+const _render=window.render;
+let __yayaPatchRaf=0;
+function __yayaSchedulePatches(){
+  if(__yayaPatchRaf)return;
+  __yayaPatchRaf=requestAnimationFrame(function(){__yayaPatchRaf=0;applyPatches();});
+}
+if(typeof _render==='function')window.render=function(){const r=_render.apply(this,arguments);__yayaSchedulePatches();return r};
+new MutationObserver(function(mutations){
+  let relevant=false;
+  outer:for(const mutation of mutations){
+    for(const node of mutation.addedNodes){
+      if(node.nodeType!==1)continue;
+      const el=node;
+      if(el.matches?.('.modal,.card,.stat,.achligne,.yaya-week-hours-modal')||el.querySelector?.('.modal,.card,.stat,.achligne,.yaya-week-hours-modal')){relevant=true;break outer;}
+    }
+  }
+  if(relevant)__yayaSchedulePatches();
+}).observe(document.body,{childList:true,subtree:true});
+setTimeout(__yayaSchedulePatches,100);
 </script></body></html>

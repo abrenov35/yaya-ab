@@ -200,8 +200,16 @@
 
   patchCommandeTab();
   let raf=0;
-  const observer=new MutationObserver(function(){
-    if(raf)return;
+  const observer=new MutationObserver(function(mutations){
+    let relevant=false;
+    outer:for(const mutation of mutations){
+      for(const node of mutation.addedNodes){
+        if(node.nodeType!==1)continue;
+        const el=node;
+        if(el.matches?.('.yaya-detail-section-tab')||el.querySelector?.('.yaya-detail-section-tab')){relevant=true;break outer;}
+      }
+    }
+    if(!relevant||raf)return;
     raf=requestAnimationFrame(function(){
       raf=0;
       patchCommandeTab();

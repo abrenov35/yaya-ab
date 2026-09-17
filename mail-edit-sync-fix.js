@@ -246,6 +246,17 @@
   let pending=false;
   function schedule(){if(pending)return;pending=true;requestAnimationFrame(function(){pending=false;fixRows();});}
   fixRows();
-  new MutationObserver(schedule).observe(document.documentElement,{childList:true,subtree:true});
+  const mailObserverRoot=document.getElementById('pane-chantiers')||document.body;
+  new MutationObserver(function(mutations){
+    let relevant=false;
+    outer:for(const mutation of mutations){
+      for(const node of mutation.addedNodes){
+        if(node.nodeType!==1)continue;
+        const el=node;
+        if(el.matches?.('.yaya-detail-mail-row,.message-ligne')||el.querySelector?.('.yaya-detail-mail-row,.message-ligne')){relevant=true;break outer;}
+      }
+    }
+    if(relevant)schedule();
+  }).observe(mailObserverRoot,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();

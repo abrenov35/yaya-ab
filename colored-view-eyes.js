@@ -34,8 +34,16 @@
     if(!root)return;
 
     let raf=0;
-    new MutationObserver(function(){
-      if(raf)return;
+    new MutationObserver(function(mutations){
+      let relevant=false;
+      outer:for(const mutation of mutations){
+        for(const node of mutation.addedNodes){
+          if(node.nodeType!==1)continue;
+          const el=node;
+          if(el.matches?.('.yaya-detail-document-view,.yaya-detail-charge-view,.yaya-detail-commande-view')||el.querySelector?.('.yaya-detail-document-view,.yaya-detail-charge-view,.yaya-detail-commande-view')){relevant=true;break outer;}
+        }
+      }
+      if(!relevant||raf)return;
       raf=requestAnimationFrame(function(){
         raf=0;
         apply(root);
