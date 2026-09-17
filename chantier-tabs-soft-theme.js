@@ -125,6 +125,21 @@
       color:#1e293b!important;
     }
 
+    /* YAYA_COMMANDE_NO_COUNT_FINAL */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="commandes"] > small,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="commandes"] > span,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab.yaya-commande-tab-contrast > small,
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab.yaya-commande-tab-contrast > span{
+      display:none!important;
+      visibility:hidden!important;
+      width:0!important;
+      min-width:0!important;
+      height:0!important;
+      margin:0!important;
+      padding:0!important;
+      border:0!important;
+    }
+
     /* Actions chantier : tous les boutons ont exactement le même style. */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > button{
       background:#FFFFFF!important;
