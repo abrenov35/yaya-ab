@@ -37,11 +37,17 @@
       if(saved||!/Pi[eè]ce jointe enregistr[eé]e/i.test(text))return;
       saved=true;
 
-      // Le handler existant data-save enregistre le devis, ferme la modale
-      // puis rouvre la liste avec le nouveau devis. On le déclenche automatiquement.
+      // Le handler existant data-save enregistre le devis puis ferme la modale.
+      // Ensuite on recharge une fois Yaya pour forcer marche-cards-page.js à
+      // relire la feuille centrale DEVIS et migrer un éventuel devis resté local.
       setTimeout(function(){
         if(!modal.isConnected)return;
-        try{saveBtn.click();}
+        try{
+          saveBtn.click();
+          setTimeout(function(){
+            try{window.location.reload();}catch(e){}
+          },900);
+        }
         catch(e){
           saved=false;
           if(importBtn){importBtn.disabled=false;importBtn.style.opacity='1';}
