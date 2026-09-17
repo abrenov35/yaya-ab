@@ -16,14 +16,31 @@ jobs:
       - uses: actions/checkout@v4
       - name: Mettre à jour le chargement AB COMMANDES
         run: python tools/bump_ab_commandes_embed.py
-      - name: Publier
+      - name: Publier sans conflit avec les mises à jour de version
         run: |
-          if git diff --quiet; then
-            echo "Aucun changement"
-            exit 0
-          fi
           git config user.name "Yaya automation"
           git config user.email "actions@users.noreply.github.com"
-          git add index.html
-          git commit -m "Yaya v205.576 - AB COMMANDES intégré"
-          git push
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            git reset --hard origin/main
+            python tools/bump_ab_commandes_embed.py
+
+            if git diff --quiet; then
+              echo "Aucun changement"
+              exit 0
+            fi
+
+            git add index.html
+            git commit -m "Yaya - actualiser le module Commandes"
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            echo "Conflit de publication, nouvelle tentative..."
+            sleep 2
+          done
+
+          echo "Échec de publication après 3 tentatives"
+          exit 1
