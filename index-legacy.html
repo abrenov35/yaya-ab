@@ -1871,8 +1871,10 @@ function confirmerActionCharge(titre,message,action){
   });
 }
 function toast(msg, err){ const t=document.getElementById("toast"); t.textContent=msg; t.className=err?"err":""; t.style.display="block"; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display="none", 3500); }
-function syncMsg(m){ document.getElementById("syncState").textContent = "v1"; }
-
+function syncMsg(m){
+  const el = document.getElementById("syncState");
+  if (el) el.textContent = m || "";
+}
 // ═════════ API SHEET ═════════
 async function apiGet(){
   const r = await fetch(API, {method:"GET"});
