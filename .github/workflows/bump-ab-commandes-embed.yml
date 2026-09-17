@@ -31,7 +31,7 @@ jobs:
               exit 0
             fi
 
-            git add index.html
+            git add index.html chantier-tabs-soft-theme.js
             git commit -m "Yaya - actualiser le module Commandes"
 
             if git push origin HEAD:main; then
