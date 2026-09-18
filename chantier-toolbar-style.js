@@ -8,6 +8,16 @@
     .yaya-chantier-edit-modal label:has(#editChDemarrage){
       display:none!important;
     }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .chantier-fin-toolbar{
+      display:none!important;
+      width:0!important;
+      height:0!important;
+      min-height:0!important;
+      margin:0!important;
+      padding:0!important;
+      border:0!important;
+      overflow:hidden!important;
+    }
     #pane-chantiers .chantier-fin-toolbar{
       display:flex!important;
       align-items:center!important;
