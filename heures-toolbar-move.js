@@ -186,7 +186,7 @@
   'use strict';
   if(document.querySelector('script[data-yaya-hours-active-chantiers-filter]'))return;
   const s=document.createElement('script');
-  s.src='heures-active-chantiers-filter.js?v=1-'+Date.now();
+  s.src='heures-active-chantiers-filter.js?v=2';
   s.async=false;
   s.setAttribute('data-yaya-hours-active-chantiers-filter','1');
   document.head.appendChild(s);
