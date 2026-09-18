@@ -156,9 +156,27 @@
     toolbar.querySelectorAll('.chantier-command-btn,.chantier-expense-btn').forEach(button=>button.remove());
     toolbar.querySelectorAll('button').forEach(button=>{
       const onclick=String(button.getAttribute('onclick')||'');
-      if(onclick.includes('openAvenant(')||onclick.includes('openDocumentModal(')||onclick.includes('reload()'))button.remove();
+      if(
+        onclick.includes('openAvenant(')||
+        onclick.includes('openDocumentModal(')||
+        onclick.includes('reload()')||
+        onclick.includes('delChantier(')||
+        button.classList.contains('chantier-delete-btn')||
+        button.classList.contains('chantier-archive-btn')
+      )button.remove();
     });
     styleLeftActionButtons(toolbar);
+
+    // Si aucune action utile ne reste, supprimer totalement la barre.
+    // Cela évite la grande zone vide entre les KPI et les onglets.
+    const useful=[...toolbar.children].filter(function(el){
+      if(!el)return false;
+      const txt=String(el.textContent||'').trim();
+      return (el.tagName==='BUTTON'||el.tagName==='A') && txt;
+    });
+    if(!useful.length){
+      toolbar.remove();
+    }
   }
 
   function cleanCard(card){
