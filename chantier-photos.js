@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V14)return;window.__YAYA_PHOTOS_V14=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v14';
+if(window.__YAYA_PHOTOS_V15)return;window.__YAYA_PHOTOS_V14=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v15';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -450,9 +450,34 @@ async function openPic(p){
   }
 }
 function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)}),old=a.map(function(p){return[p,p.titre]});a.forEach(function(p){p.titre=v});var ok=false;try{ok=await apiPost('setDocuments',S.documents)}catch(e){}if(!ok){old.forEach(function(x){x[0].titre=x[1]});return}close();refresh();toastS('Titre enregistré ✓')}}
+function photoFromTile(tile){
+  if(!tile)return null;
+  var p=find(tile.dataset.id);
+  if(p)return p;
+  var img=tile.querySelector('.yaya-photo-thumb');
+  var link=String(img&&img.dataset.photoLink||'');
+  return link?docs().find(function(d){return isPhoto(d)&&String(d.lien||'')===link}):null;
+}
+var lastTouchOpenAt=0;
+function openPhotoTile(e,isTouch){
+  var tile=e.target.closest&&e.target.closest('.yaya-pic[data-id]');
+  if(!tile)return false;
+  e.preventDefault();
+  e.stopPropagation();
+  var now=Date.now();
+  if(now-lastTouchOpenAt<450)return true;
+  if(isTouch)lastTouchOpenAt=now;
+  openPic(photoFromTile(tile));
+  return true;
+}
+document.addEventListener('pointerup',function(e){
+  if(e.pointerType==='touch')openPhotoTile(e,true);
+},true);
+if(!window.PointerEvent){
+  document.addEventListener('touchend',function(e){openPhotoTile(e,true)},true);
+}
 document.addEventListener('click',function(e){
-  var p=e.target.closest&&e.target.closest('.yaya-pic[data-id]');
-  if(p){e.preventDefault();e.stopPropagation();openPic(find(p.dataset.id));return}
+  if(openPhotoTile(e,false))return;
   var ed=e.target.closest&&e.target.closest('.yaya-pe[data-date]');
   if(ed){e.preventDefault();e.stopPropagation();var c=ed.closest('.card'),cid=cardId(c),d=ed.dataset.date;editTitle(cid,d,groupTitle(rows(cid).filter(function(p){return iso(p.date)===d})))}
 },true);
