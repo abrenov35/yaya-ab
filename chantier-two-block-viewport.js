@@ -1,13 +1,12 @@
 (function(){
 'use strict';
-if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V6)return;
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V6=true;
+if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V7)return;
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V7=true;
 
-const STYLE_ID='yaya-chantier-three-block-viewport-v6';
+const STYLE_ID='yaya-chantier-three-block-viewport-v7';
 const PAGE_SIZE=12;
 let activeCard=null;
 let activeKey='';
-let pageIndex=0;
 let raf=0;
 let wheelLock=false;
 let touchStartY=0;
@@ -34,11 +33,11 @@ function installStyle(){
   const s=document.createElement('style');
   s.id=STYLE_ID;
   s.textContent=`
-    /* 3 blocs chantier.
-       Bloc 1 = entête + KPI.
-       Bloc 2 = onglets + bandeau/actions.
-       Bloc 3 = contenu, affiché par pages de 12 lignes. */
-    #pane-chantiers .card.yaya-three-block-fit{overflow:visible!important}
+    /* Fiche chantier 3 blocs, sans masquer/remplacer les lignes.
+       Le texte reste dans le DOM en permanence : aucun scintillement. */
+    #pane-chantiers .card.yaya-three-block-fit{
+      overflow:visible!important;
+    }
 
     #pane-chantiers .card.yaya-three-block-fit > .yaya-detail-section-tabs{
       position:sticky!important;
@@ -60,42 +59,23 @@ function installStyle(){
       box-shadow:0 5px 10px rgba(22,45,73,.04)!important;
     }
 
-    #pane-chantiers .card.yaya-three-block-long .yaya-page-hidden{
-      display:none!important;
-    }
-
-    /* Changement de tranche sans scintillement : le bloc 3 garde sa hauteur
-       pendant que les 12 lignes visibles changent. */
-    #pane-chantiers .card.yaya-three-block-long > .yaya-detail-section-node[data-section]{
-      min-height:var(--yaya-page-min-height,0px)!important;
-      contain:layout paint!important;
-    }
-
-    #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-tabs,
-    #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-action-row{
-      backface-visibility:hidden!important;
-      transform:translateZ(0)!important;
-    }
-
     #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-node,
     #pane-chantiers .card.yaya-three-block-long .ycn-group-body{
       overflow:visible!important;
       max-height:none!important;
     }
 
-    #pane-chantiers .yaya-block-page-indicator{
-      display:none;
-      align-items:center;
-      justify-content:flex-end;
-      min-height:24px;
-      padding:2px 4px 4px;
-      color:#64748b;
-      font-size:10.5px;
-      font-weight:700;
-      user-select:none;
+    #pane-chantiers [data-yaya-page-anchor="1"]{
+      scroll-margin-top:calc(
+        var(--yaya-detail-sticky-top,8px)
+        + var(--yaya-tabs-sticky-height,48px)
+        + var(--yaya-action-sticky-height,48px)
+        + 8px
+      )!important;
     }
-    #pane-chantiers .card.yaya-three-block-long .yaya-block-page-indicator{
-      display:flex;
+
+    #pane-chantiers .yaya-block-page-indicator{
+      display:none!important;
     }
   `;
   document.head.appendChild(s);
@@ -121,9 +101,6 @@ function activeScope(card){
   if(!card)return null;
   const section=sectionKey(card);
 
-  // IMPORTANT : ne jamais prendre le bandeau d'actions comme bloc 3.
-  // Il porte lui aussi data-section, donc querySelector() renvoyait ce bandeau
-  // et la pagination comptait 0 ligne. On cible explicitement le vrai pane contenu.
   let candidates=[...card.querySelectorAll(
     ':scope > .yaya-detail-section-node[data-section="'+CSS.escape(section)+'"]:not(.yaya-detail-section-action-row):not(.yaya-detail-empty-pane)'
   )];
@@ -143,7 +120,9 @@ function rowsFor(card){
   if(!scope)return [];
   const seen=new Set();
   ROW_SELECTORS.forEach(sel=>{
-    scope.querySelectorAll(sel).forEach(el=>seen.add(el));
+    scope.querySelectorAll(sel).forEach(el=>{
+      if(el.offsetParent!==null)seen.add(el);
+    });
   });
   return Array.from(seen).sort((a,b)=>{
     const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();
@@ -151,70 +130,14 @@ function rowsFor(card){
   });
 }
 
-function ensureIndicator(card,scope){
-  if(!card||!scope)return null;
-  let el=card.querySelector(':scope > .yaya-block-page-indicator');
-  if(!el){
-    el=document.createElement('div');
-    el.className='yaya-block-page-indicator';
-  }
-  if(scope.nextElementSibling!==el)scope.insertAdjacentElement('afterend',el);
-  return el;
-}
-
-function clearPagination(card){
-  if(!card)return;
-  card.querySelectorAll('.yaya-page-hidden').forEach(el=>el.classList.remove('yaya-page-hidden'));
-  const ind=card.querySelector(':scope > .yaya-block-page-indicator');
-  if(ind)ind.remove();
-}
-
-function applyPage(card){
-  if(!card)return;
-  const scope=activeScope(card);
-  if(!scope){clearPagination(card);return;}
-
+function markAnchors(card){
+  if(!card)return [];
+  card.querySelectorAll('[data-yaya-page-anchor]').forEach(el=>el.removeAttribute('data-yaya-page-anchor'));
   const rows=rowsFor(card);
-  const longList=rows.length>PAGE_SIZE;
-  card.classList.toggle('yaya-three-block-long',longList);
-
-  if(!longList){
-    rows.forEach(el=>el.classList.remove('yaya-page-hidden'));
-    scope.style.removeProperty('--yaya-page-min-height');
-    const old=card.querySelector(':scope > .yaya-block-page-indicator');
-    if(old)old.remove();
-    pageIndex=0;
-    return;
-  }
-
-  const pageCount=Math.ceil(rows.length/PAGE_SIZE);
-  pageIndex=Math.max(0,Math.min(pageIndex,pageCount-1));
-  const start=pageIndex*PAGE_SIZE;
-  const end=Math.min(rows.length,start+PAGE_SIZE);
-
-  // Mesure la hauteur de 12 lignes avant de masquer/afficher la nouvelle tranche.
-  // Ceci évite que le contenu saute ou clignote pendant le changement de page.
-  const visibleNow=rows.filter(function(el){return !el.classList.contains('yaya-page-hidden')});
-  if(visibleNow.length){
-    const first=visibleNow[0].getBoundingClientRect();
-    const last=visibleNow[visibleNow.length-1].getBoundingClientRect();
-    const h=Math.max(0,Math.ceil(last.bottom-first.top));
-    if(h>0)scope.style.setProperty('--yaya-page-min-height',h+'px');
-  }
-
-  requestAnimationFrame(function(){
-    rows.forEach((el,i)=>el.classList.toggle('yaya-page-hidden',i<start||i>=end));
-    const shown=rows.slice(start,end);
-    if(shown.length){
-      const first=shown[0].getBoundingClientRect();
-      const last=shown[shown.length-1].getBoundingClientRect();
-      const h=Math.max(0,Math.ceil(last.bottom-first.top));
-      if(h>0)scope.style.setProperty('--yaya-page-min-height',h+'px');
-    }
+  rows.forEach((row,i)=>{
+    if(i%PAGE_SIZE===0)row.dataset.yayaPageAnchor='1';
   });
-
-  const ind=ensureIndicator(card,scope);
-  if(ind)ind.textContent=(start+1)+'–'+end+' / '+rows.length;
+  return rows;
 }
 
 function evaluate(){
@@ -224,31 +147,36 @@ function evaluate(){
   const key=c?sectionKey(c):'';
 
   if(activeCard&&activeCard!==c){
-    clearPagination(activeCard);
     activeCard.classList.remove('yaya-three-block-fit','yaya-three-block-long');
     activeCard.style.removeProperty('--yaya-detail-sticky-top');
     activeCard.style.removeProperty('--yaya-tabs-sticky-height');
+    activeCard.style.removeProperty('--yaya-action-sticky-height');
   }
 
-  if(c!==activeCard||key!==activeKey){
-    pageIndex=0;
-    activeCard=c;
-    activeKey=key;
-  }
-
+  activeCard=c;
+  activeKey=key;
   if(!c)return;
+
   const tabs=c.querySelector(':scope > .yaya-detail-section-tabs');
   if(!tabs)return;
 
-  const top=stickyTop();
-  c.style.setProperty('--yaya-detail-sticky-top',top+'px');
-  c.style.setProperty('--yaya-tabs-sticky-height',Math.ceil(tabs.getBoundingClientRect().height||0)+'px');
+  const rows=markAnchors(c);
+  const action=c.querySelector(':scope > .yaya-detail-section-action-row[data-section="'+CSS.escape(key)+'"]')
+    ||c.querySelector(':scope > .yaya-detail-section-action-row');
 
-  applyPage(c);
+  const top=stickyTop();
+  const tabsH=Math.ceil(tabs.getBoundingClientRect().height||0);
+  const actionH=action&&action.offsetParent!==null?Math.ceil(action.getBoundingClientRect().height||0):0;
+
+  c.style.setProperty('--yaya-detail-sticky-top',top+'px');
+  c.style.setProperty('--yaya-tabs-sticky-height',tabsH+'px');
+  c.style.setProperty('--yaya-action-sticky-height',actionH+'px');
 
   const available=Math.max(320,window.innerHeight-top-10);
   const fullHeight=Math.ceil(c.getBoundingClientRect().height);
-  c.classList.toggle('yaya-three-block-fit',fullHeight>available||c.classList.contains('yaya-three-block-long'));
+
+  c.classList.toggle('yaya-three-block-long',rows.length>PAGE_SIZE);
+  c.classList.toggle('yaya-three-block-fit',fullHeight>available||rows.length>PAGE_SIZE);
 }
 
 function schedule(){
@@ -256,18 +184,45 @@ function schedule(){
   raf=requestAnimationFrame(()=>{raf=0;evaluate();});
 }
 
-function changePage(dir){
-  const c=activeCard||currentCard();
-  if(!c)return false;
-  const rows=rowsFor(c);
-  const pages=Math.ceil(rows.length/PAGE_SIZE);
-  if(pages<=1)return false;
+function anchorsFor(card){
+  const rows=rowsFor(card);
+  return rows.filter((_,i)=>i%PAGE_SIZE===0);
+}
 
-  const next=Math.max(0,Math.min(pages-1,pageIndex+(dir>0?1:-1)));
-  if(next===pageIndex)return false;
+function stickyContentTop(card){
+  if(!card)return stickyTop()+8;
+  const cs=getComputedStyle(card);
+  return stickyTop()
+    +(parseFloat(cs.getPropertyValue('--yaya-tabs-sticky-height'))||0)
+    +(parseFloat(cs.getPropertyValue('--yaya-action-sticky-height'))||0)
+    +8;
+}
 
-  pageIndex=next;
-  applyPage(c);
+function currentAnchorIndex(card,anchors){
+  if(!anchors.length)return -1;
+  const top=stickyContentTop(card);
+  let idx=0;
+  for(let i=0;i<anchors.length;i++){
+    if(anchors[i].getBoundingClientRect().top<=top+10)idx=i;
+    else break;
+  }
+  return idx;
+}
+
+function jumpPage(dir){
+  const card=activeCard||currentCard();
+  if(!card||!card.classList.contains('yaya-three-block-long'))return false;
+
+  const anchors=anchorsFor(card);
+  if(anchors.length<2)return false;
+
+  const idx=currentAnchorIndex(card,anchors);
+  const next=Math.max(0,Math.min(anchors.length-1,idx+(dir>0?1:-1)));
+  if(next===idx)return false;
+
+  const target=anchors[next];
+  const y=Math.max(0,window.scrollY+target.getBoundingClientRect().top-stickyContentTop(card));
+  window.scrollTo(0,Math.round(y));
   return true;
 }
 
@@ -277,15 +232,15 @@ function inBlock3(card,target){
 }
 
 function onWheel(e){
-  const c=activeCard||currentCard();
-  if(!c||!c.classList.contains('yaya-three-block-long'))return;
-  if(!inBlock3(c,e.target))return;
-  if(wheelLock||Math.abs(e.deltaY)<16)return;
+  const card=activeCard||currentCard();
+  if(!card||!card.classList.contains('yaya-three-block-long'))return;
+  if(!inBlock3(card,e.target))return;
+  if(wheelLock||Math.abs(e.deltaY)<18)return;
 
-  if(changePage(e.deltaY>0?1:-1)){
+  if(jumpPage(e.deltaY>0?1:-1)){
     e.preventDefault();
     wheelLock=true;
-    setTimeout(()=>{wheelLock=false;},220);
+    setTimeout(()=>{wheelLock=false;},140);
   }
 }
 
@@ -299,13 +254,13 @@ function onTouchEnd(e){
   const endY=e.changedTouches&&e.changedTouches.length?e.changedTouches[0].clientY:touchStartY;
   const delta=touchStartY-endY;
   touchStartY=0;
-  if(Math.abs(delta)<55)return;
+  if(Math.abs(delta)<60)return;
 
-  const c=activeCard||currentCard();
-  if(!c||!c.classList.contains('yaya-three-block-long'))return;
-  const target=e.target;
-  if(!inBlock3(c,target))return;
-  changePage(delta>0?1:-1);
+  const card=activeCard||currentCard();
+  if(!card||!card.classList.contains('yaya-three-block-long'))return;
+  if(!inBlock3(card,e.target))return;
+
+  jumpPage(delta>0?1:-1);
 }
 
 installStyle();
@@ -332,5 +287,5 @@ setTimeout(schedule,0);
 setTimeout(schedule,250);
 setTimeout(schedule,800);
 
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='6.0-stable-no-flicker';
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='7.0-no-flicker-natural-12';
 })();
