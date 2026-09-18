@@ -37,7 +37,7 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
       gap:6px!important;
       margin-top:0!important;
-      margin-bottom:4px!important;
+      margin-bottom:8px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
       min-height:44px!important;
