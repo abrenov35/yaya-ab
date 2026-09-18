@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V27)return;window.__YAYA_PHOTOS_V27=true;
+if(window.__YAYA_PHOTOS_V28)return;window.__YAYA_PHOTOS_V28=true;
 var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v25';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -1106,33 +1106,62 @@ document.addEventListener('click',function(e){
 },true);
 style();refresh();var refreshTimer=0,pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(function(){if(refreshTimer)return;refreshTimer=setTimeout(function(){refreshTimer=0;refresh()},90)}).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',function(){setTimeout(refresh,30)});
 
-function forcePhotoSyncMobile(reason){
-  lastPhotoSyncAt=0;
-  setTimeout(function(){photoSyncPulse(true)},120);
+function silentPhotoSync(force){
+  if(photoSyncBusy)return;
+  commitPhotoPending().finally(function(){
+    syncPhotosFromServer(!!force).finally(function(){
+      processPhotoJobs();
+    });
+  });
+}
+
+function scheduleSilentPhotoSync(delay,force){
   setTimeout(function(){
     if(document.hidden)return;
-    lastPhotoSyncAt=0;
-    photoSyncPulse(true);
-  },1100);
+    silentPhotoSync(!!force);
+  },Number(delay)||0);
 }
 
 document.addEventListener('click',function(e){
   var tab=e.target.closest&&e.target.closest('[data-section="photos"]');
-  if(tab)forcePhotoSyncMobile('tab');
+  if(tab){
+    // Affichage immédiat depuis S.documents / cache local, puis contrôle serveur discret.
+    scheduleSilentPhotoSync(350,true);
+  }
 },true);
 
-window.addEventListener('focus',function(){forcePhotoSyncMobile('focus')});
-window.addEventListener('online',function(){forcePhotoSyncMobile('online')});
-window.addEventListener('pageshow',function(){forcePhotoSyncMobile('pageshow')});
-document.addEventListener('visibilitychange',function(){if(!document.hidden)forcePhotoSyncMobile('visible')});
+window.addEventListener('focus',function(){
+  // Un seul contrôle discret au retour sur l'app, pas de double reload.
+  scheduleSilentPhotoSync(700,false);
+});
 
+window.addEventListener('online',function(){
+  scheduleSilentPhotoSync(500,true);
+});
+
+window.addEventListener('pageshow',function(e){
+  // Safari/iPhone peut restaurer la page depuis son cache mémoire.
+  // On garde l'écran tel quel puis on vérifie le serveur sans forcer de reconstruction.
+  scheduleSilentPhotoSync(e && e.persisted ? 700 : 1000,false);
+});
+
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden)scheduleSilentPhotoSync(800,false);
+});
+
+// Contrôle léger uniquement si l'onglet Photos est réellement ouvert.
+// La fonction syncPhotosFromServer ne reconstruit rien si la signature n'a pas changé.
 setInterval(function(){
   if(document.hidden)return;
-  if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(false);
-},20000);
+  if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]')){
+    silentPhotoSync(false);
+  }
+},60000);
 
 setTimeout(function(){
   processPhotoJobs();
-  if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))forcePhotoSyncMobile('startup');
-},1400);
+  if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]')){
+    scheduleSilentPhotoSync(600,false);
+  }
+},1200);
 })();
