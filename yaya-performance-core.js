@@ -185,8 +185,109 @@
     else setTimeout(run,900);
   }
 
+  // Synchronisation légère des DOCUMENTS externes (ex. Yaya Mail).
+  // On ne recharge pas tout Yaya : un GET limité à ?tabs=documents, uniquement
+  // si l'onglet est visible, l'utilisateur n'est pas en saisie et aucune écriture locale n'attend.
+  const DOCUMENTS_POLL_MS=10000;
+  const PENDING_DOCUMENTS_KEY='YAYA_PENDING_DOCUMENT_UPSERT_V1';
+  let documentsPollInFlight=false;
+  let lastDocumentsSignature='';
+
+  function documentsPendingLocally(){
+    try{
+      const raw=localStorage.getItem(PENDING_DOCUMENTS_KEY);
+      if(!raw)return false;
+      const parsed=JSON.parse(raw);
+      return !!(parsed&&parsed.items&&Object.keys(parsed.items).length);
+    }catch(e){return false;}
+  }
+
+  function documentsSignature(rows){
+    try{return JSON.stringify(Array.isArray(rows)?rows:[]);}
+    catch(e){return '';}
+  }
+
+  function saveDocumentsCache(rows){
+    try{
+      const cached=JSON.parse(localStorage.getItem(CACHE_DATA_KEY)||'{}')||{};
+      cached.documents=rows;
+      localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(cached));
+    }catch(e){}
+  }
+
+  async function fetchDocumentsOnly(){
+    let api='';
+    try{api=(typeof API==='string'&&API)?API:'';}catch(e){}
+    if(!api)throw new Error('API Yaya indisponible');
+    const sep=api.includes('?')?'&':'?';
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),6500);
+    try{
+      const r=await fetch(api+sep+'tabs=documents&_yaya_docs_live='+Date.now(),{
+        method:'GET',cache:'no-store',signal:ctrl.signal
+      });
+      const txt=await r.text();
+      const j=JSON.parse(txt);
+      if(!j||!j.ok)throw new Error(j&&j.error||'Réponse documents invalide');
+      return (j.data&&Array.isArray(j.data.documents))?j.data.documents:null;
+    }finally{clearTimeout(timer);}
+  }
+
+  async function refreshDocumentsLight(){
+    if(documentsPollInFlight)return false;
+    if(document.hidden||userBusy()||documentsPendingLocally())return false;
+    if((Date.now()-lastInteraction)<1200)return false;
+
+    documentsPollInFlight=true;
+    try{
+      const rows=await fetchDocumentsOnly();
+      if(!rows)return false;
+
+      const signature=documentsSignature(rows);
+      if(!lastDocumentsSignature){
+        try{lastDocumentsSignature=documentsSignature((typeof S!=='undefined'&&S&&S.documents)||[]);}catch(e){}
+      }
+      if(signature===lastDocumentsSignature)return true;
+
+      // Vérification tardive : ne jamais remplacer l'état pendant une saisie/écriture.
+      if(userBusy()||documentsPendingLocally())return false;
+
+      if(typeof S!=='undefined'&&S)S.documents=rows;
+      lastDocumentsSignature=signature;
+      saveDocumentsCache(rows);
+
+      // Le rendu ne se produit que lorsqu'un document a réellement changé.
+      try{if(typeof render==='function')render();}catch(e){}
+      try{
+        window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{
+          detail:{tabs:['documents'],source:'documents-light-sync'}
+        }));
+      }catch(e){}
+      return true;
+    }catch(err){
+      console.warn('Yaya documents · contrôle léger différé :',err);
+      return false;
+    }finally{
+      documentsPollInFlight=false;
+    }
+  }
+
+  function scheduleDocumentsPoll(){
+    setTimeout(async function tick(){
+      await refreshDocumentsLight();
+      setTimeout(tick,DOCUMENTS_POLL_MS);
+    },DOCUMENTS_POLL_MS);
+  }
+
   // Démarrage cache d'abord : contrôle serveur seulement une fois l'interface disponible.
   setTimeout(scheduleBootRefresh,1800);
+  scheduleDocumentsPoll();
+
+  // Au retour sur Yaya, un seul contrôle documents après stabilisation de la fenêtre.
+  window.addEventListener('focus',function(){setTimeout(refreshDocumentsLight,700);});
+  document.addEventListener('visibilitychange',function(){
+    if(!document.hidden)setTimeout(refreshDocumentsLight,700);
+  });
 
   setTimeout(function(){
     const old=document.getElementById('yaya-central-authority-overlay');
