@@ -15,7 +15,34 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();
 const uid=()=>globalThis.crypto?.randomUUID?.()||(Date.now()+'-'+Math.random().toString(36).slice(2));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-function normalize(o){return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit:String(o?.produit||o?.designation||''),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:STATUSES[o?.status]?o.status:'choice'};}
+function normalizeStatus(v){
+ const raw=String(v||'').trim();
+ if(STATUSES[raw])return raw;
+ const n=norm(raw);
+ if(n==='ATTENTE CHOIX CLIENT'||n==='CHOIX CLIENT')return 'choice';
+ if(n==='A COMMANDER'||n==='À COMMANDER')return 'todo';
+ if(n==='COMMANDE'||n==='COMMANDÉ')return 'ordered';
+ if(n==='RECU'||n==='REÇU')return 'received';
+ if(n==='PROBLEME'||n==='PROBLÈME')return 'problem';
+ return 'choice';
+}
+function normalize(o){return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit:String(o?.produit||o?.designation||''),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:normalizeStatus(o?.status||o?.statut)};}
+function yayaStateOrders(){
+ try{
+   if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes))return S.commandes.map(normalize);
+ }catch(_){}
+ try{
+   const cached=JSON.parse(localStorage.getItem('YAYA_CACHE_DATA_V2')||'{}')||{};
+   if(Array.isArray(cached.commandes))return cached.commandes.map(normalize);
+ }catch(_){}
+ return [];
+}
+function mergeOrderSources(legacyRows,yayaRows){
+ const map=new Map();
+ (Array.isArray(legacyRows)?legacyRows:[]).map(normalize).forEach(o=>{if(o.id)map.set(String(o.id),o);});
+ (Array.isArray(yayaRows)?yayaRows:[]).map(normalize).forEach(o=>{if(o.id)map.set(String(o.id),o);});
+ return Array.from(map.values());
+}
 function readCache(){for(const key of CACHE_KEYS){try{const d=JSON.parse(localStorage.getItem(key)||'null');if(Array.isArray(d?.orders)){orders=d.orders.map(normalize);documents=Array.isArray(d.documents)?d.documents:[];return true;}}catch(_){}}return false;}
 function saveCache(){const p={savedAt:Date.now(),orders,documents};try{localStorage.setItem(CACHE_KEYS[0],JSON.stringify(p));}catch(_){}try{localStorage.setItem(CACHE_KEYS[1],JSON.stringify({version:8,...p}));}catch(_){}}
 function readPending(){try{const p=JSON.parse(localStorage.getItem(PENDING_KEY)||'[]');return Array.isArray(p)?p:[];}catch(_){return [];}}
@@ -52,9 +79,9 @@ function renderDocs(){const box=document.getElementById('ycnDocList');if(!box)re
 function fileBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result||'').split(',').pop()||'');r.onerror=()=>rej(new Error('Lecture impossible'));r.readAsDataURL(file);});}
 async function startDocUpload(){const file=document.getElementById('ycnDocFile')?.files?.[0];if(!file){toast('Choisis un fichier.','err');return;}const order=orders.find(o=>String(o.id)===currentDocOrderId);if(!order)return;const id=uid(),name=file.name;closeDocs();toast('Envoi en arrière-plan : '+name);setTimeout(async()=>{try{const base64=await fileBase64(file);await fetch(GAS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=UTF-8'},body:JSON.stringify({action:'document_upload',id,commande_id:order.id,chantier:order.chantier,type:'Fichier',file_name:name,nom_fichier:name,mime_type:file.type||'application/octet-stream',file_base64:base64,source:'Google Drive'})});let found=null;for(let i=0;i<6&&!found;i++){if(i)await wait(650);try{const r=await jsonp('document',{id});if(r?.ok&&r.document)found=r.document;}catch(_){}}if(found){documents.push(found);saveCache();render();toast('Document enregistré : '+name,'ok');}else toast('Envoi non confirmé : '+name,'err');}catch(e){toast('Échec document : '+name,'err');}},0);}
 function deleteDoc(id){if(!confirm('Supprimer ce document ?'))return;documents=documents.filter(d=>String(d?.id||'')!==String(id));saveCache();renderDocs();render();post({action:'document_delete',id}).catch(()=>{});}
-async function refresh(){if(!root)return;const line=root.querySelector('.ycn-statusline');if(line)line.textContent='Actualisation volontaire…';try{await flushPending();const [a,b]=await Promise.all([jsonp('list'),jsonp('documents')]);if(!a?.ok)throw new Error(a?.error||'Lecture commandes impossible');if(!b?.ok)throw new Error(b?.error||'Lecture documents impossible');orders=(a.commandes||[]).map(normalize);documents=Array.isArray(b.documents)?b.documents:[];saveCache();render();toast('Commandes actualisées','ok');return true;}catch(e){if(line)line.textContent='Actualisation impossible — affichage conservé.';toast(e?.message||'Actualisation impossible','err');return false;}}
-function mount(el,id,name){root=el;chantierId=String(id||'');chantierName=String(name||'');root.classList.add('yaya-cmd-native-root');readCache();ensureModals();render();}
+async function refresh(){if(!root)return;const line=root.querySelector('.ycn-statusline');if(line)line.textContent='Actualisation volontaire…';try{await flushPending();const [a,b]=await Promise.all([jsonp('list'),jsonp('documents')]);if(!a?.ok)throw new Error(a?.error||'Lecture commandes impossible');if(!b?.ok)throw new Error(b?.error||'Lecture documents impossible');orders=mergeOrderSources(a.commandes||[],yayaStateOrders());documents=Array.isArray(b.documents)?b.documents:[];saveCache();render();toast('Commandes actualisées','ok');return true;}catch(e){const central=yayaStateOrders();if(central.length){orders=mergeOrderSources(orders,central);saveCache();render();toast('Commandes Yaya actualisées','ok');return true;}if(line)line.textContent='Actualisation impossible — affichage conservé.';toast(e?.message||'Actualisation impossible','err');return false;}}
+function mount(el,id,name){root=el;chantierId=String(id||'');chantierName=String(name||'');root.classList.add('yaya-cmd-native-root');readCache();orders=mergeOrderSources(orders,yayaStateOrders());ensureModals();render();}
 function unmount(el){if(root===el)root=null;if(el)el.innerHTML='';}
-function setChantier(id,name){chantierId=String(id||'');chantierName=String(name||'');render();}
-window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.1-static-status-sections'};
+function setChantier(id,name){chantierId=String(id||'');chantierName=String(name||'');orders=mergeOrderSources(orders,yayaStateOrders());saveCache();render();}
+window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.2-yaya-commandes-merged'};
 })();
