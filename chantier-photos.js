@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V13)return;window.__YAYA_PHOTOS_V13=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v13';
+if(window.__YAYA_PHOTOS_V14)return;window.__YAYA_PHOTOS_V14=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v14';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -142,7 +142,7 @@ function ensurePane(card,tabs,list){
     var a=groups[d],t=groupTitle(a);
     return '<section class="yaya-pg"><div class="yaya-ph"><b class="yaya-pd">'+esc(fr(d))+'</b><span class="yaya-pt">'+esc(t)+'</span><button class="yaya-pe" data-date="'+esc(d)+'">✏️</button></div><div class="yaya-grid">'+a.map(function(p){
       var image=p.lien?'<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" src="'+esc(thumb(p.lien,500))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="eager" decoding="async">':'<span class="yaya-photo-placeholder" aria-hidden="true">📷</span>';
-      return '<div class="yaya-pic-wrap"><button type="button" class="yaya-pic" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo">'+image+'</button><button type="button" class="yaya-photo-delete" data-photo-delete-id="'+esc(p.id)+'" title="Supprimer cette photo" aria-label="Supprimer cette photo">×</button></div>';
+      return '<button type="button" class="yaya-pic" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo">'+image+'</button>';
     }).join('')+'</div></section>';
   }).join('');
   hydratePhotoThumbs(pane);
@@ -451,8 +451,6 @@ async function openPic(p){
 }
 function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)}),old=a.map(function(p){return[p,p.titre]});a.forEach(function(p){p.titre=v});var ok=false;try{ok=await apiPost('setDocuments',S.documents)}catch(e){}if(!ok){old.forEach(function(x){x[0].titre=x[1]});return}close();refresh();toastS('Titre enregistré ✓')}}
 document.addEventListener('click',function(e){
-  var remove=e.target.closest&&e.target.closest('.yaya-photo-delete[data-photo-delete-id]');
-  if(remove){e.preventDefault();e.stopPropagation();deletePhoto(find(remove.dataset.photoDeleteId),remove,false);return}
   var p=e.target.closest&&e.target.closest('.yaya-pic[data-id]');
   if(p){e.preventDefault();e.stopPropagation();openPic(find(p.dataset.id));return}
   var ed=e.target.closest&&e.target.closest('.yaya-pe[data-date]');
