@@ -32,7 +32,8 @@ TABS.commandes = [
   "origine",
   "gmailMessageId",
   "pieceNom",
-  "pieceEmpreinte"
+  "pieceEmpreinte",
+  "statut"
 ];
 
 
@@ -86,7 +87,8 @@ TABS.commandes = [
         origine: String(d.origine || "GMAIL_ADDON"),
         gmailMessageId: String(d.gmailMessageId || ""),
         pieceNom: String(d.pieceNom || ""),
-        pieceEmpreinte: String(d.pieceEmpreinte || "")
+        pieceEmpreinte: String(d.pieceEmpreinte || ""),
+        statut: String(d.statut || d.status || "choice")
       };
 
       replaceWhere_(
