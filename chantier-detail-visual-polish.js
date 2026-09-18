@@ -11,7 +11,7 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs){
       border:1.5px solid #003D7A!important;
       border-radius:14px!important;
-      padding:10px 12px 12px!important;
+      padding:8px 10px 10px!important;
       box-shadow:0 4px 16px rgba(0,61,122,.12)!important;
       background:#fff!important;
     }
@@ -19,7 +19,7 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
       align-items:center!important;
       gap:9px!important;
-      margin-bottom:4px!important;
+      margin-bottom:3px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top b{
       font-size:16px!important;
@@ -35,48 +35,57 @@
 
     /* KPI : contenu centré dans les pavés */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
-      gap:7px!important;
+      gap:6px!important;
       margin-top:0!important;
-      margin-bottom:5px!important;
+      margin-bottom:4px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
-      min-height:54px!important;
-      height:54px!important;
-      padding:4px 8px!important;
+      min-height:40px!important;
+      height:40px!important;
+      max-height:40px!important;
+      padding:3px 9px!important;
       border:1px solid #d9e1e9!important;
-      border-radius:10px!important;
+      border-radius:8px!important;
       background:#f8fafc!important;
       box-shadow:none!important;
       display:flex!important;
-      flex-direction:column!important;
+      flex-direction:row!important;
       align-items:center!important;
       justify-content:center!important;
+      gap:6px!important;
       text-align:center!important;
+      box-sizing:border-box!important;
+      white-space:nowrap!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{
-      margin-bottom:1px!important;
+      margin:0!important;
       color:#66798d!important;
       opacity:1!important;
-      font-size:9px!important;
-      font-weight:650!important;
-      letter-spacing:.07em!important;
+      font-size:8.8px!important;
+      font-weight:700!important;
+      letter-spacing:.05em!important;
       text-align:center!important;
-      width:100%!important;
+      width:auto!important;
+      flex:0 0 auto!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
       color:#173452!important;
-      font-size:15.5px!important;
-      font-weight:750!important;
+      font-size:14.5px!important;
+      line-height:1!important;
+      font-weight:780!important;
       text-align:center!important;
-      width:100%!important;
+      width:auto!important;
+      flex:0 0 auto!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{
-      margin-top:1px!important;
+      margin:0!important;
       color:#6a7c8e!important;
       opacity:1!important;
-      font-size:9px!important;
+      font-size:8.8px!important;
+      line-height:1!important;
       text-align:center!important;
-      width:100%!important;
+      width:auto!important;
+      flex:0 0 auto!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat.marge-pos{
       background:#eef7f1!important;
@@ -270,7 +279,18 @@
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
         grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:5px!important;
       }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
+        min-height:42px!important;
+        height:42px!important;
+        max-height:42px!important;
+        padding:3px 6px!important;
+        gap:4px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{font-size:8px!important}
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{font-size:13px!important}
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{font-size:8px!important}
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar{
         justify-content:flex-start!important;
         padding:7px!important;
