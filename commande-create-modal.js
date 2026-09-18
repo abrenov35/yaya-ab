@@ -369,6 +369,7 @@
         oneDriveId:'',
         oneDriveWebUrl:'',
         statutValidation:'VALIDEE',
+        statut:'choice',
         origine:'YAYA',
         gmailMessageId:'',
         pieceNom:String(attachment.pieceNom||''),
