@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V25)return;window.__YAYA_PHOTOS_V25=true;
+if(window.__YAYA_PHOTOS_V27)return;window.__YAYA_PHOTOS_V27=true;
 var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v25';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -1106,16 +1106,33 @@ document.addEventListener('click',function(e){
 },true);
 style();refresh();var refreshTimer=0,pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(function(){if(refreshTimer)return;refreshTimer=setTimeout(function(){refreshTimer=0;refresh()},90)}).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',function(){setTimeout(refresh,30)});
 
+function forcePhotoSyncMobile(reason){
+  lastPhotoSyncAt=0;
+  setTimeout(function(){photoSyncPulse(true)},120);
+  setTimeout(function(){
+    if(document.hidden)return;
+    lastPhotoSyncAt=0;
+    photoSyncPulse(true);
+  },1100);
+}
+
 document.addEventListener('click',function(e){
   var tab=e.target.closest&&e.target.closest('[data-section="photos"]');
-  if(tab)setTimeout(function(){photoSyncPulse(true)},0);
+  if(tab)forcePhotoSyncMobile('tab');
 },true);
-window.addEventListener('focus',function(){setTimeout(function(){photoSyncPulse(true)},250)});
-window.addEventListener('online',function(){setTimeout(function(){photoSyncPulse(true)},250)});
-document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(function(){photoSyncPulse(true)},250)});
+
+window.addEventListener('focus',function(){forcePhotoSyncMobile('focus')});
+window.addEventListener('online',function(){forcePhotoSyncMobile('online')});
+window.addEventListener('pageshow',function(){forcePhotoSyncMobile('pageshow')});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)forcePhotoSyncMobile('visible')});
+
 setInterval(function(){
   if(document.hidden)return;
   if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(false);
-},60000);
-setTimeout(function(){processPhotoJobs();if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(true)},1400);
+},20000);
+
+setTimeout(function(){
+  processPhotoJobs();
+  if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))forcePhotoSyncMobile('startup');
+},1400);
 })();
