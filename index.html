@@ -44,7 +44,7 @@
     '<script src="evolution-ca-hide-title.js?v=hide-title-1"><\\/script>'+
     '<script src="yaya-performance-core.js?v=perf-2"><\\/script>'+
     '<script src="charges-page-cleanup.js?v=charges-2"><\\/script>'+
-    '<script src="chantier-actions-line.js?v=actions-15"><\\/script>'+
+    '<script src="chantier-actions-line.js?v=actions-16"><\\/script>'+
     '<script src="avoir-display-positive.js?v=avoir-1"><\\/script>'+
     '<script src="chantier-create-search-line.js?v=mainline-21"><\\/script>'+
     '<script src="recent-items-limit.js?v=recent-10-3"><\\/script>'+
@@ -74,8 +74,8 @@
     '<script src="commande-actions.js?v=commande-actions-native-2"><\\/script>'+
     '<script src="commande-create-modal.js?v=commande-create-1"><\\/script>'+
     '<script src="commande-upload-noai-fix.js?v=commande-noai-1"><\\/script>'+
-    '<script src="chantier-detail-visual-polish.js?v=detailvisual-5"><\\/script>'+
-    '<script src="chantier-sticky-header-full.js?v=1"><\\/script>'+    '<script src="remove-chantier-detail-search.js?v=1"><\\/script>'+
+    '<script src="chantier-detail-visual-polish.js?v=detailvisual-6"><\\/script>'+
+    '<script src="chantier-sticky-header-full.js?v=2"><\\/script>'+    '<script src="remove-chantier-detail-search.js?v=1"><\\/script>'+
     '<script src="colored-view-eyes.js?v=eyes-1"><\\/script>'+
     '<script src="edit-id-compat-fix.js?v=editid-4"><\\/script>'+
     '<script src="ui-finance-theme.js?v=finance-1"><\\/script>'+
@@ -117,8 +117,7 @@
     '<script src="marche-cards-page.js?v=3"><\\/script>'+
     '<script src="devis-auto-save-after-import.js?v=autosave-1"><\\/script>'+
     '<script src="devis-drive-preview-fix.js?v=5"><\\/script>'+
-    '<script src="devis-drive-embed-fallback.js?v=embed-1"><\\/script>'+
-    '<script src="chantier-kpi-compact.js?v=2"><\\/script>'+"'+reveal+'</body>'";
+    '<script src="devis-drive-embed-fallback.js?v=embed-1"><\\/script>'+"'+reveal+'</body>'";
   if(!base.includes(marker))throw new Error('Point insertion aperçu introuvable');
   const nonBlockingReplacement=replacement.replaceAll('<script src="','<script defer src="');
   base=base.replace(marker,nonBlockingReplacement);
