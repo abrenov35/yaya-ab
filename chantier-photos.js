@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V10)return;window.__YAYA_PHOTOS_V10=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v10';
+if(window.__YAYA_PHOTOS_V11)return;window.__YAYA_PHOTOS_V11=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v11';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -10,6 +10,7 @@ function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()
 function docs(){try{return Array.isArray(S.documents)?S.documents:[]}catch(e){return[]}}
 function isPhoto(d){return d&&norm(d.type)===TYPE}
 function rows(cid){return docs().filter(function(d){return isPhoto(d)&&String(d.chantierId||'')===String(cid||'')}).sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))})}
+function isImageFile(file){var t=String(file&&file.type||'').toLowerCase(),n=String(file&&file.name||'');return t.indexOf('image/')===0||/\.(?:jpe?g|png|heic|heif|webp)$/i.test(n)}
 function toastS(m,e){try{toast(m,!!e)}catch(x){}}
 function id(){try{if(typeof uid==='function')return String(uid())}catch(e){}return 'photo-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)}
 function cardId(card){if(!card)return'';var ns=card.querySelectorAll('[onclick]');for(var i=0;i<ns.length;i++){var m=String(ns[i].getAttribute('onclick')||'').match(/(?:toggleChantier|openDocumentModal|openAchat|openAvenant|delChantier)\(['"]([^'"]+)/);if(m)return m[1]}try{return String(focusChantier||'')}catch(e){return''}}
@@ -104,7 +105,30 @@ async function exifDate(file){
   }
 function base64(file){return new Promise(function(ok,no){var r=new FileReader();r.onerror=no;r.onload=function(){ok(String(r.result||'').split(',')[1]||'')};r.readAsDataURL(file)})}
 async function resize(file){if(file.size<=MAX)return file;var u=URL.createObjectURL(file);try{var img=await new Promise(function(ok,no){var i=new Image();i.onload=function(){ok(i)};i.onerror=no;i.src=u}),r=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);c.getContext('2d').drawImage(img,0,0,c.width,c.height);var blob=await new Promise(function(ok){c.toBlob(ok,'image/jpeg',.84)});return blob?new File([blob],String(file.name||'photo').replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'}):file}catch(e){return file}finally{URL.revokeObjectURL(u)}}
-async function archive(file){var api='';try{api=String(API||'')}catch(e){}if(!api)throw new Error('API Yaya indisponible');file=await resize(file);if(file.size>MAX)throw new Error('Photo trop lourde');var b=await base64(file),r=await fetch(api,{method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'image/jpeg',base64:b}})}),j=await r.json();if(!j.ok)throw new Error(j.error||'Import impossible');var x=j.data||{},link=String(x.lienDrive||x.lien||'');if(!link)throw new Error(x.archiveErreur||'Photo non archivée');return link}
+async function archive(file){
+  var api='';try{api=String(API||'')}catch(e){}
+  if(!api)throw new Error('API Yaya indisponible');
+  file=await resize(file);
+  if(file.size>MAX)throw new Error('Photo trop lourde');
+  var b=await base64(file);
+  var ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){try{ctrl.abort()}catch(e){}},60000):0;
+  try{
+    var opts={method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'image/jpeg',base64:b}})};
+    if(ctrl)opts.signal=ctrl.signal;
+    var r=await fetch(api,opts);
+    var j=await r.json();
+    if(!j.ok)throw new Error(j.error||'Import impossible');
+    var x=j.data||{},link=String(x.lienDrive||x.lien||'');
+    if(!link)throw new Error(x.archiveErreur||'Photo non archivée');
+    return link;
+  }catch(e){
+    if(e&&e.name==='AbortError')throw new Error('Import trop long — vérifiez la connexion');
+    throw e;
+  }finally{
+    if(timer)clearTimeout(timer);
+  }
+}
 function pickPhotos(cid,mode){
   cid=String(cid||'');
   var input=document.createElement('input');
@@ -117,25 +141,20 @@ function pickPhotos(cid,mode){
   input.style.opacity='0';
   document.body.appendChild(input);
 
-  var handled=false;
   function cleanupPicker(){
     if(input&&input.parentNode)input.parentNode.removeChild(input);
   }
 
   input.onchange=async function(){
-    handled=true;
     var files=Array.from(input.files||[]);
     cleanupPicker();
     if(!files.length)return;
     await openPhotoReview(cid,files,mode);
   };
 
-  window.addEventListener('focus',function onFocus(){
-    window.removeEventListener('focus',onFocus);
-    setTimeout(function(){
-      if(!handled)cleanupPicker();
-    },700);
-  },{once:true});
+  // Sur iPhone, le retour de la photothèque peut rendre le focus avant l'événement change.
+  // Ne pas supprimer l'input sur focus : on attend change ou cancel.
+  input.addEventListener('cancel',cleanupPicker,{once:true});
 
   input.click();
 }
@@ -146,7 +165,7 @@ async function openPhotoReview(cid,files,mode){
 
   var q=[],urls=[];
   for(var f of Array.from(files||[])){
-    if(!String(f.type||'').startsWith('image/'))continue;
+    if(!isImageFile(f))continue;
     var exif=mode==='camera'?'':await exifDate(f);
     var d=mode==='camera'?today():(exif||today());
     var u=URL.createObjectURL(f);
