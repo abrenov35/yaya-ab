@@ -13,6 +13,7 @@
       .piece-preview-modal{width:min(90vw,900px)!important;height:min(88dvh,760px)!important;max-width:900px!important;max-height:88dvh!important;padding:9px!important;display:flex!important;flex-direction:column!important;overflow:hidden!important;}
       .piece-preview-head{flex:0 0 auto!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;margin:0 0 6px!important;min-height:32px!important;}
       .piece-preview-head button{flex:0 0 auto!important;padding:6px 13px!important;border:1px solid rgba(22,45,73,.24)!important;border-radius:8px!important;background:#fff!important;color:var(--navy)!important;font-size:13px!important;font-weight:600!important;}
+      .piece-preview-head .yaya-preview-edit{border-color:#9fc0df!important;background:#eef6ff!important;color:#245d91!important;font-weight:800!important;}
       .piece-preview-stage{position:relative!important;flex:1 1 auto!important;min-height:0!important;min-width:0!important;width:100%!important;overflow:hidden!important;border-radius:8px!important;background:#eef1f5!important;}
       .piece-image-stage,.piece-drive-pages-stage{display:flex!important;align-items:center!important;justify-content:center!important;padding:4px!important;touch-action:pan-y!important;overscroll-behavior:contain!important;}
       .piece-image-stage img,.piece-drive-pages-stage img{display:block!important;width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center!important;user-select:none!important;-webkit-user-drag:none!important;}
@@ -111,9 +112,36 @@
     const close=document.createElement('button');
     close.type='button';
     close.textContent='Fermer';
-    close.onclick=()=>window.closeModal();
+    close.onclick=()=>{
+      window.__yayaPreviewDocumentId='';
+      window.closeModal();
+    };
 
-    head.append(title,close);
+    const docId=String(window.__yayaPreviewDocumentId||'').trim();
+    let edit=null;
+    if(docId){
+      edit=document.createElement('button');
+      edit.type='button';
+      edit.className='yaya-preview-edit';
+      edit.textContent='Modifier';
+      edit.onclick=function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        const id=docId;
+        window.__yayaPreviewDocumentId='';
+        try{if(typeof window.closeModal==='function')window.closeModal();}catch(_e){}
+        setTimeout(function(){
+          try{
+            if(typeof window.editDocument==='function'){window.editDocument(id);return;}
+            if(typeof editDocument==='function')editDocument(id);
+          }catch(_e){}
+        },0);
+      };
+    }
+
+    head.append(title);
+    if(edit)head.appendChild(edit);
+    head.appendChild(close);
 
     const stage=document.createElement('div');
     stage.className='piece-preview-stage';
