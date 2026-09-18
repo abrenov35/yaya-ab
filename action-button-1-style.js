@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  const id='yaya-action-buttons-style-v20';
+  const id='yaya-action-buttons-style-v21';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -199,6 +199,97 @@
       }
       #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-row:has(.yaya-detail-charge-view) .yaya-charge-meta{
         padding-right:72px!important;
+      }
+    }
+
+    /* Téléphone debout : grille stricte 2 x 2, aucun décalage visuel */
+    @media(max-width:760px) and (orientation:portrait){
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-row{
+        grid-template-columns:minmax(0,1fr) auto!important;
+        grid-template-rows:minmax(20px,auto) minmax(18px,auto)!important;
+        gap:4px 12px!important;
+        align-items:center!important;
+        min-height:58px!important;
+        padding:8px 12px!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-charge-name{
+        grid-column:1!important;
+        grid-row:1!important;
+        align-self:center!important;
+        text-align:left!important;
+        line-height:1.15!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-cost{
+        grid-column:2!important;
+        grid-row:1!important;
+        align-self:center!important;
+        justify-self:end!important;
+        text-align:right!important;
+        line-height:1.15!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-charge-meta{
+        grid-column:1!important;
+        grid-row:2!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        gap:4px!important;
+        min-width:0!important;
+        width:100%!important;
+        padding-right:0!important;
+        overflow:hidden!important;
+        white-space:nowrap!important;
+        text-align:left!important;
+        line-height:1.15!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-charge-detail{
+        display:inline!important;
+        flex:0 1 auto!important;
+        min-width:0!important;
+        margin:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-charge-period{
+        display:inline!important;
+        flex:0 0 auto!important;
+        margin:0!important;
+        padding:0!important;
+        white-space:nowrap!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-charge-detail + .yaya-charge-period::before{
+        content:"•"!important;
+        margin:0 4px 0 0!important;
+        color:#b4bec8!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-hours{
+        grid-column:2!important;
+        grid-row:2!important;
+        align-self:center!important;
+        justify-self:end!important;
+        text-align:right!important;
+        line-height:1.15!important;
+        white-space:nowrap!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-row:has(.yaya-detail-charge-view) .yaya-charge-meta{
+        padding-right:0!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-view{
+        top:50%!important;
+        bottom:auto!important;
+        right:42px!important;
+        transform:translateY(-50%)!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-edit{
+        top:50%!important;
+        bottom:auto!important;
+        right:10px!important;
+        transform:translateY(-50%)!important;
+      }
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-row:has(.yaya-detail-charge-view) .yaya-detail-charge-cost,
+      #pane-chantiers .yaya-detail-charges-pane .yaya-detail-charge-row:has(.yaya-detail-charge-view) .yaya-detail-charge-hours{
+        padding-right:68px!important;
       }
     }
   `;
