@@ -114,12 +114,15 @@
     close.textContent='Fermer';
     close.onclick=()=>{
       window.__yayaPreviewDocumentId='';
+      window.__yayaPreviewCommandeId='';
+      window.__yayaPreviewCommandePieceId='';
       window.closeModal();
     };
 
     const docId=String(window.__yayaPreviewDocumentId||'').trim();
+    const commandeId=String(window.__yayaPreviewCommandeId||'').trim();
     let edit=null;
-    if(docId){
+    if(docId||commandeId){
       edit=document.createElement('button');
       edit.type='button';
       edit.className='yaya-preview-edit';
@@ -128,12 +131,20 @@
         e.preventDefault();
         e.stopPropagation();
         const id=docId;
+        const cid=commandeId;
         window.__yayaPreviewDocumentId='';
+        window.__yayaPreviewCommandeId='';
+        window.__yayaPreviewCommandePieceId='';
         try{if(typeof window.closeModal==='function')window.closeModal();}catch(_e){}
         setTimeout(function(){
           try{
-            if(typeof window.editDocument==='function'){window.editDocument(id);return;}
-            if(typeof editDocument==='function')editDocument(id);
+            if(cid){
+              const row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(cid)+'"]');
+              const btn=row&&row.querySelector('[data-ycn-edit]');
+              if(btn){btn.click();return;}
+            }
+            if(id&&typeof window.editDocument==='function'){window.editDocument(id);return;}
+            if(id&&typeof editDocument==='function')editDocument(id);
           }catch(_e){}
         },0);
       };
