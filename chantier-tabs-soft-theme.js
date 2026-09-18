@@ -1,7 +1,7 @@
 (function(){
   'use strict';
 
-  const id='yaya-chantier-tabs-soft-theme-v6';
+  const id='yaya-chantier-tabs-soft-theme-v7';
   if(document.getElementById(id))return;
 
   const style=document.createElement('style');
@@ -169,21 +169,51 @@
     }
 
     @media(max-width:760px){
+      /* Résumé financier compact : 4 KPI lisibles sans monopoliser l'écran. */
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
+        gap:7px!important;
+        margin-bottom:10px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
+        min-height:64px!important;
+        padding:7px 8px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{
+        margin-bottom:2px!important;
+        font-size:9.5px!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
+        font-size:18px!important;
+        line-height:1.05!important;
+      }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{
+        margin-top:1px!important;
+        font-size:10px!important;
+      }
+
+      /* Les 5 onglets restent tous visibles sur un iPhone en mode portrait. */
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
-        gap:6px!important;
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.06fr) minmax(0,1.28fr) minmax(0,1fr)!important;
+        gap:4px!important;
+        width:100%!important;
+        overflow:visible!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab{
-        min-width:112px!important;
-        height:36px!important;
-        min-height:36px!important;
-        padding:0 10px!important;
-        font-size:11.5px!important;
+        min-width:0!important;
+        width:auto!important;
+        height:34px!important;
+        min-height:34px!important;
+        padding:0 4px!important;
+        gap:3px!important;
+        font-size:10.5px!important;
+        white-space:nowrap!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab small{
-        height:18px!important;
-        min-width:20px!important;
-        padding:0 6px!important;
-        font-size:10px!important;
+        height:17px!important;
+        min-width:17px!important;
+        padding:0 4px!important;
+        font-size:9px!important;
       }
     }
   `;
