@@ -11,7 +11,7 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs){
       border:1.5px solid #003D7A!important;
       border-radius:14px!important;
-      padding:16px 17px 18px!important;
+      padding:10px 12px 12px!important;
       box-shadow:0 4px 16px rgba(0,61,122,.12)!important;
       background:#fff!important;
     }
@@ -19,10 +19,10 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
       align-items:center!important;
       gap:9px!important;
-      margin-bottom:12px!important;
+      margin-bottom:4px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top b{
-      font-size:18px!important;
+      font-size:16px!important;
       line-height:1.15!important;
       letter-spacing:.005em!important;
       color:#152f50!important;
@@ -35,13 +35,14 @@
 
     /* KPI : contenu centré dans les pavés */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
-      gap:9px!important;
+      gap:7px!important;
       margin-top:0!important;
-      margin-bottom:13px!important;
+      margin-bottom:5px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
-      min-height:76px!important;
-      padding:11px 13px!important;
+      min-height:54px!important;
+      height:54px!important;
+      padding:4px 8px!important;
       border:1px solid #d9e1e9!important;
       border-radius:10px!important;
       background:#f8fafc!important;
@@ -53,10 +54,10 @@
       text-align:center!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{
-      margin-bottom:4px!important;
+      margin-bottom:1px!important;
       color:#66798d!important;
       opacity:1!important;
-      font-size:10.5px!important;
+      font-size:9px!important;
       font-weight:650!important;
       letter-spacing:.07em!important;
       text-align:center!important;
@@ -64,16 +65,16 @@
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
       color:#173452!important;
-      font-size:18px!important;
+      font-size:15.5px!important;
       font-weight:750!important;
       text-align:center!important;
       width:100%!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{
-      margin-top:3px!important;
+      margin-top:1px!important;
       color:#6a7c8e!important;
       opacity:1!important;
-      font-size:11px!important;
+      font-size:9px!important;
       text-align:center!important;
       width:100%!important;
     }
