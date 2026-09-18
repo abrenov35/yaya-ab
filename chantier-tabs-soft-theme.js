@@ -12,7 +12,8 @@
       align-items:center!important;
       gap:8px!important;
       margin:0!important;
-      padding:5px 0!important;
+      padding-top:2px!important;
+      padding-bottom:8px!important;
       border-bottom:none!important;
       overflow-x:auto!important;
       scrollbar-width:none!important;
