@@ -23,7 +23,7 @@ function installStyle(){
       top:var(--yaya-sticky-base,72px)!important;
       z-index:44!important;
       background:#fff!important;
-      padding-top:4px!important;
+      padding-top:0!important;
       margin-bottom:0!important;
     }
 
@@ -33,8 +33,8 @@ function installStyle(){
       top:calc(var(--yaya-sticky-base,72px) + var(--yaya-sticky-top-h,52px))!important;
       z-index:43!important;
       background:#fff!important;
-      padding-top:6px!important;
-      padding-bottom:8px!important;
+      padding-top:2px!important;
+      padding-bottom:3px!important;
       margin-bottom:0!important;
     }
 
@@ -48,8 +48,8 @@ function installStyle(){
       )!important;
       z-index:42!important;
       background:#fff!important;
-      padding-top:6px!important;
-      padding-bottom:6px!important;
+      padding-top:3px!important;
+      padding-bottom:3px!important;
       margin-top:0!important;
       margin-bottom:0!important;
       box-shadow:0 5px 10px rgba(22,45,73,.06)!important;
