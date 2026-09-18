@@ -122,6 +122,67 @@ function renderExternalInStage(stage,url,title){
   iframe.loading='eager';
   stage.appendChild(iframe);
 }
+function drivePageCandidates(id,page,width){
+  const safe=encodeURIComponent(id),p=Math.max(1,Number(page)||1),w=Math.max(700,Math.min(2200,Math.round(width||1400)));
+  return [
+    'https://drive.google.com/file/d/'+safe+'/image?pagenumber='+p+'&w='+w,
+    'https://docs.google.com/file/d/'+safe+'/image?pagenumber='+p+'&w='+w
+  ];
+}
+function loadDrivePage(urls,timeoutMs){
+  return new Promise((resolve,reject)=>{
+    let index=0;
+    function next(){
+      if(index>=urls.length){reject(new Error('Page Drive indisponible'));return;}
+      const src=urls[index++];
+      const img=new Image();
+      let done=false;
+      const timer=setTimeout(()=>finish(false),timeoutMs||6500);
+      function finish(ok){
+        if(done)return;done=true;clearTimeout(timer);img.onload=img.onerror=null;
+        if(ok&&img.naturalWidth>30&&img.naturalHeight>30)resolve(src);else next();
+      }
+      img.onload=()=>finish(true);img.onerror=()=>finish(false);img.src=src;
+    }
+    next();
+  });
+}
+async function renderDrivePagesFallback(stage,id,token){
+  stage.innerHTML='<div class="v4-loading">Chargement du document…</div>';
+  let current=1,last=null,busy=false,touchY=null;
+  const wrap=document.createElement('div');wrap.className='v4-drive-page-wrap';
+  const img=document.createElement('img');img.className='v4-drive-page';
+  const nav=document.createElement('div');nav.className='v4-drive-nav';
+  const prev=document.createElement('button');prev.type='button';prev.textContent='‹';
+  const info=document.createElement('span');
+  const next=document.createElement('button');next.type='button';next.textContent='›';
+  nav.append(prev,info,next);wrap.append(img,nav);
+
+  function width(){const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));return Math.max(900,(stage.clientWidth||700)*dpr);}
+  async function get(n){return loadDrivePage(drivePageCandidates(id,n,width()),6500);}
+  function update(){info.textContent='Page '+current+(last?' / '+last:'');prev.disabled=current<=1;next.disabled=!!last&&current>=last;}
+  async function show(n){
+    if(busy||n<1||n===current)return;
+    busy=true;
+    try{
+      const src=await get(n);
+      if(token!==previewToken||!stage.isConnected)return;
+      img.src=src;current=n;update();
+      if(last==null)get(current+1).catch(()=>{last=current;update();});
+    }catch(_){
+      if(n>current){last=current;update();}
+    }finally{busy=false;}
+  }
+
+  const first=await get(1);
+  if(token!==previewToken||!stage.isConnected)return;
+  img.src=first;stage.replaceChildren(wrap);update();
+  get(2).catch(()=>{last=1;update();});
+  prev.onclick=e=>{e.preventDefault();e.stopPropagation();if(current>1)show(current-1);};
+  next.onclick=e=>{e.preventDefault();e.stopPropagation();if(!last||current<last)show(current+1);};
+  wrap.addEventListener('touchstart',e=>{if(e.touches&&e.touches[0])touchY=e.touches[0].clientY;},{passive:true});
+  wrap.addEventListener('touchend',e=>{if(touchY==null||!e.changedTouches||!e.changedTouches[0])return;const dy=e.changedTouches[0].clientY-touchY;touchY=null;if(Math.abs(dy)<45)return;if(dy<0)show(current+1);else if(current>1)show(current-1);},{passive:true});
+}
 function writeDocuments(next){
   for(const key of CACHE_KEYS){
     try{const raw=localStorage.getItem(key);if(!raw)continue;const d=JSON.parse(raw);if(!Array.isArray(d?.orders))continue;d.documents=Array.isArray(next)?next:[];d.savedAt=Date.now();localStorage.setItem(key,JSON.stringify(d));}catch(_){ }
@@ -166,6 +227,11 @@ function injectStyle(){
     #${MODAL_ID} .v4-pdf{width:100%;height:100%;overflow:auto;padding:8px;box-sizing:border-box;-webkit-overflow-scrolling:touch}
     #${MODAL_ID} .v4-pdf canvas{display:block;max-width:100%;height:auto!important;margin:0 auto 8px;background:#fff;box-shadow:0 1px 5px rgba(15,23,42,.14)}
     #${MODAL_ID} .v4-image{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
+    #${MODAL_ID} .v4-drive-page-wrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:6px;box-sizing:border-box;background:#eef2f6;overflow:hidden}
+    #${MODAL_ID} .v4-drive-page{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
+    #${MODAL_ID} .v4-drive-nav{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:18px;background:rgba(15,23,42,.82);color:#fff;font-size:11px;font-weight:800}
+    #${MODAL_ID} .v4-drive-nav button{width:29px;height:27px;border:0;border-radius:14px;background:#fff;color:#162d49;font-size:18px;font-weight:900;line-height:1;cursor:pointer}
+    #${MODAL_ID} .v4-drive-nav button:disabled{opacity:.35}
     #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
     @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(0,1fr) minmax(125px,.9fr) auto!important}.yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:none!important}.yaya-cmd-native-root .ycn-v4-url{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}}
   `;document.head.appendChild(s);
@@ -210,10 +276,16 @@ function renderModal(){
   if(!url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
   const id=driveId(url);
   if(id){
-    renderDriveInStage(stage,url,id,token).catch(err=>{
+    renderDriveInStage(stage,url,id,token).catch(async err=>{
       if(token!==previewToken||!stage.isConnected)return;
-      console.warn('Yaya Commandes : aperçu Drive indisponible',err);
-      stage.innerHTML='<div class="v4-error">Aperçu impossible pour cette pièce.<br>Utilisez le bouton Télécharger.</div>';
+      console.warn('Yaya Commandes : API Drive indisponible, essai page directe',err);
+      try{
+        await renderDrivePagesFallback(stage,id,token);
+      }catch(err2){
+        if(token!==previewToken||!stage.isConnected)return;
+        console.warn('Yaya Commandes : page Drive indisponible',err2);
+        stage.innerHTML='<div class="v4-error">Aperçu impossible pour cette pièce.<br>Utilisez le bouton Télécharger.</div>';
+      }
     });
     return;
   }
@@ -254,5 +326,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.1-drive-via-yaya-api';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.2-drive-page-fallback-ios';
 })();
