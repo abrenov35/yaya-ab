@@ -1,9 +1,9 @@
 (function(){
 'use strict';
-if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V5)return;
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V5=true;
+if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V6)return;
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V6=true;
 
-const STYLE_ID='yaya-chantier-three-block-viewport-v5';
+const STYLE_ID='yaya-chantier-three-block-viewport-v6';
 const PAGE_SIZE=12;
 let activeCard=null;
 let activeKey='';
@@ -62,6 +62,19 @@ function installStyle(){
 
     #pane-chantiers .card.yaya-three-block-long .yaya-page-hidden{
       display:none!important;
+    }
+
+    /* Changement de tranche sans scintillement : le bloc 3 garde sa hauteur
+       pendant que les 12 lignes visibles changent. */
+    #pane-chantiers .card.yaya-three-block-long > .yaya-detail-section-node[data-section]{
+      min-height:var(--yaya-page-min-height,0px)!important;
+      contain:layout paint!important;
+    }
+
+    #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-tabs,
+    #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-action-row{
+      backface-visibility:hidden!important;
+      transform:translateZ(0)!important;
     }
 
     #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-node,
@@ -167,6 +180,7 @@ function applyPage(card){
 
   if(!longList){
     rows.forEach(el=>el.classList.remove('yaya-page-hidden'));
+    scope.style.removeProperty('--yaya-page-min-height');
     const old=card.querySelector(':scope > .yaya-block-page-indicator');
     if(old)old.remove();
     pageIndex=0;
@@ -178,7 +192,26 @@ function applyPage(card){
   const start=pageIndex*PAGE_SIZE;
   const end=Math.min(rows.length,start+PAGE_SIZE);
 
-  rows.forEach((el,i)=>el.classList.toggle('yaya-page-hidden',i<start||i>=end));
+  // Mesure la hauteur de 12 lignes avant de masquer/afficher la nouvelle tranche.
+  // Ceci évite que le contenu saute ou clignote pendant le changement de page.
+  const visibleNow=rows.filter(function(el){return !el.classList.contains('yaya-page-hidden')});
+  if(visibleNow.length){
+    const first=visibleNow[0].getBoundingClientRect();
+    const last=visibleNow[visibleNow.length-1].getBoundingClientRect();
+    const h=Math.max(0,Math.ceil(last.bottom-first.top));
+    if(h>0)scope.style.setProperty('--yaya-page-min-height',h+'px');
+  }
+
+  requestAnimationFrame(function(){
+    rows.forEach((el,i)=>el.classList.toggle('yaya-page-hidden',i<start||i>=end));
+    const shown=rows.slice(start,end);
+    if(shown.length){
+      const first=shown[0].getBoundingClientRect();
+      const last=shown[shown.length-1].getBoundingClientRect();
+      const h=Math.max(0,Math.ceil(last.bottom-first.top));
+      if(h>0)scope.style.setProperty('--yaya-page-min-height',h+'px');
+    }
+  });
 
   const ind=ensureIndicator(card,scope);
   if(ind)ind.textContent=(start+1)+'–'+end+' / '+rows.length;
@@ -291,7 +324,7 @@ if(pane){
     childList:true,
     subtree:true,
     attributes:true,
-    attributeFilter:['class','data-yaya-detail-section']
+    attributeFilter:['data-yaya-detail-section']
   });
 }
 
@@ -299,5 +332,5 @@ setTimeout(schedule,0);
 setTimeout(schedule,250);
 setTimeout(schedule,800);
 
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='5.0-visible-pages-12-fixed-scope';
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='6.0-stable-no-flicker';
 })();
