@@ -289,7 +289,7 @@
   else schedule();
 
   const root=document.getElementById('pane-chantiers')||document.body;
-  new MutationObserver(schedule).observe(root,{childList:true,subtree:true,characterData:true});
+  new MutationObserver(schedule).observe(root,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',schedule);
   window.addEventListener('resize',schedule);
 })();
