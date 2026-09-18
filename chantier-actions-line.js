@@ -13,6 +13,10 @@
       #pane-chantiers .chantier-fin-toolbar > .chantier-archive-btn{
         display:none!important;
       }
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > .chantier-delete-btn,
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .chantier-fin-toolbar > button[onclick*="delChantier"]{
+        display:none!important;
+      }
       #pane-chantiers .chantier-fin-toolbar{
         display:flex!important;
         align-items:center!important;
