@@ -1,6 +1,6 @@
 (async function(){
 'use strict';
-const raw=await fetch('chantier-detail-section-tabs.js?v=detailtabs-21',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('detailtabs '+r.status);return r.text();});
+const raw=await fetch('chantier-detail-section-tabs.js?v=detailtabs-22',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('detailtabs '+r.status);return r.text();});
 let src=raw;
 function rep(a,b){if(!src.includes(a))throw new Error('Onglets chantier: point introuvable');src=src.replace(a,b);}
 
@@ -40,6 +40,31 @@ rep("      if(small)small.style.display=key==='documents'?'none':'';","      if(
 rep("      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : (section?'0':'1');","      empty.dataset.empty=key==='charges'\n        ? (chargeRows.length?'0':'1')\n        : key==='commandes'\n          ? (commandeRows.length?'0':'1')\n        : key==='depenses'\n          ? (depenseRows.length?'0':'1')\n          : key==='documents'\n            ? (documentRows.length?'0':'1')\n            : key==='mail'\n              ? (mailRows.length?'0':'1')\n              : (section?'0':'1');");
 
 rep("    ensureChargesPane(card,tabs,chargeRows);\n    ensureExpensesPane(card,tabs,depenseRows);","    ensureChargesPane(card,tabs,chargeRows);\n    ensureCommandesPane(card,tabs,commandeRows);\n    ensureExpensesPane(card,tabs,depenseRows);");
+
+
+// PHOTOS : section native après Documents / Mail.
+// Stockage partagé dans S.documents avec type=Photo pour préparer aussi l'entrée future via Yaya Mail.
+rep("const ORDER=['marche','commandes','depenses','charges','documents','mail'];","const ORDER=['marche','commandes','depenses','charges','documents','mail','photos'];");
+rep("const LABELS={marche:'Marché',commandes:'Commande',depenses:'Dépenses',charges:'Charges',documents:'Documents',mail:'Mail'};","const LABELS={marche:'Marché',commandes:'Commande',depenses:'Dépenses',charges:'Charges',documents:'Documents',mail:'Mail',photos:'Photos'};");
+rep("const EMPTY_LABELS={marche:'Aucun devis',commandes:'Aucune commande',depenses:'Aucune dépense',charges:'Aucune charge',documents:'Aucun document',mail:'Aucun mail'};","const EMPTY_LABELS={marche:'Aucun devis',commandes:'Aucune commande',depenses:'Aucune dépense',charges:'Aucune charge',documents:'Aucun document',mail:'Aucun mail',photos:'Aucune photo'};");
+rep("const EMPTY_META={marche:'0 €',commandes:'0 €',depenses:'0 €',charges:'0 €',documents:'',mail:''};","const EMPTY_META={marche:'0 €',commandes:'0 €',depenses:'0 €',charges:'0 €',documents:'',mail:'',photos:'0'};");
+
+rep("  function documentsFor(card){\n    const cid=cardId(card);\n    if(!cid||typeof S==='undefined'||!Array.isArray(S.documents))return [];\n    return S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL'\n    );\n  }","  function documentsFor(card){\n    const cid=cardId(card);\n    if(!cid||typeof S==='undefined'||!Array.isArray(S.documents))return [];\n    return S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL'\n      && normalise(d.type)!=='PHOTO'\n    );\n  }\n\n  function photosFor(card){\n    const cid=cardId(card);\n    if(!cid||typeof S==='undefined'||!Array.isArray(S.documents))return [];\n    return S.documents.filter(d=>String(d.chantierId)===cid&&normalise(d.type)==='PHOTO')\n      .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||''))||String(b.id||'').localeCompare(String(a.id||'')));\n  }");
+
+rep("    else if(key==='documents'&&typeof openDocumentModal==='function')openDocumentModal(cid);","    else if(key==='documents'&&typeof openDocumentModal==='function')openDocumentModal(cid);\n    else if(key==='photos'&&typeof window.openPhotosForChantier==='function')window.openPhotosForChantier(cid);");
+
+rep("      documents:'Ajouter un document'\n    };","      documents:'Ajouter un document',\n      photos:'Ajouter des photos'\n    };");
+
+rep("    const mailRows=mailsFor(card);\n    const achats=achatsFor(card);","    const mailRows=mailsFor(card);\n    const photoRows=photosFor(card);\n    const achats=achatsFor(card);");
+
+rep("      const meta=(key==='documents'||key==='mail')\n        ? ''","      const meta=(key==='documents'||key==='mail')\n        ? ''\n        : key==='photos'\n          ? String(photoRows.length)");
+
+rep("              ? (mailRows.length?'0':'1')\n              : (section?'0':'1');","              ? (mailRows.length?'0':'1')\n              : key==='photos'\n                ? (photoRows.length?'0':'1')\n                : (section?'0':'1');");
+
+rep("    ensureMailPane(card,tabs,mailRows);\n    ensureSectionActions(card,tabs);","    ensureMailPane(card,tabs,mailRows);\n    if(typeof window.yayaEnsurePhotosPane==='function')window.yayaEnsurePhotosPane(card,tabs,photoRows);\n    ensureSectionActions(card,tabs);");
+
+// Le placeholder "Aucune photo" suit la même logique d'affichage que les autres sections.
+rep("      .card[data-yaya-detail-section=\"mail\"] > .yaya-detail-empty-pane[data-section=\"mail\"][data-empty=\"1\"]{\n        display:block!important;\n      }","      .card[data-yaya-detail-section=\"mail\"] > .yaya-detail-empty-pane[data-section=\"mail\"][data-empty=\"1\"],\n      .card[data-yaya-detail-section=\"photos\"] > .yaya-detail-empty-pane[data-section=\"photos\"][data-empty=\"1\"]{\n        display:block!important;\n      }");
 
 (0,eval)(src+'\n//# sourceURL=chantier-detail-section-tabs-native-commandes-mail.js');
 
