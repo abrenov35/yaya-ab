@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V20)return;window.__YAYA_PHOTOS_V20=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v20';
+if(window.__YAYA_PHOTOS_V21)return;window.__YAYA_PHOTOS_V21=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v21';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -643,6 +643,21 @@ function refresh(){
 }
 function readAscii(v,p,n){var o='';for(var i=0;i<n;i++){var c=v.getUint8(p+i);if(!c)break;o+=String.fromCharCode(c)}return o}
 function parseExifDateText(raw){var m=String(raw||'').trim().match(/^(\d{4}):(\d{2}):(\d{2})/);return m?iso(m[1]+'-'+m[2]+'-'+m[3]):''}
+function photoDateFromFilename(name){
+  var s=String(name||'');
+  var m=s.match(/(?:^|[^0-9])(\d{2})[-_. ](\d{2})[-_. ](\d{4})(?:[^0-9]|$)/);
+  if(m)return iso(m[3]+'-'+m[2]+'-'+m[1]);
+  m=s.match(/(?:^|[^0-9])(20\d{2})[-_.]?(\d{2})[-_.]?(\d{2})(?:[^0-9]|$)/);
+  if(m)return iso(m[1]+'-'+m[2]+'-'+m[3]);
+  return '';
+}
+function photoDateFromFileTimestamp(file){
+  var t=Number(file&&file.lastModified||0);
+  if(!t)return '';
+  var d=new Date(t);
+  if(!isFinite(d.getTime())||d.getFullYear()<2000)return '';
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 async function exifDate(file){
     if(!file||!/(?:jpe?g)$/i.test(String(file.name||''))&&!/^image\/jpeg$/i.test(String(file.type||'')))return '';
     let buffer;
@@ -785,11 +800,13 @@ async function openPhotoReview(cid,files,mode){
   var q=[],urls=[];
   for(var f of Array.from(files||[])){
     if(!isImageFile(f))continue;
-    var exif=mode==='camera'?'':await exifDate(f);
-    var d=mode==='camera'?today():(exif||today());
+    var exif=await exifDate(f);
+    var fromName=photoDateFromFilename(f&&f.name);
+    var fromFile=photoDateFromFileTimestamp(f);
+    var d=exif||fromName||fromFile||today();
     var u=URL.createObjectURL(f);
     urls.push(u);
-    q.push({f:f,d:d,u:u,exif:!!exif});
+    q.push({f:f,d:d,u:u,exif:!!exif,sourceDate:exif?'EXIF':(fromName?'nom du fichier':(fromFile?'date du fichier':'date du jour'))});
   }
 
   if(!q.length){
@@ -821,7 +838,7 @@ async function openPhotoReview(cid,files,mode){
     qe.innerHTML=q.map(function(x,i){
       return '<div class="yaya-pqr">'
         +'<img src="'+esc(x.u)+'">'
-        +'<div><b>'+esc(x.f.name)+'</b><div class="note">'+(x.exif?'Date de la photo':'Date proposée')+'</div></div>'
+        +'<div><b>'+esc(x.f.name)+'</b><div class="note">Date détectée : '+esc(x.sourceDate||'date du jour')+'</div></div>'
         +'<input type="date" data-i="'+i+'" value="'+esc(x.d)+'">'
         +'</div>';
     }).join('');
