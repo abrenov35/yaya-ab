@@ -251,6 +251,6 @@
   else schedule();
 
   const pane=document.getElementById('pane-chantiers');
-  if(pane)new MutationObserver(schedule).observe(pane,{childList:true,subtree:true,characterData:true});
+  if(pane)new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
   window.addEventListener('yaya:data-refreshed',schedule);
 })();
