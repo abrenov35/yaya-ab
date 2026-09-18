@@ -33,9 +33,9 @@ function installStyle(){
       top:calc(var(--yaya-sticky-base,0px) + var(--yaya-sticky-top-h,52px))!important;
       z-index:43!important;
       background:#fff!important;
-      padding-top:2px!important;
-      padding-bottom:3px!important;
-      margin-bottom:0!important;
+      padding-top:0!important;
+      padding-bottom:0!important;
+      margin-bottom:8px!important;
     }
 
     /* Bloc 2 : onglets */
@@ -48,10 +48,10 @@ function installStyle(){
       )!important;
       z-index:42!important;
       background:#fff!important;
-      padding-top:3px!important;
-      padding-bottom:3px!important;
+      padding-top:0!important;
+      padding-bottom:0!important;
       margin-top:0!important;
-      margin-bottom:0!important;
+      margin-bottom:8px!important;
       box-shadow:0 5px 10px rgba(22,45,73,.06)!important;
     }
 
