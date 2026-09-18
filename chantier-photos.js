@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V18)return;window.__YAYA_PHOTOS_V18=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v18';
+if(window.__YAYA_PHOTOS_V19)return;window.__YAYA_PHOTOS_V19=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v19';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -15,7 +15,7 @@ function toastS(m,e){try{toast(m,!!e)}catch(x){}}
 function id(){try{if(typeof uid==='function')return String(uid())}catch(e){}return 'photo-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)}
 function cardId(card){if(!card)return'';var ns=card.querySelectorAll('[onclick]');for(var i=0;i<ns.length;i++){var m=String(ns[i].getAttribute('onclick')||'').match(/(?:toggleChantier|openDocumentModal|openAchat|openAvenant|delChantier)\(['"]([^'"]+)/);if(m)return m[1]}try{return String(focusChantier||'')}catch(e){return''}}
 function root(){return document.getElementById('modalRoot')}
-function close(){try{closeModal();return}catch(e){}var r=root();if(r)r.innerHTML=''}
+function close(){if(window.__yayaPhotoKeyHandler){try{document.removeEventListener('keydown',window.__yayaPhotoKeyHandler)}catch(e){}window.__yayaPhotoKeyHandler=null}try{closeModal();return}catch(e){}var r=root();if(r)r.innerHTML=''}
 function driveId(u){var s=String(u||''),m=s.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);if(m)return m[1];m=s.match(/[?&]id=([^&#]+)/i);return m?decodeURIComponent(m[1]):''}
 function preview(u){var x=driveId(u);return x?'https://drive.google.com/file/d/'+encodeURIComponent(x)+'/preview':String(u||'')}
 function thumb(u,w){var x=driveId(u),z=Math.max(200,Number(w)||500);return x?'https://drive.google.com/thumbnail?id='+encodeURIComponent(x)+'&sz=w'+z:String(u||'')}
@@ -448,7 +448,8 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 '#modalRoot .yaya-photo-overlay>.modal{margin:auto!important;max-height:calc(100vh - 24px)!important;overflow:auto!important;box-sizing:border-box!important}'+
 '#modalRoot .yaya-pa{width:min(680px,calc(100vw - 24px))!important}.yaya-pactions{display:flex;gap:8px;margin:12px 0;flex-wrap:wrap}.yaya-pactions button{flex:1 1 180px;min-height:42px}.yaya-pq{display:grid;gap:7px;max-height:42vh;overflow:auto}.yaya-pqr{display:grid;grid-template-columns:54px 1fr 145px;gap:8px;align-items:center;padding:6px;border:1px solid #dfe6ed;border-radius:7px}.yaya-pqr img{width:54px;height:44px;object-fit:cover;border-radius:5px}.yaya-pqr input{height:34px}.yaya-pframe{width:100%;height:70vh;border:1px solid #d9e1e8;border-radius:8px}.yaya-pfoot{display:flex;gap:8px;margin-top:10px}.yaya-pfoot .del{margin-right:auto}'+
 '@media(max-width:760px){.yaya-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px}.yaya-pqr{grid-template-columns:50px 1fr}.yaya-pqr input{grid-column:1/-1}.yaya-pframe{height:64vh}.yaya-pfoot{flex-wrap:wrap}.yaya-pfoot button{flex:1 1 95px}.yaya-pfoot .del{margin-right:0}}'+
-'.yaya-pic-wrap{position:relative;min-width:0}.yaya-pic{position:relative;width:100%;display:flex;align-items:center;justify-content:center}.yaya-photo-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;color:#6b7d90;background:#eef2f5}.yaya-pic img{position:relative;z-index:1;opacity:0;transition:opacity .15s ease}.yaya-pic.loaded img{opacity:1}.yaya-pic.loaded .yaya-photo-placeholder{display:none}.yaya-pic.fallback .yaya-photo-placeholder{display:flex}.yaya-photo-delete{position:absolute;z-index:4;top:4px;right:4px;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.92);border-radius:8px;background:rgba(174,31,31,.94);color:#fff;font-size:17px;font-weight:900;line-height:1;box-shadow:0 2px 7px rgba(0,0,0,.22)}.yaya-photo-delete:disabled{opacity:.55}.yaya-photo-view-stage{position:relative;min-height:260px;background:#eef1f4;border:1px solid #d9e1e8;border-radius:8px;overflow:hidden}.yaya-photo-view-error{padding:24px;text-align:center;color:#6b7280;font-size:13px;font-weight:700}'+
+'.yaya-pic-wrap{position:relative;min-width:0}.yaya-pic{position:relative;width:100%;display:flex;align-items:center;justify-content:center}.yaya-photo-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;color:#6b7d90;background:#eef2f5}.yaya-pic img{position:relative;z-index:1;opacity:0;transition:opacity .15s ease}.yaya-pic.loaded img{opacity:1}.yaya-pic.loaded .yaya-photo-placeholder{display:none}.yaya-pic.fallback .yaya-photo-placeholder{display:flex}.yaya-photo-delete{position:absolute;z-index:4;top:4px;right:4px;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.92);border-radius:8px;background:rgba(174,31,31,.94);color:#fff;font-size:17px;font-weight:900;line-height:1;box-shadow:0 2px 7px rgba(0,0,0,.22)}.yaya-photo-delete:disabled{opacity:.55}.yaya-photo-view-stage{position:relative;min-height:260px;background:#eef1f4;border:1px solid #d9e1e8;border-radius:8px;overflow:hidden;touch-action:pan-y}.yaya-photo-view-count{position:absolute;z-index:3;top:10px;right:10px;padding:5px 9px;border-radius:999px;background:rgba(17,24,39,.72);color:#fff;font-size:11px;font-weight:800;line-height:1}.yaya-photo-nav{display:flex;align-items:center;gap:6px}.yaya-photo-nav button{white-space:nowrap}.yaya-photo-view-error{padding:24px;text-align:center;color:#6b7280;font-size:13px;font-weight:700}'+
+'@media(max-width:760px){.yaya-photo-nav{display:none!important}}'+
 '@media(max-width:560px){.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}';document.head.appendChild(s)}
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
 function photoSignature(list){
@@ -779,12 +780,56 @@ async function deletePhoto(p,button,closeAfter){
   }
   toastS('Photo supprimée et synchronisée ✓');
 }
+function sameEntryPhotos(p){
+  if(!p)return [];
+  var cid=String(p.chantierId||''),d=iso(p.date);
+  return rows(cid).filter(function(x){return iso(x.date)===d});
+}
 async function openPic(p){
   if(!p)return;
-  var r=root(),direct=thumb(p.lien,1600);
-  r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>'+esc(fr(p.date))+' — '+esc(p.titre||DEF)+'<button class="cl">Fermer</button></h5><div class="yaya-photo-view-stage"><span class="yaya-photo-placeholder">📷</span>'+(direct?'<img class="yaya-photo-view-img" src="'+esc(direct)+'" alt="Photo chantier">':'')+'</div><div class="yaya-pfoot"><button class="btn2 del">Supprimer</button><button class="btn2 dl">Télécharger</button><button class="btnp cl">Fermer</button></div></div></div>';
+  var r=root(),direct=thumb(p.lien,1600),gallery=sameEntryPhotos(p);
+  var currentIndex=gallery.findIndex(function(x){return String(x.id)===String(p.id)});
+  if(currentIndex<0){gallery=[p];currentIndex=0}
+  var countHtml=gallery.length>1?'<span class="yaya-photo-view-count">'+(currentIndex+1)+' / '+gallery.length+'</span>':'';
+  var navHtml=gallery.length>1?'<span class="yaya-photo-nav"><button type="button" class="btn2 prev"'+(currentIndex<=0?' disabled':'')+'>Photo précédente</button><button type="button" class="btn2 next"'+(currentIndex>=gallery.length-1?' disabled':'')+'>Photo suivante</button></span>':'';
+  r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>'+esc(fr(p.date))+' — '+esc(p.titre||DEF)+'<button class="cl">Fermer</button></h5><div class="yaya-photo-view-stage"><span class="yaya-photo-placeholder">📷</span>'+countHtml+(direct?'<img class="yaya-photo-view-img" src="'+esc(direct)+'" alt="Photo chantier">':'')+'</div><div class="yaya-pfoot"><button class="btn2 del">Supprimer</button>'+navHtml+'<button class="btn2 dl">Télécharger</button><button class="btnp cl">Fermer</button></div></div></div>';
   r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});
-  var stage=r.querySelector('.yaya-photo-view-stage'),view=stage&&stage.querySelector('img'),del=r.querySelector('.del'),dl=r.querySelector('.dl'),file=null,fallbackStarted=false;
+  var stage=r.querySelector('.yaya-photo-view-stage'),view=stage&&stage.querySelector('img'),del=r.querySelector('.del'),dl=r.querySelector('.dl'),prev=r.querySelector('.prev'),next=r.querySelector('.next'),file=null,fallbackStarted=false;
+
+  function navigate(delta){
+    var targetIndex=currentIndex+delta;
+    if(targetIndex<0||targetIndex>=gallery.length)return;
+    openPic(gallery[targetIndex]);
+  }
+  if(prev)prev.onclick=function(){navigate(-1)};
+  if(next)next.onclick=function(){navigate(1)};
+
+  if(window.__yayaPhotoKeyHandler){try{document.removeEventListener('keydown',window.__yayaPhotoKeyHandler)}catch(e){}}
+  window.__yayaPhotoKeyHandler=function(e){
+    if(!r.querySelector('.yaya-photo-overlay'))return;
+    if(e.key==='ArrowLeft'&&currentIndex>0){e.preventDefault();navigate(-1)}
+    else if(e.key==='ArrowRight'&&currentIndex<gallery.length-1){e.preventDefault();navigate(1)}
+  };
+  document.addEventListener('keydown',window.__yayaPhotoKeyHandler);
+
+  if(stage&&gallery.length>1){
+    var touchStartX=0,touchStartY=0;
+    stage.addEventListener('touchstart',function(e){
+      var t=e.touches&&e.touches[0];if(!t)return;
+      touchStartX=t.clientX;touchStartY=t.clientY;
+    },{passive:true});
+    stage.addEventListener('touchend',function(e){
+      var t=e.changedTouches&&e.changedTouches[0];if(!t)return;
+      var dx=t.clientX-touchStartX,dy=t.clientY-touchStartY;
+      if(Math.abs(dx)<45||Math.abs(dx)<=Math.abs(dy)*1.15)return;
+      if(dx<0)navigate(1);else navigate(-1);
+    },{passive:true});
+  }
+
+  [gallery[currentIndex-1],gallery[currentIndex+1]].forEach(function(x){
+    if(!x||!x.lien)return;
+    try{var preload=new Image();preload.src=thumb(x.lien,1600)}catch(e){}
+  });
 
   if(del)del.onclick=function(){deletePhoto(p,del,true)};
 
