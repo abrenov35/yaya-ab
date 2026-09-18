@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V16)return;window.__YAYA_PHOTOS_V16=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v16';
+if(window.__YAYA_PHOTOS_V17)return;window.__YAYA_PHOTOS_V17=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v17';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -26,6 +26,8 @@ function apiUrl(){
   return 'https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
 }
 var photoFileCache=new Map(),heicConverterPromise=null;
+var photoThumbObserver=null,photoThumbFallbackQueue=[],photoThumbFallbackActive=0,PHOTO_THUMB_FALLBACK_MAX=2;
+var lastPhotoDatasetSignature='';
 var PHOTO_PENDING_KEY='YAYA_PENDING_PHOTOS_V1';
 var PHOTO_DB='YAYA_PHOTO_UPLOAD_QUEUE_V1';
 var PHOTO_STORE='jobs';
@@ -309,28 +311,73 @@ async function fetchPhotoFile(url){
   photoFileCache.set(key,promise);
   try{return await promise}catch(e){photoFileCache.delete(key);throw e}
 }
-window.yayaPhotoThumbFallback=async function(img){
-  if(!img||img.dataset.yayaFallback==='1')return;
-  img.dataset.yayaFallback='1';
-  var tile=img.closest('.yaya-pic');
-  try{
-    var f=await fetchPhotoFile(img.dataset.photoLink||'');
-    img.onload=function(){if(tile){tile.classList.add('loaded');tile.classList.remove('fallback')}};
-    img.onerror=function(){img.style.display='none';if(tile){tile.classList.add('fallback');tile.classList.remove('loaded')}};
-    img.src=f.url;
-  }catch(e){
-    img.style.display='none';
-    if(tile){tile.classList.add('fallback');tile.classList.remove('loaded')}
+function pumpPhotoThumbFallbackQueue(){
+  while(photoThumbFallbackActive<PHOTO_THUMB_FALLBACK_MAX&&photoThumbFallbackQueue.length){
+    var img=photoThumbFallbackQueue.shift();
+    if(!img||!img.isConnected||img.dataset.yayaFallback==='1')continue;
+    img.dataset.yayaFallback='1';
+    photoThumbFallbackActive++;
+    (async function(target){
+      var tile=target.closest('.yaya-pic');
+      try{
+        var f=await fetchPhotoFile(target.dataset.photoLink||'');
+        if(!target.isConnected)return;
+        target.onload=function(){if(tile){tile.classList.add('loaded');tile.classList.remove('fallback')}};
+        target.onerror=function(){target.style.display='none';if(tile){tile.classList.add('fallback');tile.classList.remove('loaded')}};
+        target.src=f.url;
+      }catch(e){
+        if(target.isConnected){
+          target.style.display='none';
+          if(tile){tile.classList.add('fallback');tile.classList.remove('loaded')}
+        }
+      }finally{
+        photoThumbFallbackActive=Math.max(0,photoThumbFallbackActive-1);
+        pumpPhotoThumbFallbackQueue();
+      }
+    })(img);
   }
+}
+window.yayaPhotoThumbFallback=function(img){
+  if(!img||img.dataset.yayaFallback==='1'||img.dataset.yayaFallbackQueued==='1')return;
+  img.dataset.yayaFallbackQueued='1';
+  photoThumbFallbackQueue.push(img);
+  pumpPhotoThumbFallbackQueue();
 };
+function activatePhotoThumb(img){
+  if(!img||img.dataset.yayaActivated==='1')return;
+  img.dataset.yayaActivated='1';
+  var tile=img.closest('.yaya-pic');
+  img.onload=function(){
+    if(tile){tile.classList.add('loaded');tile.classList.remove('fallback')}
+  };
+  img.onerror=function(){
+    window.yayaPhotoThumbFallback&&window.yayaPhotoThumbFallback(img)
+  };
+  var src=String(img.dataset.src||'');
+  if(src)img.src=src;
+  setTimeout(function(){
+    if(!img.isConnected||img.dataset.yayaFallback==='1')return;
+    if(!img.complete||!img.naturalWidth)window.yayaPhotoThumbFallback&&window.yayaPhotoThumbFallback(img);
+  },6500);
+}
+function ensurePhotoThumbObserver(){
+  if(photoThumbObserver||!('IntersectionObserver' in window))return photoThumbObserver;
+  photoThumbObserver=new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting)return;
+      photoThumbObserver.unobserve(entry.target);
+      activatePhotoThumb(entry.target);
+    });
+  },{rootMargin:'220px 0px',threshold:0.01});
+  return photoThumbObserver;
+}
 function hydratePhotoThumbs(pane){
   if(!pane)return;
+  var observer=ensurePhotoThumbObserver();
   pane.querySelectorAll('.yaya-photo-thumb').forEach(function(img){
-    var tile=img.closest('.yaya-pic');
-    img.onload=function(){if(tile){tile.classList.add('loaded');tile.classList.remove('fallback')}};
-    img.onerror=function(){window.yayaPhotoThumbFallback&&window.yayaPhotoThumbFallback(img)};
-    if(img.complete&&img.naturalWidth>0){img.onload();return}
-    setTimeout(function(){if(!img.isConnected)return;if(!img.complete||!img.naturalWidth)window.yayaPhotoThumbFallback&&window.yayaPhotoThumbFallback(img)},2200);
+    if(img.dataset.yayaActivated==='1')return;
+    if(observer)observer.observe(img);
+    else activatePhotoThumb(img);
   });
 }
 function style(){if(document.getElementById(STYLE))return;var s=document.createElement('style');s.id=STYLE;s.textContent=
@@ -355,26 +402,93 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 '.yaya-pic-wrap{position:relative;min-width:0}.yaya-pic{position:relative;width:100%;display:flex;align-items:center;justify-content:center}.yaya-photo-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;color:#6b7d90;background:#eef2f5}.yaya-pic img{position:relative;z-index:1;opacity:0;transition:opacity .15s ease}.yaya-pic.loaded img{opacity:1}.yaya-pic.loaded .yaya-photo-placeholder{display:none}.yaya-pic.fallback .yaya-photo-placeholder{display:flex}.yaya-photo-delete{position:absolute;z-index:4;top:4px;right:4px;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.92);border-radius:8px;background:rgba(174,31,31,.94);color:#fff;font-size:17px;font-weight:900;line-height:1;box-shadow:0 2px 7px rgba(0,0,0,.22)}.yaya-photo-delete:disabled{opacity:.55}.yaya-photo-view-stage{position:relative;min-height:260px;background:#eef1f4;border:1px solid #d9e1e8;border-radius:8px;overflow:hidden}.yaya-photo-view-error{padding:24px;text-align:center;color:#6b7280;font-size:13px;font-weight:700}'+
 '@media(max-width:560px){.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}';document.head.appendChild(s)}
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
+function photoSignature(list){
+  return (Array.isArray(list)?list:[]).map(function(p){
+    return [String(p&&p.id||''),iso(p&&p.date),String(p&&p.titre||''),String(p&&p.lien||'')].join('|');
+  }).join('¦');
+}
+function photoIndexByChantier(){
+  var out=new Map();
+  docs().forEach(function(d){
+    if(!isPhoto(d))return;
+    var k=String(d.chantierId||'');
+    if(!out.has(k))out.set(k,[]);
+    out.get(k).push(d);
+  });
+  out.forEach(function(list){
+    list.sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))||String(b.id||'').localeCompare(String(a.id||''))});
+  });
+  return out;
+}
 function ensurePane(card,tabs,list){
   var cid=cardId(card),pane=card.querySelector(':scope>.yaya-detail-photos-pane');
-  if(!pane){pane=document.createElement('div');pane.className='yaya-detail-section-node yaya-detail-photos-pane';pane.dataset.section='photos';tabs.insertAdjacentElement('afterend',pane)}
+  if(!pane){
+    pane=document.createElement('div');
+    pane.className='yaya-detail-section-node yaya-detail-photos-pane';
+    pane.dataset.section='photos';
+    tabs.insertAdjacentElement('afterend',pane);
+  }
   list=Array.isArray(list)?list:rows(cid);
   pane.dataset.empty=list.length?'0':'1';
-  if(!list.length){pane.innerHTML='';return pane}
+
+  // Ne construit la galerie que lorsque l'onglet Photos est réellement ouvert.
+  if(String(card.dataset.yayaDetailSection||'')!=='photos')return pane;
+
+  var sig=photoSignature(list);
+  if(pane.dataset.photoSignature===sig){
+    hydratePhotoThumbs(pane);
+    return pane;
+  }
+  pane.dataset.photoSignature=sig;
+
+  if(!list.length){
+    if(pane.childNodes.length)pane.replaceChildren();
+    return pane;
+  }
+
   var groups={};
   list.forEach(function(p){var d=iso(p.date)||'';(groups[d]||(groups[d]=[])).push(p)});
   pane.innerHTML=Object.keys(groups).sort().reverse().map(function(d){
     var a=groups[d],t=groupTitle(a);
     return '<section class="yaya-pg"><div class="yaya-ph"><b class="yaya-pd">'+esc(fr(d))+'</b><span class="yaya-pt">'+esc(t)+'</span><button class="yaya-pe" data-date="'+esc(d)+'">✏️</button></div><div class="yaya-grid">'+a.map(function(p){
-      var image=p.lien?'<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" src="'+esc(thumb(p.lien,500))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="eager" decoding="async">':'<span class="yaya-photo-placeholder" aria-hidden="true">📷</span>';
+      var image=p.lien
+        ? '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" data-src="'+esc(thumb(p.lien,360))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="lazy" decoding="async">'
+        : '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span>';
       return '<button type="button" class="yaya-pic" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo">'+image+'</button>';
     }).join('')+'</div></section>';
   }).join('');
   hydratePhotoThumbs(pane);
-  return pane
+  return pane;
 }
 window.yayaEnsurePhotosPane=ensurePane;window.yayaPhotosForChantier=rows;
-function refresh(){style();document.querySelectorAll('#pane-chantiers .card:has(>.yaya-detail-section-tabs)').forEach(function(card){var tabs=card.querySelector(':scope>.yaya-detail-section-tabs');if(!tabs)return;var cid=cardId(card),a=rows(cid);ensurePane(card,tabs,a);var sm=tabs.querySelector('[data-section="photos"] small');if(sm){sm.textContent=String(a.length);sm.style.display='inline-flex'}var row=card.querySelector(':scope>.yaya-detail-section-action-row[data-section="photos"]');if(row){var box=row.querySelector('.yaya-photo-action-buttons');if(!box){box=document.createElement('span');box.className='yaya-photo-action-buttons';box.innerHTML='<button type="button" class="btnp yaya-photo-camera-action">📷 Prendre une photo</button><button type="button" class="btn2 yaya-photo-import-action">🖼 Importer des photos</button>';row.appendChild(box);box.querySelector('.yaya-photo-camera-action').onclick=function(e){e.preventDefault();e.stopPropagation();pickPhotos(cid,'camera')};box.querySelector('.yaya-photo-import-action').onclick=function(e){e.preventDefault();e.stopPropagation();pickPhotos(cid,'import')}}}})}
+function refresh(){
+  style();
+  var photoIndex=photoIndexByChantier();
+  document.querySelectorAll('#pane-chantiers .card:has(>.yaya-detail-section-tabs)').forEach(function(card){
+    var tabs=card.querySelector(':scope>.yaya-detail-section-tabs');
+    if(!tabs)return;
+    var cid=cardId(card),a=photoIndex.get(String(cid))||[];
+    ensurePane(card,tabs,a);
+    var sm=tabs.querySelector('[data-section="photos"] small');
+    if(sm){
+      var count=String(a.length);
+      if(sm.textContent!==count)sm.textContent=count;
+      sm.style.display='inline-flex';
+    }
+    var row=card.querySelector(':scope>.yaya-detail-section-action-row[data-section="photos"]');
+    if(row){
+      var box=row.querySelector('.yaya-photo-action-buttons');
+      if(!box){
+        box=document.createElement('span');
+        box.className='yaya-photo-action-buttons';
+        box.innerHTML='<button type="button" class="btnp yaya-photo-camera-action">📷 Prendre une photo</button><button type="button" class="btn2 yaya-photo-import-action">🖼 Importer des photos</button>';
+        row.appendChild(box);
+        box.querySelector('.yaya-photo-camera-action').onclick=function(e){e.preventDefault();e.stopPropagation();pickPhotos(cid,'camera')};
+        box.querySelector('.yaya-photo-import-action').onclick=function(e){e.preventDefault();e.stopPropagation();pickPhotos(cid,'import')};
+      }
+    }
+  });
+}
 function readAscii(v,p,n){var o='';for(var i=0;i<n;i++){var c=v.getUint8(p+i);if(!c)break;o+=String.fromCharCode(c)}return o}
 function parseExifDateText(raw){var m=String(raw||'').trim().match(/^(\d{4}):(\d{2}):(\d{2})/);return m?iso(m[1]+'-'+m[2]+'-'+m[3]):''}
 async function exifDate(file){
@@ -620,25 +734,67 @@ async function openPic(p){
   var r=root(),direct=thumb(p.lien,1600);
   r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>'+esc(fr(p.date))+' — '+esc(p.titre||DEF)+'<button class="cl">Fermer</button></h5><div class="yaya-photo-view-stage"><span class="yaya-photo-placeholder">📷</span>'+(direct?'<img class="yaya-photo-view-img" src="'+esc(direct)+'" alt="Photo chantier">':'')+'</div><div class="yaya-pfoot"><button class="btn2 del">Supprimer</button><button class="btn2 dl">Télécharger</button><button class="btnp cl">Fermer</button></div></div></div>';
   r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});
-  var stage=r.querySelector('.yaya-photo-view-stage'),view=stage&&stage.querySelector('img'),del=r.querySelector('.del'),dl=r.querySelector('.dl'),file=null;
+  var stage=r.querySelector('.yaya-photo-view-stage'),view=stage&&stage.querySelector('img'),del=r.querySelector('.del'),dl=r.querySelector('.dl'),file=null,fallbackStarted=false;
+
   if(del)del.onclick=function(){deletePhoto(p,del,true)};
-  if(dl)dl.onclick=function(){var a=document.createElement('a');a.href=file?file.url:download(p.lien);if(file)a.download=file.filename||'photo';else{a.target='_blank';a.rel='noopener'}a.click()};
-  if(view)view.onerror=function(){view.remove();if(stage)stage.innerHTML='<div class="yaya-photo-view-error">Aperçu en cours de récupération…</div>'};
-  try{
+
+  async function loadOriginal(){
+    if(file)return file;
     file=await fetchPhotoFile(p.lien);
-    if(!stage||!stage.isConnected)return;
-    if(file&&file.mimeType&&String(file.mimeType).toLowerCase().indexOf('image/')!==0){
-      close();
-      if(typeof window.voirPiece==='function')window.voirPiece(p.lien);
-      else window.open(p.lien,'_blank','noopener');
-      return;
-    }
-    stage.innerHTML='<img class="yaya-photo-view-img" src="'+esc(file.url)+'" alt="Photo chantier">';
-    var reliable=stage.querySelector('img');
-    reliable.onerror=function(){stage.innerHTML='<div class="yaya-photo-view-error">Cette photo ne peut pas être affichée, mais elle reste téléchargeable.</div>'};
-  }catch(e){
-    if(stage&&stage.isConnected&&!stage.querySelector('img'))stage.innerHTML='<div class="yaya-photo-view-error">Cette photo ne peut pas être affichée, mais elle reste téléchargeable.</div>';
+    return file;
   }
+  async function fallbackToOriginal(){
+    if(fallbackStarted)return;
+    fallbackStarted=true;
+    if(stage&&stage.isConnected)stage.innerHTML='<div class="yaya-photo-view-error">Chargement de la photo…</div>';
+    try{
+      var f=await loadOriginal();
+      if(!stage||!stage.isConnected)return;
+      if(f&&f.mimeType&&String(f.mimeType).toLowerCase().indexOf('image/')!==0){
+        close();
+        if(typeof window.voirPiece==='function')window.voirPiece(p.lien);
+        else window.open(p.lien,'_blank','noopener');
+        return;
+      }
+      stage.innerHTML='<img class="yaya-photo-view-img" src="'+esc(f.url)+'" alt="Photo chantier">';
+    }catch(e){
+      if(stage&&stage.isConnected)stage.innerHTML='<div class="yaya-photo-view-error">Cette photo ne peut pas être affichée, mais elle reste téléchargeable.</div>';
+    }
+  }
+
+  if(view){
+    view.onload=function(){
+      var ph=stage&&stage.querySelector('.yaya-photo-placeholder');
+      if(ph)ph.remove();
+    };
+    view.onerror=function(){fallbackToOriginal()};
+    if(view.complete&&view.naturalWidth>0)view.onload();
+    else setTimeout(function(){
+      if(view&&view.isConnected&&(!view.complete||!view.naturalWidth))fallbackToOriginal();
+    },7000);
+  }else{
+    fallbackToOriginal();
+  }
+
+  if(dl)dl.onclick=async function(){
+    var old=dl.textContent;
+    dl.disabled=true;
+    dl.textContent='Préparation…';
+    try{
+      var f=await loadOriginal(),a=document.createElement('a');
+      a.href=f.url;
+      a.download=f.filename||'photo';
+      a.click();
+    }catch(e){
+      var a=document.createElement('a');
+      a.href=download(p.lien);
+      a.target='_blank';
+      a.rel='noopener';
+      a.click();
+    }finally{
+      if(dl&&dl.isConnected){dl.disabled=false;dl.textContent=old}
+    }
+  };
 }
 function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)});a.forEach(function(p){p.titre=v;queuePhotoUpsert(p)});savePhotoCache();close();refresh();var ok=await commitPhotoPending();toastS(ok?'Titre enregistré et synchronisé ✓':'Titre enregistré localement — synchronisation en attente',!ok)}}
 function photoFromTile(tile){
@@ -672,7 +828,7 @@ document.addEventListener('click',function(e){
   var ed=e.target.closest&&e.target.closest('.yaya-pe[data-date]');
   if(ed){e.preventDefault();e.stopPropagation();var c=ed.closest('.card'),cid=cardId(c),d=ed.dataset.date;editTitle(cid,d,groupTitle(rows(cid).filter(function(p){return iso(p.date)===d})))}
 },true);
-style();refresh();var raf=0,pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(function(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;refresh()})}).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',refresh);
+style();refresh();var refreshTimer=0,pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(function(){if(refreshTimer)return;refreshTimer=setTimeout(function(){refreshTimer=0;refresh()},90)}).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',function(){setTimeout(refresh,30)});
 
 document.addEventListener('click',function(e){
   var tab=e.target.closest&&e.target.closest('[data-section="photos"]');
@@ -684,6 +840,6 @@ document.addEventListener('visibilitychange',function(){if(!document.hidden)setT
 setInterval(function(){
   if(document.hidden)return;
   if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(false);
-},30000);
+},60000);
 setTimeout(function(){processPhotoJobs();if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(true)},1400);
 })();
