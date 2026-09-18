@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V19)return;window.__YAYA_PHOTOS_V19=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v19';
+if(window.__YAYA_PHOTOS_V20)return;window.__YAYA_PHOTOS_V20=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v20';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -35,6 +35,61 @@ var PHOTO_CACHE_KEY='YAYA_CACHE_DATA_V2';
 var PHOTO_BINARY_CACHE='yaya-photo-binary-v1';
 var PHOTO_BINARY_CACHE_MAX=40;
 var photoCommitBusy=false,photoSyncBusy=false,photoJobBusy=false,lastPhotoSyncAt=0;
+var photoUploadState={active:false,batchId:'',total:0,done:0,failed:0,startedAt:0,phase:'',detail:''};
+var photoUploadUiTimer=0,photoUploadHideTimer=0;
+
+function photoElapsed(){
+  if(!photoUploadState.startedAt)return '0 s';
+  return Math.max(0,Math.round((Date.now()-photoUploadState.startedAt)/1000))+' s';
+}
+function ensurePhotoUploadBanner(){
+  var box=document.getElementById('yaya-photo-upload-status');
+  if(box)return box;
+  box=document.createElement('div');
+  box.id='yaya-photo-upload-status';
+  box.className='yaya-photo-upload-status';
+  box.setAttribute('aria-live','polite');
+  document.body.appendChild(box);
+  return box;
+}
+function renderPhotoUploadBanner(){
+  if(!photoUploadState.active)return;
+  var box=ensurePhotoUploadBanner(),total=Math.max(1,Number(photoUploadState.total)||1),done=Math.max(0,Number(photoUploadState.done)||0);
+  var title=photoUploadState.phase==='done'?'Photos enregistrées':'Enregistrement des photos en cours';
+  var sub=photoUploadState.detail||((done)+' / '+total+' photo(s) traitée(s)');
+  var spinner=photoUploadState.phase==='done'?'✓':'<span class="yaya-photo-upload-spinner" aria-hidden="true"></span>';
+  box.innerHTML='<div class="yaya-photo-upload-icon">'+spinner+'</div><div class="yaya-photo-upload-copy"><strong>'+esc(title)+'</strong><span>'+esc(sub)+' • '+esc(photoElapsed())+'</span></div>';
+  box.classList.toggle('done',photoUploadState.phase==='done');
+  box.classList.toggle('error',photoUploadState.phase==='error'||photoUploadState.phase==='waiting');
+}
+function startPhotoUploadStatus(total,batchId){
+  clearTimeout(photoUploadHideTimer);
+  photoUploadState={active:true,batchId:String(batchId||''),total:Number(total)||0,done:0,failed:0,startedAt:Date.now(),phase:'upload',detail:'Upload et enregistrement lancés…'};
+  renderPhotoUploadBanner();
+  clearInterval(photoUploadUiTimer);
+  photoUploadUiTimer=setInterval(renderPhotoUploadBanner,1000);
+}
+function setPhotoUploadStatus(phase,detail,doneDelta,failedDelta){
+  if(!photoUploadState.active)return;
+  photoUploadState.phase=phase||photoUploadState.phase;
+  if(detail!=null)photoUploadState.detail=String(detail);
+  if(doneDelta)photoUploadState.done=Math.min(photoUploadState.total,photoUploadState.done+Number(doneDelta||0));
+  if(failedDelta)photoUploadState.failed+=Number(failedDelta||0);
+  renderPhotoUploadBanner();
+}
+function finishPhotoUploadStatus(ok,detail){
+  if(!photoUploadState.active)return;
+  photoUploadState.phase=ok?'done':'error';
+  photoUploadState.detail=detail||(ok?photoUploadState.total+' photo(s) enregistrée(s)':'Synchronisation en attente');
+  if(ok)photoUploadState.done=photoUploadState.total;
+  renderPhotoUploadBanner();
+  clearInterval(photoUploadUiTimer);
+  photoUploadHideTimer=setTimeout(function(){
+    var box=document.getElementById('yaya-photo-upload-status');
+    if(box)box.remove();
+    photoUploadState.active=false;
+  },ok?3200:7000);
+}
 
 function photoBinaryRequest(url){
   var fid=driveId(url),key=fid||String(url||'').slice(0,500);
@@ -236,13 +291,14 @@ function fileFromJob(job){
   try{return new File([blob],job.name||'photo.jpg',{type:job.type||blob.type||'image/jpeg',lastModified:job.lastModified||Date.now()})}
   catch(e){try{blob.name=job.name||'photo.jpg'}catch(_e){}return blob}
 }
-function localUpsertPhoto(row){
+function localUpsertPhoto(row,doRefresh){
   if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return;
   var i=S.documents.findIndex(function(d){return String(d&&d.id||'')===String(row.id)});
   if(i>=0)S.documents[i]=clonePhoto(row);else S.documents.unshift(clonePhoto(row));
-  savePhotoCache();refresh();
+  savePhotoCache();
+  if(doRefresh!==false)refresh();
 }
-async function enqueuePhotoJobs(cid,batch){
+async function enqueuePhotoJobs(cid,batch,batchId){
   var count=0,seen=new Set();
   for(var i=0;i<batch.length;i++){
     var x=batch[i],f=x&&x.f;if(!f)continue;
@@ -253,7 +309,7 @@ async function enqueuePhotoJobs(cid,batch){
       id:jobId,rowId:rowId,chantierId:String(cid||''),date:iso(x.d)||today(),
       title:groupTitle(rows(cid).filter(function(p){return iso(p.date)===iso(x.d)})),
       name:String(f.name||'photo.jpg'),type:String(f.type||'image/jpeg'),
-      lastModified:Number(f.lastModified||Date.now()),blob:f,link:'',createdAt:Date.now()+i,attempts:0
+      lastModified:Number(f.lastModified||Date.now()),blob:f,link:'',createdAt:Date.now()+i,attempts:0,batchId:String(batchId||'')
     });
     count++;
   }
@@ -263,33 +319,77 @@ async function processPhotoJobs(){
   if(photoJobBusy)return;
   if(typeof S==='undefined'||!S||!Array.isArray(S.documents)||typeof window.apiPost!=='function')return;
   photoJobBusy=true;
+  var retryNeeded=false;
   try{
     var jobs=[];
     try{jobs=await listPhotoJobs()}catch(e){return}
-    for(var i=0;i<jobs.length;i++){
-      var job=jobs[i];
-      if(Number(job.attempts||0)>=4)continue;
+    var eligible=jobs.filter(function(j){return Number(j&&j.attempts||0)<4});
+    if(!eligible.length){
+      if(photoUploadState.active)finishPhotoUploadStatus(false,'Aucune photo en cours — vérifiez la connexion');
+      return;
+    }
+    if(!photoUploadState.active)startPhotoUploadStatus(eligible.length,'');
+
+    var ready=[],currentBatchReady=0,currentBatchFailed=0;
+    for(var i=0;i<eligible.length;i++){
+      var job=eligible[i],isCurrent=!photoUploadState.batchId||String(job.batchId||'')===String(photoUploadState.batchId||'');
       try{
+        if(isCurrent)setPhotoUploadStatus('upload','Upload de la photo '+Math.min(i+1,photoUploadState.total)+' / '+photoUploadState.total+'…');
         if(!job.link){
           var file=fileFromJob(job);if(!file)throw new Error('Photo locale absente');
+          var t0=Date.now();
           job.link=await archive(file);
+          job.uploadMs=Date.now()-t0;
           await putPhotoJob(job);
         }
         var row={id:job.rowId,chantierId:job.chantierId,type:'Photo',titre:job.title||DEF,sujet:job.name||'Photo chantier',date:job.date||today(),lien:job.link};
         queuePhotoUpsert(row);
-        localUpsertPhoto(row);
-        var ok=await commitPhotoPending();
-        if(!ok)break;
-        await deletePhotoJob(job.id);
-        toastS('Photo enregistrée et synchronisée ✓');
+        localUpsertPhoto(row,false);
+        ready.push(job);
+        if(isCurrent)currentBatchReady++;
       }catch(e){
         job.attempts=Number(job.attempts||0)+1;job.lastError=String(e&&e.message||e);job.lastTryAt=Date.now();
         try{await putPhotoJob(job)}catch(_e){}
+        if(isCurrent)currentBatchFailed++;
+        retryNeeded=true;
         console.warn('Yaya Photos — import en attente :',e);
-        toastS('Photo en attente de synchronisation — nouvel essai automatique',true);
       }
     }
-  }finally{photoJobBusy=false}
+
+    if(ready.length){
+      setPhotoUploadStatus('sync','Upload terminé — enregistrement dans Yaya…');
+      var syncStart=Date.now(),ok=await commitPhotoPending(),syncMs=Date.now()-syncStart;
+      if(ok){
+        for(var k=0;k<ready.length;k++){
+          try{await deletePhotoJob(ready[k].id)}catch(_e){}
+        }
+        savePhotoCache();
+        refresh();
+        if(currentBatchReady)setPhotoUploadStatus('sync','Synchronisation terminée ('+Math.max(1,Math.round(syncMs/1000))+' s)',currentBatchReady,0);
+      }else{
+        retryNeeded=true;
+        setPhotoUploadStatus('waiting','Photos envoyées — synchronisation Yaya en attente');
+      }
+    }
+
+    var remaining=[];
+    try{remaining=await listPhotoJobs()}catch(e){}
+    var currentRemaining=photoUploadState.batchId
+      ? remaining.filter(function(j){return String(j&&j.batchId||'')===String(photoUploadState.batchId)})
+      : remaining;
+
+    if(photoUploadState.active){
+      if(!currentRemaining.length&&currentBatchFailed===0){
+        finishPhotoUploadStatus(true,photoUploadState.total+' photo(s) enregistrée(s) — '+photoElapsed());
+      }else if(currentBatchFailed){
+        setPhotoUploadStatus('waiting',currentBatchFailed+' photo(s) en attente — nouvel essai automatique',0,currentBatchFailed);
+        retryNeeded=true;
+      }
+    }
+  }finally{
+    photoJobBusy=false;
+    if(retryNeeded)setTimeout(processPhotoJobs,5000);
+  }
 }
 function photoSyncPulse(force){
   commitPhotoPending().finally(function(){syncPhotosFromServer(!!force).finally(function(){processPhotoJobs()})});
@@ -450,7 +550,9 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 '@media(max-width:760px){.yaya-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:5px}.yaya-pqr{grid-template-columns:50px 1fr}.yaya-pqr input{grid-column:1/-1}.yaya-pframe{height:64vh}.yaya-pfoot{flex-wrap:wrap}.yaya-pfoot button{flex:1 1 95px}.yaya-pfoot .del{margin-right:0}}'+
 '.yaya-pic-wrap{position:relative;min-width:0}.yaya-pic{position:relative;width:100%;display:flex;align-items:center;justify-content:center}.yaya-photo-placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:28px;color:#6b7d90;background:#eef2f5}.yaya-pic img{position:relative;z-index:1;opacity:0;transition:opacity .15s ease}.yaya-pic.loaded img{opacity:1}.yaya-pic.loaded .yaya-photo-placeholder{display:none}.yaya-pic.fallback .yaya-photo-placeholder{display:flex}.yaya-photo-delete{position:absolute;z-index:4;top:4px;right:4px;width:28px;height:28px;padding:0;border:1px solid rgba(255,255,255,.92);border-radius:8px;background:rgba(174,31,31,.94);color:#fff;font-size:17px;font-weight:900;line-height:1;box-shadow:0 2px 7px rgba(0,0,0,.22)}.yaya-photo-delete:disabled{opacity:.55}.yaya-photo-view-stage{position:relative;min-height:260px;background:#eef1f4;border:1px solid #d9e1e8;border-radius:8px;overflow:hidden;touch-action:pan-y}.yaya-photo-view-count{position:absolute;z-index:3;top:10px;right:10px;padding:5px 9px;border-radius:999px;background:rgba(17,24,39,.72);color:#fff;font-size:11px;font-weight:800;line-height:1}.yaya-photo-nav{display:flex;align-items:center;gap:6px}.yaya-photo-nav button{white-space:nowrap}.yaya-photo-view-error{padding:24px;text-align:center;color:#6b7280;font-size:13px;font-weight:700}'+
 '@media(max-width:760px){.yaya-photo-nav{display:none!important}}'+
-'@media(max-width:560px){.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}';document.head.appendChild(s)}
+'.yaya-photo-save-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:18px;text-align:center}.yaya-photo-save-state strong{font-size:16px;color:#173f69}.yaya-photo-save-state span{font-size:12px;color:#617184;max-width:420px}.yaya-photo-save-spinner,.yaya-photo-upload-spinner{display:inline-block;width:30px;height:30px;border:3px solid #cfd8e3;border-top-color:#173f69;border-radius:50%;animation:yayaPhotoSpin .8s linear infinite}@keyframes yayaPhotoSpin{to{transform:rotate(360deg)}}'+
+'.yaya-photo-upload-status{position:fixed;z-index:2147483000;right:14px;bottom:14px;display:flex;align-items:center;gap:10px;min-width:250px;max-width:min(380px,calc(100vw - 28px));padding:11px 13px;border:1px solid #b8c8da;border-radius:12px;background:#fff;box-shadow:0 8px 28px rgba(15,35,60,.18);color:#173f69}.yaya-photo-upload-status.done{border-color:#9bc6a4;background:#f4fbf5;color:#275d35}.yaya-photo-upload-status.error{border-color:#e2b7b7;background:#fff7f7;color:#8a2424}.yaya-photo-upload-icon{width:32px;min-width:32px;text-align:center;font-size:22px;font-weight:900}.yaya-photo-upload-copy{display:flex;flex-direction:column;gap:2px;min-width:0}.yaya-photo-upload-copy strong{font-size:12.5px;line-height:1.2}.yaya-photo-upload-copy span{font-size:11px;line-height:1.25;opacity:.9}.yaya-photo-upload-status .yaya-photo-upload-spinner{width:22px;height:22px;border-width:2px}'+
+'@media(max-width:560px){.yaya-photo-upload-status{left:10px;right:10px;bottom:10px;max-width:none}.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}';document.head.appendChild(s)}
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
 function photoSignature(list){
   return (Array.isArray(list)?list:[]).map(function(p){
@@ -741,20 +843,29 @@ async function openPhotoReview(cid,files,mode){
   sv.onclick=async function(){
     if(sv.disabled)return;
     sv.disabled=true;
-    sv.textContent='Enregistrement lancé…';
-    msg.innerHTML='<strong style="color:#173f69">Enregistrement lancé…</strong>';
-    var batch=q.slice();
+    var batch=q.slice(),batchId='pb_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+
+    // Retour visuel IMMEDIAT : l'opérateur sait que le clic a bien été pris en compte.
+    m.innerHTML='<h5>Enregistrement des photos</h5>'
+      +'<div class="yaya-photo-save-state">'
+      +'<span class="yaya-photo-save-spinner" aria-hidden="true"></span>'
+      +'<strong>Enregistrement lancé</strong>'
+      +'<span class="yaya-photo-save-detail">Préparation et sécurisation de '+batch.length+' photo(s)…</span>'
+      +'</div>';
 
     try{
-      var queued=await enqueuePhotoJobs(cid,batch);
+      var queued=await enqueuePhotoJobs(cid,batch,batchId);
       if(!queued)throw new Error('Aucune photo à enregistrer');
-      msg.innerHTML='<strong style="color:#166534">'+queued+' photo(s) sécurisée(s) localement — synchronisation en cours…</strong>';
-      setTimeout(closeReview,650);
+      startPhotoUploadStatus(queued,batchId);
+      var detail=m.querySelector('.yaya-photo-save-detail');
+      var strong=m.querySelector('.yaya-photo-save-state strong');
+      if(strong)strong.textContent='Upload et enregistrement en cours';
+      if(detail)detail.textContent=queued+' photo(s) sécurisée(s) sur cet appareil. Vous pouvez continuer à travailler.';
+      setTimeout(closeReview,1300);
       setTimeout(processPhotoJobs,0);
     }catch(e){
-      sv.disabled=false;
-      sv.textContent='Enregistrer les photos';
-      msg.innerHTML='<strong style="color:#b42318">Impossible de préparer l’enregistrement.</strong>';
+      m.innerHTML='<h5>Enregistrement des photos</h5><div class="yaya-photo-save-state"><strong style="color:#a32626">Enregistrement impossible</strong><span>'+esc(String(e&&e.message||e))+'</span><button type="button" class="btn2 cl">Fermer</button></div>';
+      var cl=m.querySelector('.cl');if(cl)cl.onclick=closeReview;
       toastS(String(e&&e.message||e),true);
     }
   };
