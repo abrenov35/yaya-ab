@@ -6,7 +6,7 @@ const BLOCK_CLASS='yaya-ab-commandes-direct';
 const REFRESH_ID='yayaRefreshChantierBtn';
 const MANAGE_ID='yayaManageChantierCardBtn';
 const DELETE_CONFIRM_ID='ycnDeleteConfirmPretty';
-const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.css?v=5';
+const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.css?v=6';
 const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=2';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=1';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=3';
@@ -204,5 +204,5 @@ const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserve
 const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
 bodyObserver.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);window.addEventListener('focus',scan);window.addEventListener('yaya:data-refreshed',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.15-compact-commandes';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.16-clear-status-sections';
 })();
