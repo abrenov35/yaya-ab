@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V15)return;window.__YAYA_PHOTOS_V14=true;
+if(window.__YAYA_PHOTOS_V15)return;window.__YAYA_PHOTOS_V15=true;
 var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v15';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
