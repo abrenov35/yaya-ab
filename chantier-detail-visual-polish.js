@@ -11,7 +11,7 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs){
       border:1.5px solid #003D7A!important;
       border-radius:14px!important;
-      padding:8px 10px 10px!important;
+      padding:7px 10px 9px!important;
       box-shadow:0 4px 16px rgba(0,61,122,.12)!important;
       background:#fff!important;
     }
@@ -19,7 +19,7 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
       align-items:center!important;
       gap:9px!important;
-      margin-bottom:3px!important;
+      margin-bottom:2px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top b{
       font-size:16px!important;
@@ -40,10 +40,10 @@
       margin-bottom:4px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
-      min-height:40px!important;
-      height:40px!important;
-      max-height:40px!important;
-      padding:3px 9px!important;
+      min-height:44px!important;
+      height:44px!important;
+      max-height:44px!important;
+      padding:2px 8px!important;
       border:1px solid #d9e1e9!important;
       border-radius:8px!important;
       background:#f8fafc!important;
@@ -61,8 +61,9 @@
       margin:0!important;
       color:#66798d!important;
       opacity:1!important;
-      font-size:8.8px!important;
+      font-size:8px!important;
       font-weight:700!important;
+      line-height:1!important;
       letter-spacing:.05em!important;
       text-align:center!important;
       width:auto!important;
@@ -70,9 +71,9 @@
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
       color:#173452!important;
-      font-size:14.5px!important;
+      font-size:13.5px!important;
       line-height:1!important;
-      font-weight:780!important;
+      font-weight:800!important;
       text-align:center!important;
       width:auto!important;
       flex:0 0 auto!important;
@@ -81,7 +82,7 @@
       margin:0!important;
       color:#6a7c8e!important;
       opacity:1!important;
-      font-size:8.8px!important;
+      font-size:8px!important;
       line-height:1!important;
       text-align:center!important;
       width:auto!important;
