@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V15)return;window.__YAYA_PHOTOS_V15=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v15';
+if(window.__YAYA_PHOTOS_V16)return;window.__YAYA_PHOTOS_V16=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v16';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -26,6 +26,231 @@ function apiUrl(){
   return 'https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
 }
 var photoFileCache=new Map(),heicConverterPromise=null;
+var PHOTO_PENDING_KEY='YAYA_PENDING_PHOTOS_V1';
+var PHOTO_DB='YAYA_PHOTO_UPLOAD_QUEUE_V1';
+var PHOTO_STORE='jobs';
+var PHOTO_CACHE_KEY='YAYA_CACHE_DATA_V2';
+var photoCommitBusy=false,photoSyncBusy=false,photoJobBusy=false,lastPhotoSyncAt=0;
+
+function clonePhoto(v){
+  try{return JSON.parse(JSON.stringify(v));}
+  catch(e){return v&&typeof v==='object'?Object.assign({},v):v}
+}
+function readPhotoPending(){
+  try{
+    var p=JSON.parse(localStorage.getItem(PHOTO_PENDING_KEY)||'{"upserts":{},"deletes":{}}');
+    if(!p||typeof p!=='object')p={};
+    if(!p.upserts||typeof p.upserts!=='object')p.upserts={};
+    if(!p.deletes||typeof p.deletes!=='object')p.deletes={};
+    return p;
+  }catch(e){return {upserts:{},deletes:{}}}
+}
+function writePhotoPending(p){
+  try{
+    if(!p||(!Object.keys(p.upserts||{}).length&&!Object.keys(p.deletes||{}).length))localStorage.removeItem(PHOTO_PENDING_KEY);
+    else localStorage.setItem(PHOTO_PENDING_KEY,JSON.stringify(p));
+  }catch(e){}
+}
+function queuePhotoUpsert(row){
+  if(!row||!row.id)return;
+  var p=readPhotoPending(),key=String(row.id),token=Date.now()+'_'+Math.random().toString(36).slice(2);
+  p.upserts[key]={token:token,doc:clonePhoto(row)};
+  delete p.deletes[key];
+  writePhotoPending(p);
+}
+function queuePhotoDelete(rowId){
+  var key=String(rowId||'');if(!key)return;
+  var p=readPhotoPending(),token=Date.now()+'_'+Math.random().toString(36).slice(2);
+  delete p.upserts[key];
+  p.deletes[key]={token:token};
+  writePhotoPending(p);
+}
+function applyPhotoPending(baseRows,pending){
+  var map=new Map();
+  (Array.isArray(baseRows)?baseRows:[]).forEach(function(d){var k=String(d&&d.id||'');if(k)map.set(k,clonePhoto(d))});
+  Object.keys(pending&&pending.deletes||{}).forEach(function(k){map.delete(String(k))});
+  Object.values(pending&&pending.upserts||{}).forEach(function(item){var d=item&&item.doc,k=String(d&&d.id||'');if(k)map.set(k,clonePhoto(d))});
+  return Array.from(map.values());
+}
+function pendingDocumentRows(){
+  var out=[];
+  try{
+    var p=JSON.parse(localStorage.getItem('YAYA_PENDING_DOCUMENT_UPSERT_V1')||'{"items":{}}');
+    Object.values(p&&p.items||{}).forEach(function(item){if(item&&item.doc&&item.doc.id)out.push(clonePhoto(item.doc))});
+  }catch(e){}
+  return out;
+}
+function mergeRowsById(base,extra){
+  var map=new Map();
+  (Array.isArray(base)?base:[]).forEach(function(d){var k=String(d&&d.id||'');if(k)map.set(k,clonePhoto(d))});
+  (Array.isArray(extra)?extra:[]).forEach(function(d){var k=String(d&&d.id||'');if(k)map.set(k,clonePhoto(d))});
+  return Array.from(map.values());
+}
+function savePhotoCache(){
+  try{
+    var cache=JSON.parse(localStorage.getItem(PHOTO_CACHE_KEY)||'{}')||{};
+    cache.documents=docs().map(clonePhoto);
+    localStorage.setItem(PHOTO_CACHE_KEY,JSON.stringify(cache));
+  }catch(e){}
+}
+async function fetchFreshDocuments(){
+  var api=apiUrl();if(!api)throw new Error('API Yaya indisponible');
+  var sep=api.indexOf('?')>=0?'&':'?';
+  var ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+  var timer=ctrl?setTimeout(function(){try{ctrl.abort()}catch(e){}},15000):0;
+  try{
+    var opts={method:'GET',cache:'no-store'};if(ctrl)opts.signal=ctrl.signal;
+    var r=await fetch(api+sep+'tabs=documents&_yaya_photos='+Date.now(),opts);
+    if(!r.ok)throw new Error('Synchronisation photos HTTP '+r.status);
+    var j=await r.json();
+    if(!j||j.ok!==true||!j.data||!Array.isArray(j.data.documents))throw new Error('Documents serveur indisponibles');
+    return j.data.documents;
+  }finally{if(timer)clearTimeout(timer)}
+}
+async function commitPhotoPending(){
+  if(photoCommitBusy)return false;
+  var snapshot=readPhotoPending();
+  if(!Object.keys(snapshot.upserts).length&&!Object.keys(snapshot.deletes).length)return true;
+  if(typeof window.apiPost!=='function')return false;
+  photoCommitBusy=true;
+  try{
+    var fresh=await fetchFreshDocuments();
+    fresh=mergeRowsById(fresh,pendingDocumentRows());
+    var merged=applyPhotoPending(fresh,snapshot);
+    var ok=await window.apiPost('setDocuments',merged);
+    if(!ok)throw new Error('Écriture photos refusée');
+
+    var latest=readPhotoPending();
+    Object.keys(snapshot.upserts).forEach(function(k){
+      if(latest.upserts[k]&&latest.upserts[k].token===snapshot.upserts[k].token)delete latest.upserts[k];
+    });
+    Object.keys(snapshot.deletes).forEach(function(k){
+      if(latest.deletes[k]&&latest.deletes[k].token===snapshot.deletes[k].token)delete latest.deletes[k];
+    });
+    writePhotoPending(latest);
+
+    if(typeof S!=='undefined'&&S)S.documents=applyPhotoPending(merged,latest);
+    savePhotoCache();
+    lastPhotoSyncAt=Date.now();
+    return true;
+  }catch(e){
+    console.warn('Yaya Photos — synchronisation en attente :',e);
+    return false;
+  }finally{photoCommitBusy=false}
+}
+async function syncPhotosFromServer(force){
+  if(photoSyncBusy)return false;
+  if(!force&&Date.now()-lastPhotoSyncAt<12000)return true;
+  photoSyncBusy=true;
+  try{
+    var fresh=await fetchFreshDocuments(),pending=readPhotoPending();
+    var serverPhotos=fresh.filter(isPhoto);
+    var mergedPhotos=applyPhotoPending(serverPhotos,pending);
+    var localNonPhotos=docs().filter(function(d){return !isPhoto(d)});
+    if(typeof S!=='undefined'&&S)S.documents=mergedPhotos.concat(localNonPhotos);
+    savePhotoCache();
+    lastPhotoSyncAt=Date.now();
+    refresh();
+    return true;
+  }catch(e){
+    console.warn('Yaya Photos — lecture serveur impossible :',e);
+    return false;
+  }finally{photoSyncBusy=false}
+}
+function openPhotoDb(){
+  return new Promise(function(resolve,reject){
+    if(!window.indexedDB){reject(new Error('Stockage local indisponible'));return}
+    var req=indexedDB.open(PHOTO_DB,1);
+    req.onupgradeneeded=function(){var db=req.result;if(!db.objectStoreNames.contains(PHOTO_STORE))db.createObjectStore(PHOTO_STORE,{keyPath:'id'})};
+    req.onsuccess=function(){resolve(req.result)};
+    req.onerror=function(){reject(req.error||new Error('Stockage photo indisponible'))};
+  });
+}
+async function putPhotoJob(job){
+  var db=await openPhotoDb();
+  return new Promise(function(resolve,reject){
+    var tx=db.transaction(PHOTO_STORE,'readwrite');tx.objectStore(PHOTO_STORE).put(job);
+    tx.oncomplete=function(){db.close();resolve(true)};tx.onerror=function(){var e=tx.error;db.close();reject(e)}
+  });
+}
+async function deletePhotoJob(jobId){
+  var db=await openPhotoDb();
+  return new Promise(function(resolve,reject){
+    var tx=db.transaction(PHOTO_STORE,'readwrite');tx.objectStore(PHOTO_STORE).delete(jobId);
+    tx.oncomplete=function(){db.close();resolve(true)};tx.onerror=function(){var e=tx.error;db.close();reject(e)}
+  });
+}
+async function listPhotoJobs(){
+  var db=await openPhotoDb();
+  return new Promise(function(resolve,reject){
+    var tx=db.transaction(PHOTO_STORE,'readonly'),req=tx.objectStore(PHOTO_STORE).getAll();
+    req.onsuccess=function(){var a=Array.isArray(req.result)?req.result:[];db.close();a.sort(function(x,y){return Number(x.createdAt||0)-Number(y.createdAt||0)});resolve(a)};
+    req.onerror=function(){var e=req.error;db.close();reject(e)}
+  });
+}
+function fileFromJob(job){
+  var blob=job&&job.blob;if(!blob)return null;
+  try{return new File([blob],job.name||'photo.jpg',{type:job.type||blob.type||'image/jpeg',lastModified:job.lastModified||Date.now()})}
+  catch(e){try{blob.name=job.name||'photo.jpg'}catch(_e){}return blob}
+}
+function localUpsertPhoto(row){
+  if(typeof S==='undefined'||!S||!Array.isArray(S.documents))return;
+  var i=S.documents.findIndex(function(d){return String(d&&d.id||'')===String(row.id)});
+  if(i>=0)S.documents[i]=clonePhoto(row);else S.documents.unshift(clonePhoto(row));
+  savePhotoCache();refresh();
+}
+async function enqueuePhotoJobs(cid,batch){
+  var count=0,seen=new Set();
+  for(var i=0;i<batch.length;i++){
+    var x=batch[i],f=x&&x.f;if(!f)continue;
+    var fp=[cid,f.name,f.size,f.lastModified,iso(x.d)].join('|');
+    if(seen.has(fp))continue;seen.add(fp);
+    var rowId=id(),jobId='pj_'+rowId;
+    await putPhotoJob({
+      id:jobId,rowId:rowId,chantierId:String(cid||''),date:iso(x.d)||today(),
+      title:groupTitle(rows(cid).filter(function(p){return iso(p.date)===iso(x.d)})),
+      name:String(f.name||'photo.jpg'),type:String(f.type||'image/jpeg'),
+      lastModified:Number(f.lastModified||Date.now()),blob:f,link:'',createdAt:Date.now()+i,attempts:0
+    });
+    count++;
+  }
+  return count;
+}
+async function processPhotoJobs(){
+  if(photoJobBusy)return;
+  if(typeof S==='undefined'||!S||!Array.isArray(S.documents)||typeof window.apiPost!=='function')return;
+  photoJobBusy=true;
+  try{
+    var jobs=[];
+    try{jobs=await listPhotoJobs()}catch(e){return}
+    for(var i=0;i<jobs.length;i++){
+      var job=jobs[i];
+      if(Number(job.attempts||0)>=4)continue;
+      try{
+        if(!job.link){
+          var file=fileFromJob(job);if(!file)throw new Error('Photo locale absente');
+          job.link=await archive(file);
+          await putPhotoJob(job);
+        }
+        var row={id:job.rowId,chantierId:job.chantierId,type:'Photo',titre:job.title||DEF,sujet:job.name||'Photo chantier',date:job.date||today(),lien:job.link};
+        queuePhotoUpsert(row);
+        localUpsertPhoto(row);
+        var ok=await commitPhotoPending();
+        if(!ok)break;
+        await deletePhotoJob(job.id);
+        toastS('Photo enregistrée et synchronisée ✓');
+      }catch(e){
+        job.attempts=Number(job.attempts||0)+1;job.lastError=String(e&&e.message||e);job.lastTryAt=Date.now();
+        try{await putPhotoJob(job)}catch(_e){}
+        console.warn('Yaya Photos — import en attente :',e);
+        toastS('Photo en attente de synchronisation — nouvel essai automatique',true);
+      }
+    }
+  }finally{photoJobBusy=false}
+}
+function photoSyncPulse(force){
+  commitPhotoPending().finally(function(){syncPhotosFromServer(!!force).finally(function(){processPhotoJobs()})});
+}
 function base64Blob(base64,mime){
   var raw=atob(String(base64||'')),bytes=new Uint8Array(raw.length);
   for(var i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
@@ -350,66 +575,23 @@ async function openPhotoReview(cid,files,mode){
 
   sv.onclick=async function(){
     if(sv.disabled)return;
-
     sv.disabled=true;
     sv.textContent='Enregistrement lancé…';
     msg.innerHTML='<strong style="color:#173f69">Enregistrement lancé…</strong>';
-
     var batch=q.slice();
 
-    // Le message reste brièvement visible, puis la modale se ferme.
-    setTimeout(closeReview,650);
-
-    var made=[],errors=0;
-    for(var i=0;i<batch.length;i++){
-      try{
-        var link=await archive(batch[i].f);
-        var d=iso(batch[i].d);
-        var same=rows(cid).filter(function(p){return iso(p.date)===d});
-        made.push({
-          id:id(),
-          chantierId:cid,
-          type:'Photo',
-          titre:groupTitle(same),
-          sujet:batch[i].f.name||'Photo chantier',
-          date:d,
-          lien:link
-        });
-      }catch(e){
-        errors++;
-      }
+    try{
+      var queued=await enqueuePhotoJobs(cid,batch);
+      if(!queued)throw new Error('Aucune photo à enregistrer');
+      msg.innerHTML='<strong style="color:#166534">'+queued+' photo(s) sécurisée(s) localement — synchronisation en cours…</strong>';
+      setTimeout(closeReview,650);
+      setTimeout(processPhotoJobs,0);
+    }catch(e){
+      sv.disabled=false;
+      sv.textContent='Enregistrer les photos';
+      msg.innerHTML='<strong style="color:#b42318">Impossible de préparer l’enregistrement.</strong>';
+      toastS(String(e&&e.message||e),true);
     }
-
-    if(!made.length){
-      toastS('Enregistrement des photos impossible',true);
-      return;
-    }
-
-    var before=docs().slice();
-    S.documents=made.concat(before);
-
-    var ok=false;
-    try{ok=await apiPost('setDocuments',S.documents)}catch(e){}
-
-    if(!ok){
-      S.documents=before;
-      toastS('Enregistrement des photos impossible',true);
-      return;
-    }
-
-    try{render()}catch(e){}
-
-    setTimeout(function(){
-      refresh();
-      document.querySelectorAll('[data-section="photos"]').forEach(function(b){
-        if(cardId(b.closest('.card'))===cid)b.click();
-      });
-    },80);
-
-    toastS(
-      made.length+' photo(s) enregistrée(s) ✓'+(errors?' — '+errors+' erreur(s)':''),
-      !!errors
-    );
   };
 }
 
@@ -420,15 +602,18 @@ function find(idv){return docs().find(function(d){return isPhoto(d)&&String(d.id
 async function deletePhoto(p,button,closeAfter){
   if(!p||!confirm('Supprimer cette photo ?'))return;
   if(button)button.disabled=true;
-  var before=docs().slice(),next=before.filter(function(d){return String(d.id)!==String(p.id)});
-  S.documents=next;
-  var ok=false;
-  try{ok=await apiPost('setDocuments',next)}catch(e){}
-  if(!ok){S.documents=before;if(button)button.disabled=false;toastS('Suppression impossible',true);return}
+  var before=docs().slice();
+  if(typeof S!=='undefined'&&S)S.documents=before.filter(function(d){return String(d.id)!==String(p.id)});
+  queuePhotoDelete(p.id);savePhotoCache();
   if(closeAfter)close();
-  try{render()}catch(e){}
-  setTimeout(refresh,60);
-  toastS('Photo supprimée ✓');
+  refresh();
+  var ok=await commitPhotoPending();
+  if(!ok){
+    toastS('Suppression enregistrée localement — synchronisation en attente',true);
+    if(button)button.disabled=false;
+    return;
+  }
+  toastS('Photo supprimée et synchronisée ✓');
 }
 async function openPic(p){
   if(!p)return;
@@ -442,6 +627,12 @@ async function openPic(p){
   try{
     file=await fetchPhotoFile(p.lien);
     if(!stage||!stage.isConnected)return;
+    if(file&&file.mimeType&&String(file.mimeType).toLowerCase().indexOf('image/')!==0){
+      close();
+      if(typeof window.voirPiece==='function')window.voirPiece(p.lien);
+      else window.open(p.lien,'_blank','noopener');
+      return;
+    }
     stage.innerHTML='<img class="yaya-photo-view-img" src="'+esc(file.url)+'" alt="Photo chantier">';
     var reliable=stage.querySelector('img');
     reliable.onerror=function(){stage.innerHTML='<div class="yaya-photo-view-error">Cette photo ne peut pas être affichée, mais elle reste téléchargeable.</div>'};
@@ -449,7 +640,7 @@ async function openPic(p){
     if(stage&&stage.isConnected&&!stage.querySelector('img'))stage.innerHTML='<div class="yaya-photo-view-error">Cette photo ne peut pas être affichée, mais elle reste téléchargeable.</div>';
   }
 }
-function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)}),old=a.map(function(p){return[p,p.titre]});a.forEach(function(p){p.titre=v});var ok=false;try{ok=await apiPost('setDocuments',S.documents)}catch(e){}if(!ok){old.forEach(function(x){x[0].titre=x[1]});return}close();refresh();toastS('Titre enregistré ✓')}}
+function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)});a.forEach(function(p){p.titre=v;queuePhotoUpsert(p)});savePhotoCache();close();refresh();var ok=await commitPhotoPending();toastS(ok?'Titre enregistré et synchronisé ✓':'Titre enregistré localement — synchronisation en attente',!ok)}}
 function photoFromTile(tile){
   if(!tile)return null;
   var p=find(tile.dataset.id);
@@ -482,4 +673,17 @@ document.addEventListener('click',function(e){
   if(ed){e.preventDefault();e.stopPropagation();var c=ed.closest('.card'),cid=cardId(c),d=ed.dataset.date;editTitle(cid,d,groupTitle(rows(cid).filter(function(p){return iso(p.date)===d})))}
 },true);
 style();refresh();var raf=0,pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(function(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;refresh()})}).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',refresh);
+
+document.addEventListener('click',function(e){
+  var tab=e.target.closest&&e.target.closest('[data-section="photos"]');
+  if(tab)setTimeout(function(){photoSyncPulse(true)},0);
+},true);
+window.addEventListener('focus',function(){setTimeout(function(){photoSyncPulse(true)},250)});
+window.addEventListener('online',function(){setTimeout(function(){photoSyncPulse(true)},250)});
+document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(function(){photoSyncPulse(true)},250)});
+setInterval(function(){
+  if(document.hidden)return;
+  if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(false);
+},30000);
+setTimeout(function(){processPhotoJobs();if(document.querySelector('#pane-chantiers .card[data-yaya-detail-section="photos"]'))photoSyncPulse(true)},1400);
 })();
