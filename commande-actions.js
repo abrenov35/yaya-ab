@@ -215,6 +215,46 @@
       e.preventDefault();
       e.stopPropagation();
       const lien=String(view.dataset.lien||'');
+      const row=view.closest&&view.closest('.yaya-detail-commande-row');
+      const commandeId=String(
+        view.dataset.commandeId||
+        (row&&row.dataset&&row.dataset.commandeId)||
+        ''
+      ).trim();
+
+      function decorateCommandePreview(){
+        if(!commandeId)return false;
+        const head=document.querySelector('#modalRoot .piece-preview-head');
+        if(!head)return false;
+        if(head.querySelector('.yaya-commande-preview-edit'))return true;
+
+        const btn=document.createElement('button');
+        btn.type='button';
+        btn.className='yaya-preview-edit yaya-commande-preview-edit';
+        btn.textContent='Modifier';
+        btn.title='Modifier la commande';
+        btn.setAttribute('aria-label','Modifier la commande');
+        btn.onclick=function(ev){
+          ev.preventDefault();
+          ev.stopPropagation();
+          try{if(typeof closeModal==='function')closeModal();}catch(e){}
+          const commande=findCommande(commandeId);
+          if(commande)openEdit(commande);
+        };
+
+        const deleteBtn=Array.from(head.querySelectorAll('button')).find(function(b){
+          return String(b.textContent||'').trim().toLowerCase()==='supprimer';
+        });
+        const closeBtn=Array.from(head.querySelectorAll('button')).find(function(b){
+          return String(b.textContent||'').trim().toLowerCase()==='fermer';
+        });
+
+        if(deleteBtn)head.insertBefore(btn,deleteBtn);
+        else if(closeBtn)head.insertBefore(btn,closeBtn);
+        else head.appendChild(btn);
+        return true;
+      }
+
       if(lien){
         try{
           if(typeof voirPiece==='function')voirPiece(lien);
@@ -222,6 +262,13 @@
         }catch(err){
           window.open(lien,'_blank','noopener,noreferrer');
         }
+
+        // Le lecteur peut reconstruire son en-tête pendant le chargement du PDF.
+        // Quelques contrôles courts garantissent que le bouton reste présent,
+        // sans observer le DOM en permanence.
+        [0,80,180,400,800,1400,2400].forEach(function(delay){
+          setTimeout(decorateCommandePreview,delay);
+        });
       }
       return;
     }
