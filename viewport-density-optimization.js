@@ -42,8 +42,8 @@ function install(){
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
       min-height:32px!important;
       margin-bottom:0!important;
-      padding-top:5px!important;
-      padding-bottom:5px!important;
+      padding-top:2px!important;
+      padding-bottom:8px!important;
     }
 
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab{
