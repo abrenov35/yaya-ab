@@ -201,24 +201,30 @@
 
 
 /* YAYA_COMMANDES_STATIC_STATUS_SECTIONS_V1 */
-.yaya-cmd-native-root .ycn-groups{display:grid!important;gap:18px!important}
-.yaya-cmd-native-root .ycn-group{display:grid!important;gap:6px!important}
+.yaya-cmd-native-root .ycn-groups{display:grid!important;gap:12px!important}
+.yaya-cmd-native-root .ycn-group{display:grid!important;gap:3px!important}
 .yaya-cmd-native-root .ycn-group-head{
-  min-height:30px!important;padding:0 2px 6px!important;border:0!important;border-radius:0!important;
+  min-height:26px!important;padding:0 2px 3px!important;border:0!important;border-radius:0!important;
   background:transparent!important;box-shadow:none!important;cursor:default!important;color:#17324f!important
 }
-.yaya-cmd-native-root .ycn-group-left{gap:8px!important}
+.yaya-cmd-native-root .ycn-group-left{gap:7px!important}
+.yaya-cmd-native-root .ycn-dot{width:10px!important;height:10px!important;flex-basis:10px!important}
 .yaya-cmd-native-root .ycn-group-left>span:last-child{
-  font-size:13px!important;font-weight:900!important;text-decoration:underline!important;
-  text-decoration-thickness:1px!important;text-underline-offset:4px!important
+  font-size:12.5px!important;font-weight:900!important;text-decoration:underline!important;
+  text-decoration-thickness:1px!important;text-underline-offset:3px!important
 }
-.yaya-cmd-native-root .ycn-group-right{gap:6px!important}
+.yaya-cmd-native-root .ycn-group-right{gap:5px!important}
 .yaya-cmd-native-root .ycn-count{
-  min-width:24px!important;height:21px!important;padding:0 7px!important;border:1px solid #d5dee8!important;
-  background:#f4f6f9!important;color:#53657a!important;font-size:10.5px!important;font-weight:850!important
+  min-width:20px!important;height:20px!important;padding:0 6px!important;border:1px solid #d5dee8!important;
+  background:#f4f6f9!important;color:#53657a!important;font-size:10px!important;font-weight:850!important
 }
 .yaya-cmd-native-root .ycn-group-body,.yaya-cmd-native-root .ycn-group.open .ycn-group-body{
-  display:grid!important;gap:7px!important;padding:0!important
+  display:grid!important;gap:5px!important;padding:0!important
 }
-.yaya-cmd-native-root .ycn-empty{padding:5px 2px 8px!important;color:#8794a6!important}
+.yaya-cmd-native-root .ycn-empty{display:none!important}
+.yaya-cmd-native-root .ycn-row{border-radius:8px!important}
+.yaya-cmd-native-root .ycn-group[data-ycn-group="choice"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-purple)!important}
+.yaya-cmd-native-root .ycn-group[data-ycn-group="todo"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-orange)!important}
+.yaya-cmd-native-root .ycn-group[data-ycn-group="ordered"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-blue)!important}
+.yaya-cmd-native-root .ycn-group[data-ycn-group="received"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-green)!important}
 .yaya-cmd-native-root .ycn-chevron{display:none!important}

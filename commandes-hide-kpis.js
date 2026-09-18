@@ -25,10 +25,28 @@
         box-shadow:none!important;
       }
 
+      /* Lecture "en un coup d'oeil" : plus dense, sans perdre les actions utiles. */
+      .yaya-cmd-native-root .ycn-groups{gap:12px!important;}
+      .yaya-cmd-native-root .ycn-group{gap:3px!important;}
+      .yaya-cmd-native-root .ycn-group-head{min-height:26px!important;padding:0 2px 3px!important;}
+      .yaya-cmd-native-root .ycn-group-left>span:last-child{font-size:12.5px!important;}
+      .yaya-cmd-native-root .ycn-count{min-width:20px!important;height:20px!important;padding:0 6px!important;font-size:10px!important;}
+      .yaya-cmd-native-root .ycn-group-body{gap:5px!important;}
+      .yaya-cmd-native-root .ycn-empty{display:none!important;}
+      .yaya-cmd-native-root .ycn-row{position:relative!important;border-radius:8px!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="choice"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-purple)!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="todo"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-orange)!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="ordered"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-blue)!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="received"] .ycn-row{box-shadow:inset 3px 0 0 var(--ycn-green)!important;}
+      .yaya-cmd-native-root .ycn-row-summary strong{font-size:13px!important;font-weight:900!important;color:#102b48!important;}
+      .yaya-cmd-native-root .ycn-v4-status{height:30px!important;border-radius:7px!important;padding:0 8px!important;font-size:10.8px!important;}
       .yaya-cmd-native-root .ycn-v4-pieces,
       .yaya-cmd-native-root .ycn-v4-url{
-        min-width:92px!important;
-        padding:0 14px!important;
+        height:30px!important;
+        min-width:0!important;
+        padding:0 9px!important;
+        border-radius:7px!important;
+        font-size:10.5px!important;
         background:#e8f3ff!important;
         border-color:#b8d4ef!important;
         color:#205b8f!important;
@@ -41,47 +59,32 @@
         color:#287a46!important;
         opacity:1!important;
       }
-      .yaya-cmd-native-root .ycn-v4-url:disabled{
-        background:#e8f3ff!important;
-        border-color:#b8d4ef!important;
-        color:#205b8f!important;
-        opacity:1!important;
-        cursor:default!important;
-      }
+      .yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important;}
 
       @media(max-width:760px){
         .yaya-cmd-native-root .ycn-row-top{
-          grid-template-columns:minmax(0,1fr) minmax(78px,.72fr) minmax(68px,.62fr)!important;
-          gap:6px!important;
-          padding:8px 10px!important;
+          grid-template-columns:minmax(0,1fr) minmax(64px,.45fr) 36px!important;
+          gap:5px!important;
+          padding:6px 8px!important;
         }
         .yaya-cmd-native-root .ycn-row-summary strong{
           grid-column:1/-1!important;
           width:100%!important;
+          line-height:1.2!important;
         }
-        .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{
-          display:none!important;
-        }
-        .yaya-cmd-native-root .ycn-v4-status{
-          grid-column:1!important;
-          width:100%!important;
-          min-width:0!important;
-        }
-        .yaya-cmd-native-root .ycn-v4-pieces{
-          grid-column:2!important;
-          min-width:0!important;
-          width:100%!important;
-          padding:0 8px!important;
-        }
-        body .yaya-cmd-native-root .ycn-row .ycn-v4-url{
+        .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:none!important;}
+        .yaya-cmd-native-root .ycn-v4-status{grid-column:1!important;width:100%!important;min-width:0!important;}
+        .yaya-cmd-native-root .ycn-v4-pieces{grid-column:2!important;min-width:0!important;width:100%!important;padding:0 7px!important;}
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url:not(:disabled){
           display:inline-flex!important;
           align-items:center!important;
           justify-content:center!important;
           grid-column:3!important;
-          min-width:0!important;
-          width:100%!important;
-          padding:0 8px!important;
+          min-width:36px!important;
+          width:36px!important;
+          padding:0!important;
         }
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url:disabled{display:none!important;}
       }
     `;
     document.head.appendChild(style);
@@ -126,22 +129,27 @@
       const url=top.querySelector('.ycn-v4-url');
 
       if(mobile){
-        top.style.setProperty('grid-template-columns','minmax(0,1fr) minmax(78px,.72fr) minmax(68px,.62fr)','important');
-        top.style.setProperty('gap','6px','important');
-        top.style.setProperty('padding','8px 10px','important');
+        const hasUrl=!!(url&&!url.disabled);
+        top.style.setProperty('grid-template-columns',hasUrl?'minmax(0,1fr) minmax(64px,.45fr) 36px':'minmax(0,1fr) minmax(64px,.45fr)','important');
+        top.style.setProperty('gap','5px','important');
+        top.style.setProperty('padding','6px 8px','important');
         if(product){product.style.setProperty('grid-column','1 / -1','important');product.style.setProperty('width','100%','important');}
         if(supplier)supplier.style.setProperty('display','none','important');
         if(status){status.style.setProperty('grid-column','1','important');status.style.setProperty('width','100%','important');status.style.setProperty('min-width','0','important');}
-        if(pieces){pieces.style.setProperty('grid-column','2','important');pieces.style.setProperty('min-width','0','important');pieces.style.setProperty('width','100%','important');pieces.style.setProperty('padding','0 8px','important');}
+        if(pieces){pieces.style.setProperty('grid-column','2','important');pieces.style.setProperty('min-width','0','important');pieces.style.setProperty('width','100%','important');pieces.style.setProperty('padding','0 7px','important');}
         if(url){
-          url.style.setProperty('display','inline-flex','important');
-          url.style.setProperty('align-items','center','important');
-          url.style.setProperty('justify-content','center','important');
-          url.style.setProperty('grid-column','3','important');
-          url.style.setProperty('min-width','0','important');
-          url.style.setProperty('width','100%','important');
-          url.style.setProperty('padding','0 8px','important');
-          url.style.setProperty('visibility','visible','important');
+          if(hasUrl){
+            url.style.setProperty('display','inline-flex','important');
+            url.style.setProperty('align-items','center','important');
+            url.style.setProperty('justify-content','center','important');
+            url.style.setProperty('grid-column','3','important');
+            url.style.setProperty('min-width','36px','important');
+            url.style.setProperty('width','36px','important');
+            url.style.setProperty('padding','0','important');
+            url.style.setProperty('visibility','visible','important');
+          }else{
+            url.style.setProperty('display','none','important');
+          }
         }
       }else{
         ['grid-template-columns','gap','padding'].forEach(function(p){top.style.removeProperty(p);});
@@ -152,9 +160,25 @@
     });
   }
 
+  function compactActionLabels(){
+    document.querySelectorAll('.yaya-cmd-native-root .ycn-v4-pieces').forEach(function(btn){
+      const m=String(btn.textContent||'').match(/(\d+)/);
+      const n=m?Number(m[1]):0;
+      btn.textContent='📎 '+n;
+      btn.title=n===1?'1 pièce jointe':n+' pièces jointes';
+      btn.setAttribute('aria-label',btn.title);
+    });
+    document.querySelectorAll('.yaya-cmd-native-root .ycn-v4-url').forEach(function(btn){
+      btn.textContent='🔗';
+      btn.title=btn.disabled?'Aucun lien':'Ouvrir le lien';
+      btn.setAttribute('aria-label',btn.title);
+    });
+  }
+
   function refreshUi(){
     renameAddButton(document);
     removeCommandCount();
+    compactActionLabels();
     forcePortraitCommandLayout();
   }
 
