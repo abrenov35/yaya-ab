@@ -9,6 +9,8 @@ const MODAL_ID='ycnIframePiecesV4';
 let currentOrderId='';
 let currentPieceIndex=0;
 let scheduled=false;
+let previewToken=0;
+let pdfJsPromise=null;
 
 function readState(){
   for(const key of CACHE_KEYS){
@@ -22,10 +24,103 @@ function docUrl(d){return String(d?.url_pdf||d?.url||d?.lien||d?.webUrl||d?.oneD
 function orderUrl(o){return String(o?.lien||o?.url||o?.urlCommande||o?.url_commande||o?.lienUrl||o?.lien_url||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||'').trim();}
 function iframeUrl(url){
   url=String(url||'').trim();if(!url)return '';
-  const d=url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
-  if(d)return 'https://drive.google.com/file/d/'+encodeURIComponent(d[1])+'/preview';
   try{const u=new URL(url);if(/(^|\.)dropbox\.com$/i.test(u.hostname)){u.searchParams.delete('dl');u.searchParams.set('raw','1');return u.toString();}}catch(_){ }
   return url;
+}
+function driveId(url){
+  const s=String(url||'').trim();
+  let m=s.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);if(m&&m[1])return m[1];
+  m=s.match(/[?&]id=([^&#]+)/i);return m&&m[1]?decodeURIComponent(m[1]):'';
+}
+function yayaApiUrl(){
+  try{if(typeof API!=='undefined'&&API)return String(API);}catch(_){ }
+  return 'https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
+}
+function ensurePdfJs(){
+  if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);
+  if(pdfJsPromise)return pdfJsPromise;
+  pdfJsPromise=new Promise((resolve,reject)=>{
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+    s.async=true;
+    s.onload=()=>{
+      if(!window.pdfjsLib){reject(new Error('PDF.js indisponible'));return;}
+      try{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}catch(_){ }
+      resolve(window.pdfjsLib);
+    };
+    s.onerror=()=>reject(new Error('Chargement PDF.js impossible'));
+    document.head.appendChild(s);
+  }).catch(err=>{pdfJsPromise=null;throw err;});
+  return pdfJsPromise;
+}
+async function fetchDriveFile(url,id){
+  const r=await fetch(yayaApiUrl(),{
+    method:'POST',
+    cache:'no-store',
+    headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({action:'getDriveFile',data:{url:String(url||''),id:String(id||'')}})
+  });
+  if(!r.ok)throw new Error('API Yaya HTTP '+r.status);
+  const j=await r.json();
+  if(!j||j.ok!==true)throw new Error(String(j&&j.error||'Lecture Drive indisponible'));
+  const data=j.data||{};
+  if(!data.base64)throw new Error('Fichier Drive vide');
+  return data;
+}
+function base64Bytes(base64){
+  const raw=atob(String(base64||'')),out=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+  return out;
+}
+async function renderPdfInStage(stage,data,token){
+  const pdfjs=await ensurePdfJs();
+  if(token!==previewToken||!stage.isConnected)return;
+  const task=pdfjs.getDocument({data:base64Bytes(data.base64),disableWorker:true});
+  const pdf=await task.promise;
+  if(token!==previewToken||!stage.isConnected){try{task.destroy();}catch(_){ }return;}
+  const viewer=document.createElement('div');viewer.className='v4-pdf';
+  stage.replaceChildren(viewer);
+  const width=Math.max(280,stage.clientWidth||900);
+  const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+  for(let n=1;n<=pdf.numPages;n++){
+    if(token!==previewToken||!stage.isConnected)break;
+    const page=await pdf.getPage(n),raw=page.getViewport({scale:1});
+    const cssScale=Math.max(.05,(width-20)/raw.width);
+    const viewport=page.getViewport({scale:cssScale*dpr});
+    const canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.floor(viewport.width));
+    canvas.height=Math.max(1,Math.floor(viewport.height));
+    canvas.style.width=Math.max(1,Math.floor(raw.width*cssScale))+'px';
+    canvas.style.height='auto';
+    viewer.appendChild(canvas);
+    await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+  }
+}
+async function renderDriveInStage(stage,url,id,token){
+  stage.innerHTML='<div class="v4-loading">Chargement du document…</div>';
+  const data=await fetchDriveFile(url,id);
+  if(token!==previewToken||!stage.isConnected)return;
+  const mime=String(data.mimeType||'').toLowerCase();
+  if(mime.startsWith('image/')){
+    const img=document.createElement('img');
+    img.className='v4-image';
+    img.alt=String(data.filename||'Pièce jointe');
+    img.src='data:'+(data.mimeType||'image/jpeg')+';base64,'+data.base64;
+    stage.replaceChildren(img);
+    return;
+  }
+  if(mime==='application/pdf'||/\.pdf$/i.test(String(data.filename||''))){
+    await renderPdfInStage(stage,data,token);
+    return;
+  }
+  throw new Error('Format non prévisualisable');
+}
+function renderExternalInStage(stage,url,title){
+  const iframe=document.createElement('iframe');
+  iframe.src=iframeUrl(url);
+  iframe.title=title;
+  iframe.loading='eager';
+  stage.appendChild(iframe);
 }
 function writeDocuments(next){
   for(const key of CACHE_KEYS){
@@ -67,8 +162,11 @@ function injectStyle(){
     #${MODAL_ID} .v4-view,#${MODAL_ID} .v4-del{min-height:32px;border-radius:7px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
     #${MODAL_ID} .v4-view{border:1px solid #c8d8e8;background:#fff;color:#205f9d;padding:0 11px}#${MODAL_ID} .v4-view.on{background:#eaf4ff;border-color:#90bce6}
     #${MODAL_ID} .v4-del{width:32px;border:1px solid #efc3c3;background:#fff5f5;color:#b42318}
-    #${MODAL_ID} .v4-stage{min-height:0;background:#eef2f6}#${MODAL_ID} iframe{display:block;width:100%;height:100%;border:0;background:#fff}
-    #${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;color:#708095;font-size:13px;font-weight:700}
+    #${MODAL_ID} .v4-stage{min-height:0;overflow:hidden;background:#eef2f6}#${MODAL_ID} iframe{display:block;width:100%;height:100%;border:0;background:#fff}
+    #${MODAL_ID} .v4-pdf{width:100%;height:100%;overflow:auto;padding:8px;box-sizing:border-box;-webkit-overflow-scrolling:touch}
+    #${MODAL_ID} .v4-pdf canvas{display:block;max-width:100%;height:auto!important;margin:0 auto 8px;background:#fff;box-shadow:0 1px 5px rgba(15,23,42,.14)}
+    #${MODAL_ID} .v4-image{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
+    #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
     @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(0,1fr) minmax(125px,.9fr) auto!important}.yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:none!important}.yaya-cmd-native-root .ycn-v4-url{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}}
   `;document.head.appendChild(s);
 }
@@ -79,11 +177,27 @@ function ensureModal(){
   m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><button type="button" class="v4-close">Fermer</button></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);m.querySelector('.v4-close').onclick=closeModal;m.onclick=e=>{if(e.target===m)closeModal();};return m;
 }
-function closeModal(){const m=document.getElementById(MODAL_ID);if(m){m.classList.remove('show');m.setAttribute('aria-hidden','true');const f=m.querySelector('iframe');if(f)f.src='about:blank';}currentOrderId='';}
+function closeModal(){
+  previewToken++;
+  const m=document.getElementById(MODAL_ID);
+  if(m){
+    m.classList.remove('show');
+    m.setAttribute('aria-hidden','true');
+    const f=m.querySelector('iframe');if(f)f.src='about:blank';
+    const stage=m.querySelector('.v4-stage');if(stage)stage.replaceChildren();
+  }
+  currentOrderId='';
+}
 function renderModal(){
-  const m=ensureModal(),tabs=m.querySelector('.v4-tabs'),stage=m.querySelector('.v4-stage'),list=docsFor(currentOrderId);
+  const token=++previewToken;
+  const m=ensureModal(),card=m.querySelector('.v4-card'),tabs=m.querySelector('.v4-tabs'),stage=m.querySelector('.v4-stage'),list=docsFor(currentOrderId);
   tabs.innerHTML='';stage.innerHTML='';
-  if(!list.length){tabs.innerHTML='<span style="font-size:12px;color:#718096">Aucune pièce</span>';stage.innerHTML='<div class="v4-empty">Aucune pièce jointe.</div>';return;}
+  if(!list.length){
+    if(card)card.dataset.yayaDownloadUrl='';
+    tabs.innerHTML='<span style="font-size:12px;color:#718096">Aucune pièce</span>';
+    stage.innerHTML='<div class="v4-empty">Aucune pièce jointe.</div>';
+    return;
+  }
   currentPieceIndex=Math.max(0,Math.min(currentPieceIndex,list.length-1));
   list.forEach((d,i)=>{
     const wrap=document.createElement('span');wrap.className='v4-piece';
@@ -91,9 +205,19 @@ function renderModal(){
     const del=document.createElement('button');del.type='button';del.className='v4-del';del.textContent='×';del.title='Supprimer cette pièce';del.onclick=()=>deletePiece(d);
     wrap.append(view,del);tabs.appendChild(wrap);
   });
-  const d=list[currentPieceIndex],url=docUrl(d);
+  const d=list[currentPieceIndex],url=docUrl(d),title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));
+  if(card)card.dataset.yayaDownloadUrl=url||'';
   if(!url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
-  const iframe=document.createElement('iframe');iframe.src=iframeUrl(url);iframe.title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));iframe.loading='eager';stage.appendChild(iframe);
+  const id=driveId(url);
+  if(id){
+    renderDriveInStage(stage,url,id,token).catch(err=>{
+      if(token!==previewToken||!stage.isConnected)return;
+      console.warn('Yaya Commandes : aperçu Drive indisponible',err);
+      stage.innerHTML='<div class="v4-error">Aperçu impossible pour cette pièce.<br>Utilisez le bouton Télécharger.</div>';
+    });
+    return;
+  }
+  renderExternalInStage(stage,url,title);
 }
 function openModal(id){currentOrderId=String(id||'');currentPieceIndex=0;const m=ensureModal();renderModal();m.classList.add('show');m.setAttribute('aria-hidden','false');}
 function deletePiece(d){
@@ -130,5 +254,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.0-product-supplier-status-pieces-iframe-url';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.1-drive-via-yaya-api';
 })();
