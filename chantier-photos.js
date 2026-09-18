@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V23)return;window.__YAYA_PHOTOS_V23=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v23';
+if(window.__YAYA_PHOTOS_V24)return;window.__YAYA_PHOTOS_V24=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v24';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -959,7 +959,11 @@ async function deletePhoto(p,button,closeAfter){
 function sameEntryPhotos(p){
   if(!p)return [];
   var cid=String(p.chantierId||''),d=iso(p.date);
-  return rows(cid).filter(function(x){return iso(x.date)===d});
+  // Même ordre que les vignettes affichées : gauche -> droite.
+  // Ainsi "précédente" va bien vers la vignette de gauche et "suivante" vers celle de droite.
+  return rows(cid)
+    .filter(function(x){return iso(x.date)===d})
+    .sort(function(a,b){return String(b.id||'').localeCompare(String(a.id||''))});
 }
 async function openPic(p){
   if(!p)return;
