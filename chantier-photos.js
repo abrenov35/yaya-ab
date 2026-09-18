@@ -148,10 +148,20 @@ async function syncPhotosFromServer(force){
     var fresh=await fetchFreshDocuments(),pending=readPhotoPending();
     var serverPhotos=fresh.filter(isPhoto);
     var mergedPhotos=applyPhotoPending(serverPhotos,pending);
+    var currentPhotos=docs().filter(isPhoto);
+    var sortSig=function(a,b){
+      return String(a&&a.id||'').localeCompare(String(b&&b.id||''));
+    };
+    var beforeSig=photoSignature(currentPhotos.slice().sort(sortSig));
+    var afterSig=photoSignature(mergedPhotos.slice().sort(sortSig));
+    lastPhotoSyncAt=Date.now();
+
+    // Si rien n'a changé côté serveur, ne reconstruit ni le cache ni l'interface.
+    if(beforeSig===afterSig)return true;
+
     var localNonPhotos=docs().filter(function(d){return !isPhoto(d)});
     if(typeof S!=='undefined'&&S)S.documents=mergedPhotos.concat(localNonPhotos);
     savePhotoCache();
-    lastPhotoSyncAt=Date.now();
     refresh();
     return true;
   }catch(e){
