@@ -20,7 +20,7 @@ function installStyle(){
     /* Bloc 1 : nom chantier + bouton gérer chantier */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
       position:sticky!important;
-      top:var(--yaya-sticky-base,72px)!important;
+      top:var(--yaya-sticky-base,0px)!important;
       z-index:44!important;
       background:#fff!important;
       padding-top:0!important;
@@ -30,7 +30,7 @@ function installStyle(){
     /* Bloc 1 : KPI */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
       position:sticky!important;
-      top:calc(var(--yaya-sticky-base,72px) + var(--yaya-sticky-top-h,52px))!important;
+      top:calc(var(--yaya-sticky-base,0px) + var(--yaya-sticky-top-h,52px))!important;
       z-index:43!important;
       background:#fff!important;
       padding-top:2px!important;
@@ -42,7 +42,7 @@ function installStyle(){
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
       position:sticky!important;
       top:calc(
-        var(--yaya-sticky-base,72px)
+        var(--yaya-sticky-base,0px)
         + var(--yaya-sticky-top-h,52px)
         + var(--yaya-sticky-kpis-h,92px)
       )!important;
@@ -59,7 +59,7 @@ function installStyle(){
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row{
       position:sticky!important;
       top:calc(
-        var(--yaya-sticky-base,72px)
+        var(--yaya-sticky-base,0px)
         + var(--yaya-sticky-top-h,52px)
         + var(--yaya-sticky-kpis-h,92px)
         + var(--yaya-sticky-tabs-h,50px)
@@ -81,12 +81,6 @@ function installStyle(){
 }
 
 function headerBase(){
-  const hdr=document.querySelector('.hdr');
-  if(!hdr)return 0;
-  const cs=getComputedStyle(hdr);
-  if(cs.position==='fixed'||cs.position==='sticky'){
-    return Math.ceil(hdr.getBoundingClientRect().height||0);
-  }
   return 0;
 }
 
