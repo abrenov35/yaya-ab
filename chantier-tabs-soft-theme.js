@@ -11,8 +11,8 @@
       display:flex!important;
       align-items:center!important;
       gap:8px!important;
-      margin:0 0 16px!important;
-      padding:0!important;
+      margin:0!important;
+      padding:5px 0!important;
       border-bottom:none!important;
       overflow-x:auto!important;
       scrollbar-width:none!important;
