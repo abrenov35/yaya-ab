@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V17)return;window.__YAYA_PHOTOS_V17=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v17';
+if(window.__YAYA_PHOTOS_V18)return;window.__YAYA_PHOTOS_V18=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v18';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -32,7 +32,38 @@ var PHOTO_PENDING_KEY='YAYA_PENDING_PHOTOS_V1';
 var PHOTO_DB='YAYA_PHOTO_UPLOAD_QUEUE_V1';
 var PHOTO_STORE='jobs';
 var PHOTO_CACHE_KEY='YAYA_CACHE_DATA_V2';
+var PHOTO_BINARY_CACHE='yaya-photo-binary-v1';
+var PHOTO_BINARY_CACHE_MAX=40;
 var photoCommitBusy=false,photoSyncBusy=false,photoJobBusy=false,lastPhotoSyncAt=0;
+
+function photoBinaryRequest(url){
+  var fid=driveId(url),key=fid||String(url||'').slice(0,500);
+  return new Request(location.origin+'/__yaya_photo_cache__/'+encodeURIComponent(key));
+}
+async function readPhotoBinaryCache(url){
+  if(!('caches' in window)||!url)return null;
+  try{
+    var cache=await caches.open(PHOTO_BINARY_CACHE);
+    var response=await cache.match(photoBinaryRequest(url));
+    if(!response)return null;
+    var blob=await response.blob();
+    if(!blob||!blob.size)return null;
+    return {blob:blob,mimeType:response.headers.get('Content-Type')||blob.type||'image/jpeg',filename:response.headers.get('X-Yaya-Filename')||'photo'};
+  }catch(e){return null}
+}
+async function storePhotoBinaryCache(url,blob,filename,mimeType){
+  if(!('caches' in window)||!url||!blob||!blob.size)return false;
+  try{
+    var cache=await caches.open(PHOTO_BINARY_CACHE);
+    await cache.put(photoBinaryRequest(url),new Response(blob,{headers:{'Content-Type':mimeType||blob.type||'image/jpeg','X-Yaya-Filename':String(filename||'photo'),'X-Yaya-Cached-At':String(Date.now())}}));
+    var keys=await cache.keys();
+    while(keys.length>PHOTO_BINARY_CACHE_MAX){await cache.delete(keys.shift())}
+    return true;
+  }catch(e){return false}
+}
+function photoBinaryResult(cached){
+  return {url:URL.createObjectURL(cached.blob),filename:cached.filename,mimeType:cached.mimeType};
+}
 
 function clonePhoto(v){
   try{return JSON.parse(JSON.stringify(v));}
@@ -297,6 +328,8 @@ async function fetchPhotoFile(url){
   if(!key)throw new Error('Lien photo manquant');
   if(photoFileCache.has(key))return photoFileCache.get(key);
   var promise=(async function(){
+    var cached=await readPhotoBinaryCache(key);
+    if(cached)return photoBinaryResult(cached);
     var api=apiUrl(),fid=driveId(key),ctrl=typeof AbortController!=='undefined'?new AbortController():null;
     if(!api||!fid)throw new Error('Lecture photo indisponible');
     var timer=ctrl?setTimeout(function(){try{ctrl.abort()}catch(e){}},20000):0;
@@ -312,6 +345,7 @@ async function fetchPhotoFile(url){
       var mime=String(d.mimeType||'image/jpeg'),filename=String(d.filename||'photo');
       var blob=base64Blob(d.base64,mime);
       if(isHeic(blob,filename)){blob=await convertHeicBlob(blob);mime='image/jpeg';filename=filename.replace(/\.(?:heic|heif)$/i,'')+'.jpg'}
+      await storePhotoBinaryCache(key,blob,filename,mime);
       return {url:URL.createObjectURL(blob),filename:filename,mimeType:mime};
     }catch(e){
       if(e&&e.name==='AbortError')throw new Error('Lecture photo trop longue');
@@ -363,8 +397,13 @@ function activatePhotoThumb(img){
   img.onerror=function(){
     window.yayaPhotoThumbFallback&&window.yayaPhotoThumbFallback(img)
   };
-  var src=String(img.dataset.src||'');
-  if(src)img.src=src;
+  var src=String(img.dataset.src||''),photoLink=String(img.dataset.photoLink||'');
+  (async function(){
+    var cached=await readPhotoBinaryCache(photoLink);
+    if(!img.isConnected)return;
+    if(cached){img.src=URL.createObjectURL(cached.blob);return}
+    if(src)img.src=src;
+  })();
   setTimeout(function(){
     if(!img.isConnected||img.dataset.yayaFallback==='1')return;
     if(!img.complete||!img.naturalWidth)window.yayaPhotoThumbFallback&&window.yayaPhotoThumbFallback(img);
@@ -597,6 +636,7 @@ async function archive(file){
     if(!j.ok)throw new Error(j.error||'Import impossible');
     var x=j.data||{},link=String(x.lienDrive||x.lien||'');
     if(!link)throw new Error(x.archiveErreur||'Photo non archivée');
+    if(!isHeic(file,file.name))await storePhotoBinaryCache(link,file,file.name,file.type||'image/jpeg');
     return link;
   }catch(e){
     if(e&&e.name==='AbortError')throw new Error('Import trop long — vérifiez la connexion');
