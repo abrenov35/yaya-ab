@@ -1,9 +1,9 @@
 (function(){
 'use strict';
-if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V4)return;
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V4=true;
+if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V5)return;
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V5=true;
 
-const STYLE_ID='yaya-chantier-three-block-viewport-v4';
+const STYLE_ID='yaya-chantier-three-block-viewport-v5';
 const PAGE_SIZE=12;
 let activeCard=null;
 let activeKey='';
@@ -107,7 +107,18 @@ function stickyTop(){
 function activeScope(card){
   if(!card)return null;
   const section=sectionKey(card);
-  let scope=card.querySelector(':scope > .yaya-detail-section-node[data-section="'+CSS.escape(section)+'"]');
+
+  // IMPORTANT : ne jamais prendre le bandeau d'actions comme bloc 3.
+  // Il porte lui aussi data-section, donc querySelector() renvoyait ce bandeau
+  // et la pagination comptait 0 ligne. On cible explicitement le vrai pane contenu.
+  let candidates=[...card.querySelectorAll(
+    ':scope > .yaya-detail-section-node[data-section="'+CSS.escape(section)+'"]:not(.yaya-detail-section-action-row):not(.yaya-detail-empty-pane)'
+  )];
+
+  let scope=candidates.find(function(el){
+    return ROW_SELECTORS.some(function(sel){return !!el.querySelector(sel);});
+  }) || candidates[0] || null;
+
   if(!scope&&section==='commandes'){
     scope=card.querySelector(':scope > .yaya-ab-commandes-direct, :scope > .yaya-detail-commandes-pane');
   }
@@ -288,5 +299,5 @@ setTimeout(schedule,0);
 setTimeout(schedule,250);
 setTimeout(schedule,800);
 
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='4.0-visible-pages-12';
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='5.0-visible-pages-12-fixed-scope';
 })();
