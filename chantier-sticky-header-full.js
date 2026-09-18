@@ -1,116 +1,142 @@
 (function(){
 'use strict';
-if(window.__YAYA_CHANTIER_STICKY_OPTION1_V3)return;
-window.__YAYA_CHANTIER_STICKY_OPTION1_V3=true;
+if(window.__YAYA_CHANTIER_STICKY_FULL_V1)return;
+window.__YAYA_CHANTIER_STICKY_FULL_V1=true;
 
-const STYLE_ID='yaya-chantier-sticky-option1-v3';
+const STYLE_ID='yaya-chantier-sticky-full-v1';
 
 function installStyle(){
-  ['yaya-chantier-sticky-full-v1','yaya-chantier-sticky-option1-v2'].forEach(function(id){
-    const n=document.getElementById(id);if(n)n.remove();
-  });
   if(document.getElementById(STYLE_ID))return;
   const s=document.createElement('style');
   s.id=STYLE_ID;
   s.textContent=`
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs){overflow:visible!important}
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top,
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
-      position:relative!important;top:auto!important;z-index:auto!important
+    /* Fiche chantier : partie haute complète figée.
+       Le scroll reste celui de la page, aucun scroll interne ni saut automatique. */
+
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs){
+      overflow:visible!important;
     }
-    #pane-chantiers .card.yaya-achats-sticky-active > .yaya-detail-section-tabs{
+
+    /* Bloc 1 : nom chantier + bouton gérer chantier */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
       position:sticky!important;
-      z-index:80!important;
+      top:var(--yaya-sticky-base,0px)!important;
+      z-index:44!important;
       background:#fff!important;
+      padding-top:0!important;
       margin-bottom:0!important;
-      box-shadow:0 5px 12px rgba(22,45,73,.10)!important
     }
-    #pane-chantiers .card.yaya-achats-sticky-active > .yaya-detail-section-action-row[data-section="depenses"]{
+
+    /* Bloc 1 : KPI */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
       position:sticky!important;
-      z-index:79!important;
+      top:calc(var(--yaya-sticky-base,0px) + var(--yaya-sticky-top-h,52px))!important;
+      z-index:43!important;
+      background:#fff!important;
+      padding-top:0!important;
+      padding-bottom:0!important;
+      margin-bottom:8px!important;
+    }
+
+    /* Bloc 2 : onglets */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
+      position:sticky!important;
+      top:calc(
+        var(--yaya-sticky-base,0px)
+        + var(--yaya-sticky-top-h,52px)
+        + var(--yaya-sticky-kpis-h,92px)
+      )!important;
+      z-index:42!important;
+      background:#fff!important;
+      padding-top:0!important;
+      padding-bottom:0!important;
+      margin-top:0!important;
+      margin-bottom:8px!important;
+      box-shadow:0 5px 10px rgba(22,45,73,.06)!important;
+    }
+
+    /* Bloc 2 : bandeau rubrique active + actions */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row{
+      position:sticky!important;
+      top:calc(
+        var(--yaya-sticky-base,0px)
+        + var(--yaya-sticky-top-h,52px)
+        + var(--yaya-sticky-kpis-h,92px)
+        + var(--yaya-sticky-tabs-h,50px)
+      )!important;
+      z-index:41!important;
       background:#fff!important;
       margin-top:0!important;
-      box-shadow:0 5px 10px rgba(22,45,73,.06)!important
+      margin-bottom:8px!important;
+      box-shadow:0 5px 10px rgba(22,45,73,.04)!important;
     }
-    #pane-chantiers .card:not(.yaya-achats-sticky-active) > .yaya-detail-section-tabs,
-    #pane-chantiers .card:not(.yaya-achats-sticky-active) > .yaya-detail-section-action-row{
-      position:relative!important;top:auto!important
+
+    /* Le contenu défile naturellement sous la zone figée. */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-node:not(.yaya-detail-section-action-row){
+      overflow:visible!important;
+      max-height:none!important;
     }
   `;
   document.head.appendChild(s);
 }
 
-function headerHeight(){
-  const h=document.querySelector('.hdr');
-  if(!h)return 0;
-  const cs=getComputedStyle(h);
-  if(cs.position!=='sticky'&&cs.position!=='fixed')return 0;
-  return Math.max(0,Math.ceil(h.getBoundingClientRect().height||0));
-}
-
-function isAchats(card){
-  if(!card)return false;
-  const state=String(card.dataset.yayaDetailSection||'').toLowerCase();
-  if(state==='depenses'||state==='achats')return true;
-  const on=card.querySelector(':scope > .yaya-detail-section-tabs .yaya-detail-section-tab.on');
-  const txt=String(on&&on.textContent||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  return txt.includes('achat')||txt.includes('depense');
-}
-
-function applyCard(card){
-  if(!card)return;
-  const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
-  const action=card.querySelector(':scope > .yaya-detail-section-action-row[data-section="depenses"]');
-  const active=isAchats(card);
-
-  card.classList.toggle('yaya-achats-sticky-active',active);
-
-  if(!tabs)return;
-  if(!active){
-    tabs.style.removeProperty('top');
-    if(action)action.style.removeProperty('top');
-    return;
-  }
-
-  const base=headerHeight();
-  const tabsH=Math.max(34,Math.ceil(tabs.getBoundingClientRect().height||0));
-  tabs.style.setProperty('top',base+'px','important');
-  if(action)action.style.setProperty('top',(base+tabsH)+'px','important');
+function headerBase(){
+  return 0;
 }
 
 function sync(){
   installStyle();
-  document.querySelectorAll('#pane-chantiers .card:has(> .yaya-detail-section-tabs)').forEach(applyCard);
+  const card=document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');
+  if(!card)return;
+
+  const top=card.querySelector(':scope > .top');
+  const kpis=card.querySelector(':scope > .kpis');
+  const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
+
+  const base=Math.max(0,headerBase());
+  const topH=top?Math.ceil(top.getBoundingClientRect().height||0):0;
+  const kpisH=kpis?Math.ceil(kpis.getBoundingClientRect().height||0):0;
+  const tabsH=tabs?Math.ceil(tabs.getBoundingClientRect().height||0):0;
+
+  card.style.setProperty('--yaya-sticky-base',base+'px');
+  card.style.setProperty('--yaya-sticky-top-h',topH+'px');
+  card.style.setProperty('--yaya-sticky-kpis-h',kpisH+'px');
+  card.style.setProperty('--yaya-sticky-tabs-h',tabsH+'px');
 }
 
 let raf=0;
-function schedule(delay){
-  if(delay){setTimeout(function(){schedule(0)},delay);return;}
+function schedule(){
   if(raf)return;
-  raf=requestAnimationFrame(function(){raf=0;sync();});
+  raf=requestAnimationFrame(function(){
+    raf=0;
+    sync();
+  });
 }
 
 installStyle();
-schedule();
-window.addEventListener('resize',function(){schedule();},{passive:true});
-window.addEventListener('orientationchange',function(){schedule(100);},{passive:true});
-window.addEventListener('yaya:data-refreshed',function(){schedule(30);},{passive:true});
-document.addEventListener('click',function(e){
-  if(e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab')){
-    schedule(0);schedule(50);schedule(180);
-  }
-},true);
+sync();
+
+window.addEventListener('resize',schedule,{passive:true});
+window.addEventListener('orientationchange',function(){
+  setTimeout(schedule,80);
+  setTimeout(schedule,300);
+},{passive:true});
+window.addEventListener('yaya:data-refreshed',schedule,{passive:true});
+document.addEventListener('click',function(){setTimeout(schedule,30)},true);
 
 const pane=document.getElementById('pane-chantiers');
 if(pane){
-  new MutationObserver(function(records){
-    for(const r of records){
-      if(r.type==='attributes'||(r.addedNodes&&r.addedNodes.length)){schedule();break;}
-    }
-  }).observe(pane,{childList:true,subtree:true,attributes:true,attributeFilter:['data-yaya-detail-section','class']});
+  new MutationObserver(schedule).observe(pane,{
+    childList:true,
+    subtree:true,
+    attributes:true,
+    attributeFilter:['data-yaya-detail-section']
+  });
 }
 
-setTimeout(sync,100);
-setTimeout(sync,500);
-window.__YAYA_CHANTIER_STICKY_OPTION1_VERSION='3.0';
+setTimeout(schedule,0);
+setTimeout(schedule,250);
+setTimeout(schedule,800);
+
+window.__YAYA_CHANTIER_STICKY_FULL_VERSION='1.0';
 })();
