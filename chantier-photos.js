@@ -1,7 +1,7 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V9)return;window.__YAYA_PHOTOS_V9=true;
-var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v9';
+if(window.__YAYA_PHOTOS_V10)return;window.__YAYA_PHOTOS_V10=true;
+var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v10';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function iso(v){var m=String(v||'').match(/^(\d{4})-(\d{2})-(\d{2})/);return m?m[1]+'-'+m[2]+'-'+m[3]:''}
@@ -41,7 +41,7 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
 function ensurePane(card,tabs,list){var cid=cardId(card),pane=card.querySelector(':scope>.yaya-detail-photos-pane');if(!pane){pane=document.createElement('div');pane.className='yaya-detail-section-node yaya-detail-photos-pane';pane.dataset.section='photos';tabs.insertAdjacentElement('afterend',pane)}list=Array.isArray(list)?list:rows(cid);pane.dataset.empty=list.length?'0':'1';if(!list.length){pane.innerHTML='';return pane}var groups={};list.forEach(function(p){var d=iso(p.date)||'';(groups[d]||(groups[d]=[])).push(p)});pane.innerHTML=Object.keys(groups).sort().reverse().map(function(d){var a=groups[d],t=groupTitle(a);return '<section class="yaya-pg"><div class="yaya-ph"><b class="yaya-pd">'+esc(fr(d))+'</b><span class="yaya-pt">'+esc(t)+'</span><button class="yaya-pe" data-date="'+esc(d)+'">✏️</button></div><div class="yaya-grid">'+a.map(function(p){return '<button class="yaya-pic" data-id="'+esc(p.id)+'">'+(p.lien?'<img src="'+esc(thumb(p.lien))+'" alt="Photo" loading="lazy">':'📷')+'</button>'}).join('')+'</div></section>'}).join('');return pane}
 window.yayaEnsurePhotosPane=ensurePane;window.yayaPhotosForChantier=rows;
-function refresh(){style();document.querySelectorAll('#pane-chantiers .card:has(>.yaya-detail-section-tabs)').forEach(function(card){var tabs=card.querySelector(':scope>.yaya-detail-section-tabs');if(!tabs)return;var cid=cardId(card),a=rows(cid);ensurePane(card,tabs,a);var sm=tabs.querySelector('[data-section="photos"] small');if(sm){sm.textContent=String(a.length);sm.style.display='inline-flex'}var row=card.querySelector(':scope>.yaya-detail-section-action-row[data-section="photos"]');if(row){var box=row.querySelector('.yaya-photo-action-buttons');if(!box){box=document.createElement('span');box.className='yaya-photo-action-buttons';box.innerHTML='<button type="button" class="btnp yaya-photo-camera-action">📷 Prendre une photo</button><button type="button" class="btn2 yaya-photo-import-action">🖼 Importer des photos</button>';row.appendChild(box);box.querySelector('.yaya-photo-camera-action').onclick=function(e){e.preventDefault();e.stopPropagation();openAdd(cid,'camera')};box.querySelector('.yaya-photo-import-action').onclick=function(e){e.preventDefault();e.stopPropagation();openAdd(cid,'import')}}}})}
+function refresh(){style();document.querySelectorAll('#pane-chantiers .card:has(>.yaya-detail-section-tabs)').forEach(function(card){var tabs=card.querySelector(':scope>.yaya-detail-section-tabs');if(!tabs)return;var cid=cardId(card),a=rows(cid);ensurePane(card,tabs,a);var sm=tabs.querySelector('[data-section="photos"] small');if(sm){sm.textContent=String(a.length);sm.style.display='inline-flex'}var row=card.querySelector(':scope>.yaya-detail-section-action-row[data-section="photos"]');if(row){var box=row.querySelector('.yaya-photo-action-buttons');if(!box){box=document.createElement('span');box.className='yaya-photo-action-buttons';box.innerHTML='<button type="button" class="btnp yaya-photo-camera-action">📷 Prendre une photo</button><button type="button" class="btn2 yaya-photo-import-action">🖼 Importer des photos</button>';row.appendChild(box);box.querySelector('.yaya-photo-camera-action').onclick=function(e){e.preventDefault();e.stopPropagation();pickPhotos(cid,'camera')};box.querySelector('.yaya-photo-import-action').onclick=function(e){e.preventDefault();e.stopPropagation();pickPhotos(cid,'import')}}}})}
 function readAscii(v,p,n){var o='';for(var i=0;i<n;i++){var c=v.getUint8(p+i);if(!c)break;o+=String.fromCharCode(c)}return o}
 function parseExifDateText(raw){var m=String(raw||'').trim().match(/^(\d{4}):(\d{2}):(\d{2})/);return m?iso(m[1]+'-'+m[2]+'-'+m[3]):''}
 async function exifDate(file){
@@ -105,8 +105,171 @@ async function exifDate(file){
 function base64(file){return new Promise(function(ok,no){var r=new FileReader();r.onerror=no;r.onload=function(){ok(String(r.result||'').split(',')[1]||'')};r.readAsDataURL(file)})}
 async function resize(file){if(file.size<=MAX)return file;var u=URL.createObjectURL(file);try{var img=await new Promise(function(ok,no){var i=new Image();i.onload=function(){ok(i)};i.onerror=no;i.src=u}),r=Math.min(1,1800/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*r);c.height=Math.round(img.height*r);c.getContext('2d').drawImage(img,0,0,c.width,c.height);var blob=await new Promise(function(ok){c.toBlob(ok,'image/jpeg',.84)});return blob?new File([blob],String(file.name||'photo').replace(/\.[^.]+$/,'')+'.jpg',{type:'image/jpeg'}):file}catch(e){return file}finally{URL.revokeObjectURL(u)}}
 async function archive(file){var api='';try{api=String(API||'')}catch(e){}if(!api)throw new Error('API Yaya indisponible');file=await resize(file);if(file.size>MAX)throw new Error('Photo trop lourde');var b=await base64(file),r=await fetch(api,{method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'image/jpeg',base64:b}})}),j=await r.json();if(!j.ok)throw new Error(j.error||'Import impossible');var x=j.data||{},link=String(x.lienDrive||x.lien||'');if(!link)throw new Error(x.archiveErreur||'Photo non archivée');return link}
-function openAdd(cid,mode){cid=String(cid||'');var r=root();if(!r)return;var q=[],urls=[];r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal yaya-pa"><h5>Ajouter des photos<button class="cl">Fermer</button></h5><div class="note">Classement par date réelle de la photo. Si la date n’est pas récupérée, renseignez-la avant Enregistrer.</div><div class="yaya-pactions"><button class="btnp cam">📷 Prendre une photo</button><button class="btn2 imp">🖼 Importer des photos</button></div><input class="ci" type="file" accept="image/*" capture="environment" hidden><input class="ii" type="file" accept="image/*" multiple hidden><div class="yaya-pq"></div><div class="msg note"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv" disabled>Enregistrer les photos</button></div></div></div>';var m=r.querySelector('.yaya-pa'),qe=m.querySelector('.yaya-pq'),sv=m.querySelector('.sv'),msg=m.querySelector('.msg'),ci=m.querySelector('.ci'),ii=m.querySelector('.ii');function clean(){urls.forEach(function(u){URL.revokeObjectURL(u)});close()}function draw(){qe.innerHTML=q.map(function(x,i){return '<div class="yaya-pqr"><img src="'+esc(x.u)+'"><div><b>'+esc(x.f.name)+'</b><div class="note">'+(x.d?'Date proposée':'Date à renseigner')+'</div></div><input type="date" data-i="'+i+'" value="'+esc(x.d)+'"></div>'}).join('');sv.disabled=!q.length||q.some(function(x){return !iso(x.d)})}async function add(fs,cam){for(var f of Array.from(fs||[])){if(!String(f.type||'').startsWith('image/'))continue;var exif=cam?'':await exifDate(f),d=cam?today():(exif||today()),u=URL.createObjectURL(f);urls.push(u);q.push({f:f,d:d,u:u})}draw()}m.querySelector('.cam').onclick=function(){ci.click()};m.querySelector('.imp').onclick=function(){ii.click()};m.querySelectorAll('.cl').forEach(function(b){b.onclick=clean});if(mode==='camera')ci.click();else if(mode==='import')ii.click();ci.onchange=async function(){await add(this.files,true);this.value=''};ii.onchange=async function(){await add(this.files,false);this.value=''};qe.oninput=function(e){if(!e.target.matches('input[type=date]'))return;q[Number(e.target.dataset.i)].d=iso(e.target.value);draw()};sv.onclick=async function(){if(sv.disabled)return;sv.disabled=true;msg.textContent='Enregistrement lancé…';var batch=q.slice();setTimeout(clean,500);var made=[],errors=0;for(var i=0;i<batch.length;i++){try{var link=await archive(batch[i].f),d=iso(batch[i].d),same=rows(cid).filter(function(p){return iso(p.date)===d});made.push({id:id(),chantierId:cid,type:'Photo',titre:groupTitle(same),sujet:batch[i].f.name||'Photo chantier',date:d,lien:link})}catch(e){errors++;toastS(String(e.message||e),true)}}if(!made.length){toastS('Aucune photo enregistrée',true);return}var before=docs().slice();S.documents=made.concat(before);var ok=false;try{ok=await apiPost('setDocuments',S.documents)}catch(e){}if(!ok){S.documents=before;toastS('Enregistrement des photos impossible',true);return}try{render()}catch(e){}setTimeout(function(){refresh();document.querySelectorAll('[data-section="photos"]').forEach(function(b){if(cardId(b.closest('.card'))===cid)b.click()})},80);toastS(made.length+' photo(s) enregistrée(s) ✓'+(errors?' — '+errors+' erreur(s)':''),!!errors)}}
-window.openPhotosForChantier=openAdd;window.yayaOpenPhotoCamera=function(cid){openAdd(cid,'camera')};window.yayaOpenPhotoImport=function(cid){openAdd(cid,'import')};
+function pickPhotos(cid,mode){
+  cid=String(cid||'');
+  var input=document.createElement('input');
+  input.type='file';
+  input.accept='image/*';
+  if(mode==='camera')input.setAttribute('capture','environment');
+  else input.multiple=true;
+  input.style.position='fixed';
+  input.style.left='-9999px';
+  input.style.opacity='0';
+  document.body.appendChild(input);
+
+  var handled=false;
+  function cleanupPicker(){
+    if(input&&input.parentNode)input.parentNode.removeChild(input);
+  }
+
+  input.onchange=async function(){
+    handled=true;
+    var files=Array.from(input.files||[]);
+    cleanupPicker();
+    if(!files.length)return;
+    await openPhotoReview(cid,files,mode);
+  };
+
+  window.addEventListener('focus',function onFocus(){
+    window.removeEventListener('focus',onFocus);
+    setTimeout(function(){
+      if(!handled)cleanupPicker();
+    },700);
+  },{once:true});
+
+  input.click();
+}
+
+async function openPhotoReview(cid,files,mode){
+  var r=root();
+  if(!r)return;
+
+  var q=[],urls=[];
+  for(var f of Array.from(files||[])){
+    if(!String(f.type||'').startsWith('image/'))continue;
+    var exif=mode==='camera'?'':await exifDate(f);
+    var d=mode==='camera'?today():(exif||today());
+    var u=URL.createObjectURL(f);
+    urls.push(u);
+    q.push({f:f,d:d,u:u,exif:!!exif});
+  }
+
+  if(!q.length){
+    toastS('Aucune photo sélectionnée',true);
+    return;
+  }
+
+  r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal yaya-pa">'
+    +'<h5>Photos sélectionnées<button class="cl">Fermer</button></h5>'
+    +'<div class="note">Vérifiez la date puis cliquez sur Enregistrer.</div>'
+    +'<div class="yaya-pq"></div>'
+    +'<div class="msg note" style="min-height:20px;margin-top:8px"></div>'
+    +'<div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer les photos</button></div>'
+    +'</div></div>';
+
+  var m=r.querySelector('.yaya-pa');
+  var qe=m.querySelector('.yaya-pq');
+  var sv=m.querySelector('.sv');
+  var msg=m.querySelector('.msg');
+
+  function closeReview(){
+    urls.forEach(function(u){
+      try{URL.revokeObjectURL(u)}catch(e){}
+    });
+    close();
+  }
+
+  function draw(){
+    qe.innerHTML=q.map(function(x,i){
+      return '<div class="yaya-pqr">'
+        +'<img src="'+esc(x.u)+'">'
+        +'<div><b>'+esc(x.f.name)+'</b><div class="note">'+(x.exif?'Date de la photo':'Date proposée')+'</div></div>'
+        +'<input type="date" data-i="'+i+'" value="'+esc(x.d)+'">'
+        +'</div>';
+    }).join('');
+    sv.disabled=!q.length||q.some(function(x){return !iso(x.d)});
+  }
+
+  draw();
+
+  m.querySelectorAll('.cl').forEach(function(b){
+    b.onclick=closeReview;
+  });
+
+  qe.oninput=function(e){
+    if(!e.target.matches('input[type=date]'))return;
+    q[Number(e.target.dataset.i)].d=iso(e.target.value);
+    draw();
+  };
+
+  sv.onclick=async function(){
+    if(sv.disabled)return;
+
+    sv.disabled=true;
+    sv.textContent='Enregistrement lancé…';
+    msg.innerHTML='<strong style="color:#173f69">Enregistrement lancé…</strong>';
+
+    var batch=q.slice();
+
+    // Le message reste brièvement visible, puis la modale se ferme.
+    setTimeout(closeReview,650);
+
+    var made=[],errors=0;
+    for(var i=0;i<batch.length;i++){
+      try{
+        var link=await archive(batch[i].f);
+        var d=iso(batch[i].d);
+        var same=rows(cid).filter(function(p){return iso(p.date)===d});
+        made.push({
+          id:id(),
+          chantierId:cid,
+          type:'Photo',
+          titre:groupTitle(same),
+          sujet:batch[i].f.name||'Photo chantier',
+          date:d,
+          lien:link
+        });
+      }catch(e){
+        errors++;
+      }
+    }
+
+    if(!made.length){
+      toastS('Enregistrement des photos impossible',true);
+      return;
+    }
+
+    var before=docs().slice();
+    S.documents=made.concat(before);
+
+    var ok=false;
+    try{ok=await apiPost('setDocuments',S.documents)}catch(e){}
+
+    if(!ok){
+      S.documents=before;
+      toastS('Enregistrement des photos impossible',true);
+      return;
+    }
+
+    try{render()}catch(e){}
+
+    setTimeout(function(){
+      refresh();
+      document.querySelectorAll('[data-section="photos"]').forEach(function(b){
+        if(cardId(b.closest('.card'))===cid)b.click();
+      });
+    },80);
+
+    toastS(
+      made.length+' photo(s) enregistrée(s) ✓'+(errors?' — '+errors+' erreur(s)':''),
+      !!errors
+    );
+  };
+}
+
+window.openPhotosForChantier=function(cid){pickPhotos(cid,'import')};
+window.yayaOpenPhotoCamera=function(cid){pickPhotos(cid,'camera')};
+window.yayaOpenPhotoImport=function(cid){pickPhotos(cid,'import')};
 function find(idv){return docs().find(function(d){return isPhoto(d)&&String(d.id)===String(idv)})}
 function openPic(p){if(!p)return;var r=root(),src=preview(p.lien);r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>'+esc(fr(p.date))+' — '+esc(p.titre||DEF)+'<button class="cl">Fermer</button></h5><iframe class="yaya-pframe" src="'+esc(src)+'"></iframe><div class="yaya-pfoot"><button class="btn2 del">Supprimer</button><button class="btn2 dl">Télécharger</button><button class="btnp cl">Fermer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.dl').onclick=function(){var a=document.createElement('a');a.href=download(p.lien);a.target='_blank';a.rel='noopener';a.click()};r.querySelector('.del').onclick=async function(){if(!confirm('Supprimer cette photo ?'))return;var before=docs().slice(),next=before.filter(function(d){return String(d.id)!==String(p.id)});S.documents=next;var ok=false;try{ok=await apiPost('setDocuments',next)}catch(e){}if(!ok){S.documents=before;return}close();try{render()}catch(e){}setTimeout(refresh,60);toastS('Photo supprimée ✓')}}
 function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)}),old=a.map(function(p){return[p,p.titre]});a.forEach(function(p){p.titre=v});var ok=false;try{ok=await apiPost('setDocuments',S.documents)}catch(e){}if(!ok){old.forEach(function(x){x[0].titre=x[1]});return}close();refresh();toastS('Titre enregistré ✓')}}
