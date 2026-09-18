@@ -1,11 +1,13 @@
 (function(){
 'use strict';
-if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V3)return;
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V3=true;
+if(window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V4)return;
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_V4=true;
 
-const STYLE_ID='yaya-chantier-three-block-viewport-v3';
+const STYLE_ID='yaya-chantier-three-block-viewport-v4';
 const PAGE_SIZE=12;
 let activeCard=null;
+let activeKey='';
+let pageIndex=0;
 let raf=0;
 let wheelLock=false;
 let touchStartY=0;
@@ -32,14 +34,11 @@ function installStyle(){
   const s=document.createElement('style');
   s.id=STYLE_ID;
   s.textContent=`
-    /* Fiche chantier = 3 blocs :
-       1. en-tête + KPI
-       2. onglets + bandeau/actions de la rubrique
-       3. lignes de la rubrique, parcourues par groupes de 12.
-       Aucun ascenseur interne. */
-    #pane-chantiers .card.yaya-three-block-fit{
-      overflow:visible!important;
-    }
+    /* 3 blocs chantier.
+       Bloc 1 = entête + KPI.
+       Bloc 2 = onglets + bandeau/actions.
+       Bloc 3 = contenu, affiché par pages de 12 lignes. */
+    #pane-chantiers .card.yaya-three-block-fit{overflow:visible!important}
 
     #pane-chantiers .card.yaya-three-block-fit > .yaya-detail-section-tabs{
       position:sticky!important;
@@ -61,19 +60,29 @@ function installStyle(){
       box-shadow:0 5px 10px rgba(22,45,73,.04)!important;
     }
 
+    #pane-chantiers .card.yaya-three-block-long .yaya-page-hidden{
+      display:none!important;
+    }
+
     #pane-chantiers .card.yaya-three-block-long .yaya-detail-section-node,
     #pane-chantiers .card.yaya-three-block-long .ycn-group-body{
       overflow:visible!important;
       max-height:none!important;
     }
 
-    #pane-chantiers [data-yaya-page-start="1"]{
-      scroll-margin-top:calc(
-        var(--yaya-detail-sticky-top,8px)
-        + var(--yaya-tabs-sticky-height,48px)
-        + var(--yaya-action-sticky-height,48px)
-        + 8px
-      )!important;
+    #pane-chantiers .yaya-block-page-indicator{
+      display:none;
+      align-items:center;
+      justify-content:flex-end;
+      min-height:24px;
+      padding:2px 4px 4px;
+      color:#64748b;
+      font-size:10.5px;
+      font-weight:700;
+      user-select:none;
+    }
+    #pane-chantiers .card.yaya-three-block-long .yaya-block-page-indicator{
+      display:flex;
     }
   `;
   document.head.appendChild(s);
@@ -81,6 +90,10 @@ function installStyle(){
 
 function currentCard(){
   return document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');
+}
+
+function sectionKey(card){
+  return String(card&&card.dataset.yayaDetailSection||'');
 }
 
 function stickyTop(){
@@ -93,22 +106,20 @@ function stickyTop(){
 
 function activeScope(card){
   if(!card)return null;
-  const section=String(card.dataset.yayaDetailSection||'');
+  const section=sectionKey(card);
   let scope=card.querySelector(':scope > .yaya-detail-section-node[data-section="'+CSS.escape(section)+'"]');
   if(!scope&&section==='commandes'){
     scope=card.querySelector(':scope > .yaya-ab-commandes-direct, :scope > .yaya-detail-commandes-pane');
   }
-  return scope||card;
+  return scope||null;
 }
 
-function visibleRows(card){
+function rowsFor(card){
   const scope=activeScope(card);
   if(!scope)return [];
   const seen=new Set();
   ROW_SELECTORS.forEach(sel=>{
-    scope.querySelectorAll(sel).forEach(el=>{
-      if(el.offsetParent!==null)seen.add(el);
-    });
+    scope.querySelectorAll(sel).forEach(el=>seen.add(el));
   });
   return Array.from(seen).sort((a,b)=>{
     const ra=a.getBoundingClientRect(),rb=b.getBoundingClientRect();
@@ -116,50 +127,84 @@ function visibleRows(card){
   });
 }
 
-function markPages(card){
-  const rows=visibleRows(card);
-  card.querySelectorAll('[data-yaya-page-start]').forEach(el=>el.removeAttribute('data-yaya-page-start'));
-  rows.forEach((row,i)=>{
-    if(i%PAGE_SIZE===0)row.dataset.yayaPageStart='1';
-  });
-  return rows;
+function ensureIndicator(card,scope){
+  if(!card||!scope)return null;
+  let el=card.querySelector(':scope > .yaya-block-page-indicator');
+  if(!el){
+    el=document.createElement('div');
+    el.className='yaya-block-page-indicator';
+  }
+  if(scope.nextElementSibling!==el)scope.insertAdjacentElement('afterend',el);
+  return el;
+}
+
+function clearPagination(card){
+  if(!card)return;
+  card.querySelectorAll('.yaya-page-hidden').forEach(el=>el.classList.remove('yaya-page-hidden'));
+  const ind=card.querySelector(':scope > .yaya-block-page-indicator');
+  if(ind)ind.remove();
+}
+
+function applyPage(card){
+  if(!card)return;
+  const scope=activeScope(card);
+  if(!scope){clearPagination(card);return;}
+
+  const rows=rowsFor(card);
+  const longList=rows.length>PAGE_SIZE;
+  card.classList.toggle('yaya-three-block-long',longList);
+
+  if(!longList){
+    rows.forEach(el=>el.classList.remove('yaya-page-hidden'));
+    const old=card.querySelector(':scope > .yaya-block-page-indicator');
+    if(old)old.remove();
+    pageIndex=0;
+    return;
+  }
+
+  const pageCount=Math.ceil(rows.length/PAGE_SIZE);
+  pageIndex=Math.max(0,Math.min(pageIndex,pageCount-1));
+  const start=pageIndex*PAGE_SIZE;
+  const end=Math.min(rows.length,start+PAGE_SIZE);
+
+  rows.forEach((el,i)=>el.classList.toggle('yaya-page-hidden',i<start||i>=end));
+
+  const ind=ensureIndicator(card,scope);
+  if(ind)ind.textContent=(start+1)+'–'+end+' / '+rows.length;
 }
 
 function evaluate(){
   installStyle();
 
   const c=currentCard();
+  const key=c?sectionKey(c):'';
+
   if(activeCard&&activeCard!==c){
+    clearPagination(activeCard);
     activeCard.classList.remove('yaya-three-block-fit','yaya-three-block-long');
     activeCard.style.removeProperty('--yaya-detail-sticky-top');
     activeCard.style.removeProperty('--yaya-tabs-sticky-height');
-    activeCard.style.removeProperty('--yaya-action-sticky-height');
   }
-  activeCard=c;
-  if(!c)return;
 
+  if(c!==activeCard||key!==activeKey){
+    pageIndex=0;
+    activeCard=c;
+    activeKey=key;
+  }
+
+  if(!c)return;
   const tabs=c.querySelector(':scope > .yaya-detail-section-tabs');
   if(!tabs)return;
 
-  const rows=markPages(c);
-  const action=c.querySelector(':scope > .yaya-detail-section-action-row[data-section="'+CSS.escape(String(c.dataset.yayaDetailSection||''))+'"]')
-    ||c.querySelector(':scope > .yaya-detail-section-action-row');
-
   const top=stickyTop();
-  const tabsH=Math.ceil(tabs.getBoundingClientRect().height||0);
-  const actionH=action&&action.offsetParent!==null?Math.ceil(action.getBoundingClientRect().height||0):0;
-
   c.style.setProperty('--yaya-detail-sticky-top',top+'px');
-  c.style.setProperty('--yaya-tabs-sticky-height',tabsH+'px');
-  c.style.setProperty('--yaya-action-sticky-height',actionH+'px');
+  c.style.setProperty('--yaya-tabs-sticky-height',Math.ceil(tabs.getBoundingClientRect().height||0)+'px');
+
+  applyPage(c);
 
   const available=Math.max(320,window.innerHeight-top-10);
   const fullHeight=Math.ceil(c.getBoundingClientRect().height);
-  const needsScroll=fullHeight>available;
-  const longList=rows.length>PAGE_SIZE;
-
-  c.classList.toggle('yaya-three-block-fit',needsScroll);
-  c.classList.toggle('yaya-three-block-long',longList);
+  c.classList.toggle('yaya-three-block-fit',fullHeight>available||c.classList.contains('yaya-three-block-long'));
 }
 
 function schedule(){
@@ -167,53 +212,37 @@ function schedule(){
   raf=requestAnimationFrame(()=>{raf=0;evaluate();});
 }
 
-function pageStarts(){
+function changePage(dir){
   const c=activeCard||currentCard();
-  if(!c||!c.classList.contains('yaya-three-block-long'))return [];
-  return visibleRows(c).filter((_,i)=>i%PAGE_SIZE===0);
-}
+  if(!c)return false;
+  const rows=rowsFor(c);
+  const pages=Math.ceil(rows.length/PAGE_SIZE);
+  if(pages<=1)return false;
 
-function currentPageIndex(starts){
-  if(!starts.length)return -1;
-  const top=stickyTop()
-    +(activeCard?Number.parseFloat(getComputedStyle(activeCard).getPropertyValue('--yaya-tabs-sticky-height'))||0:0)
-    +(activeCard?Number.parseFloat(getComputedStyle(activeCard).getPropertyValue('--yaya-action-sticky-height'))||0:0)
-    +10;
-  let idx=0;
-  for(let i=0;i<starts.length;i++){
-    if(starts[i].getBoundingClientRect().top<=top+25)idx=i;
-    else break;
-  }
-  return idx;
-}
+  const next=Math.max(0,Math.min(pages-1,pageIndex+(dir>0?1:-1)));
+  if(next===pageIndex)return false;
 
-function goPage(direction){
-  if(wheelLock)return false;
-  const starts=pageStarts();
-  if(starts.length<2)return false;
-
-  const idx=currentPageIndex(starts);
-  const next=Math.max(0,Math.min(starts.length-1,idx+(direction>0?1:-1)));
-  if(next===idx)return false;
-
-  wheelLock=true;
-  starts[next].scrollIntoView({behavior:'smooth',block:'start'});
-  setTimeout(()=>{wheelLock=false;},420);
+  pageIndex=next;
+  applyPage(c);
   return true;
 }
 
+function inBlock3(card,target){
+  const scope=activeScope(card);
+  return !!(scope&&target&&scope.contains(target));
+}
+
 function onWheel(e){
-  if(Math.abs(e.deltaY)<18)return;
   const c=activeCard||currentCard();
   if(!c||!c.classList.contains('yaya-three-block-long'))return;
+  if(!inBlock3(c,e.target))return;
+  if(wheelLock||Math.abs(e.deltaY)<16)return;
 
-  const scope=activeScope(c);
-  if(!scope)return;
-  const r=scope.getBoundingClientRect();
-  const y=e.clientY;
-  if(y<r.top-20||y>r.bottom+20)return;
-
-  if(goPage(e.deltaY>0?1:-1))e.preventDefault();
+  if(changePage(e.deltaY>0?1:-1)){
+    e.preventDefault();
+    wheelLock=true;
+    setTimeout(()=>{wheelLock=false;},220);
+  }
 }
 
 function onTouchStart(e){
@@ -223,14 +252,16 @@ function onTouchStart(e){
 
 function onTouchEnd(e){
   if(!touchStartY)return;
-  const y=e.changedTouches&&e.changedTouches.length?e.changedTouches[0].clientY:touchStartY;
-  const delta=touchStartY-y;
+  const endY=e.changedTouches&&e.changedTouches.length?e.changedTouches[0].clientY:touchStartY;
+  const delta=touchStartY-endY;
   touchStartY=0;
-  if(Math.abs(delta)<70)return;
+  if(Math.abs(delta)<55)return;
 
   const c=activeCard||currentCard();
   if(!c||!c.classList.contains('yaya-three-block-long'))return;
-  goPage(delta>0?1:-1);
+  const target=e.target;
+  if(!inBlock3(c,target))return;
+  changePage(delta>0?1:-1);
 }
 
 installStyle();
@@ -249,7 +280,7 @@ if(pane){
     childList:true,
     subtree:true,
     attributes:true,
-    attributeFilter:['class','data-yaya-detail-section','style']
+    attributeFilter:['class','data-yaya-detail-section']
   });
 }
 
@@ -257,5 +288,5 @@ setTimeout(schedule,0);
 setTimeout(schedule,250);
 setTimeout(schedule,800);
 
-window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='3.0-pages-12';
+window.__YAYA_CHANTIER_THREE_BLOCK_VIEWPORT_VERSION='4.0-visible-pages-12';
 })();
