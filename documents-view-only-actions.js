@@ -197,7 +197,7 @@
       +'<div class="yaya-read-actions">'
       +'<button type="button" class="yaya-delete" data-yaya-doc-delete="'+esc(id)+'">Supprimer</button>'
       +'<button type="button" class="yaya-edit" data-yaya-doc-edit="'+esc(id)+'">Modifier</button>'
-      +(url?'<button type="button" class="yaya-open" data-yaya-doc-open="'+esc(url)+'">Voir le document</button>':'')
+      +(url?'<button type="button" class="yaya-open" data-yaya-doc-open="'+esc(url)+'" data-yaya-doc-open-id="'+esc(id)+'">Voir le document</button>':'')
       +'<button type="button" class="btnp" onclick="closeModal()">Fermer</button>'
       +'</div></div></div>';
     return true;
@@ -303,7 +303,12 @@
 
   document.addEventListener('click',function(e){
     const open=e.target&&e.target.closest?e.target.closest('[data-yaya-doc-open]'):null;
-    if(open){e.preventDefault();e.stopPropagation();openPiece(open.dataset.yayaDocOpen);return;}
+    if(open){
+      e.preventDefault();e.stopPropagation();
+      window.__yayaPreviewDocumentId=text(open.dataset.yayaDocOpenId||'');
+      openPiece(open.dataset.yayaDocOpen);
+      return;
+    }
 
     const editDoc=e.target&&e.target.closest?e.target.closest('[data-yaya-doc-edit]'):null;
     if(editDoc){e.preventDefault();e.stopPropagation();editDocumentFromModal(editDoc.dataset.yayaDocEdit);return;}
