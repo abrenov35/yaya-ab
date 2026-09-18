@@ -1,107 +1,98 @@
 (function(){
 'use strict';
-if(window.__YAYA_CHANTIER_STICKY_FULL_V1)return;
-window.__YAYA_CHANTIER_STICKY_FULL_V1=true;
+if(window.__YAYA_CHANTIER_STICKY_OPTION1_V2)return;
+window.__YAYA_CHANTIER_STICKY_OPTION1_V2=true;
 
-const STYLE_ID='yaya-chantier-sticky-full-v1';
+const STYLE_ID='yaya-chantier-sticky-option1-v2';
 
 function installStyle(){
+  let old=document.getElementById('yaya-chantier-sticky-full-v1');
+  if(old)old.remove();
   if(document.getElementById(STYLE_ID))return;
+
   const s=document.createElement('style');
   s.id=STYLE_ID;
   s.textContent=`
-    /* Fiche chantier : partie haute complète figée.
-       Le scroll reste celui de la page, aucun scroll interne ni saut automatique. */
+    /* OPTION 1 — Achats :
+       les KPI et le titre chantier défilent normalement.
+       seuls les onglets + le bandeau ACHATS restent visibles. */
 
     #pane-chantiers .card:has(> .yaya-detail-section-tabs){
       overflow:visible!important;
     }
 
-    /* Bloc 1 : nom chantier + bouton gérer chantier */
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{
-      position:sticky!important;
-      top:var(--yaya-sticky-base,0px)!important;
-      z-index:44!important;
-      background:#fff!important;
-      padding-top:0!important;
-      margin-bottom:0!important;
-    }
-
-    /* Bloc 1 : KPI */
+    /* Annule l'ancien comportement "tout figé". */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
-      position:sticky!important;
-      top:calc(var(--yaya-sticky-base,0px) + var(--yaya-sticky-top-h,52px))!important;
-      z-index:43!important;
-      background:#fff!important;
-      padding-top:0!important;
-      padding-bottom:0!important;
-      margin-bottom:8px!important;
+      position:relative!important;
+      top:auto!important;
+      z-index:auto!important;
     }
 
-    /* Bloc 2 : onglets */
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs{
-      position:sticky!important;
-      top:calc(
-        var(--yaya-sticky-base,0px)
-        + var(--yaya-sticky-top-h,52px)
-        + var(--yaya-sticky-kpis-h,92px)
-      )!important;
-      z-index:42!important;
-      background:#fff!important;
-      padding-top:0!important;
-      padding-bottom:0!important;
-      margin-top:0!important;
-      margin-bottom:8px!important;
-      box-shadow:0 5px 10px rgba(22,45,73,.06)!important;
-    }
-
-    /* Bloc 2 : bandeau rubrique active + actions */
+    /* Par défaut aucun sticky sur les autres rubriques. */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-tabs,
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-action-row{
+      position:relative!important;
+      top:auto!important;
+    }
+
+    /* Onglets figés uniquement lorsque la rubrique ACHATS est ouverte. */
+    #pane-chantiers .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-tabs{
       position:sticky!important;
-      top:calc(
-        var(--yaya-sticky-base,0px)
-        + var(--yaya-sticky-top-h,52px)
-        + var(--yaya-sticky-kpis-h,92px)
-        + var(--yaya-sticky-tabs-h,50px)
-      )!important;
-      z-index:41!important;
+      top:var(--yaya-achats-sticky-base,0px)!important;
+      z-index:46!important;
+      background:#fff!important;
+      margin-top:0!important;
+      margin-bottom:0!important;
+      padding-top:4px!important;
+      padding-bottom:4px!important;
+      box-shadow:0 4px 10px rgba(22,45,73,.08)!important;
+    }
+
+    /* Bandeau ACHATS + boutons juste sous les onglets. */
+    #pane-chantiers .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-action-row[data-section="depenses"]{
+      position:sticky!important;
+      top:calc(var(--yaya-achats-sticky-base,0px) + var(--yaya-achats-sticky-tabs-h,42px))!important;
+      z-index:45!important;
       background:#fff!important;
       margin-top:0!important;
       margin-bottom:8px!important;
-      box-shadow:0 5px 10px rgba(22,45,73,.04)!important;
+      box-shadow:0 5px 10px rgba(22,45,73,.05)!important;
     }
 
-    /* Le contenu défile naturellement sous la zone figée. */
-    #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .yaya-detail-section-node:not(.yaya-detail-section-action-row){
+    /* Évite qu'un contenu de la liste crée son propre scroll. */
+    #pane-chantiers .card[data-yaya-detail-section="depenses"] > .yaya-detail-expenses-pane{
       overflow:visible!important;
       max-height:none!important;
+    }
+
+    @media(max-width:760px){
+      #pane-chantiers .card[data-yaya-detail-section="depenses"] > .yaya-detail-section-tabs{
+        padding-top:3px!important;
+        padding-bottom:3px!important;
+      }
     }
   `;
   document.head.appendChild(s);
 }
 
-function headerBase(){
-  return 0;
+function stickyBase(){
+  const header=document.querySelector('.hdr');
+  if(!header)return 0;
+  const cs=getComputedStyle(header);
+  if(cs.position!=='sticky'&&cs.position!=='fixed')return 0;
+  return Math.max(0,Math.ceil(header.getBoundingClientRect().height||0));
 }
 
 function sync(){
   installStyle();
-  const card=document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');
-  if(!card)return;
-
-  const top=card.querySelector(':scope > .top');
-  const kpis=card.querySelector(':scope > .kpis');
-  const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
-
-  const base=Math.max(0,headerBase());
-  const topH=top?Math.ceil(top.getBoundingClientRect().height||0):0;
-  const kpisH=kpis?Math.ceil(kpis.getBoundingClientRect().height||0):0;
-  const tabsH=tabs?Math.ceil(tabs.getBoundingClientRect().height||0):0;
-
-  card.style.setProperty('--yaya-sticky-base',base+'px');
-  card.style.setProperty('--yaya-sticky-top-h',topH+'px');
-  card.style.setProperty('--yaya-sticky-kpis-h',kpisH+'px');
-  card.style.setProperty('--yaya-sticky-tabs-h',tabsH+'px');
+  document.querySelectorAll('#pane-chantiers .card:has(> .yaya-detail-section-tabs)').forEach(function(card){
+    const tabs=card.querySelector(':scope > .yaya-detail-section-tabs');
+    const base=stickyBase();
+    const tabsH=tabs?Math.ceil(tabs.getBoundingClientRect().height||0):0;
+    card.style.setProperty('--yaya-achats-sticky-base',base+'px');
+    card.style.setProperty('--yaya-achats-sticky-tabs-h',Math.max(34,tabsH)+'px');
+  });
 }
 
 let raf=0;
@@ -114,19 +105,21 @@ function schedule(){
 }
 
 installStyle();
-sync();
-
+schedule();
 window.addEventListener('resize',schedule,{passive:true});
-window.addEventListener('orientationchange',function(){
-  setTimeout(schedule,80);
-  setTimeout(schedule,300);
-},{passive:true});
+window.addEventListener('orientationchange',function(){setTimeout(schedule,100);},{passive:true});
 window.addEventListener('yaya:data-refreshed',schedule,{passive:true});
-document.addEventListener('click',function(){setTimeout(schedule,30)},true);
+document.addEventListener('click',function(e){
+  if(e.target&&e.target.closest&&e.target.closest('.yaya-detail-section-tab'))setTimeout(schedule,20);
+},true);
 
 const pane=document.getElementById('pane-chantiers');
 if(pane){
-  new MutationObserver(schedule).observe(pane,{
+  new MutationObserver(function(records){
+    for(const r of records){
+      if(r.type==='attributes'||(r.addedNodes&&r.addedNodes.length)){schedule();break;}
+    }
+  }).observe(pane,{
     childList:true,
     subtree:true,
     attributes:true,
@@ -134,9 +127,6 @@ if(pane){
   });
 }
 
-setTimeout(schedule,0);
-setTimeout(schedule,250);
-setTimeout(schedule,800);
-
-window.__YAYA_CHANTIER_STICKY_FULL_VERSION='1.0';
+setTimeout(schedule,200);
+window.__YAYA_CHANTIER_STICKY_OPTION1_VERSION='2.0';
 })();
