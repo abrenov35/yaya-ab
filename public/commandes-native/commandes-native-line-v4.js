@@ -232,7 +232,10 @@ function injectStyle(){
     #${MODAL_ID} .v4-drive-nav{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:18px;background:rgba(15,23,42,.82);color:#fff;font-size:11px;font-weight:800}
     #${MODAL_ID} .v4-drive-nav button{width:29px;height:27px;border:0;border-radius:14px;background:#fff;color:#162d49;font-size:18px;font-weight:900;line-height:1;cursor:pointer}
     #${MODAL_ID} .v4-drive-nav button:disabled{opacity:.35}
-    #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
+    #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-head-actions{display:flex;align-items:center;gap:9px}
+    #${MODAL_ID} .v4-edit{border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
+    #${MODAL_ID} .v4-edit:hover{background:#e2f0fd;border-color:#7eacd8}
+    #${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
     @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(0,1fr) auto auto!important;gap:5px!important;padding:6px 8px!important}.yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:none!important}.yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}}
   `;document.head.appendChild(s);
 }
@@ -240,8 +243,19 @@ function injectStyle(){
 function ensureModal(){
   let m=document.getElementById(MODAL_ID);if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><button type="button" class="v4-close">Fermer</button></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
-  document.body.appendChild(m);m.querySelector('.v4-close').onclick=closeModal;m.onclick=e=>{if(e.target===m)closeModal();};return m;
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-head-actions"><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
+  document.body.appendChild(m);
+  m.querySelector('.v4-close').onclick=closeModal;
+  m.querySelector('.v4-edit').onclick=function(e){
+    e.preventDefault();e.stopPropagation();
+    const id=String(currentOrderId||'').trim();
+    closeModal();
+    if(!id)return;
+    const row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');
+    const edit=row&&row.querySelector('[data-ycn-edit]');
+    if(edit)setTimeout(function(){edit.click();},0);
+  };
+  m.onclick=e=>{if(e.target===m)closeModal();};return m;
 }
 function closeModal(){
   previewToken++;
