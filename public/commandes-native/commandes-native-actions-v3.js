@@ -95,7 +95,7 @@ function renderPieces(){
  list.forEach((d,i)=>{
   const row=document.createElement('div');row.className='ycn-piece-line';
   const name=document.createElement('div');name.className='ycn-piece-name';name.textContent=(d?.nom_fichier||d?.type||('Pièce '+(i+1)));
-  const view=document.createElement('button');view.type='button';view.className='ycn-piece-view';view.textContent='Visualiser '+(i+1);view.onclick=e=>{e.stopPropagation();const url=docUrl(d);if(!url){toast('Lien de la pièce introuvable','err');return;}if(typeof window.voirPiece==='function')window.voirPiece(url);else window.open(url,'_blank','noopener');};
+  const view=document.createElement('button');view.type='button';view.className='ycn-piece-view';view.textContent='Visualiser '+(i+1);view.onclick=e=>{e.stopPropagation();const url=docUrl(d);if(!url){toast('Lien de la pièce introuvable','err');return;}window.__yayaPreviewCommandeId=String(currentOrderId||'');window.__yayaPreviewCommandePieceId=String(d?.id||'');if(typeof window.voirPiece==='function')window.voirPiece(url);else window.open(url,'_blank','noopener');};
   const del=document.createElement('button');del.type='button';del.className='ycn-piece-del';del.textContent='Supprimer';del.onclick=e=>{e.stopPropagation();deletePiece(d);};
   row.append(name,view,del);box.appendChild(row);
  });
