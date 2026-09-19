@@ -415,12 +415,21 @@
     openCreate(commandeIdFromButton(button));
   },true);
 
-  function retitle(){
-    document.querySelectorAll('.chantier-command-btn').forEach(function(button){
+  function retitle(root){
+    if(!root)return;
+    if(root.matches&&root.matches('.chantier-command-btn'))root.title='Ajouter une commande à ce chantier';
+    if(root.querySelectorAll)root.querySelectorAll('.chantier-command-btn').forEach(function(button){
       button.title='Ajouter une commande à ce chantier';
     });
   }
 
-  retitle();
-  new MutationObserver(retitle).observe(document.documentElement,{childList:true,subtree:true});
+  retitle(document);
+  const retitleRoot=document.getElementById('pane-chantiers')||document.body;
+  new MutationObserver(function(mutations){
+    for(const mutation of mutations){
+      for(const node of mutation.addedNodes){
+        if(node.nodeType===1)retitle(node);
+      }
+    }
+  }).observe(retitleRoot,{childList:true,subtree:true});
 })();
