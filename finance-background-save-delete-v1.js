@@ -339,8 +339,67 @@
     return fastSave(modal,txt(id));
   };
 
+  function deleteByIdQueued(id,skipConfirm){
+    id=txt(id);
+    if(!id)return false;
+
+    const execute=function(){
+      try{
+        if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('données indisponibles');
+        const before=S.achats.length;
+        S.achats=S.achats.filter(function(a){return txt(a&&a.id)!==id;});
+        if(S.achats.length===before){
+          console.warn('Yaya finance — achat déjà absent :',id);
+        }
+      }catch(err){
+        toastSafe('Suppression impossible',true);
+        return false;
+      }
+
+      persistCacheSoon();
+      queueCurrent({removeIds:[id]});
+      renderSoon();
+      toastSafe('Achat supprimé — synchronisation…');
+      return true;
+    };
+
+    if(skipConfirm===true)return execute();
+
+    const existing=document.querySelector('.'+CONFIRM_CLASS);
+    if(existing)existing.remove();
+
+    const overlay=document.createElement('div');
+    overlay.className=CONFIRM_CLASS;
+    overlay.style.cssText='position:fixed!important;inset:0!important;background:rgba(15,23,42,.58)!important;z-index:2147483647!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:18px!important';
+    overlay.innerHTML=''
+      +'<div style="background:#fff;border-radius:14px;padding:22px;max-width:410px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.35);font-family:inherit">'
+      +'<div style="font-size:17px;font-weight:800;color:#162D49;margin-bottom:10px">Supprimer cet achat de Yaya ?</div>'
+      +'<div style="font-size:13px;line-height:1.5;color:#556579;margin-bottom:18px">Le fichier original Drive / Dropbox sera conservé. Seule la ligne Yaya sera supprimée.</div>'
+      +'<div style="display:flex;gap:10px;justify-content:flex-end">'
+      +'<button type="button" data-bg-cancel style="padding:10px 15px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;cursor:pointer">Annuler</button>'
+      +'<button type="button" data-bg-ok style="padding:10px 15px;border-radius:8px;border:0;background:#b42318;color:#fff;font-weight:800;cursor:pointer">Supprimer de Yaya</button>'
+      +'</div></div>';
+    document.body.appendChild(overlay);
+
+    const close=function(){try{overlay.remove();}catch(e){}};
+    overlay.querySelector('[data-bg-cancel]').onclick=close;
+    overlay.onclick=function(e){if(e.target===overlay)close();};
+    overlay.querySelector('[data-bg-ok]').onclick=function(e){
+      e.preventDefault();e.stopPropagation();
+      close();
+      execute();
+    };
+    return true;
+  }
+
+  window.__yayaFinanceDeleteById=deleteByIdQueued;
   window.__yayaFinanceQueueCurrent=queueCurrent;
   window.__yayaFinanceFlushPending=worker;
+
+  // Toutes les anciennes croix/boutons qui appellent delAchat(id) passent
+  // désormais par la suppression persistante par ID.
+  window.delAchat=function(id){return deleteByIdQueued(id,false);};
+  try{delAchat=window.delAchat;}catch(e){}
 
   restorePendingLocally();
   window.addEventListener('online',function(){setTimeout(worker,250);});
