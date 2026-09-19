@@ -83,12 +83,32 @@
     }catch(e){}
   }
   function replaceLocalFromServer(serverRows){
-    const merged=Array.isArray(serverRows)?serverRows.slice():[];
+    let merged=Array.isArray(serverRows)?serverRows.map(function(a){return {...a};}):[];
+
+    // Créations non encore confirmées.
     readPending().forEach(function(row){
       const i=merged.findIndex(a=>txt(a&&a.id)===txt(row&&row.id));
       if(i>=0)merged[i]={...merged[i],...row};
-      else merged.push(row);
+      else merged.push({...row});
     });
+
+    // Modifications / suppressions non encore confirmées.
+    try{
+      const finance=JSON.parse(localStorage.getItem('YAYA_FINANCE_PENDING_ACHATS_V1')||'null');
+      if(finance&&Array.isArray(finance.achats)){
+        const source=new Map(finance.achats.map(function(row){return [txt(row&&row.id),row];}).filter(function(x){return x[0];}));
+        const map=new Map(merged.map(function(row){return [txt(row&&row.id),row];}).filter(function(x){return x[0];}));
+        const removeIds=Array.from(new Set((finance.removeIds||[]).map(txt).filter(Boolean)));
+        const upsertIds=Array.from(new Set((finance.upsertIds||[]).map(txt).filter(Boolean)));
+        removeIds.forEach(function(id){map.delete(id);});
+        upsertIds.forEach(function(id){
+          const row=source.get(id);
+          if(row)map.set(id,{...row});
+        });
+        merged=Array.from(map.values());
+      }
+    }catch(e){}
+
     try{if(typeof S!=='undefined'&&S)S.achats=merged.slice();}catch(e){}
     try{
       const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
