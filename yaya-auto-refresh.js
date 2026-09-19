@@ -60,8 +60,22 @@
   // Aucun setInterval, aucun premier GET différé, aucun refresh au retour d'onglet.
   window.__YAYA_AUTO_SYNC_STOPPED=true;
   window.__yayaSmartRefreshInstalled=true;
+  async function refreshCommandesQuiet(){
+    try{
+      const j=await fetchJson('tabs=commandes');
+      const rows=j&&j.data&&Array.isArray(j.data.commandes)?j.data.commandes:null;
+      if(!rows)return false;
+      if(typeof S!=='undefined'&&S)S.commandes=rows;
+      saveCacheTab('commandes',rows,j.meta);
+      return true;
+    }catch(e){
+      console.warn('Yaya commandes · actualisation silencieuse impossible :',e);
+      return false;
+    }
+  }
+
   window.yayaRefreshTabsNow=function(tabs){return refreshTabsManual(tabs);};
-  window.yayaRefreshCommandesNow=function(){return refreshTabsManual(['commandes']);};
+  window.yayaRefreshCommandesNow=refreshCommandesQuiet;
   window.yayaSmartRefreshNow=function(){return refreshTabsManual(WATCHED);};
 })();
 
