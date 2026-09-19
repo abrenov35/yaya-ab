@@ -4,6 +4,29 @@
   window.__yayaAchatCreateCentralSaveV2=true;
 
   let busy=false;
+  const PENDING_KEY='YAYA_ACHATS_CREATE_PENDING_V1';
+  let flushBusy=false;
+
+  function readPending(){
+    try{
+      const p=JSON.parse(localStorage.getItem(PENDING_KEY)||'[]');
+      return Array.isArray(p)?p.filter(x=>x&&x.id):[];
+    }catch(e){return [];}
+  }
+  function writePending(rows){
+    try{
+      if(rows&&rows.length)localStorage.setItem(PENDING_KEY,JSON.stringify(rows));
+      else localStorage.removeItem(PENDING_KEY);
+    }catch(e){}
+  }
+  function queuePending(row){
+    const rows=readPending().filter(x=>txt(x&&x.id)!==txt(row&&row.id));
+    rows.push(row);
+    writePending(rows);
+  }
+  function dequeuePending(id){
+    writePending(readPending().filter(x=>txt(x&&x.id)!==txt(id)));
+  }
 
   function txt(v){return String(v==null?'':v).trim();}
   function val(id){const el=document.getElementById(id);return el?txt(el.value):'';}
@@ -37,6 +60,44 @@
     el.textContent=message||'';
     el.style.color=isError?'#b42318':'#166534';
   }
+  function applyLocal(row){
+    try{
+      if(typeof S!=='undefined'&&S){
+        if(!Array.isArray(S.achats))S.achats=[];
+        const i=S.achats.findIndex(a=>txt(a&&a.id)===txt(row&&row.id));
+        if(i>=0)S.achats[i]={...S.achats[i],...row};
+        else S.achats.push(row);
+      }
+    }catch(e){}
+    try{
+      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+      const cached=raw?JSON.parse(raw):{};
+      if(cached&&typeof cached==='object'){
+        if(!Array.isArray(cached.achats))cached.achats=[];
+        const i=cached.achats.findIndex(a=>txt(a&&a.id)===txt(row&&row.id));
+        if(i>=0)cached.achats[i]={...cached.achats[i],...row};
+        else cached.achats.push(row);
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+      }
+    }catch(e){}
+  }
+  function replaceLocalFromServer(serverRows){
+    try{if(typeof S!=='undefined'&&S)S.achats=Array.isArray(serverRows)?serverRows.slice():[];}catch(e){}
+    try{
+      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+      const cached=raw?JSON.parse(raw):{};
+      if(cached&&typeof cached==='object'){
+        cached.achats=Array.isArray(serverRows)?serverRows.slice():[];
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+      }
+    }catch(e){}
+  }
+  function mergePendingIntoLocal(){
+    const pending=readPending();
+    if(!pending.length)return;
+    pending.forEach(applyLocal);
+  }
+
   function setBusy(button,on){
     busy=!!on;
     if(!button)return;
@@ -89,6 +150,42 @@
     return hasId(rows,row.id)?rows:null;
   }
 
+  async function persistInBackground(row){
+    queuePending(row);
+    window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
+    try{
+      let postOk=false;
+      try{postOk=await postRow(row);}catch(err){console.warn('Yaya achat · écriture directe',err);}
+      const serverRows=await confirmRow(row);
+      if(!serverRows)throw new Error(postOk?'Enregistrement non confirmé dans le Sheet':'Écriture serveur refusée');
+      dequeuePending(row.id);
+      replaceLocalFromServer(serverRows);
+      try{if(typeof render==='function')render();}catch(e){}
+      toastSafe('Achat synchronisé ✓');
+      return true;
+    }catch(err){
+      console.error('Yaya — achat conservé localement, synchronisation en attente :',err);
+      applyLocal(row);
+      toastSafe('Achat enregistré localement — synchronisation en attente',true);
+      return false;
+    }finally{
+      window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+      window.__yayaLastWriteAt=Date.now();
+    }
+  }
+
+  async function flushPending(){
+    if(flushBusy)return;
+    const rows=readPending();
+    if(!rows.length)return;
+    flushBusy=true;
+    try{
+      for(const row of rows.slice()){
+        try{await persistInBackground(row);}catch(e){}
+      }
+    }finally{flushBusy=false;}
+  }
+
   async function save(button,modal){
     if(busy)return;
 
@@ -123,37 +220,15 @@
       origine:'MANUELLE'
     };
 
-    setBusy(button,true);
-    setStatus(modal,'Écriture dans le Sheet…',false);
-    try{
-      if(typeof API==='undefined'||!API)throw new Error('API Yaya indisponible');
+    // Local-first : l'opérateur ne doit pas attendre les allers-retours Google.
+    applyLocal(row);
+    queuePending(row);
+    try{achatLien='';}catch(e){try{window.achatLien='';}catch(_) {}}
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
+    try{if(typeof render==='function')render();}catch(e){}
+    toastSafe(charge?'Charge enregistrée — synchronisation…':'Achat enregistré — synchronisation…');
 
-      let postOk=false;
-      try{postOk=await postRow(row);}catch(err){console.warn('Yaya achat · écriture directe',err);}
-      const serverRows=await confirmRow(row);
-      if(!serverRows)throw new Error(postOk?'Enregistrement non confirmé dans le Sheet':'Écriture serveur refusée');
-
-      try{if(typeof S!=='undefined'&&S)S.achats=serverRows;}catch(e){}
-      try{
-        const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
-        const cached=raw?JSON.parse(raw):{};
-        if(cached&&typeof cached==='object'){
-          cached.achats=serverRows;
-          localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
-        }
-      }catch(e){}
-      try{achatLien='';}catch(e){try{window.achatLien='';}catch(_) {}}
-      setStatus(modal,'Enregistré dans le Sheet ✓',false);
-      try{if(typeof closeModal==='function')closeModal();}catch(e){}
-      try{if(typeof render==='function')render();}catch(e){}
-      toastSafe(charge?'Charge enregistrée dans le Sheet ✓':'Achat enregistré dans le Sheet ✓');
-    }catch(err){
-      console.error('Yaya — création achat/charge non enregistrée :',err);
-      setStatus(modal,'NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
-      toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
-    }finally{
-      setBusy(button,false);
-    }
+    setTimeout(function(){persistInBackground(row);},0);
   }
 
   document.addEventListener('click',function(e){
@@ -166,4 +241,10 @@
     if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
     save(button,modal);
   },true);
+
+  // Réinjecte les achats non encore synchronisés après un reload.
+  mergePendingIntoLocal();
+  setTimeout(flushPending,700);
+  window.addEventListener('online',function(){setTimeout(flushPending,150);},{passive:true});
+  window.addEventListener('focus',function(){setTimeout(flushPending,350);},{passive:true});
 })();
