@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V28)return;window.__YAYA_PHOTOS_V28=true;
+if(window.__YAYA_PHOTOS_V29)return;window.__YAYA_PHOTOS_V29=true;
 var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v25';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -25,7 +25,7 @@ function apiUrl(){
   try{if(typeof API!=='undefined'&&API)return String(API)}catch(e){}
   return 'https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
 }
-var photoFileCache=new Map(),heicConverterPromise=null;
+var photoFileCache=new Map(),heicConverterPromise=null,photoExifReaderPromise=null;
 var photoThumbObserver=null,photoThumbFallbackQueue=[],photoThumbFallbackActive=0,PHOTO_THUMB_FALLBACK_MAX=2;
 var lastPhotoDatasetSignature='';
 var PHOTO_PENDING_KEY='YAYA_PENDING_PHOTOS_V1';
@@ -402,6 +402,40 @@ function base64Blob(base64,mime){
 function isHeic(value,name){
   return /image\/hei[cf]/i.test(String(value&&value.type||value||''))||/\.(?:heic|heif)$/i.test(String(name||value&&value.name||''));
 }
+function ensurePhotoExifReader(){
+  if(window.exifr&&typeof window.exifr.parse==='function')return Promise.resolve(window.exifr);
+  if(photoExifReaderPromise)return photoExifReaderPromise;
+  photoExifReaderPromise=new Promise(function(resolve,reject){
+    var s=document.createElement('script'),done=false;
+    var timer=setTimeout(function(){if(done)return;done=true;reject(new Error('Lecteur EXIF indisponible'))},12000);
+    s.src='https://cdn.jsdelivr.net/npm/exifr@7.1.3/dist/lite.umd.js';
+    s.async=true;
+    s.onload=function(){if(done)return;done=true;clearTimeout(timer);window.exifr&&typeof window.exifr.parse==='function'?resolve(window.exifr):reject(new Error('Lecteur EXIF invalide'))};
+    s.onerror=function(){if(done)return;done=true;clearTimeout(timer);reject(new Error('Chargement EXIF impossible'))};
+    document.head.appendChild(s);
+  }).catch(function(e){photoExifReaderPromise=null;throw e});
+  return photoExifReaderPromise;
+}
+function photoDateFromExifValue(value){
+  if(!value)return '';
+  if(value instanceof Date&&isFinite(value.getTime())){
+    return value.getFullYear()+'-'+String(value.getMonth()+1).padStart(2,'0')+'-'+String(value.getDate()).padStart(2,'0');
+  }
+  var s=String(value&&value.description||value||'').trim();
+  var m=s.match(/^(\d{4})[:\-](\d{2})[:\-](\d{2})/);
+  return m?iso(m[1]+'-'+m[2]+'-'+m[3]):'';
+}
+async function exifDateWithLibrary(file){
+  try{
+    var lib=await ensurePhotoExifReader();
+    var meta=await lib.parse(file,['DateTimeOriginal','CreateDate','ModifyDate']);
+    if(!meta)return '';
+    return photoDateFromExifValue(meta.DateTimeOriginal)||photoDateFromExifValue(meta.CreateDate)||photoDateFromExifValue(meta.ModifyDate)||'';
+  }catch(e){
+    console.warn('Yaya Photos — métadonnées EXIF non lisibles :',e);
+    return '';
+  }
+}
 function ensureHeicConverter(){
   if(typeof window.heic2any==='function')return Promise.resolve(window.heic2any);
   if(heicConverterPromise)return heicConverterPromise;
@@ -667,7 +701,9 @@ function photoDateFromFileTimestamp(file){
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
 async function exifDate(file){
-    if(!file||!/(?:jpe?g)$/i.test(String(file.name||''))&&!/^image\/jpeg$/i.test(String(file.type||'')))return '';
+    if(!file)return '';
+    if(isHeic(file,file&&file.name))return await exifDateWithLibrary(file);
+    if(!/(?:jpe?g)$/i.test(String(file.name||''))&&!/^image\/jpeg$/i.test(String(file.type||'')))return await exifDateWithLibrary(file);
     let buffer;
     try{buffer=await file.slice(0,512*1024).arrayBuffer();}catch(e){return '';}
     const view=new DataView(buffer);
@@ -722,7 +758,7 @@ async function exifDate(file){
       }
       offset+=2+len;
     }
-    return '';
+    return await exifDateWithLibrary(file);
   }
 function base64(file){return new Promise(function(ok,no){var r=new FileReader();r.onerror=no;r.onload=function(){ok(String(r.result||'').split(',')[1]||'')};r.readAsDataURL(file)})}
 async function resize(file){
@@ -810,11 +846,14 @@ async function openPhotoReview(cid,files,mode){
     if(!isImageFile(f))continue;
     var exif=await exifDate(f);
     var fromName=photoDateFromFilename(f&&f.name);
-    var fromFile=photoDateFromFileTimestamp(f);
-    var d=exif||fromName||fromFile||today();
+    // IMPORTANT : file.lastModified n'est pas une date de prise de vue fiable.
+    // Sur iPhone, Safari peut lui attribuer l'heure de sélection/importation.
+    // On ne l'utilise donc jamais pour classer une photo importée.
+    var d=exif||fromName||(mode==='camera'?today():'');
+    var sourceDate=exif?'EXIF':(fromName?'nom du fichier':(mode==='camera'?'prise de vue aujourd\'hui':'non détectée — à renseigner'));
     var u=URL.createObjectURL(f);
     urls.push(u);
-    q.push({f:f,d:d,u:u,exif:!!exif,sourceDate:exif?'EXIF':(fromName?'nom du fichier':(fromFile?'date du fichier':'date du jour'))});
+    q.push({f:f,d:d,u:u,exif:!!exif,sourceDate:sourceDate});
   }
 
   if(!q.length){
