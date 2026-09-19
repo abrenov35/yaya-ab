@@ -4,12 +4,13 @@ if(window.YayaCommandesNativeEmbed)return;
 
 const CACHE_KEYS=['YAYA_COMMANDES_EMBED_CACHE_V3'];
 const PENDING_KEY='YAYA_COMMANDES_NATIVE_PENDING_V1';
+const STATUS_PENDING_KEY='YAYA_COMMANDES_STATUS_PENDING_V1';
 const NOTE_KEY='YAYA_COMMANDES_NATIVE_CHANTIER_NOTES_V1';
 const GROUP_KEY='YAYA_COMMANDES_NATIVE_GROUPS_V2';
 const ROW_KEY='YAYA_COMMANDES_NATIVE_ROWS_V2';
 const STATUSES={choice:'Attente choix',todo:'À commander',ordered:'Commandé',received:'Reçu'};
 const GROUPS=[{key:'choice',kpi:'Choix client',label:'Attente choix',tone:'purple'},{key:'todo',kpi:'À commander',label:'À commander',tone:'orange'},{key:'ordered',kpi:'Commandé',label:'Commandé',tone:'blue'},{key:'received',kpi:'Reçu',label:'Reçu',tone:'green'}];
-let root=null, chantierId='', chantierName='', orders=[], documents=[], pending=readPending(), editId='', currentDocOrderId='';
+let root=null, chantierId='', chantierName='', orders=[], documents=[], pending=readPending(), statusPending=readStatusPending(), statusSyncTimer=0, statusSyncBusy=false, editId='', currentDocOrderId='';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();
 const uid=()=>globalThis.crypto?.randomUUID?.()||(Date.now()+'-'+Math.random().toString(36).slice(2));
@@ -39,13 +40,22 @@ function workflowValidation(current,status){
  return clean+'|YAYA_STATUS='+normalizeStatus(status);
 }
 function normalize(o){return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit:String(o?.produit||o?.designation||''),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:workflowStatus(o)};}
+function applyPendingStatuses(rows){
+ const list=(Array.isArray(rows)?rows:[]).map(normalize);
+ if(!statusPending.length)return list;
+ const byId=new Map(statusPending.map(m=>[String(m.id||''),m]));
+ return list.map(row=>{
+   const m=byId.get(String(row.id||''));
+   return m?normalize({...row,status:m.status,statut:m.status,statutValidation:workflowValidation(row.statutValidation,m.status)}):row;
+ });
+}
 function yayaStateOrders(){
  try{
-   if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes))return S.commandes.map(normalize);
+   if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes))return applyPendingStatuses(S.commandes);
  }catch(_){}
  try{
    const cached=JSON.parse(localStorage.getItem('YAYA_CACHE_DATA_V2')||'{}')||{};
-   if(Array.isArray(cached.commandes))return cached.commandes.map(normalize);
+   if(Array.isArray(cached.commandes))return applyPendingStatuses(cached.commandes);
  }catch(_){}
  return [];
 }
@@ -61,6 +71,90 @@ function readPending(){try{const p=JSON.parse(localStorage.getItem(PENDING_KEY)|
 function savePending(){try{localStorage.setItem(PENDING_KEY,JSON.stringify(pending));}catch(_){}}
 function queue(order){pending=pending.filter(x=>String(x?.id||'')!==String(order.id));pending.push(normalize(order));savePending();}
 function dequeue(id){pending=pending.filter(x=>String(x?.id||'')!==String(id));savePending();}
+function readStatusPending(){
+ try{
+   const p=JSON.parse(localStorage.getItem(STATUS_PENDING_KEY)||'[]');
+   return Array.isArray(p)?p.filter(x=>x&&x.id&&x.status):[];
+ }catch(_){return [];}
+}
+function saveStatusPending(){
+ try{
+   if(statusPending.length)localStorage.setItem(STATUS_PENDING_KEY,JSON.stringify(statusPending));
+   else localStorage.removeItem(STATUS_PENDING_KEY);
+ }catch(_){}
+}
+function queueStatus(id,status){
+ const key=String(id||''),workflow=normalizeStatus(status);
+ if(!key)return;
+ statusPending=statusPending.filter(x=>String(x?.id||'')!==key);
+ statusPending.push({id:key,status:workflow,at:Date.now()});
+ saveStatusPending();
+ scheduleStatusSync(650);
+}
+function removeStatusMutation(mutation){
+ const id=String(mutation?.id||''),at=Number(mutation?.at||0);
+ statusPending=statusPending.filter(x=>!(String(x?.id||'')===id&&Number(x?.at||0)===at));
+ saveStatusPending();
+}
+function apiUrl(){
+ try{return (typeof API==='string'&&API)?API:'';}catch(_){return '';}
+}
+async function fetchLatestCommandes(){
+ const api=apiUrl();if(!api)throw new Error('API Yaya indisponible');
+ const sep=api.includes('?')?'&':'?';
+ const ctrl=new AbortController();
+ const timer=setTimeout(()=>ctrl.abort(),7000);
+ try{
+   const r=await fetch(api+sep+'tabs=commandes&_yaya_status_sync='+Date.now(),{method:'GET',cache:'no-store',signal:ctrl.signal});
+   const txt=await r.text();
+   const j=JSON.parse(txt);
+   if(!j||!j.ok)throw new Error(j&&j.error||'Lecture commandes impossible');
+   const rows=j.data&&Array.isArray(j.data.commandes)?j.data.commandes:null;
+   if(!rows)throw new Error('Commandes serveur absentes');
+   return rows;
+ }finally{clearTimeout(timer);}
+}
+function applyStatusToRows(rows,mutation){
+ const id=String(mutation?.id||''),workflow=normalizeStatus(mutation?.status);
+ return (Array.isArray(rows)?rows:[]).map(row=>{
+   if(String(row?.id||'')!==id)return row;
+   return {
+     ...row,
+     statut:workflow,
+     statutValidation:workflowValidation(row?.statutValidation,workflow)
+   };
+ });
+}
+async function syncStatusQueue(){
+ if(statusSyncBusy||!statusPending.length)return !statusPending.length;
+ if(typeof apiPost!=='function')return false;
+ statusSyncBusy=true;
+ const snapshot=statusPending.slice();
+ window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
+ try{
+   let rows=await fetchLatestCommandes();
+   for(const mutation of snapshot)rows=applyStatusToRows(rows,mutation);
+   const ok=await apiPost('setCommandes',rows);
+   if(!ok)throw new Error('Écriture statuts refusée');
+   snapshot.forEach(removeStatusMutation);
+   try{
+     if(typeof S!=='undefined'&&S)S.commandes=rows;
+     updateYayaCache();
+   }catch(_){}
+   return true;
+ }catch(err){
+   console.warn('Yaya Commandes : statuts conservés en local, synchronisation différée',err);
+   return false;
+ }finally{
+   window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+   window.__yayaLastWriteAt=Date.now();
+   statusSyncBusy=false;
+ }
+}
+function scheduleStatusSync(delay){
+ clearTimeout(statusSyncTimer);
+ statusSyncTimer=setTimeout(()=>{syncStatusQueue();},Math.max(0,Number(delay)||0));
+}
 async function post(data){
  const action=String(data?.action||'');
  if(action==='upsert'){
@@ -144,7 +238,28 @@ function ensureModals(){if(!document.getElementById('ycnEditModal')){const m=doc
 function openEdit(id=''){ensureModals();editId=String(id||'');const o=editId?orders.find(x=>String(x.id)===editId):null;document.getElementById('ycnEditTitle').textContent=o?'Modifier la commande':'Ajouter une commande';document.getElementById('ycnProduit').value=o?.produit||'';document.getElementById('ycnQte').value=o?.qte||'';document.getElementById('ycnFournisseur').value=o?.fournisseur||'';document.getElementById('ycnResponsable').value=o?.responsable||'';document.getElementById('ycnStatus').innerHTML=statusOptions(o?.status||'choice');document.getElementById('ycnNotes').value=o?.notes||'';document.getElementById('ycnEditModal').classList.add('show');}
 function closeEdit(){document.getElementById('ycnEditModal')?.classList.remove('show');editId='';}
 function saveEdit(e){e.preventDefault();const old=editId?orders.find(x=>String(x.id)===editId):null;const o=normalize({...old,id:editId||uid(),chantierId,chantier:chantierName,produit:document.getElementById('ycnProduit').value.trim(),qte:document.getElementById('ycnQte').value.trim(),fournisseur:document.getElementById('ycnFournisseur').value.trim(),responsable:document.getElementById('ycnResponsable').value,status:document.getElementById('ycnStatus').value,notes:document.getElementById('ycnNotes').value.trim()});if(!o.produit)return;if((o.status==='ordered'||o.status==='received')&&!o.fournisseur){alert('Renseigne d’abord le fournisseur.');return;}const i=orders.findIndex(x=>String(x.id)===String(o.id));if(i>=0)orders[i]=o;else orders.push(o);saveCache();closeEdit();render();sendBackground(o);}
-function changeStatus(id,value){const o=orders.find(x=>String(x.id)===String(id));if(!o)return;if((value==='ordered'||value==='received')&&!o.fournisseur){alert('Renseigne d’abord le fournisseur.');render();return;}const u=normalize({...o,status:value});orders[orders.findIndex(x=>String(x.id)===String(id))]=u;saveCache();render();sendBackground(u);}
+function changeStatus(id,value){
+ const key=String(id||''),workflow=normalizeStatus(value);
+ const i=orders.findIndex(x=>String(x.id)===key),o=i>=0?orders[i]:null;
+ if(!o)return;
+ if((workflow==='ordered'||workflow==='received')&&!o.fournisseur){alert('Renseigne d’abord le fournisseur.');render();return;}
+ const u=normalize({...o,status:workflow});
+ orders[i]=u;
+ try{
+   if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)){
+     const si=S.commandes.findIndex(x=>String(x?.id||'')===key);
+     if(si>=0){
+       const prev=S.commandes[si]||{};
+       S.commandes[si]={...prev,statut:workflow,statutValidation:workflowValidation(prev.statutValidation,workflow)};
+     }
+     updateYayaCache();
+   }
+ }catch(_){}
+ saveCache();
+ queueStatus(key,workflow);
+ render();
+ toast('Statut modifié — synchronisation…');
+}
 function renderRow(o){const open=stateGet(ROW_KEY,o.id);return `<article class="ycn-row${open?' open':''}" data-ycn-row="${esc(o.id)}"><div class="ycn-row-top"><div class="ycn-row-summary"><strong>${esc(o.produit||'—')}</strong><span class="ycn-supplier">${esc(o.fournisseur||'—')}</span><span class="ycn-qte">${esc(o.qte||'—')}</span><span class="ycn-resp">${esc(o.responsable||'—')}</span></div><button class="ycn-row-toggle" type="button" data-ycn-toggle-row="${esc(o.id)}">${open?'▴':'▾'}</button></div><div class="ycn-row-detail"><div class="ycn-detail-grid"><div class="ycn-box"><small>Produit</small><strong>${esc(o.produit||'—')}</strong></div><div class="ycn-box"><small>Fournisseur</small><span>${esc(o.fournisseur||'—')}</span></div><div class="ycn-box"><small>Quantité</small><span>${esc(o.qte||'—')}</span></div><div class="ycn-box"><small>Responsable</small><span>${esc(o.responsable||'—')}</span></div><div class="ycn-box"><small>Statut</small><select class="ycn-status" data-ycn-status="${esc(o.id)}">${statusOptions(o.status)}</select></div><div class="ycn-box"><small>Pièces jointes</small><span>${docCount(o.id)}</span></div><div class="ycn-box note"><small>Note</small><span>${esc(o.notes||'—')}</span></div></div><div class="ycn-actions"><button type="button" class="ycn-doc" data-ycn-doc="${esc(o.id)}">📎 Documents${docCount(o.id)?' ('+docCount(o.id)+')':''}</button><button type="button" class="ycn-edit" data-ycn-edit="${esc(o.id)}">Modifier</button></div></div></article>`;}
 function renderGroup(g,all){const rows=all.filter(o=>o.status===g.key);return `<section class="ycn-group open" data-ycn-group="${g.key}"><div class="ycn-group-head"><span class="ycn-group-left"><span class="ycn-dot ${g.tone}"></span><span>${esc(g.label)}</span></span><span class="ycn-group-right"><span class="ycn-count">${rows.length}</span></span></div><div class="ycn-group-body">${rows.length?rows.map(renderRow).join(''):'<div class="ycn-empty">Aucune commande.</div>'}</div></section>`;}
 function bind(){root.querySelector('[data-ycn-add]')?.addEventListener('click',()=>openEdit(''));root.querySelectorAll('[data-ycn-toggle-row]').forEach(b=>b.onclick=()=>{const id=b.dataset.ycnToggleRow,v=!stateGet(ROW_KEY,id);stateSet(ROW_KEY,id,v);render();});root.querySelectorAll('[data-ycn-status]').forEach(s=>{s.onclick=e=>e.stopPropagation();s.onchange=()=>changeStatus(s.dataset.ycnStatus,s.value);});root.querySelectorAll('[data-ycn-edit]').forEach(b=>b.onclick=()=>openEdit(b.dataset.ycnEdit));root.querySelectorAll('[data-ycn-doc]').forEach(b=>b.onclick=()=>openDocs(b.dataset.ycnDoc));const n=root.querySelector('#ycnNote');root.querySelector('[data-ycn-note-cancel]')?.addEventListener('click',()=>n.value=noteGet());root.querySelector('[data-ycn-note-save]')?.addEventListener('click',()=>{noteSet(n.value);toast('Note commandes enregistrée','ok');});}
@@ -175,9 +290,13 @@ async function startDocUpload(){
  },0);
 }
 function deleteDoc(id){if(!confirm('Supprimer ce document ?'))return;documents=documents.filter(d=>String(d?.id||'')!==String(id));saveCache();renderDocs();render();}
-async function refresh(){if(!root)return;const line=root.querySelector('.ycn-statusline');if(line)line.textContent='Actualisation volontaire…';try{await flushPending();const a=await jsonp('list');if(!a?.ok)throw new Error(a?.error||'Lecture commandes impossible');orders=yayaStateOrders();saveCache();render();toast('Commandes actualisées','ok');return true;}catch(e){orders=yayaStateOrders();saveCache();render();if(line)line.textContent='Actualisation impossible — affichage conservé.';toast(e?.message||'Actualisation impossible','err');return false;}}
-function mount(el,id,name){root=el;chantierId=String(id||'');chantierName=String(name||'');root.classList.add('yaya-cmd-native-root');readCache();orders=yayaStateOrders();ensureModals();saveCache();render();}
+async function refresh(){if(!root)return;const line=root.querySelector('.ycn-statusline');if(line)line.textContent='Actualisation volontaire…';try{await flushPending();await syncStatusQueue();const a=await jsonp('list');if(!a?.ok)throw new Error(a?.error||'Lecture commandes impossible');orders=yayaStateOrders();saveCache();render();toast('Commandes actualisées','ok');return true;}catch(e){orders=yayaStateOrders();saveCache();render();if(line)line.textContent='Actualisation impossible — affichage conservé.';toast(e?.message||'Actualisation impossible','err');return false;}}
+function mount(el,id,name){root=el;chantierId=String(id||'');chantierName=String(name||'');root.classList.add('yaya-cmd-native-root');readCache();orders=yayaStateOrders();ensureModals();saveCache();render();scheduleStatusSync(250);}
 function unmount(el){if(root===el)root=null;if(el)el.innerHTML='';}
 function setChantier(id,name){chantierId=String(id||'');chantierName=String(name||'');orders=yayaStateOrders();saveCache();render();}
-window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.2-yaya-commandes-merged'};
+window.addEventListener('online',()=>scheduleStatusSync(150),{passive:true});
+window.addEventListener('focus',()=>scheduleStatusSync(350),{passive:true});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleStatusSync(350);});
+window.addEventListener('pagehide',()=>{saveStatusPending();},{passive:true});
+window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.3-local-first-status'};
 })();
