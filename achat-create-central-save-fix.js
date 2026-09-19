@@ -164,6 +164,20 @@
     queuePending(row);
     window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
     try{
+      // Reprise sûre après fermeture : vérifier d'abord si le serveur possède déjà l'ID.
+      // Cela évite un second addAchat si le premier POST avait réussi juste avant la fermeture.
+      try{
+        const already=await readAchats();
+        if(hasId(already,rowId)){
+          dequeuePending(rowId);
+          replaceLocalFromServer(already);
+          try{if(typeof render==='function')render();}catch(e){}
+          return true;
+        }
+      }catch(preErr){
+        console.warn('Yaya achat · contrôle préalable impossible',preErr);
+      }
+
       let postOk=false;
       try{postOk=await postRow(row);}catch(err){console.warn('Yaya achat · écriture directe',err);}
       const serverRows=await confirmRow(row);
