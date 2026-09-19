@@ -117,6 +117,16 @@
       target=Array.from(merged.values());
     }
 
+    // Informer le garde-fou de concurrence des suppressions volontaires.
+    // Sans ce tombstone, une ligne serveur inconnue de la baseline peut être
+    // réinjectée pendant la fusion.
+    if(removeIds.length){
+      if(!(window.__yayaAchatsExplicitRemoveIds instanceof Set)){
+        window.__yayaAchatsExplicitRemoveIds=new Set();
+      }
+      removeIds.forEach(function(id){window.__yayaAchatsExplicitRemoveIds.add(id);});
+    }
+
     const ok=await apiPost('setAchats',target);
     if(!ok)throw new Error('écriture refusée');
     return true;
