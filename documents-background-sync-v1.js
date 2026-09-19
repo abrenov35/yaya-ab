@@ -234,9 +234,14 @@
   document.addEventListener('click',function(e){
     const ok=e.target&&e.target.closest?e.target.closest('#del-ok-doc'):null;
     if(!ok||!pendingDeleteId)return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
+
     const id=pendingDeleteId;
     pendingDeleteId='';
     queueRemove(id);
+
     // Appliquer immédiatement la suppression au cache local, avant tout réseau.
     try{
       if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
@@ -244,6 +249,15 @@
       }
     }catch(err){}
     persistCacheNow();
+
+    // Fermer la confirmation sans exécuter l'ancien POST direct.
+    try{
+      const overlay=ok.closest('div[style*="position:fixed"]');
+      if(overlay&&overlay.isConnected)overlay.remove();
+      else ok.closest('.overlay')?.remove();
+    }catch(err){}
+    try{if(typeof render==='function')render();}catch(err){}
+    toastSafe('Document supprimé — synchronisation…',false);
     setTimeout(worker,0);
   },true);
 
