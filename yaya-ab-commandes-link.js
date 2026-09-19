@@ -8,7 +8,7 @@ const MANAGE_ID='yayaManageChantierCardBtn';
 const DELETE_CONFIRM_ID='ycnDeleteConfirmPretty';
 const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.css?v=6';
 const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=4';
-const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=1';
+const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=2';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=4';
 const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=11';
 const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=7';
