@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaPerformanceCoreV2)return;
+  if(window.__yayaPerformanceCoreV3)return;
+  window.__yayaPerformanceCoreV3=true;
   window.__yayaPerformanceCoreV2=true;
   window.__yayaPerformanceCoreV1=true;
 
@@ -188,7 +189,7 @@
   // Synchronisation légère des DOCUMENTS externes (ex. Yaya Mail).
   // On ne recharge pas tout Yaya : un GET limité à ?tabs=documents, uniquement
   // si l'onglet est visible, l'utilisateur n'est pas en saisie et aucune écriture locale n'attend.
-  const DOCUMENTS_POLL_MS=10000;
+  const DOCUMENTS_POLL_MS=20000;
   const PENDING_DOCUMENTS_KEY='YAYA_PENDING_DOCUMENT_UPSERT_V1';
   let documentsPollInFlight=false;
   let lastDocumentsSignature='';
@@ -280,7 +281,7 @@
   }
 
   // Démarrage cache d'abord : contrôle serveur seulement une fois l'interface disponible.
-  setTimeout(scheduleBootRefresh,1800);
+  setTimeout(scheduleBootRefresh,3500);
   scheduleDocumentsPoll();
 
   // Au retour sur Yaya, un seul contrôle documents après stabilisation de la fenêtre.
