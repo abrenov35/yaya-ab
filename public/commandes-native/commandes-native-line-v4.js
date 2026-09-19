@@ -350,15 +350,41 @@ function fitStatusWidth(sel){
   }catch(_){}
 }
 
-function sanitize(top){top.querySelectorAll('.ycn-top-status,.ycn-top-docs,.ycn-top-note,.ycn-row-direct-actions,.ycn-v4-status,.ycn-v4-pieces,.ycn-v4-url').forEach(x=>x.remove());}
+function setImp(el,prop,value){if(el)el.style.setProperty(prop,value,'important');}
+function sanitize(row,top){
+  top.querySelectorAll('.ycn-top-status,.ycn-top-docs,.ycn-top-note,.ycn-row-direct-actions,.ycn-v4-status,.ycn-v4-pieces,.ycn-v4-url').forEach(x=>x.remove());
+  row.querySelectorAll(':scope > .ycn-v4-actions').forEach(x=>x.remove());
+}
+function styleActionBar(bar,status,pieces,link){
+  setImp(bar,'display','flex');
+  setImp(bar,'width','calc(100% - 16px)');
+  setImp(bar,'max-width','none');
+  setImp(bar,'margin','0 8px 8px 8px');
+  setImp(bar,'gap','6px');
+  setImp(bar,'box-sizing','border-box');
+  setImp(bar,'align-items','stretch');
+  [[status,'1.4 1 0'],[pieces,'1 1 0'],[link,'.8 1 0']].forEach(pair=>{
+    const el=pair[0];
+    setImp(el,'flex',pair[1]);
+    setImp(el,'width','0');
+    setImp(el,'min-width','0');
+    setImp(el,'max-width','none');
+    setImp(el,'height','32px');
+    setImp(el,'margin','0');
+    setImp(el,'box-sizing','border-box');
+  });
+  setImp(pieces,'display','inline-flex');setImp(pieces,'align-items','center');setImp(pieces,'justify-content','center');
+  setImp(link,'display','inline-flex');setImp(link,'align-items','center');setImp(link,'justify-content','center');
+  if(link.disabled){setImp(link,'visibility','hidden');setImp(link,'pointer-events','none');}
+}
 function enhance(row){
   const id=String(row?.dataset?.ycnRow||'');if(!id)return;
   const top=row.querySelector('.ycn-row-top'),edit=row.querySelector('[data-ycn-edit]'),hiddenStatus=row.querySelector('.ycn-row-detail [data-ycn-status]');if(!top||!edit||!hiddenStatus)return;
-  sanitize(top);row.classList.remove('open');
-  const status=hiddenStatus.cloneNode(true);status.removeAttribute('data-ycn-status');status.className='ycn-v4-status';status.value=hiddenStatus.value;status.onclick=e=>e.stopPropagation();status.onchange=e=>{e.stopPropagation();hiddenStatus.value=status.value;hiddenStatus.dispatchEvent(new Event('change',{bubbles:true}));fitStatusWidth(status);};
+  sanitize(row,top);row.classList.remove('open');
+  const status=hiddenStatus.cloneNode(true);status.removeAttribute('data-ycn-status');status.className='ycn-v4-status';status.value=hiddenStatus.value;status.onclick=e=>e.stopPropagation();status.onchange=e=>{e.stopPropagation();hiddenStatus.value=status.value;hiddenStatus.dispatchEvent(new Event('change',{bubbles:true}));};
   const n=docsFor(id).length,pieces=document.createElement('button');pieces.type='button';pieces.className='ycn-v4-pieces'+(n?' has':'');pieces.textContent=n>1?('📎 '+n):'📎 Pièce';pieces.title=n===1?'Voir la pièce jointe':(n>1?'Voir les '+n+' pièces jointes':'Aucune pièce jointe');pieces.setAttribute('aria-label',pieces.title);pieces.onclick=e=>{e.preventDefault();e.stopPropagation();openModal(id);};
   const o=orderById(id),url=orderUrl(o),pieceNom=String(o?.pieceNom||o?.piece_nom||'').trim(),link=document.createElement('button');link.type='button';link.className='ycn-v4-url';link.textContent='🔗 Lien';link.disabled=!url;link.title=url&&!pieceNom?'Ouvrir le lien':'Aucun lien';link.setAttribute('aria-label',link.title);link.onclick=e=>{e.preventDefault();e.stopPropagation();if(url&&!pieceNom)window.open(url,'_blank','noopener');};
-  top.append(status,pieces,link);fitStatusWidth(status);
+  const bar=document.createElement('div');bar.className='ycn-v4-actions';bar.append(status,pieces,link);styleActionBar(bar,status,pieces,link);row.appendChild(bar);
   if(!top.dataset.ycnV4Edit){top.dataset.ycnV4Edit='1';top.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea,label'))return;e.preventDefault();e.stopPropagation();edit.click();});}
   row.dataset.ycnLineV4='1';
 }
@@ -376,5 +402,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.4-status-fit-actions';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.5-native-action-bar';
 })();
