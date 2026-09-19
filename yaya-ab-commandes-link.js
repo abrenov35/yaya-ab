@@ -7,11 +7,11 @@ const REFRESH_ID='yayaRefreshChantierBtn';
 const MANAGE_ID='yayaManageChantierCardBtn';
 const DELETE_CONFIRM_ID='ycnDeleteConfirmPretty';
 const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.css?v=6';
-const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=5';
+const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=6';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=2';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=4';
-const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=13';
-const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=7';
+const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=14';
+const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=8';
 const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=1';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
 
@@ -121,8 +121,9 @@ function ensureRowModalPatch(){
  const s=document.createElement('script');s.src=ROW_MODAL_URL;s.async=true;s.dataset.ycnRowModal='1';document.head.appendChild(s);
 }
 function ensureActionsPatch(){
- if(window.__YAYA_COMMANDES_NATIVE_ACTIONS_V3||document.querySelector('script[data-ycn-actions-v3]'))return;
- const s=document.createElement('script');s.src=ACTIONS_URL;s.async=true;s.dataset.ycnActionsV3='1';document.head.appendChild(s);
+ // Ancien module AB Commande volontairement désactivé.
+ // La page Commandes est désormais alimentée uniquement par Yaya.
+ return;
 }
 function ensureLineV4Patch(){
  if(window.__YAYA_COMMANDES_LINE_V4||document.querySelector('script[data-ycn-line-v4]'))return;
@@ -214,5 +215,5 @@ const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserve
 const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
 bodyObserver.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.18-stable-no-auto-sync';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.19-yaya-only';
 })();
