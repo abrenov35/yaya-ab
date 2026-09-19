@@ -91,6 +91,174 @@
     document.head.appendChild(style);
   }
 
+  if(!document.getElementById('yaya-commandes-kanban-v1')){
+    const kanban=document.createElement('style');
+    kanban.id='yaya-commandes-kanban-v1';
+    kanban.textContent=`
+      .yaya-cmd-native-root .ycn-toolbar{margin-bottom:10px!important;}
+      .yaya-cmd-native-root .ycn-groups{
+        display:grid!important;
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        gap:10px!important;
+        align-items:start!important;
+        overflow:visible!important;
+      }
+      .yaya-cmd-native-root .ycn-group{
+        display:block!important;
+        min-width:0!important;
+        overflow:visible!important;
+        padding:0 7px 8px!important;
+        border:1px solid #dde5ee!important;
+        border-radius:10px!important;
+        background:#f7f9fc!important;
+        box-shadow:none!important;
+      }
+      .yaya-cmd-native-root .ycn-group-head{
+        min-height:38px!important;
+        padding:0 3px!important;
+        border:0!important;
+        border-bottom:3px solid #b9c5d2!important;
+        border-radius:0!important;
+        background:transparent!important;
+        color:#20364f!important;
+        box-shadow:none!important;
+      }
+      .yaya-cmd-native-root .ycn-group-left{gap:7px!important;min-width:0!important;}
+      .yaya-cmd-native-root .ycn-group-left>span:last-child{
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        font-size:11.8px!important;
+        font-weight:900!important;
+      }
+      .yaya-cmd-native-root .ycn-dot{display:none!important;}
+      .yaya-cmd-native-root .ycn-count{
+        min-width:20px!important;
+        height:20px!important;
+        padding:0 6px!important;
+        border-radius:10px!important;
+        background:#e7edf4!important;
+        color:#52667c!important;
+        font-size:10px!important;
+        font-weight:900!important;
+      }
+      .yaya-cmd-native-root .ycn-group-body,
+      .yaya-cmd-native-root .ycn-group.open .ycn-group-body{
+        display:flex!important;
+        flex-direction:column!important;
+        gap:7px!important;
+        min-height:58px!important;
+        padding:8px 0 0!important;
+        border:0!important;
+        background:transparent!important;
+      }
+      .yaya-cmd-native-root .ycn-row{
+        width:100%!important;
+        overflow:hidden!important;
+        border:1px solid #d7e0ea!important;
+        border-radius:9px!important;
+        background:#fff!important;
+        box-shadow:0 1px 4px rgba(22,45,73,.08)!important;
+      }
+      .yaya-cmd-native-root .ycn-row:hover{
+        border-color:#bccbda!important;
+        box-shadow:0 3px 10px rgba(22,45,73,.11)!important;
+      }
+      .yaya-cmd-native-root .ycn-row-top{
+        display:grid!important;
+        grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+        gap:6px!important;
+        padding:10px!important;
+      }
+      .yaya-cmd-native-root .ycn-row-summary{display:contents!important;}
+      .yaya-cmd-native-root .ycn-row-summary strong{
+        grid-column:1/-1!important;
+        min-width:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        color:#102b48!important;
+        font-size:12.5px!important;
+        font-weight:900!important;
+        line-height:1.25!important;
+      }
+      .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{
+        display:block!important;
+        grid-column:1/-1!important;
+        min-width:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        color:#738195!important;
+        font-size:10.5px!important;
+        line-height:1.2!important;
+      }
+      .yaya-cmd-native-root .ycn-row-summary .ycn-qte,
+      .yaya-cmd-native-root .ycn-row-summary .ycn-resp{display:none!important;}
+      .yaya-cmd-native-root .ycn-v4-pieces,
+      .yaya-cmd-native-root .ycn-v4-url{
+        width:100%!important;
+        min-width:0!important;
+        height:29px!important;
+        padding:0 7px!important;
+        border-radius:7px!important;
+        font-size:10px!important;
+      }
+      .yaya-cmd-native-root .ycn-v4-pieces{grid-column:1!important;}
+      .yaya-cmd-native-root .ycn-v4-url{grid-column:2!important;}
+      .yaya-cmd-native-root .ycn-v4-status{
+        grid-column:1/-1!important;
+        width:100%!important;
+        min-width:0!important;
+        max-width:none!important;
+        height:30px!important;
+        justify-self:stretch!important;
+        font-size:10.5px!important;
+      }
+      .yaya-cmd-native-root .ycn-empty{
+        display:flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        min-height:52px!important;
+        padding:8px!important;
+        color:#94a0ad!important;
+        font-size:10px!important;
+        font-style:normal!important;
+        text-align:center!important;
+      }
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="choice"]{background:#fbf9ff!important;border-color:#e2d7f1!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="choice"] .ycn-group-head{border-bottom-color:#9b5de5!important;color:#6d28a8!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="todo"]{background:#fffaf7!important;border-color:#f1ded4!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="todo"] .ycn-group-head{border-bottom-color:#ef8b4c!important;color:#a84a1c!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="ordered"]{background:#f8fbff!important;border-color:#d8e4f4!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="ordered"] .ycn-group-head{border-bottom-color:#3478df!important;color:#1858b8!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="received"]{background:#f8fcfa!important;border-color:#d7eadf!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="received"] .ycn-group-head{border-bottom-color:#2f9f6b!important;color:#087148!important;}
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="choice"] .ycn-row,
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="todo"] .ycn-row,
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="ordered"] .ycn-row,
+      .yaya-cmd-native-root .ycn-group[data-ycn-group="received"] .ycn-row{box-shadow:0 1px 4px rgba(22,45,73,.08)!important;}
+
+      @media(max-width:860px){
+        .yaya-cmd-native-root .ycn-groups{
+          display:flex!important;
+          gap:10px!important;
+          overflow-x:auto!important;
+          overflow-y:visible!important;
+          padding:1px 2px 8px!important;
+          scroll-snap-type:x proximity!important;
+          -webkit-overflow-scrolling:touch!important;
+        }
+        .yaya-cmd-native-root .ycn-group{
+          flex:0 0:min(82vw,310px)!important;
+          width:min(82vw,310px)!important;
+          scroll-snap-align:start!important;
+        }
+      }
+    `;
+    document.head.appendChild(kanban);
+  }
+
   function renameAddButton(root){
     (root||document).querySelectorAll('.yaya-cmd-native-root [data-ycn-add]').forEach(function(btn){
       if(btn.textContent.trim()!=='+ Ajouter une commande')btn.textContent='+ Ajouter une commande';
@@ -120,54 +288,17 @@
   }
 
   function forcePortraitCommandLayout(){
-    const mobile=window.matchMedia && window.matchMedia('(max-width:760px)').matches;
-    document.querySelectorAll('.yaya-cmd-native-root .ycn-row-top').forEach(function(top){
-      const summary=top.querySelector('.ycn-row-summary');
-      const product=summary && summary.querySelector('strong');
-      const supplier=summary && summary.querySelector('.ycn-supplier');
-      const status=top.querySelector('.ycn-v4-status');
-      const pieces=top.querySelector('.ycn-v4-pieces');
-      const url=top.querySelector('.ycn-v4-url');
-
-      if(mobile){
-        const hasUrl=!!(url&&!url.disabled);
-        top.style.setProperty('grid-template-columns',hasUrl?'max-content max-content max-content':'max-content max-content','important');
-        top.style.setProperty('justify-content','start','important');
-        top.style.setProperty('gap','5px','important');
-        top.style.setProperty('padding','6px 8px','important');
-        if(product){product.style.setProperty('grid-column','1 / -1','important');product.style.setProperty('width','100%','important');}
-        if(supplier)supplier.style.setProperty('display','none','important');
-        if(status){status.style.setProperty('grid-column','1','important');status.style.setProperty('width','auto','important');status.style.setProperty('min-width','0','important');status.style.setProperty('max-width','165px','important');}
-        if(pieces){pieces.style.setProperty('grid-column','2','important');pieces.style.setProperty('min-width','0','important');pieces.style.setProperty('width','auto','important');pieces.style.setProperty('padding','0 9px','important');}
-        if(url){
-          if(hasUrl){
-            url.style.setProperty('display','inline-flex','important');
-            url.style.setProperty('align-items','center','important');
-            url.style.setProperty('justify-content','center','important');
-            url.style.setProperty('grid-column','3','important');
-            url.style.setProperty('min-width','0','important');
-            url.style.setProperty('width','auto','important');
-            url.style.setProperty('padding','0 9px','important');
-            url.style.setProperty('visibility','visible','important');
-          }else{
-            url.style.setProperty('display','none','important');
-          }
-        }
-      }else{
-        ['grid-template-columns','justify-content','gap','padding'].forEach(function(p){top.style.removeProperty(p);});
-        if(product){product.style.removeProperty('grid-column');product.style.removeProperty('width');}
-        if(supplier)supplier.style.removeProperty('display');
-        [status,pieces,url].forEach(function(el){if(!el)return;['grid-column','min-width','max-width','width','padding','display','align-items','justify-content','visibility'].forEach(function(p){el.style.removeProperty(p);});});
-      }
-    });
+    // Le Kanban gère lui-même le responsive, sans styles inline concurrents.
   }
 
   function compactActionLabels(){
     document.querySelectorAll('.yaya-cmd-native-root .ycn-v4-pieces').forEach(function(btn){
-      const m=String(btn.textContent||'').match(/(\d+)/);
-      const n=m?Number(m[1]):0;
-      btn.textContent=n?'📎 Voir '+n:'📎 0';
-      btn.title=n===1?'1 pièce jointe':n+' pièces jointes';
+      const raw=String(btn.textContent||'');
+      const m=raw.match(/\((\d+)\)|\b(\d+)\b/);
+      const n=m?Number(m[1]||m[2]||0):0;
+      const has=btn.classList.contains('has');
+      btn.textContent=has?(n>1?'📎 '+n:'📎 Pièce'):'📎 Pièce';
+      btn.title=has?(n>1?n+' pièces jointes':'1 pièce jointe'):'Aucune pièce jointe';
       btn.setAttribute('aria-label',btn.title);
     });
     document.querySelectorAll('.yaya-cmd-native-root .ycn-v4-url').forEach(function(btn){
@@ -178,21 +309,10 @@
   }
 
   function fitStatusWidths(){
-    const canvas=fitStatusWidths._canvas||(fitStatusWidths._canvas=document.createElement('canvas'));
-    const ctx=canvas.getContext('2d');
     document.querySelectorAll('.yaya-cmd-native-root .ycn-v4-status').forEach(function(sel){
-      const option=sel.options&&sel.selectedIndex>=0?sel.options[sel.selectedIndex]:null;
-      const label=String(option?.textContent||sel.value||'').trim();
-      const cs=getComputedStyle(sel);
-      if(ctx)ctx.font=[cs.fontStyle,cs.fontWeight,cs.fontSize,cs.fontFamily].filter(Boolean).join(' ');
-      const textWidth=ctx?ctx.measureText(label).width:(label.length*6.5);
-      const width=Math.max(78,Math.min(165,Math.ceil(textWidth+34)));
-      sel.style.setProperty('width',width+'px','important');
-      sel.style.setProperty('min-width','0','important');
-      if(!sel.dataset.ycnFitWidth){
-        sel.dataset.ycnFitWidth='1';
-        sel.addEventListener('change',scheduleRefresh,{passive:true});
-      }
+      sel.style.removeProperty('width');
+      sel.style.removeProperty('min-width');
+      sel.style.removeProperty('max-width');
     });
   }
 
