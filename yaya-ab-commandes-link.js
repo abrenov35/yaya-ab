@@ -14,6 +14,32 @@ const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?
 const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=8';
 const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=1';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
+const COMMANDES_BASE_MIGRATION_KEY='YAYA_COMMANDES_BASE_LINKS_20260919_V1';
+let commandesMigrationPromise=null;
+
+async function ensureFreshCommandesAfterBaseMigration(){
+  try{
+    if(localStorage.getItem(COMMANDES_BASE_MIGRATION_KEY)==='1')return true;
+  }catch(_){}
+  if(commandesMigrationPromise)return commandesMigrationPromise;
+  commandesMigrationPromise=(async()=>{
+    try{
+      if(typeof window.yayaRefreshCommandesNow!=='function')return false;
+      const ok=await window.yayaRefreshCommandesNow();
+      if(ok){
+        try{localStorage.setItem(COMMANDES_BASE_MIGRATION_KEY,'1');}catch(_){}
+        return true;
+      }
+      return false;
+    }catch(err){
+      console.warn('Yaya Commandes : rafraîchissement migration impossible',err);
+      return false;
+    }finally{
+      commandesMigrationPromise=null;
+    }
+  })();
+  return commandesMigrationPromise;
+}
 
 function installBaseStyle(){
  let s=document.getElementById(STYLE_ID);
@@ -178,6 +204,7 @@ async function mountCard(card){
  if(!block.dataset.ycnReady)block.innerHTML='<div class="yaya-cmd-direct-wait">Chargement des commandes…</div>';
  try{
    const api=await loadAssets();
+   await ensureFreshCommandesAfterBaseMigration();
    if(!block.isConnected)return;
    const chantierKey=String(id||'')+'::'+String(name||'');
    if(block.dataset.ycnReady==='1'){
@@ -215,5 +242,5 @@ const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserve
 const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
 bodyObserver.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.19-yaya-only';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.20-yaya-base-linked';
 })();
