@@ -188,6 +188,18 @@
     return ui;
   }
 
+  function showDrivePreviewFast(root,id){
+    const ui=makeModal(root);
+    const iframe=document.createElement('iframe');
+    iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
+    iframe.title='Pièce jointe';
+    iframe.loading='eager';
+    iframe.referrerPolicy='no-referrer-when-downgrade';
+    iframe.style.cssText='display:block;width:100%;height:100%;border:0;background:#fff';
+    ui.stage.replaceChildren(iframe);
+    return ui;
+  }
+
   function showImage(root,src){
     const ui=makeModal(root);
     ui.stage.classList.add('piece-image-stage');
@@ -629,52 +641,8 @@
     }
 
     if(driveId){
-      const knownName=currentPreviewFileName();
-      const knownPdf=pdfByExtension(knownName);
-      const pending=showLoading(root,knownPdf?'Chargement de la pièce…':'Analyse de la pièce…');
-      const imageCandidate=
-        'https://drive.google.com/uc?export=view&id='+
-        encodeURIComponent(driveId);
-
-      if(!knownPdf){
-        try{
-          const isImage=await canLoadImage(imageCandidate,900);
-          if(!root.contains(pending.modal))return;
-
-          if(isImage){
-            showImage(root,imageCandidate);
-            return;
-          }
-        }catch(e){
-          if(!root.contains(pending.modal))return;
-        }
-      }
-
-      try{
-        await renderDrivePdfPages(root,driveId);
-        return;
-      }catch(e){
-        console.warn(
-          'Rendu Drive page-par-page indisponible :',
-          e
-        );
-      }
-
-      const pdfCandidate=
-        'https://drive.google.com/uc?export=download&id='+
-        encodeURIComponent(driveId);
-
-      try{
-        await renderPdf(root,pdfCandidate);
-        return;
-      }catch(e){
-        console.warn(
-          'PDF.js Drive indisponible, retour lecteur Drive :',
-          e
-        );
-        showFallback(root,u);
-        return;
-      }
+      showDrivePreviewFast(root,driveId);
+      return;
     }
 
     if(pdfByExtension(direct)||!imageByExtension(direct)){
