@@ -152,24 +152,42 @@
 
       const signature=(sigMonth.value&&sigYear.value)?String(sigYear.value)+'-'+String(sigMonth.value):'';
 
-      c.nom=name;
-      c.dateSignature=signature;
-      c.montantMarcheHT=montant;
+      const previous={
+        nom:c.nom,
+        dateSignature:c.dateSignature,
+        montantMarcheHT:c.montantMarcheHT
+      };
+      const applied={nom:name,dateSignature:signature,montantMarcheHT:montant};
+
+      c.nom=applied.nom;
+      c.dateSignature=applied.dateSignature;
+      c.montantMarcheHT=applied.montantMarcheHT;
 
       const btn=document.getElementById('editChSave');
       if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
+
+      try{closeModal();}catch(e){}
+      try{render();}catch(e){}
+      try{toast('Chantier modifié — synchronisation…');}catch(e){}
+      window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
 
       let ok=false;
       try{ok=await apiPost('setChantiers',S.chantiers);}catch(e){ok=false;}
 
       if(ok){
-        try{closeModal();}catch(e){}
-        try{render();}catch(e){}
         try{toast('Chantier mis à jour ✓');}catch(e){}
-      }else if(btn){
-        btn.disabled=false;
-        btn.textContent='Enregistrer';
+      }else{
+        // Ne revenir en arrière que si aucune modification plus récente n'a remplacé ces valeurs.
+        if(c.nom===applied.nom&&c.dateSignature===applied.dateSignature&&Number(c.montantMarcheHT)===Number(applied.montantMarcheHT)){
+          c.nom=previous.nom;
+          c.dateSignature=previous.dateSignature;
+          c.montantMarcheHT=previous.montantMarcheHT;
+          try{render();}catch(e){}
+        }
+        try{toast('NON ENREGISTRÉ — modification du chantier annulée',true);}catch(e){}
       }
+      window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+      window.__yayaLastWriteAt=Date.now();
     };
   }
 
