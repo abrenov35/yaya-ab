@@ -18,10 +18,10 @@ function injectStyle(){
     .yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(170px,1.35fr) minmax(120px,1fr) 80px 105px 125px 72px minmax(140px,1fr);gap:10px;cursor:pointer}
     .yaya-cmd-native-root .ycn-top-status,.yaya-cmd-native-root .ycn-top-docs,.yaya-cmd-native-root .ycn-top-note{font-size:11.5px;color:#4d5f74;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .yaya-cmd-native-root .ycn-top-status{font-weight:800;color:#263f5d}
-    .yaya-cmd-native-root .ycn-top-docs{border:1px solid #cfd9e6;background:#fff;color:#1f5f9f;border-radius:7px;min-height:30px;padding:0 8px;font:inherit;font-size:11px;font-weight:850;cursor:pointer;white-space:nowrap}
+    .yaya-cmd-native-root .ycn-top-docs{border:1px solid #cfd9e6;background:#fff;color:#1f5f9f;border-radius:8px;min-width:52px;min-height:36px;padding:0 11px;font:inherit;font-size:12px;font-weight:850;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:5px}
     .yaya-cmd-native-root .ycn-top-note{color:#6f7f92}
     @media(max-width:900px){.yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(160px,1.4fr) minmax(110px,1fr) 90px 110px 64px}.yaya-cmd-native-root .ycn-row-top .ycn-qte,.yaya-cmd-native-root .ycn-row-top .ycn-resp,.yaya-cmd-native-root .ycn-top-note{display:none}}
-    @media(max-width:640px){.yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(0,1fr) 96px 58px}.yaya-cmd-native-root .ycn-row-top .ycn-supplier,.yaya-cmd-native-root .ycn-row-top .ycn-qte,.yaya-cmd-native-root .ycn-row-top .ycn-resp,.yaya-cmd-native-root .ycn-top-note{display:none}}
+    @media(max-width:640px){.yaya-cmd-native-root .ycn-row-top{grid-template-columns:minmax(0,1fr) 96px 64px}.yaya-cmd-native-root .ycn-top-docs{min-width:52px;min-height:36px;padding:0 10px;font-size:12px}.yaya-cmd-native-root .ycn-row-top .ycn-supplier,.yaya-cmd-native-root .ycn-row-top .ycn-qte,.yaya-cmd-native-root .ycn-row-top .ycn-resp,.yaya-cmd-native-root .ycn-top-note{display:none}}
   `;
   document.head.appendChild(s);
 }
