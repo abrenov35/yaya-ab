@@ -530,8 +530,8 @@ function hydratePhotoThumbs(pane){
   });
 }
 function style(){if(document.getElementById(STYLE))return;var s=document.createElement('style');s.id=STYLE;s.textContent=
-'#pane-chantiers .yaya-detail-section-tab[data-section="photos"]{background:#f3eeff!important;border-color:#c8b7f0!important;color:#6a45a5!important}'+
-'#pane-chantiers .yaya-detail-section-tab[data-section="photos"].on{background:#e8deff!important;border-color:#a98bdf!important;color:#59358f!important;box-shadow:inset 0 -2px 0 #a98bdf!important}'+
+'#pane-chantiers .yaya-detail-section-tab[data-section="photos"]{background:#eaf8f8!important;border-color:#9fd7d7!important;color:#267a7a!important}'+
+'#pane-chantiers .yaya-detail-section-tab[data-section="photos"].on{background:#d8f0f0!important;border-color:#72bcbc!important;color:#1f6868!important;box-shadow:inset 0 -2px 0 #72bcbc!important}'+
 '#pane-chantiers .yaya-detail-section-tab[data-section="photos"] small{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important}'+
 '#pane-chantiers .card[data-yaya-detail-section="photos"]>.yaya-detail-section-action-row[data-section="photos"]{display:flex!important}'+
 '#pane-chantiers .yaya-detail-section-action-row[data-section="photos"]{background:#f3f8f4!important;border-left:4px solid #78ae87!important}'+
