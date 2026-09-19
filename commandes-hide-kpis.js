@@ -364,11 +364,7 @@
   }
 
   function fitStatusWidths(){
-    document.querySelectorAll('.yaya-cmd-native-root .ycn-v4-status').forEach(function(sel){
-      sel.style.removeProperty('width');
-      sel.style.removeProperty('min-width');
-      sel.style.removeProperty('max-width');
-    });
+    // Les dimensions des actions Commandes sont maintenant pilotées par le rendu natif.
   }
 
   function refreshUi(){
