@@ -267,6 +267,48 @@
           min-width:0!important;
           padding:0 5px 6px!important;
         }
+
+        /* Règle finale : Statut | Pièce | Lien sur une seule ligne */
+        .yaya-cmd-native-root .ycn-row-top{
+          display:grid!important;
+          grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.85fr)!important;
+          gap:5px!important;
+          align-items:center!important;
+          padding:6px 8px!important;
+        }
+        .yaya-cmd-native-root .ycn-row-summary{display:contents!important;}
+        .yaya-cmd-native-root .ycn-row-summary strong{
+          grid-column:1/-1!important;
+          width:100%!important;
+          line-height:1.2!important;
+        }
+        .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:none!important;}
+        .yaya-cmd-native-root .ycn-v4-status,
+        .yaya-cmd-native-root .ycn-v4-pieces,
+        .yaya-cmd-native-root .ycn-v4-url{
+          width:100%!important;
+          min-width:0!important;
+          max-width:none!important;
+          height:30px!important;
+          margin:0!important;
+          padding:0 5px!important;
+          box-sizing:border-box!important;
+          align-self:stretch!important;
+          justify-self:stretch!important;
+        }
+        .yaya-cmd-native-root .ycn-v4-status{grid-column:1!important;}
+        .yaya-cmd-native-root .ycn-v4-pieces{grid-column:2!important;}
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url{
+          display:inline-flex!important;
+          align-items:center!important;
+          justify-content:center!important;
+          grid-column:3!important;
+        }
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url:disabled{
+          display:inline-flex!important;
+          visibility:hidden!important;
+          pointer-events:none!important;
+        }
       }
     `;
     document.head.appendChild(kanban);
