@@ -110,7 +110,6 @@
         localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
       }
     }catch(e){}
-    try{localStorage.removeItem('YAYA_FINANCE_PENDING_ACHATS_V1');}catch(e){}
   }
   function restoreIfStillCurrent(id,updated,previous){
     const rows=localRows();
@@ -162,19 +161,36 @@
     busy=true;
     setBusy(button,true);
     updateLocal(next);
+
+    // File persistante AVANT fermeture : si l'onglet/app est tué juste après,
+    // la modification est rejouée au prochain démarrage.
+    if(typeof window.__yayaFinanceQueueCurrent==='function'){
+      window.__yayaFinanceQueueCurrent({upsertIds:[rowId]});
+    }
+
     closeEditModal(modal);
     try{if(typeof render==='function')render();}catch(e){}
-    toastSafe(charge?'Enregistrement de la charge…':'Enregistrement de l’achat…');
-    window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
+    toastSafe(charge?'Charge modifiée — synchronisation…':'Achat modifié — synchronisation…');
 
+    // Le chemin normal est désormais la file locale persistante.
+    if(typeof window.__yayaFinanceFlushPending==='function'){
+      setTimeout(function(){window.__yayaFinanceFlushPending();},0);
+      setTimeout(function(){verifyInBackground(rowId,updated,charge);},1500);
+      busy=false;
+      return true;
+    }
+
+    // Secours uniquement si le gestionnaire de file n'est pas disponible.
+    window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
     try{
       await writeOne(updated);
       toastSafe(charge?'Charge modifiée ✓':'Achat modifié ✓');
       verifyInBackground(rowId,updated,charge);
       return true;
     }catch(err){
-      restoreIfStillCurrent(rowId,updated,previous);
-      toastSafe('NON ENREGISTRÉ — '+txt(err&&err.message||err),true);
+      // On conserve la version locale : mieux vaut une synchronisation en attente
+      // qu'une perte de modification après fermeture.
+      toastSafe('Modification conservée localement — synchronisation à reprendre',true);
       return false;
     }finally{
       window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
