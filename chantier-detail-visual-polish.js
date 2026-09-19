@@ -35,57 +35,57 @@
 
     /* KPI : contenu centré dans les pavés */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
-      gap:6px!important;
+      gap:7px!important;
       margin-top:0!important;
-      margin-bottom:8px!important;
+      margin-bottom:5px!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
-      min-height:44px!important;
-      height:44px!important;
-      max-height:44px!important;
-      padding:2px 8px!important;
+      min-height:54px!important;
+      height:54px!important;
+      max-height:54px!important;
+      padding:4px 8px!important;
       border:1px solid #d9e1e9!important;
-      border-radius:8px!important;
+      border-radius:10px!important;
       background:#f8fafc!important;
       box-shadow:none!important;
       display:flex!important;
-      flex-direction:row!important;
+      flex-direction:column!important;
       align-items:center!important;
       justify-content:center!important;
-      gap:6px!important;
+      gap:0!important;
       text-align:center!important;
       box-sizing:border-box!important;
-      white-space:nowrap!important;
+      white-space:normal!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{
-      margin:0!important;
+      margin:0 0 1px!important;
       color:#66798d!important;
       opacity:1!important;
-      font-size:8px!important;
-      font-weight:700!important;
+      font-size:9px!important;
+      font-weight:650!important;
       line-height:1!important;
-      letter-spacing:.05em!important;
+      letter-spacing:.07em!important;
       text-align:center!important;
-      width:auto!important;
+      width:100%!important;
       flex:0 0 auto!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
       color:#173452!important;
-      font-size:13.5px!important;
+      font-size:15.5px!important;
       line-height:1!important;
-      font-weight:800!important;
+      font-weight:750!important;
       text-align:center!important;
-      width:auto!important;
+      width:100%!important;
       flex:0 0 auto!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{
-      margin:0!important;
+      margin:1px 0 0!important;
       color:#6a7c8e!important;
       opacity:1!important;
-      font-size:8px!important;
+      font-size:9px!important;
       line-height:1!important;
       text-align:center!important;
-      width:auto!important;
+      width:100%!important;
       flex:0 0 auto!important;
     }
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat.marge-pos{
