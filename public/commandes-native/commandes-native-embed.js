@@ -27,11 +27,13 @@ function normalizeStatus(v){
  return 'choice';
 }
 function workflowStatus(o){
- const direct=String(o?.status||o?.statut||'').trim();
- if(direct)return normalizeStatus(direct);
+ const persisted=String(o?.statut||'').trim();
+ if(persisted)return normalizeStatus(persisted);
  const validation=String(o?.statutValidation||'');
  const m=validation.match(/(?:^|\|)YAYA_STATUS=(choice|todo|ordered|received)(?:\||$)/i);
- return m?normalizeStatus(m[1]):normalizeStatus('');
+ if(m)return normalizeStatus(m[1]);
+ const transient=String(o?.status||'').trim();
+ return transient?normalizeStatus(transient):normalizeStatus('');
 }
 function workflowValidation(current,status){
  const clean=String(current||'VALIDEE')
@@ -39,7 +41,10 @@ function workflowValidation(current,status){
    .replace(/\|+$/,'')||'VALIDEE';
  return clean+'|YAYA_STATUS='+normalizeStatus(status);
 }
-function normalize(o){return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit:String(o?.produit||o?.designation||''),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:workflowStatus(o)};}
+function normalize(o){
+ const produit=String(o?.produit||o?.designation||'');
+ return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit,designation:String(o?.designation||produit),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:workflowStatus(o)};
+}
 function applyPendingStatuses(rows){
  const list=(Array.isArray(rows)?rows:[]).map(normalize);
  if(!statusPending.length)return list;
@@ -192,13 +197,16 @@ function persistToYaya(order){
    const idx=rows.findIndex(x=>String(x?.id||'')===id);
    const prev=idx>=0?rows[idx]:{};
    const workflow=normalizeStatus(order?.status||order?.statut||workflowStatus(prev));
+   const produit=String(order?.produit||order?.designation||prev?.designation||'').trim();
    const nextRow={
      ...prev,
      ...order,
+     designation:produit,
      statut:workflow,
      statutValidation:workflowValidation(order?.statutValidation||prev?.statutValidation,workflow)
    };
    delete nextRow.status;
+   delete nextRow.produit;
    if(idx>=0)rows[idx]=nextRow;else rows.push(nextRow);
    S.commandes=rows;
    updateYayaCache();
