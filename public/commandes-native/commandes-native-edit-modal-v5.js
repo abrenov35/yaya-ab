@@ -49,6 +49,14 @@ function updateOrderInCaches(order){
   if(i>=0)rows[i]={...rows[i],...order};else rows.push(order);
   writeOrders(rows);
 }
+function encodeWorkflowValidation(current,status){
+  const allowed=['choice','todo','ordered','received'];
+  const workflow=allowed.includes(String(status||''))?String(status):'choice';
+  const clean=String(current||'VALIDEE')
+    .replace(/\|YAYA_STATUS=(choice|todo|ordered|received)/ig,'')
+    .replace(/\|+$/,'')||'VALIDEE';
+  return clean+'|YAYA_STATUS='+workflow;
+}
 function removePending(id){
   try{const p=JSON.parse(localStorage.getItem(PENDING_KEY)||'[]');if(Array.isArray(p))localStorage.setItem(PENDING_KEY,JSON.stringify(p.filter(x=>String(x?.id||'')!==String(id))));}catch(_){ }
 }
@@ -66,7 +74,12 @@ async function post(data){
   }else if(action==='upsert'){
     const order={...data};delete order.action;
     const i=rows.findIndex(o=>String(o?.id||'')===String(order.id||''));
-    if(i>=0)rows[i]={...rows[i],...order};else rows.push(order);
+    const previous=i>=0?rows[i]:{};
+    const workflow=String(order.status||order.statut||previous.status||previous.statut||'choice');
+    order.statut=workflow;
+    order.statutValidation=encodeWorkflowValidation(order.statutValidation||previous.statutValidation,workflow);
+    delete order.status;
+    if(i>=0)rows[i]={...previous,...order};else rows.push(order);
     writeOrders(rows);
   }else return {ok:true};
   if(typeof apiPost!=='function')throw new Error('API Yaya indisponible');
