@@ -107,8 +107,19 @@ function yayaOpenDirectChantier(){
   }catch(e){return false;}
 }
 
-const directStateObserver=new MutationObserver(()=>{yayaSyncDirectUrl();if(yayaDirectPendingId)yayaOpenDirectChantier();});
-directStateObserver.observe(document.documentElement,{childList:true,subtree:true});
+let directStateQueued=false;
+function queueDirectStateSync(){
+  if(directStateQueued)return;
+  directStateQueued=true;
+  requestAnimationFrame(()=>{
+    directStateQueued=false;
+    yayaSyncDirectUrl();
+    if(yayaDirectPendingId)yayaOpenDirectChantier();
+  });
+}
+const directStateObserver=new MutationObserver(queueDirectStateSync);
+const directStateRoot=document.getElementById('pane-chantiers')||document.body;
+directStateObserver.observe(directStateRoot,{childList:true,subtree:true});
 
 if(yayaDirectPendingId){
   yayaSetDirectUrl(yayaDirectPendingId);
