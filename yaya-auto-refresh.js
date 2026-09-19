@@ -60,6 +60,8 @@
   // Aucun setInterval, aucun premier GET différé, aucun refresh au retour d'onglet.
   window.__YAYA_AUTO_SYNC_STOPPED=true;
   window.__yayaSmartRefreshInstalled=true;
+  window.yayaRefreshTabsNow=function(tabs){return refreshTabsManual(tabs);};
+  window.yayaRefreshCommandesNow=function(){return refreshTabsManual(['commandes']);};
   window.yayaSmartRefreshNow=function(){return refreshTabsManual(WATCHED);};
 })();
 
