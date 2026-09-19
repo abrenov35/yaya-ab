@@ -63,8 +63,9 @@
 
       @media(max-width:760px){
         .yaya-cmd-native-root .ycn-row-top{
-          grid-template-columns:max-content max-content max-content!important;
-          justify-content:start!important;
+          display:grid!important;
+          grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,.85fr)!important;
+          justify-content:stretch!important;
           gap:5px!important;
           padding:6px 8px!important;
         }
@@ -74,18 +75,32 @@
           line-height:1.2!important;
         }
         .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:none!important;}
-        .yaya-cmd-native-root .ycn-v4-status{grid-column:1!important;width:auto!important;min-width:0!important;max-width:165px!important;}
-        .yaya-cmd-native-root .ycn-v4-pieces{grid-column:2!important;min-width:0!important;width:auto!important;padding:0 9px!important;}
-        body .yaya-cmd-native-root .ycn-row .ycn-v4-url:not(:disabled){
+        .yaya-cmd-native-root .ycn-v4-status,
+        .yaya-cmd-native-root .ycn-v4-pieces,
+        .yaya-cmd-native-root .ycn-v4-url{
+          width:100%!important;
+          min-width:0!important;
+          max-width:none!important;
+          height:30px!important;
+          margin:0!important;
+          padding:0 5px!important;
+          box-sizing:border-box!important;
+          align-self:stretch!important;
+          justify-self:stretch!important;
+        }
+        .yaya-cmd-native-root .ycn-v4-status{grid-column:1!important;}
+        .yaya-cmd-native-root .ycn-v4-pieces{grid-column:2!important;}
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url{
           display:inline-flex!important;
           align-items:center!important;
           justify-content:center!important;
           grid-column:3!important;
-          min-width:0!important;
-          width:auto!important;
-          padding:0 9px!important;
         }
-        body .yaya-cmd-native-root .ycn-row .ycn-v4-url:disabled{display:none!important;}
+        body .yaya-cmd-native-root .ycn-row .ycn-v4-url:disabled{
+          display:inline-flex!important;
+          visibility:hidden!important;
+          pointer-events:none!important;
+        }
       }
     `;
     document.head.appendChild(style);
@@ -241,18 +256,16 @@
 
       @media(max-width:860px){
         .yaya-cmd-native-root .ycn-groups{
-          display:flex!important;
-          gap:10px!important;
-          overflow-x:auto!important;
-          overflow-y:visible!important;
-          padding:1px 2px 8px!important;
-          scroll-snap-type:x proximity!important;
-          -webkit-overflow-scrolling:touch!important;
+          display:grid!important;
+          grid-template-columns:repeat(2,minmax(0,1fr))!important;
+          gap:8px!important;
+          overflow:visible!important;
+          padding:1px 0 8px!important;
         }
         .yaya-cmd-native-root .ycn-group{
-          flex:0 0:min(82vw,310px)!important;
-          width:min(82vw,310px)!important;
-          scroll-snap-align:start!important;
+          width:auto!important;
+          min-width:0!important;
+          padding:0 5px 6px!important;
         }
       }
     `;
