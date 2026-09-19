@@ -91,6 +91,21 @@
     return /\.pdf(?:[?#]|$)/i.test(String(u||''));
   }
 
+  function currentPreviewFileName(){
+    const id=String(window.__yayaPreviewDocumentId||'').trim();
+    if(!id)return '';
+    let rows=[];
+    try{if(typeof S!=='undefined'&&S&&Array.isArray(S.documents))rows=S.documents;}catch(e){}
+    if(!rows.length){
+      try{
+        const cached=JSON.parse(localStorage.getItem('YAYA_CACHE_DATA_V2')||'{}')||{};
+        if(Array.isArray(cached.documents))rows=cached.documents;
+      }catch(e){}
+    }
+    const d=rows.find(x=>String(x&&x.id||'')===id);
+    return String(d&&(d.pieceNom||d.nomFichier||d.filename||d.nom||d.titre)||'').trim();
+  }
+
   function makeModal(root){
     root.replaceChildren();
 
@@ -274,8 +289,8 @@
     let knownLastPage=null;
 
     function targetWidth(){
-      const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
-      return Math.round(Math.max(900,ui.stage.clientWidth*dpr));
+      const dpr=Math.min(1.6,Math.max(1,window.devicePixelRatio||1));
+      return Math.round(Math.max(760,Math.min(1500,ui.stage.clientWidth*dpr)));
     }
 
     async function getPage(n){
@@ -285,7 +300,7 @@
 
       const promise=loadImageFromCandidates(
         drivePageCandidates(id,n,targetWidth()),
-        6500
+        4200
       ).then(r=>r.url).catch(err=>{
         cache.delete(n);
         throw err;
@@ -614,21 +629,25 @@
     }
 
     if(driveId){
-      const pending=showLoading(root,'Analyse de la pièce…');
+      const knownName=currentPreviewFileName();
+      const knownPdf=pdfByExtension(knownName);
+      const pending=showLoading(root,knownPdf?'Chargement de la pièce…':'Analyse de la pièce…');
       const imageCandidate=
         'https://drive.google.com/uc?export=view&id='+
         encodeURIComponent(driveId);
 
-      try{
-        const isImage=await canLoadImage(imageCandidate,1700);
-        if(!root.contains(pending.modal))return;
+      if(!knownPdf){
+        try{
+          const isImage=await canLoadImage(imageCandidate,900);
+          if(!root.contains(pending.modal))return;
 
-        if(isImage){
-          showImage(root,imageCandidate);
-          return;
+          if(isImage){
+            showImage(root,imageCandidate);
+            return;
+          }
+        }catch(e){
+          if(!root.contains(pending.modal))return;
         }
-      }catch(e){
-        if(!root.contains(pending.modal))return;
       }
 
       try{
