@@ -105,6 +105,20 @@
       }
     });
 
+    // Suppressions explicites issues de la file persistante Achats.
+    // Elles doivent gagner sur la fusion serveur, même si la baseline locale
+    // n'avait pas encore connaissance de la ligne (cas typique d'un doublon
+    // apparu via une synchronisation récente).
+    try{
+      const explicit=window.__yayaAchatsExplicitRemoveIds;
+      if(explicit&&typeof explicit.forEach==='function'){
+        explicit.forEach(function(id){
+          id=String(id||'');
+          if(id)removedIds.add(id);
+        });
+      }
+    }catch(e){}
+
     const mergedMap=new Map();
     freshRows.forEach(function(row){
       const id=idOf(row);
@@ -123,6 +137,12 @@
     const ok=await originalApiPost('setAchats',merged);
     if(ok){
       saveLocal(merged);
+      try{
+        const explicit=window.__yayaAchatsExplicitRemoveIds;
+        if(explicit&&typeof explicit.delete==='function'){
+          removedIds.forEach(function(id){explicit.delete(id);});
+        }
+      }catch(e){}
       try{window.dispatchEvent(new CustomEvent('yaya:achats-safe-write'));}catch(e){}
     }
     return ok;
