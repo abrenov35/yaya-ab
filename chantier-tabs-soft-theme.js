@@ -234,6 +234,25 @@
       border:0!important;
     }
 
+    /* Photos : contraste renforcé sans concurrencer l’onglet actif. */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="photos"]{
+      background:#F3F6FA!important;
+      border-color:#C8D4E3!important;
+      color:#4B5F7A!important;
+      font-weight:700!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="photos"]:hover{
+      background:#EEF3F8!important;
+      border-color:#B7C7DA!important;
+      color:#314966!important;
+    }
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="photos"].on{
+      background:#E7EEF6!important;
+      border-color:#9FB4CA!important;
+      color:#2F4A66!important;
+      box-shadow:inset 0 -2px 0 #8FA9C1!important;
+    }
+
     /* YAYA_PHOTOS_NO_COUNT_FINAL */
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="photos"] > small[data-yaya-count],
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="photos"] > small{
