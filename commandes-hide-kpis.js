@@ -404,7 +404,7 @@
     }
     if(relevant)scheduleRefresh();
   });
-  observer.observe(document.body,{childList:true,subtree:true});
+  observer.observe(document.getElementById('pane-chantiers')||document.body,{childList:true,subtree:true});
 
   window.addEventListener('resize',forcePortraitCommandLayout,{passive:true});
   window.addEventListener('orientationchange',forcePortraitCommandLayout,{passive:true});
