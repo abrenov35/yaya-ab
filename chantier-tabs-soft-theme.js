@@ -175,31 +175,24 @@
     @media(max-width:760px){
       /* Résumé financier compact : 4 KPI lisibles sans monopoliser l'écran. */
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .kpis{
-        grid-template-columns:repeat(2,minmax(0,1fr))!important;
-        gap:5px!important;
-        margin-bottom:8px!important;
+        gap:7px!important;
+        margin-bottom:10px!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat{
-        min-height:42px!important;
-        height:42px!important;
-        max-height:42px!important;
-        padding:3px 6px!important;
-        gap:4px!important;
-        flex-direction:row!important;
+        min-height:64px!important;
+        padding:7px 8px!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat small{
-        margin:0!important;
-        font-size:8px!important;
-        line-height:1!important;
+        margin-bottom:2px!important;
+        font-size:9.5px!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat b{
-        font-size:13px!important;
-        line-height:1!important;
+        font-size:18px!important;
+        line-height:1.05!important;
       }
       #pane-chantiers .card:has(> .yaya-detail-section-tabs) .stat .sub{
-        margin:0!important;
-        font-size:8px!important;
-        line-height:1!important;
+        margin-top:1px!important;
+        font-size:10px!important;
       }
 
       /* Les 5 onglets restent tous visibles sur un iPhone en mode portrait. */
