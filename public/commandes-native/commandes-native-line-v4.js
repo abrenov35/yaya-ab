@@ -19,7 +19,26 @@ function readState(){
   return {orders:[],documents:[]};
 }
 function orderById(id){return (readState().orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;}
-function docsFor(id){return (readState().documents||[]).filter(d=>String(d?.commande_id||'')===String(id||''));}
+function docsFor(id){
+  const state=readState();
+  const docs=(state.documents||[]).filter(d=>String(d?.commande_id||'')===String(id||''));
+  const order=(state.orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;
+  const url=orderUrl(order);
+  const pieceNom=String(order?.pieceNom||order?.piece_nom||'').trim();
+  if(url&&pieceNom){
+    const exists=docs.some(d=>docUrl(d)===url);
+    if(!exists)docs.unshift({
+      id:'order-attachment:'+String(order?.id||id||''),
+      commande_id:String(order?.id||id||''),
+      type:'Fichier',
+      nom_fichier:pieceNom,
+      url_pdf:url,
+      source:'Commande',
+      __yayaOrderAttachment:true
+    });
+  }
+  return docs;
+}
 function docUrl(d){return String(d?.url_pdf||d?.url||d?.lien||d?.webUrl||d?.oneDriveWebUrl||'').trim();}
 function orderUrl(o){return String(o?.lien||o?.url||o?.urlCommande||o?.url_commande||o?.lienUrl||o?.lien_url||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||'').trim();}
 function iframeUrl(url){
@@ -282,8 +301,9 @@ function renderModal(){
   list.forEach((d,i)=>{
     const wrap=document.createElement('span');wrap.className='v4-piece';
     const view=document.createElement('button');view.type='button';view.className='v4-view'+(i===currentPieceIndex?' on':'');view.textContent='Pièce '+(i+1);view.title=String(d?.nom_fichier||d?.type||('Pièce '+(i+1)));view.onclick=()=>{currentPieceIndex=i;renderModal();};
-    const del=document.createElement('button');del.type='button';del.className='v4-del';del.textContent='×';del.title='Supprimer cette pièce';del.onclick=()=>deletePiece(d);
-    wrap.append(view,del);tabs.appendChild(wrap);
+    wrap.append(view);
+    if(!d?.__yayaOrderAttachment){const del=document.createElement('button');del.type='button';del.className='v4-del';del.textContent='×';del.title='Supprimer cette pièce';del.onclick=()=>deletePiece(d);wrap.append(del);}
+    tabs.appendChild(wrap);
   });
   const d=list[currentPieceIndex],url=docUrl(d),title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));
   if(card)card.dataset.yayaDownloadUrl=url||'';
@@ -321,7 +341,7 @@ function enhance(row){
   sanitize(top);row.classList.remove('open');
   const status=hiddenStatus.cloneNode(true);status.removeAttribute('data-ycn-status');status.className='ycn-v4-status';status.value=hiddenStatus.value;status.onclick=e=>e.stopPropagation();status.onchange=e=>{e.stopPropagation();hiddenStatus.value=status.value;hiddenStatus.dispatchEvent(new Event('change',{bubbles:true}));};
   const n=docsFor(id).length,pieces=document.createElement('button');pieces.type='button';pieces.className='ycn-v4-pieces'+(n?' has':'');pieces.textContent='📎 '+n;pieces.title=n===1?'1 pièce jointe':n+' pièces jointes';pieces.setAttribute('aria-label',pieces.title);pieces.onclick=e=>{e.preventDefault();e.stopPropagation();openModal(id);};
-  const o=orderById(id),url=orderUrl(o),link=document.createElement('button');link.type='button';link.className='ycn-v4-url';link.textContent='🔗';link.disabled=!url;link.title=url?'Ouvrir le lien':'Aucun lien';link.setAttribute('aria-label',link.title);link.onclick=e=>{e.preventDefault();e.stopPropagation();if(url)window.open(url,'_blank','noopener');};
+  const o=orderById(id),url=orderUrl(o),pieceNom=String(o?.pieceNom||o?.piece_nom||'').trim(),link=document.createElement('button');link.type='button';link.className='ycn-v4-url';link.textContent='🔗';link.disabled=!url||!!pieceNom;link.title=url&&!pieceNom?'Ouvrir le lien':'Aucun lien';link.setAttribute('aria-label',link.title);link.onclick=e=>{e.preventDefault();e.stopPropagation();if(url&&!pieceNom)window.open(url,'_blank','noopener');};
   top.append(status,pieces,link);
   if(!top.dataset.ycnV4Edit){top.dataset.ycnV4Edit='1';top.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea,label'))return;e.preventDefault();e.stopPropagation();edit.click();});}
   row.dataset.ycnLineV4='1';
