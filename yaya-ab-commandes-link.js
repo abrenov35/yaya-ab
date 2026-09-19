@@ -178,7 +178,17 @@ async function mountCard(card){
  try{
    const api=await loadAssets();
    if(!block.isConnected)return;
-   if(block.dataset.ycnReady==='1')api.setChantier(id,name);else{block.dataset.ycnReady='1';api.mount(block,id,name);}
+   const chantierKey=String(id||'')+'::'+String(name||'');
+   if(block.dataset.ycnReady==='1'){
+     if(block.dataset.ycnChantierKey!==chantierKey){
+       block.dataset.ycnChantierKey=chantierKey;
+       api.setChantier(id,name);
+     }
+   }else{
+     block.dataset.ycnReady='1';
+     block.dataset.ycnChantierKey=chantierKey;
+     api.mount(block,id,name);
+   }
    ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureEditV5Patch();ensureCreateV6Patch();setTimeout(ensureCommandModalTweaks,0);
  }catch(err){block.innerHTML='<div class="yaya-cmd-direct-wait">Commandes indisponibles : '+String(err?.message||err)+'</div>';}
 }
@@ -203,6 +213,6 @@ document.addEventListener('click',e=>{
 const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
 const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
 bodyObserver.observe(document.body,{childList:true,subtree:true});
-window.addEventListener('hashchange',scan);window.addEventListener('focus',scan);window.addEventListener('yaya:data-refreshed',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.17-modal-fit-no-scroll';
+window.addEventListener('hashchange',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.18-stable-no-auto-sync';
 })();
