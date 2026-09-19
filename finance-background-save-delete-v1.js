@@ -161,12 +161,43 @@
   function restorePendingLocally(){
     const pending=readPending();
     if(!pending||!Array.isArray(pending.achats))return;
-    try{if(typeof S!=='undefined'&&S)S.achats=pending.achats.map(function(a){return {...a};});}catch(e){}
+
+    const upsertIds=cleanIds(pending.upsertIds);
+    const removeIds=cleanIds(pending.removeIds);
+    const source=new Map(pending.achats.map(function(row){return [txt(row&&row.id),row];}).filter(function(x){return x[0];}));
+
+    let current=[];
+    try{
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.achats))current=S.achats.map(function(a){return {...a};});
+    }catch(e){}
+    if(!current.length){
+      try{
+        const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+        const cached=raw?JSON.parse(raw):{};
+        if(Array.isArray(cached.achats))current=cached.achats.map(function(a){return {...a};});
+      }catch(e){}
+    }
+
+    let restored;
+    if(upsertIds.length||removeIds.length){
+      const map=new Map(current.map(function(row){return [txt(row&&row.id),row];}).filter(function(x){return x[0];}));
+      removeIds.forEach(function(id){map.delete(id);});
+      upsertIds.forEach(function(id){
+        const row=source.get(id);
+        if(row)map.set(id,{...row});
+      });
+      restored=Array.from(map.values());
+    }else{
+      // Compatibilité avec une ancienne file créée avant les mutations explicites.
+      restored=pending.achats.map(function(a){return {...a};});
+    }
+
+    try{if(typeof S!=='undefined'&&S)S.achats=restored.map(function(a){return {...a};});}catch(e){}
     try{
       const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
       const cached=raw?JSON.parse(raw):{};
       if(cached&&typeof cached==='object'){
-        cached.achats=pending.achats.map(function(a){return {...a};});
+        cached.achats=restored.map(function(a){return {...a};});
         localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
       }
     }catch(e){}
