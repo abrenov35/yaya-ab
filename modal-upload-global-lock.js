@@ -98,8 +98,8 @@
       overlay.innerHTML=''
         +'<div class="yaya-upload-progress-box">'
         +'<span class="yaya-upload-progress-hourglass" aria-hidden="true">⏳</span>'
-        +'<div class="yaya-upload-progress-title">Analyse du document en cours…</div>'
-        +'<div class="yaya-upload-progress-sub">La pièce est en cours de traitement et d’archivage.</div>'
+        +'<div class="yaya-upload-progress-title">Traitement du document en cours…</div>'
+        +'<div class="yaya-upload-progress-sub">La pièce est en cours d’envoi et d’archivage.</div>'
         +'</div>';
       document.body.appendChild(overlay);
     }
@@ -148,8 +148,49 @@
     btn.dataset.yayaGlobalUploadText=baselineText(btn);
   }
 
+  function isChargeUpload(modal){
+    if(!modal)return false;
+    const type=modal.querySelector('#acType');
+    if(type&&String(type.value||'').trim()==='Facture sous-traitant')return true;
+    const title=String((modal.querySelector('h5,h4,h3')||{}).textContent||'');
+    return /Ajouter une charge|charge sous-traitant/i.test(title);
+  }
+
+  function isSaveButton(btn){
+    if(!btn)return false;
+    const text=String(btn.textContent||'').trim();
+    const raw=String(btn.getAttribute('onclick')||'');
+    return /^Enregistrer$/i.test(text)||/addAchat|saveAchat/i.test(raw)||btn.classList.contains('yaya-achat-single-save');
+  }
+
+  function lockChargeSoft(modal){
+    if(!modal)return;
+    installStyle();
+    modal.dataset.yayaUploadBusy='1';
+    modal.dataset.yayaChargeUploadSoft='1';
+
+    const imp=importButton(modal);
+    modal.querySelectorAll('button').forEach(function(btn){
+      if(btn!==imp&&!isSaveButton(btn))return;
+      rememberButton(btn);
+      btn.disabled=true;
+      btn.setAttribute('aria-busy','true');
+      btn.style.setProperty('pointer-events','none','important');
+      btn.style.setProperty('opacity','.62','important');
+    });
+    if(imp)imp.textContent='Import en cours…';
+
+    const old=timers.get(modal);
+    if(old)clearTimeout(old);
+    timers.set(modal,setTimeout(function(){unlock(modal,false);},90000));
+  }
+
   function lock(modal){
     if(!modal)return;
+    if(isChargeUpload(modal)){
+      lockChargeSoft(modal);
+      return;
+    }
     installStyle();
     showProgressModal();
     modal.classList.add('yaya-upload-modal-busy');
@@ -214,6 +255,7 @@
 
     modal.classList.remove('yaya-upload-modal-busy');
     modal.dataset.yayaUploadBusy='0';
+    delete modal.dataset.yayaChargeUploadSoft;
 
     releaseLegacyAchatLock(modal);
     restoreGlobalButtons(modal);
