@@ -6,6 +6,7 @@
   let busy=false;
   const PENDING_KEY='YAYA_ACHATS_CREATE_PENDING_V1';
   let flushBusy=false;
+  const syncingIds=new Set();
 
   function readPending(){
     try{
@@ -82,12 +83,18 @@
     }catch(e){}
   }
   function replaceLocalFromServer(serverRows){
-    try{if(typeof S!=='undefined'&&S)S.achats=Array.isArray(serverRows)?serverRows.slice():[];}catch(e){}
+    const merged=Array.isArray(serverRows)?serverRows.slice():[];
+    readPending().forEach(function(row){
+      const i=merged.findIndex(a=>txt(a&&a.id)===txt(row&&row.id));
+      if(i>=0)merged[i]={...merged[i],...row};
+      else merged.push(row);
+    });
+    try{if(typeof S!=='undefined'&&S)S.achats=merged.slice();}catch(e){}
     try{
       const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
       const cached=raw?JSON.parse(raw):{};
       if(cached&&typeof cached==='object'){
-        cached.achats=Array.isArray(serverRows)?serverRows.slice():[];
+        cached.achats=merged.slice();
         localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
       }
     }catch(e){}
@@ -151,6 +158,9 @@
   }
 
   async function persistInBackground(row){
+    const rowId=txt(row&&row.id);
+    if(!rowId||syncingIds.has(rowId))return false;
+    syncingIds.add(rowId);
     queuePending(row);
     window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
     try{
@@ -169,6 +179,7 @@
       toastSafe('Achat enregistré localement — synchronisation en attente',true);
       return false;
     }finally{
+      syncingIds.delete(rowId);
       window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
       window.__yayaLastWriteAt=Date.now();
     }
@@ -246,5 +257,6 @@
   mergePendingIntoLocal();
   setTimeout(flushPending,700);
   window.addEventListener('online',function(){setTimeout(flushPending,150);},{passive:true});
-  window.addEventListener('focus',function(){setTimeout(flushPending,350);},{passive:true});
+  window.addEventListener('focus',function(){mergePendingIntoLocal();setTimeout(flushPending,350);},{passive:true});
+  window.addEventListener('yaya:data-refreshed',function(){mergePendingIntoLocal();},{passive:true});
 })();
