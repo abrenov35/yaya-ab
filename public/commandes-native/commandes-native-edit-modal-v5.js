@@ -75,10 +75,16 @@ async function post(data){
     const order={...data};delete order.action;
     const i=rows.findIndex(o=>String(o?.id||'')===String(order.id||''));
     const previous=i>=0?rows[i]:{};
-    const workflow=String(order.status||order.statut||previous.status||previous.statut||'choice');
+    const persistedStatus=txt(order.statut||previous.statut);
+    const validation=txt(order.statutValidation||previous.statutValidation);
+    const vm=validation.match(/(?:^|\|)YAYA_STATUS=(choice|todo|ordered|received)(?:\||$)/i);
+    const workflow=txt(order.status)||persistedStatus||(vm&&vm[1])||'choice';
+    const produit=txt(order.produit||order.designation||previous.designation||previous.produit);
+    order.designation=produit;
     order.statut=workflow;
     order.statutValidation=encodeWorkflowValidation(order.statutValidation||previous.statutValidation,workflow);
     delete order.status;
+    delete order.produit;
     if(i>=0)rows[i]={...previous,...order};else rows.push(order);
     writeOrders(rows);
   }else return {ok:true};
