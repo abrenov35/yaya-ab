@@ -8,7 +8,7 @@ const PENDING_KEY='YAYA_COMMANDES_NATIVE_PENDING_V1';
 const NOTE_KEY='YAYA_COMMANDES_NATIVE_CHANTIER_NOTES_V1';
 const GROUP_KEY='YAYA_COMMANDES_NATIVE_GROUPS_V2';
 const ROW_KEY='YAYA_COMMANDES_NATIVE_ROWS_V2';
-const STATUSES={choice:'Attente choix client',todo:'À commander',ordered:'Commandé',received:'Reçu',problem:'Problème'};
+const STATUSES={choice:'Attente choix',todo:'À commander',ordered:'Commandé',received:'Reçu',problem:'Problème'};
 const GROUPS=[{key:'choice',kpi:'Choix client',label:'Attente choix client',tone:'purple'},{key:'todo',kpi:'À commander',label:'À commander',tone:'orange'},{key:'ordered',kpi:'Commandé',label:'Commandé',tone:'blue'},{key:'received',kpi:'Reçu',label:'Reçu',tone:'green'}];
 let root=null, chantierId='', chantierName='', orders=[], documents=[], pending=readPending(), editId='', currentDocOrderId='';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
@@ -19,7 +19,7 @@ function normalizeStatus(v){
  const raw=String(v||'').trim();
  if(STATUSES[raw])return raw;
  const n=norm(raw);
- if(n==='ATTENTE CHOIX CLIENT'||n==='CHOIX CLIENT')return 'choice';
+ if(n==='ATTENTE CHOIX CLIENT'||n==='ATTENTE CHOIX'||n==='CHOIX CLIENT')return 'choice';
  if(n==='A COMMANDER'||n==='À COMMANDER')return 'todo';
  if(n==='COMMANDE'||n==='COMMANDÉ')return 'ordered';
  if(n==='RECU'||n==='REÇU')return 'received';
