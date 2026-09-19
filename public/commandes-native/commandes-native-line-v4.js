@@ -181,8 +181,11 @@ async function renderDrivePagesFallback(stage,id,token){
   const next=document.createElement('button');next.type='button';next.textContent='›';
   nav.append(prev,info,next);wrap.append(img,nav);
 
-  function width(){const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));return Math.max(900,(stage.clientWidth||700)*dpr);}
-  async function get(n){return loadDrivePage(drivePageCandidates(id,n,width()),6500);}
+  function width(){
+    const dpr=Math.min(1.6,Math.max(1,window.devicePixelRatio||1));
+    return Math.max(760,Math.min(1500,(stage.clientWidth||700)*dpr));
+  }
+  async function get(n){return loadDrivePage(drivePageCandidates(id,n,width()),4200);}
   function update(){info.textContent='Page '+current+(last?' / '+last:'');prev.disabled=current<=1;next.disabled=!!last&&current>=last;}
   async function show(n){
     if(busy||n<1||n===current)return;
@@ -316,14 +319,16 @@ function renderModal(){
   if(!url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
   const id=driveId(url);
   if(id){
-    renderDriveInStage(stage,url,id,token).catch(async err=>{
+    // Fast path : afficher directement les pages Drive.
+    // Évite de rapatrier tout le PDF en base64 via Apps Script avant le premier affichage.
+    renderDrivePagesFallback(stage,id,token).catch(async err=>{
       if(token!==previewToken||!stage.isConnected)return;
-      console.warn('Yaya Commandes : API Drive indisponible, essai page directe',err);
+      console.warn('Yaya Commandes : aperçu Drive direct indisponible, essai backend complet',err);
       try{
-        await renderDrivePagesFallback(stage,id,token);
+        await renderDriveInStage(stage,url,id,token);
       }catch(err2){
         if(token!==previewToken||!stage.isConnected)return;
-        console.warn('Yaya Commandes : page Drive indisponible',err2);
+        console.warn('Yaya Commandes : backend Drive indisponible',err2);
         stage.innerHTML='<div class="v4-error">Aperçu impossible pour cette pièce.<br>Utilisez le bouton Télécharger.</div>';
       }
     });
