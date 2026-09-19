@@ -1,84 +1,60 @@
 (function(){
   'use strict';
-  if(window.__YAYA_COMMANDES_MOBILE_ACTIONS_FINAL_V1)return;
-  window.__YAYA_COMMANDES_MOBILE_ACTIONS_FINAL_V1=true;
+  if(window.__YAYA_COMMANDES_MOBILE_ACTIONS_FINAL_V2)return;
+  window.__YAYA_COMMANDES_MOBILE_ACTIONS_FINAL_V2=true;
 
-  const STYLE_ID='yaya-commandes-mobile-actions-final-v1';
+  const STYLE_ID='yaya-commandes-mobile-actions-final-v2';
+  const MOBILE_QUERY='(max-width: 860px)';
 
   function installStyle(){
+    let old=document.getElementById('yaya-commandes-mobile-actions-final-v1');
+    if(old)old.remove();
     if(document.getElementById(STYLE_ID))return;
+
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      .yaya-cmd-native-root .ycn-mobile-actions-final{display:contents}
-
       @media(max-width:860px){
-        .yaya-cmd-native-root .ycn-row-top{
-          grid-template-columns:minmax(0,1fr)!important;
-          gap:5px!important;
-          padding:7px!important;
-        }
-
-        .yaya-cmd-native-root .ycn-row-summary strong{
-          grid-column:1!important;
-          min-width:0!important;
-          width:100%!important;
-          overflow:hidden!important;
-          text-overflow:ellipsis!important;
-          white-space:nowrap!important;
-        }
-
-        .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{
-          grid-column:1!important;
-          min-width:0!important;
-          width:100%!important;
-          overflow:hidden!important;
-          text-overflow:ellipsis!important;
-          white-space:nowrap!important;
-        }
-
-        .yaya-cmd-native-root .ycn-mobile-actions-final{
-          grid-column:1!important;
-          display:grid!important;
-          grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr) minmax(0,.75fr)!important;
-          gap:4px!important;
-          width:100%!important;
-          min-width:0!important;
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final{
+          display:flex!important;
+          width:calc(100% - 16px)!important;
+          max-width:none!important;
+          margin:0 8px 8px 8px!important;
+          gap:6px!important;
+          box-sizing:border-box!important;
           align-items:stretch!important;
         }
 
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-status,
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-pieces,
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-url{
-          width:100%!important;
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-status,
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-pieces,
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-url{
+          width:0!important;
           min-width:0!important;
           max-width:none!important;
-          height:30px!important;
+          height:32px!important;
           margin:0!important;
-          padding:0 4px!important;
           box-sizing:border-box!important;
-          align-self:stretch!important;
-          justify-self:stretch!important;
-          font-size:9.5px!important;
-          line-height:1!important;
         }
 
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-status{
-          grid-column:1!important;
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-status{
+          flex:1.4 1 0!important;
         }
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-pieces{
-          grid-column:2!important;
+
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-pieces{
+          flex:1 1 0!important;
           display:inline-flex!important;
           align-items:center!important;
           justify-content:center!important;
         }
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-url{
-          grid-column:3!important;
+
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-url{
+          flex:.8 1 0!important;
           display:inline-flex!important;
           align-items:center!important;
           justify-content:center!important;
         }
-        .yaya-cmd-native-root .ycn-mobile-actions-final > .ycn-v4-url:disabled{
+
+        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final > .ycn-v4-url:disabled{
           display:inline-flex!important;
           visibility:hidden!important;
           pointer-events:none!important;
@@ -97,36 +73,53 @@
   }
 
   function compactLink(btn){
-    if(!btn)return;
-    btn.textContent='🔗 Lien';
+    if(btn)btn.textContent='🔗 Lien';
   }
 
-  function fixRow(top){
-    if(!top||top.dataset.yayaMobileActionsFinal==='1')return;
-    const status=top.querySelector('.ycn-v4-status');
-    const piece=top.querySelector('.ycn-v4-pieces');
-    const link=top.querySelector('.ycn-v4-url');
+  function moveMobile(row){
+    if(!row)return;
+    const top=row.querySelector(':scope > .ycn-row-top');
+    if(!top)return;
+
+    const status=row.querySelector('.ycn-v4-status');
+    const piece=row.querySelector('.ycn-v4-pieces');
+    const link=row.querySelector('.ycn-v4-url');
     if(!status||!piece||!link)return;
 
-    let wrap=top.querySelector(':scope > .ycn-mobile-actions-final');
+    let wrap=row.querySelector(':scope > .ycn-mobile-actions-final');
     if(!wrap){
       wrap=document.createElement('div');
       wrap.className='ycn-mobile-actions-final';
-      top.appendChild(wrap);
+      row.appendChild(wrap);
     }
 
     compactPiece(piece);
     compactLink(link);
+    wrap.append(status,piece,link);
+  }
 
-    wrap.appendChild(status);
-    wrap.appendChild(piece);
-    wrap.appendChild(link);
-    top.dataset.yayaMobileActionsFinal='1';
+  function restoreDesktop(row){
+    if(!row)return;
+    const top=row.querySelector(':scope > .ycn-row-top');
+    const wrap=row.querySelector(':scope > .ycn-mobile-actions-final');
+    if(!top||!wrap)return;
+
+    const status=wrap.querySelector('.ycn-v4-status');
+    const piece=wrap.querySelector('.ycn-v4-pieces');
+    const link=wrap.querySelector('.ycn-v4-url');
+    if(status)top.appendChild(status);
+    if(piece)top.appendChild(piece);
+    if(link)top.appendChild(link);
+    wrap.remove();
   }
 
   function refresh(){
     installStyle();
-    document.querySelectorAll('.yaya-cmd-native-root .ycn-row-top').forEach(fixRow);
+    const mobile=window.matchMedia(MOBILE_QUERY).matches;
+    document.querySelectorAll('.yaya-cmd-native-root .ycn-row').forEach(function(row){
+      if(mobile)moveMobile(row);
+      else restoreDesktop(row);
+    });
   }
 
   refresh();
