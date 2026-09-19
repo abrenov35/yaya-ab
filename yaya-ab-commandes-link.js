@@ -16,6 +16,28 @@ const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-fo
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
 const COMMANDES_BASE_MIGRATION_KEY='YAYA_COMMANDES_BASE_LINKS_20260919_V2';
 let commandesMigrationPromise=null;
+let commandesLiveRefreshPromise=null;
+let commandesLiveRefreshAt=0;
+
+async function refreshCommandesFromBase(force){
+  const now=Date.now();
+  if(!force&&now-commandesLiveRefreshAt<3000)return true;
+  if(commandesLiveRefreshPromise)return commandesLiveRefreshPromise;
+  commandesLiveRefreshPromise=(async()=>{
+    try{
+      if(typeof window.yayaRefreshCommandesNow!=='function')return false;
+      const ok=await window.yayaRefreshCommandesNow();
+      if(ok)commandesLiveRefreshAt=Date.now();
+      return !!ok;
+    }catch(e){
+      console.warn('Yaya Commandes : lecture fraîche impossible',e);
+      return false;
+    }finally{
+      commandesLiveRefreshPromise=null;
+    }
+  })();
+  return commandesLiveRefreshPromise;
+}
 
 async function ensureFreshCommandesAfterBaseMigration(){
   try{
@@ -205,13 +227,12 @@ async function mountCard(card){
  try{
    const api=await loadAssets();
    await ensureFreshCommandesAfterBaseMigration();
+   await refreshCommandesFromBase(false);
    if(!block.isConnected)return;
    const chantierKey=String(id||'')+'::'+String(name||'');
    if(block.dataset.ycnReady==='1'){
-     if(block.dataset.ycnChantierKey!==chantierKey){
-       block.dataset.ycnChantierKey=chantierKey;
-       api.setChantier(id,name);
-     }
+     block.dataset.ycnChantierKey=chantierKey;
+     api.setChantier(id,name);
    }else{
      block.dataset.ycnReady='1';
      block.dataset.ycnChantierKey=chantierKey;
@@ -242,5 +263,5 @@ const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserve
 const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
 bodyObserver.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.21-yaya-commandes-cleaned';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.22-yaya-commandes-live-on-open';
 })();
