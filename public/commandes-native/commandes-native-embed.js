@@ -50,7 +50,48 @@ function savePending(){try{localStorage.setItem(PENDING_KEY,JSON.stringify(pendi
 function queue(order){pending=pending.filter(x=>String(x?.id||'')!==String(order.id));pending.push(normalize(order));savePending();}
 function dequeue(id){pending=pending.filter(x=>String(x?.id||'')!==String(id));savePending();}
 function post(data){const b=new URLSearchParams();Object.entries(data).forEach(([k,v])=>b.append(k,v==null?'':String(v)));return fetch(GAS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b});}
-function sendBackground(order){queue(order);Promise.resolve().then(()=>post({action:'upsert',...order})).then(()=>{dequeue(order.id);toast('Enregistré en arrière-plan','ok');}).catch(()=>toast('Envoi en attente — utiliser Actualiser','err'));}
+function updateYayaCache(){
+ try{
+   const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+   const data=raw?JSON.parse(raw):{};
+   if(data&&typeof data==='object'){
+     data.commandes=(typeof S!=='undefined'&&S&&Array.isArray(S.commandes))?S.commandes:[];
+     localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(data));
+   }
+ }catch(_){}
+}
+function persistToYaya(order){
+ try{
+   if(typeof S==='undefined'||!S)return Promise.resolve(false);
+   const rows=Array.isArray(S.commandes)?S.commandes.slice():[];
+   const id=String(order?.id||'');
+   const idx=rows.findIndex(x=>String(x?.id||'')===id);
+   const prev=idx>=0?rows[idx]:{};
+   const nextRow={...prev,...order,statut:normalizeStatus(order?.status||order?.statut)};
+   delete nextRow.status;
+   if(idx>=0)rows[idx]=nextRow;else rows.push(nextRow);
+   S.commandes=rows;
+   updateYayaCache();
+   if(typeof apiPost!=='function')return Promise.resolve(false);
+   return Promise.resolve(apiPost('setCommandes',rows)).then(ok=>{
+     if(!ok)throw new Error('Écriture Yaya refusée');
+     return true;
+   }).catch(err=>{
+     console.warn('Yaya Commandes : statut central non enregistré',err);
+     return false;
+   });
+ }catch(err){
+   console.warn('Yaya Commandes : synchronisation centrale impossible',err);
+   return Promise.resolve(false);
+ }
+}
+function sendBackground(order){
+ queue(order);
+ persistToYaya(order);
+ Promise.resolve().then(()=>post({action:'upsert',...order}))
+   .then(()=>{dequeue(order.id);toast('Enregistré en arrière-plan','ok');})
+   .catch(()=>toast('Envoi en attente — utiliser Actualiser','err'));
+}
 async function flushPending(){for(const order of [...pending]){try{await post({action:'upsert',...order});dequeue(order.id);}catch(_){}}}
 function jsonp(action,extra={}){return new Promise((resolve,reject)=>{const cb='__ycn_'+Date.now()+'_'+Math.random().toString(36).slice(2),s=document.createElement('script');const t=setTimeout(()=>{cleanup();reject(new Error('Délai dépassé'));},12000);function cleanup(){clearTimeout(t);try{delete window[cb];}catch(_){window[cb]=undefined;}s.remove();}window[cb]=d=>{cleanup();resolve(d)};s.onerror=()=>{cleanup();reject(new Error('Connexion impossible'))};const q=new URLSearchParams({action,callback:cb,_:Date.now(),...extra});s.src=GAS+'?'+q.toString();document.head.appendChild(s);});}
 function toast(text,kind=''){let el=document.getElementById('ycnToast');if(!el){el=document.createElement('div');el.id='ycnToast';el.className='ycn-toast';document.body.appendChild(el);}el.textContent=text;el.className='ycn-toast show'+(kind?' '+kind:'');clearTimeout(el._t);el._t=setTimeout(()=>el.className='ycn-toast',3500);}
