@@ -220,6 +220,20 @@
         font-size:9px!important;
       }
     }
+    /* YAYA_ACHATS_NO_COUNT_FINAL */
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="depenses"] > small[data-yaya-count],
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="depenses"] > small{
+      display:none!important;
+      visibility:hidden!important;
+      width:0!important;
+      min-width:0!important;
+      height:0!important;
+      min-height:0!important;
+      margin:0!important;
+      padding:0!important;
+      border:0!important;
+    }
+
   `;
 
   document.head.appendChild(style);
