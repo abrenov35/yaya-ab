@@ -83,6 +83,56 @@
     }
   }
 
+  function directDownloadUrl(u){
+    u=String(u||'').trim();
+    if(!u)return '';
+    const id=driveIdFromUrl(u);
+    if(id)return 'https://drive.usercontent.google.com/download?id='+encodeURIComponent(id)+'&export=download&confirm=t';
+    try{
+      const d=new URL(u);
+      if(/(?:^|\.)dropbox\.com$/i.test(d.hostname)){
+        d.searchParams.delete('raw');
+        d.searchParams.set('dl','1');
+        return d.toString();
+      }
+      if(/(?:1drv\.ms|onedrive\.live\.com|sharepoint\.com)$/i.test(d.hostname)){
+        d.searchParams.set('download','1');
+        return d.toString();
+      }
+    }catch(e){}
+    return u;
+  }
+
+  function addDirectDownload(ui,url){
+    if(!ui||!ui.modal)return;
+    const head=ui.modal.querySelector('.piece-preview-head');
+    if(!head)return;
+    let btn=head.querySelector('.yaya-preview-download-direct');
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='yaya-preview-download-direct';
+      btn.textContent='Télécharger';
+      const close=head.querySelector('button:last-child');
+      head.insertBefore(btn,close||null);
+    }
+    const dl=directDownloadUrl(url);
+    if(!dl){btn.style.display='none';return;}
+    btn.style.display='';
+    btn.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const a=document.createElement('a');
+      a.href=dl;
+      a.target='_blank';
+      a.rel='noopener';
+      a.download='';
+      (document.body||document.documentElement).appendChild(a);
+      a.click();
+      a.remove();
+    };
+  }
+
   function imageByExtension(u){
     return /\.(jpe?g|png|webp|gif|bmp|svg)(?:[?#]|$)/i.test(String(u||''));
   }
@@ -188,8 +238,9 @@
     return ui;
   }
 
-  function showDrivePreviewFast(root,id){
+  function showDrivePreviewFast(root,id,sourceUrl){
     const ui=makeModal(root);
+    addDirectDownload(ui,sourceUrl||('https://drive.google.com/file/d/'+encodeURIComponent(id)+'/view'));
     const iframe=document.createElement('iframe');
     iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
     iframe.title='Pièce jointe';
@@ -202,6 +253,7 @@
 
   function showImage(root,src){
     const ui=makeModal(root);
+    addDirectDownload(ui,src);
     ui.stage.classList.add('piece-image-stage');
     const img=document.createElement('img');
     img.alt='Pièce jointe';
@@ -418,6 +470,7 @@
 
   async function renderPdf(root,pdfUrl){
     const ui=makeModal(root);
+    addDirectDownload(ui,pdfUrl);
 
     const loading=document.createElement('div');
     loading.className='piece-preview-loading';
@@ -641,7 +694,7 @@
     }
 
     if(driveId){
-      showDrivePreviewFast(root,driveId);
+      showDrivePreviewFast(root,driveId,u);
       return;
     }
 
