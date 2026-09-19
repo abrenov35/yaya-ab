@@ -94,6 +94,8 @@
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"] small{background:#fde6c5!important;color:#935a08!important}
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"].on{background:#fde8cb!important;border-color:#d6963d!important;box-shadow:inset 0 -2px 0 #d6963d!important}
 
+    #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"] small[data-yaya-count]{display:none!important}
+
     #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="documents"]{
       background:#eef6ff!important;border-color:#acc9eb!important;color:#285f96!important;
     }
