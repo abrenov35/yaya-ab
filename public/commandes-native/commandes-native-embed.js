@@ -25,7 +25,20 @@ function normalizeStatus(v){
  if(n==='PROBLEME'||n==='PROBLÈME')return 'todo';
  return 'choice';
 }
-function normalize(o){return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit:String(o?.produit||o?.designation||''),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:normalizeStatus(o?.status||o?.statut)};}
+function workflowStatus(o){
+ const direct=String(o?.status||o?.statut||'').trim();
+ if(direct)return normalizeStatus(direct);
+ const validation=String(o?.statutValidation||'');
+ const m=validation.match(/(?:^|\|)YAYA_STATUS=(choice|todo|ordered|received)(?:\||$)/i);
+ return m?normalizeStatus(m[1]):normalizeStatus('');
+}
+function workflowValidation(current,status){
+ const clean=String(current||'VALIDEE')
+   .replace(/\|YAYA_STATUS=(choice|todo|ordered|received)/ig,'')
+   .replace(/\|+$/,'')||'VALIDEE';
+ return clean+'|YAYA_STATUS='+normalizeStatus(status);
+}
+function normalize(o){return {...o,id:String(o?.id||''),chantierId:String(o?.chantierId||o?.chantier_id||''),chantier:String(o?.chantier||''),produit:String(o?.produit||o?.designation||''),qte:String(o?.qte||''),fournisseur:String(o?.fournisseur||''),responsable:String(o?.responsable||''),notes:String(o?.notes||''),status:workflowStatus(o)};}
 function yayaStateOrders(){
  try{
    if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes))return S.commandes.map(normalize);
@@ -84,7 +97,13 @@ function persistToYaya(order){
    const id=String(order?.id||'');
    const idx=rows.findIndex(x=>String(x?.id||'')===id);
    const prev=idx>=0?rows[idx]:{};
-   const nextRow={...prev,...order,statut:normalizeStatus(order?.status||order?.statut)};
+   const workflow=normalizeStatus(order?.status||order?.statut||workflowStatus(prev));
+   const nextRow={
+     ...prev,
+     ...order,
+     statut:workflow,
+     statutValidation:workflowValidation(order?.statutValidation||prev?.statutValidation,workflow)
+   };
    delete nextRow.status;
    if(idx>=0)rows[idx]=nextRow;else rows.push(nextRow);
    S.commandes=rows;
