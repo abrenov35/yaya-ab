@@ -11,8 +11,8 @@
     const style=document.createElement('style');
     style.id=STYLE_ID;
     style.textContent=`
-      #pane-chantiers .yaya-detail-section-tab[data-section="charges"] > small,
-      #pane-chantiers .yaya-detail-section-tab[data-section="charges"] > span{
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"] > small,
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) .yaya-detail-section-tab[data-section="charges"] > span{
         display:none!important;
       }
     `;
