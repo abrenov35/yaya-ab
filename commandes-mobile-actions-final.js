@@ -76,6 +76,47 @@
     if(btn)btn.textContent='🔗 Lien';
   }
 
+  function forceImportant(el,prop,value){
+    if(el)el.style.setProperty(prop,value,'important');
+  }
+
+  function applyValidatedLayout(row,wrap,status,piece,link){
+    forceImportant(wrap,'display','flex');
+    forceImportant(wrap,'width','calc(100% - 16px)');
+    forceImportant(wrap,'max-width','none');
+    forceImportant(wrap,'margin','0 8px 8px 8px');
+    forceImportant(wrap,'gap','6px');
+    forceImportant(wrap,'box-sizing','border-box');
+    forceImportant(wrap,'align-items','stretch');
+
+    [[status,'1.4 1 0'],[piece,'1 1 0'],[link,'.8 1 0']].forEach(function(pair){
+      const el=pair[0],flex=pair[1];
+      forceImportant(el,'flex',flex);
+      forceImportant(el,'width','0');
+      forceImportant(el,'min-width','0');
+      forceImportant(el,'max-width','none');
+      forceImportant(el,'height','32px');
+      forceImportant(el,'margin','0');
+      forceImportant(el,'box-sizing','border-box');
+    });
+
+    forceImportant(piece,'display','inline-flex');
+    forceImportant(piece,'align-items','center');
+    forceImportant(piece,'justify-content','center');
+
+    forceImportant(link,'display','inline-flex');
+    forceImportant(link,'align-items','center');
+    forceImportant(link,'justify-content','center');
+
+    if(link.disabled){
+      forceImportant(link,'visibility','hidden');
+      forceImportant(link,'pointer-events','none');
+    }else{
+      link.style.removeProperty('visibility');
+      link.style.removeProperty('pointer-events');
+    }
+  }
+
   function moveMobile(row){
     if(!row)return;
     const top=row.querySelector(':scope > .ycn-row-top');
@@ -96,6 +137,7 @@
     compactPiece(piece);
     compactLink(link);
     wrap.append(status,piece,link);
+    applyValidatedLayout(row,wrap,status,piece,link);
   }
 
   function restoreDesktop(row){
@@ -107,6 +149,14 @@
     const status=wrap.querySelector('.ycn-v4-status');
     const piece=wrap.querySelector('.ycn-v4-pieces');
     const link=wrap.querySelector('.ycn-v4-url');
+
+    [status,piece,link].forEach(function(el){
+      if(!el)return;
+      ['flex','width','min-width','max-width','height','margin','box-sizing','display','align-items','justify-content','visibility','pointer-events'].forEach(function(prop){
+        el.style.removeProperty(prop);
+      });
+    });
+
     if(status)top.appendChild(status);
     if(piece)top.appendChild(piece);
     if(link)top.appendChild(link);
