@@ -259,6 +259,27 @@
     try{window.dispatchEvent(new Event('yaya:data-refreshed'));}catch(e){}
   }
 
+  function removeLocal(id){
+    try{
+      if(typeof S!=='undefined'&&Array.isArray(S.commandes)){
+        S.commandes=S.commandes.filter(c=>String(c&&c.id||'')!==String(id||''));
+      }
+    }catch(e){}
+    try{
+      const key='YAYA_CACHE_DATA_V2';
+      const raw=localStorage.getItem(key);
+      if(raw){
+        const cached=JSON.parse(raw);
+        if(cached&&typeof cached==='object'){
+          cached.commandes=(Array.isArray(cached.commandes)?cached.commandes:[]).filter(c=>String(c&&c.id||'')!==String(id||''));
+          localStorage.setItem(key,JSON.stringify(cached));
+        }
+      }
+    }catch(e){}
+    try{if(typeof render==='function')render();}catch(e){}
+    try{window.dispatchEvent(new Event('yaya:data-refreshed'));}catch(e){}
+  }
+
   function makeId(){
     return 'cmd_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
   }
@@ -378,15 +399,22 @@
 
       saveBtn.disabled=true;
       importBtn.disabled=true;
+
+      // Local-first : la carte apparaît et la modale se ferme immédiatement.
+      persistLocal(row);
+      overlay.remove();
+      try{if(typeof toast==='function')toast('Commande ajoutée — synchronisation…');}catch(e){}
+      window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
+
       try{
         await addCommande(row);
-        persistLocal(row);
-        overlay.remove();
         try{if(typeof toast==='function')toast('Commande enregistrée ✓');}catch(e){}
       }catch(err){
-        saveBtn.disabled=false;
-        importBtn.disabled=false;
-        alert('Enregistrement impossible : '+String(err&&err.message||err));
+        removeLocal(row.id);
+        try{if(typeof toast==='function')toast('NON ENREGISTRÉ — '+String(err&&err.message||err),true);}catch(e){}
+      }finally{
+        window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+        window.__yayaLastWriteAt=Date.now();
       }
     };
 
