@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaDocumentsBackgroundSyncV2)return;
+  if(window.__yayaDocumentsBackgroundSyncV3)return;
+  window.__yayaDocumentsBackgroundSyncV3=true;
   window.__yayaDocumentsBackgroundSyncV2=true;
   window.__yayaDocumentsBackgroundSyncV1=true;
 
@@ -33,25 +34,36 @@
 
   function readPending(){
     try{
-      const p=JSON.parse(localStorage.getItem(PENDING_KEY)||'{"items":{}}');
-      if(!p||typeof p!=='object')return {items:{}};
+      const p=JSON.parse(localStorage.getItem(PENDING_KEY)||'{"items":{},"removes":{}}');
+      if(!p||typeof p!=='object')return {items:{},removes:{}};
       if(!p.items||typeof p.items!=='object')p.items={};
+      if(!p.removes||typeof p.removes!=='object')p.removes={};
       return p;
-    }catch(e){return {items:{}};}
+    }catch(e){return {items:{},removes:{}};}
   }
 
   function writePending(store){
     try{
       const items=store&&store.items||{};
-      if(!Object.keys(items).length)localStorage.removeItem(PENDING_KEY);
-      else localStorage.setItem(PENDING_KEY,JSON.stringify({items:items}));
+      const removes=store&&store.removes||{};
+      if(!Object.keys(items).length&&!Object.keys(removes).length)localStorage.removeItem(PENDING_KEY);
+      else localStorage.setItem(PENDING_KEY,JSON.stringify({items:items,removes:removes}));
     }catch(e){}
   }
 
   function queueDoc(doc){
     const id=idOf(doc);if(!id)return;
     const store=readPending();
+    delete store.removes[id];
     store.items[id]={token:Date.now()+'_'+Math.random().toString(36).slice(2),savedAt:Date.now(),doc:clone(doc)};
+    writePending(store);
+  }
+
+  function queueRemove(id){
+    id=String(id||'').trim();if(!id)return;
+    const store=readPending();
+    delete store.items[id];
+    store.removes[id]={token:Date.now()+'_'+Math.random().toString(36).slice(2),savedAt:Date.now()};
     writePending(store);
   }
 
@@ -74,19 +86,22 @@
     Object.values(pendingStore&&pendingStore.items||{}).forEach(function(item){
       const d=item&&item.doc,id=idOf(d);if(id)map.set(id,clone(d));
     });
+    Object.keys(pendingStore&&pendingStore.removes||{}).forEach(function(id){map.delete(String(id));});
     return Array.from(map.values());
   }
 
+  function persistCacheNow(){
+    try{
+      const raw=localStorage.getItem(CACHE_KEY);
+      const cache=raw?JSON.parse(raw):{};
+      if(!cache||typeof cache!=='object')return;
+      cache.documents=docs().map(clone);
+      localStorage.setItem(CACHE_KEY,JSON.stringify(cache));
+    }catch(e){}
+  }
+
   function persistCacheSoon(){
-    const run=function(){
-      try{
-        const raw=localStorage.getItem(CACHE_KEY);
-        const cache=raw?JSON.parse(raw):{};
-        if(!cache||typeof cache!=='object')return;
-        cache.documents=docs().map(clone);
-        localStorage.setItem(CACHE_KEY,JSON.stringify(cache));
-      }catch(e){}
-    };
+    const run=persistCacheNow;
     if(typeof requestIdleCallback==='function')requestIdleCallback(run,{timeout:1200});
     else setTimeout(run,0);
   }
@@ -105,7 +120,7 @@
   async function worker(){
     if(workerBusy)return;
     const snapshot=readPending();
-    if(!Object.keys(snapshot.items||{}).length)return;
+    if(!Object.keys(snapshot.items||{}).length&&!Object.keys(snapshot.removes||{}).length)return;
     if(typeof window.apiGet!=='function'||typeof window.apiPost!=='function')return;
 
     workerBusy=true;markWrite(1);
@@ -121,9 +136,13 @@
         const oldItem=snapshot.items[id],newItem=latest.items&&latest.items[id];
         if(oldItem&&newItem&&oldItem.token===newItem.token)delete latest.items[id];
       });
+      Object.keys(snapshot.removes||{}).forEach(function(id){
+        const oldItem=snapshot.removes[id],newItem=latest.removes&&latest.removes[id];
+        if(oldItem&&newItem&&oldItem.token===newItem.token)delete latest.removes[id];
+      });
       writePending(latest);
 
-      if(Object.keys(latest.items||{}).length)setTimeout(worker,0);
+      if(Object.keys(latest.items||{}).length||Object.keys(latest.removes||{}).length)setTimeout(worker,0);
     }catch(err){
       console.warn('Yaya documents — synchronisation arrière-plan en attente :',err);
       const now=Date.now();
@@ -169,11 +188,28 @@
     return wrapped;
   }
 
+  let pendingDeleteId='';
+
+  function installDeleteTracking(){
+    if(typeof window.delDocument!=='function')return;
+    if(window.delDocument.__yayaDocumentsDeleteBackgroundV3)return;
+    const originalDelete=window.delDocument;
+    const wrappedDelete=function(id){
+      pendingDeleteId=String(id||'').trim();
+      return originalDelete.apply(this,arguments);
+    };
+    wrappedDelete.__yayaDocumentsDeleteBackgroundV3=true;
+    wrappedDelete.__yayaOriginalFunction=originalDelete;
+    window.delDocument=wrappedDelete;
+    try{delDocument=wrappedDelete;}catch(e){}
+  }
+
   function install(){
     installTries++;
     const currentSave=window.saveDocument;
     const currentApply=window.appliquerModificationDocument;
     const currentPost=window.apiPost;
+    installDeleteTracking();
     if(typeof currentSave!=='function'||typeof currentPost!=='function'){
       if(installTries<80)setTimeout(install,120);
       return;
@@ -195,8 +231,31 @@
     setTimeout(worker,500);
   }
 
+  document.addEventListener('click',function(e){
+    const ok=e.target&&e.target.closest?e.target.closest('#del-ok-doc'):null;
+    if(!ok||!pendingDeleteId)return;
+    const id=pendingDeleteId;
+    pendingDeleteId='';
+    queueRemove(id);
+    // Appliquer immédiatement la suppression au cache local, avant tout réseau.
+    try{
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
+        S.documents=S.documents.filter(function(d){return idOf(d)!==id;});
+      }
+    }catch(err){}
+    persistCacheNow();
+    setTimeout(worker,0);
+  },true);
+
   install();
   setTimeout(install,400);
   window.addEventListener('online',function(){setTimeout(worker,250);});
   window.addEventListener('focus',function(){mergePendingIntoLocal();setTimeout(worker,500);});
+  window.addEventListener('yaya:data-refreshed',function(){mergePendingIntoLocal();setTimeout(worker,150);});
+  window.addEventListener('pagehide',function(){
+    // La file est déjà persistée de façon synchrone. À la fermeture on ne
+    // dépend d'aucun POST réseau ; on fige seulement le cache courant.
+    mergePendingIntoLocal();
+    persistCacheNow();
+  },{passive:true});
 })();
