@@ -145,6 +145,15 @@ function renderExternalInStage(stage,url,title){
   iframe.loading='eager';
   stage.appendChild(iframe);
 }
+function renderDrivePreviewFast(stage,id,title,token){
+  if(token!==previewToken||!stage.isConnected)return;
+  const iframe=document.createElement('iframe');
+  iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';
+  iframe.title=title||'Pièce jointe';
+  iframe.loading='eager';
+  iframe.referrerPolicy='no-referrer-when-downgrade';
+  stage.replaceChildren(iframe);
+}
 function drivePageCandidates(id,page,width){
   const safe=encodeURIComponent(id),p=Math.max(1,Number(page)||1),w=Math.max(700,Math.min(2200,Math.round(width||1400)));
   return [
@@ -319,19 +328,9 @@ function renderModal(){
   if(!url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
   const id=driveId(url);
   if(id){
-    // Fast path : afficher directement les pages Drive.
-    // Évite de rapatrier tout le PDF en base64 via Apps Script avant le premier affichage.
-    renderDrivePagesFallback(stage,id,token).catch(async err=>{
-      if(token!==previewToken||!stage.isConnected)return;
-      console.warn('Yaya Commandes : aperçu Drive direct indisponible, essai backend complet',err);
-      try{
-        await renderDriveInStage(stage,url,id,token);
-      }catch(err2){
-        if(token!==previewToken||!stage.isConnected)return;
-        console.warn('Yaya Commandes : backend Drive indisponible',err2);
-        stage.innerHTML='<div class="v4-error">Aperçu impossible pour cette pièce.<br>Utilisez le bouton Télécharger.</div>';
-      }
-    });
+    // Chemin ultra-rapide : lecteur Drive natif dans l'iframe.
+    // Aucun base64, aucun PDF.js, aucune reconstruction page par page avant affichage.
+    renderDrivePreviewFast(stage,id,title,token);
     return;
   }
   renderExternalInStage(stage,url,title);
