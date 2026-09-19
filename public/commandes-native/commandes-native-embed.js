@@ -15,6 +15,14 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().replace(/\s+/g,' ').toUpperCase();
 const uid=()=>globalThis.crypto?.randomUUID?.()||(Date.now()+'-'+Math.random().toString(36).slice(2));
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const actionLocks=new Map();
+function allowAction(key,delay=550){
+  const k=String(key||'global'),now=Date.now(),until=Number(actionLocks.get(k)||0);
+  if(now<until)return false;
+  actionLocks.set(k,now+Math.max(250,Number(delay)||550));
+  setTimeout(()=>{if(Number(actionLocks.get(k)||0)<=Date.now())actionLocks.delete(k);},Math.max(300,Number(delay)||550)+80);
+  return true;
+}
 function normalizeStatus(v){
  const raw=String(v||'').trim();
  if(STATUSES[raw])return raw;
@@ -270,7 +278,37 @@ function changeStatus(id,value){
 }
 function renderRow(o){const open=stateGet(ROW_KEY,o.id);return `<article class="ycn-row${open?' open':''}" data-ycn-row="${esc(o.id)}"><div class="ycn-row-top"><div class="ycn-row-summary"><strong>${esc(o.produit||'—')}</strong><span class="ycn-supplier">${esc(o.fournisseur||'—')}</span><span class="ycn-qte">${esc(o.qte||'—')}</span><span class="ycn-resp">${esc(o.responsable||'—')}</span></div><button class="ycn-row-toggle" type="button" data-ycn-toggle-row="${esc(o.id)}">${open?'▴':'▾'}</button></div><div class="ycn-row-detail"><div class="ycn-detail-grid"><div class="ycn-box"><small>Produit</small><strong>${esc(o.produit||'—')}</strong></div><div class="ycn-box"><small>Fournisseur</small><span>${esc(o.fournisseur||'—')}</span></div><div class="ycn-box"><small>Quantité</small><span>${esc(o.qte||'—')}</span></div><div class="ycn-box"><small>Responsable</small><span>${esc(o.responsable||'—')}</span></div><div class="ycn-box"><small>Statut</small><select class="ycn-status" data-ycn-status="${esc(o.id)}">${statusOptions(o.status)}</select></div><div class="ycn-box"><small>Pièces jointes</small><span>${docCount(o.id)}</span></div><div class="ycn-box note"><small>Note</small><span>${esc(o.notes||'—')}</span></div></div><div class="ycn-actions"><button type="button" class="ycn-doc" data-ycn-doc="${esc(o.id)}">📎 Documents${docCount(o.id)?' ('+docCount(o.id)+')':''}</button><button type="button" class="ycn-edit" data-ycn-edit="${esc(o.id)}">Modifier</button></div></div></article>`;}
 function renderGroup(g,all){const rows=all.filter(o=>o.status===g.key);return `<section class="ycn-group open" data-ycn-group="${g.key}"><div class="ycn-group-head"><span class="ycn-group-left"><span class="ycn-dot ${g.tone}"></span><span>${esc(g.label)}</span></span><span class="ycn-group-right"><span class="ycn-count">${rows.length}</span></span></div><div class="ycn-group-body">${rows.length?rows.map(renderRow).join(''):'<div class="ycn-empty">Aucune commande.</div>'}</div></section>`;}
-function bind(){root.querySelector('[data-ycn-add]')?.addEventListener('click',()=>openEdit(''));root.querySelectorAll('[data-ycn-toggle-row]').forEach(b=>b.onclick=()=>{const id=b.dataset.ycnToggleRow,v=!stateGet(ROW_KEY,id);stateSet(ROW_KEY,id,v);render();});root.querySelectorAll('[data-ycn-status]').forEach(s=>{s.onclick=e=>e.stopPropagation();s.onchange=()=>changeStatus(s.dataset.ycnStatus,s.value);});root.querySelectorAll('[data-ycn-edit]').forEach(b=>b.onclick=()=>openEdit(b.dataset.ycnEdit));root.querySelectorAll('[data-ycn-doc]').forEach(b=>b.onclick=()=>openDocs(b.dataset.ycnDoc));const n=root.querySelector('#ycnNote');root.querySelector('[data-ycn-note-cancel]')?.addEventListener('click',()=>n.value=noteGet());root.querySelector('[data-ycn-note-save]')?.addEventListener('click',()=>{noteSet(n.value);toast('Note commandes enregistrée','ok');});}
+function bind(){
+ const add=root.querySelector('[data-ycn-add]');
+ if(add)add.onclick=()=>{if(!allowAction('add',650))return;openEdit('');};
+
+ root.querySelectorAll('[data-ycn-toggle-row]').forEach(b=>b.onclick=()=>{
+   const id=b.dataset.ycnToggleRow;
+   if(!allowAction('toggle:'+String(id||''),450))return;
+   const v=!stateGet(ROW_KEY,id);stateSet(ROW_KEY,id,v);render();
+ });
+
+ root.querySelectorAll('[data-ycn-status]').forEach(s=>{
+   s.onclick=e=>e.stopPropagation();
+   s.onchange=()=>changeStatus(s.dataset.ycnStatus,s.value);
+ });
+
+ root.querySelectorAll('[data-ycn-edit]').forEach(b=>b.onclick=()=>{
+   const id=b.dataset.ycnEdit;
+   if(!allowAction('edit:'+String(id||''),650))return;
+   openEdit(id);
+ });
+
+ root.querySelectorAll('[data-ycn-doc]').forEach(b=>b.onclick=()=>{
+   const id=b.dataset.ycnDoc;
+   if(!allowAction('docs:'+String(id||''),650))return;
+   openDocs(id);
+ });
+
+ const n=root.querySelector('#ycnNote');
+ root.querySelector('[data-ycn-note-cancel]')?.addEventListener('click',()=>{if(!allowAction('note-cancel',400))return;n.value=noteGet();});
+ root.querySelector('[data-ycn-note-save]')?.addEventListener('click',()=>{if(!allowAction('note-save',700))return;noteSet(n.value);toast('Note commandes enregistrée','ok');});
+}
 function render(){if(!root||!root.isConnected)return;const all=list();root.innerHTML=`<div class="ycn-toolbar"><button type="button" class="ycn-btn primary" data-ycn-add>+ Ajouter</button></div><div class="ycn-statusline">Données Yaya — Actualiser uniquement sur demande.</div><div class="ycn-kpis">${GROUPS.map(g=>`<div class="ycn-kpi ${g.tone}"><span class="ycn-kpi-num">${all.filter(o=>o.status===g.key).length}</span><strong>${esc(g.kpi)}</strong></div>`).join('')}</div><div class="ycn-groups">${GROUPS.map(g=>renderGroup(g,all)).join('')}</div><section class="ycn-note-panel"><div class="ycn-note-head">NOTE COMMANDES</div><div class="ycn-note-body"><textarea id="ycnNote">${esc(noteGet())}</textarea><div class="ycn-note-actions"><button type="button" class="ycn-btn" data-ycn-note-cancel>Annuler</button><button type="button" class="ycn-btn primary" data-ycn-note-save>Enregistrer</button></div></div></section>`;bind();}
 function openDocs(id){ensureModals();currentDocOrderId=String(id||'');document.getElementById('ycnDocFile').value='';renderDocs();document.getElementById('ycnDocModal').classList.add('show');}
 function closeDocs(){document.getElementById('ycnDocModal')?.classList.remove('show');currentDocOrderId='';}
@@ -297,7 +335,7 @@ async function startDocUpload(){
    }catch(e){toast('Échec document : '+String(e?.message||e),'err');}
  },0);
 }
-function deleteDoc(id){if(!confirm('Supprimer ce document ?'))return;documents=documents.filter(d=>String(d?.id||'')!==String(id));saveCache();renderDocs();render();}
+function deleteDoc(id){if(!allowAction('doc-delete:'+String(id||''),700))return;if(!confirm('Supprimer ce document ?'))return;documents=documents.filter(d=>String(d?.id||'')!==String(id));saveCache();renderDocs();render();}
 async function refresh(){if(!root)return;const line=root.querySelector('.ycn-statusline');if(line)line.textContent='Actualisation volontaire…';try{await flushPending();await syncStatusQueue();const a=await jsonp('list');if(!a?.ok)throw new Error(a?.error||'Lecture commandes impossible');orders=yayaStateOrders();saveCache();render();toast('Commandes actualisées','ok');return true;}catch(e){orders=yayaStateOrders();saveCache();render();if(line)line.textContent='Actualisation impossible — affichage conservé.';toast(e?.message||'Actualisation impossible','err');return false;}}
 function mount(el,id,name){root=el;chantierId=String(id||'');chantierName=String(name||'');root.classList.add('yaya-cmd-native-root');readCache();orders=yayaStateOrders();ensureModals();saveCache();render();scheduleStatusSync(250);}
 function unmount(el){if(root===el)root=null;if(el)el.innerHTML='';}
@@ -306,5 +344,5 @@ window.addEventListener('online',()=>scheduleStatusSync(150),{passive:true});
 window.addEventListener('focus',()=>scheduleStatusSync(350),{passive:true});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleStatusSync(350);});
 window.addEventListener('pagehide',()=>{saveStatusPending();},{passive:true});
-window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.3-local-first-status'};
+window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.4-local-first-status-click-guard'};
 })();
