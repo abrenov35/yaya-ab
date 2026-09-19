@@ -530,8 +530,8 @@ function hydratePhotoThumbs(pane){
   });
 }
 function style(){if(document.getElementById(STYLE))return;var s=document.createElement('style');s.id=STYLE;s.textContent=
-'#pane-chantiers .yaya-detail-section-tab[data-section="photos"]{background:#f2f7f3!important;border-color:#b8d6c0!important;color:#356b45!important}'+
-'#pane-chantiers .yaya-detail-section-tab[data-section="photos"].on{background:#e1f0e5!important;border-color:#78ae87!important;color:#2f633e!important}'+
+'#pane-chantiers .yaya-detail-section-tab[data-section="photos"]{background:#f3eeff!important;border-color:#c8b7f0!important;color:#6a45a5!important}'+
+'#pane-chantiers .yaya-detail-section-tab[data-section="photos"].on{background:#e8deff!important;border-color:#a98bdf!important;color:#59358f!important;box-shadow:inset 0 -2px 0 #a98bdf!important}'+
 '#pane-chantiers .yaya-detail-section-tab[data-section="photos"] small{display:none!important;visibility:hidden!important;width:0!important;min-width:0!important;height:0!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important}'+
 '#pane-chantiers .card[data-yaya-detail-section="photos"]>.yaya-detail-section-action-row[data-section="photos"]{display:flex!important}'+
 '#pane-chantiers .yaya-detail-section-action-row[data-section="photos"]{background:#f3f8f4!important;border-left:4px solid #78ae87!important}'+
