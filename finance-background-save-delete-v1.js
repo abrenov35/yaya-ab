@@ -50,8 +50,25 @@
     }catch(e){return null;}
   }
 
-  function writePending(achats){
-    const payload={token:Date.now()+'_'+Math.random().toString(36).slice(2),savedAt:Date.now(),achats:achats.map(function(a){return {...a};})};
+  function cleanIds(list){
+    return Array.from(new Set((Array.isArray(list)?list:[]).map(txt).filter(Boolean)));
+  }
+
+  function writePending(achats,ops){
+    ops=ops||{};
+    const previous=readPending();
+    const payload={
+      token:Date.now()+'_'+Math.random().toString(36).slice(2),
+      savedAt:Date.now(),
+      achats:achats.map(function(a){return {...a};}),
+      upsertIds:cleanIds([...(previous&&previous.upsertIds||[]),...(ops.upsertIds||[])]),
+      removeIds:cleanIds([...(previous&&previous.removeIds||[]),...(ops.removeIds||[])])
+    };
+    // Une suppression gagne toujours sur un upsert du même ID.
+    if(payload.removeIds.length){
+      const removed=new Set(payload.removeIds);
+      payload.upsertIds=payload.upsertIds.filter(function(id){return !removed.has(id);});
+    }
     try{localStorage.setItem(PENDING_KEY,JSON.stringify(payload));}catch(e){}
     return payload;
   }
@@ -63,9 +80,44 @@
     }catch(e){}
   }
 
+  function reconcileCreatePending(id,row){
+    try{
+      const key='YAYA_ACHATS_CREATE_PENDING_V1';
+      const list=JSON.parse(localStorage.getItem(key)||'[]');
+      if(!Array.isArray(list))return;
+      const idx=list.findIndex(function(x){return txt(x&&x.id)===txt(id);});
+      if(idx<0)return;
+      if(row)list[idx]={...list[idx],...row};
+      else list.splice(idx,1);
+      if(list.length)localStorage.setItem(key,JSON.stringify(list));
+      else localStorage.removeItem(key);
+    }catch(e){}
+  }
+
   async function sendSnapshot(snapshot){
     if(typeof apiPost!=='function')throw new Error('API Yaya indisponible');
-    const ok=await apiPost('setAchats',snapshot.achats);
+
+    const upsertIds=cleanIds(snapshot&&snapshot.upsertIds);
+    const removeIds=cleanIds(snapshot&&snapshot.removeIds);
+    let target=Array.isArray(snapshot&&snapshot.achats)?snapshot.achats.map(function(a){return {...a};}):[];
+
+    // Après un reload, on repart toujours d'une lecture serveur fraîche puis
+    // on rejoue explicitement les IDs modifiés/supprimés.
+    if((upsertIds.length||removeIds.length)&&typeof apiGet==='function'){
+      const fresh=await apiGet(true);
+      if(!fresh||!Array.isArray(fresh.achats))throw new Error('liste achats serveur indisponible');
+      const source=new Map(target.map(function(row){return [txt(row&&row.id),row];}).filter(function(x){return x[0];}));
+      const merged=new Map(fresh.achats.map(function(row){return [txt(row&&row.id),{...row}];}).filter(function(x){return x[0];}));
+
+      removeIds.forEach(function(id){merged.delete(id);});
+      upsertIds.forEach(function(id){
+        const row=source.get(id);
+        if(row)merged.set(id,{...row});
+      });
+      target=Array.from(merged.values());
+    }
+
+    const ok=await apiPost('setAchats',target);
     if(!ok)throw new Error('écriture refusée');
     return true;
   }
@@ -94,9 +146,30 @@
     }
   }
 
-  function queueCurrent(){
-    writePending(cloneAchats());
+  function queueCurrent(ops){
+    ops=ops||{};
+    const rows=cloneAchats();
+    (ops.upsertIds||[]).forEach(function(id){
+      const row=rows.find(function(a){return txt(a&&a.id)===txt(id);});
+      if(row)reconcileCreatePending(id,row);
+    });
+    (ops.removeIds||[]).forEach(function(id){reconcileCreatePending(id,null);});
+    writePending(rows,ops);
     setTimeout(worker,0);
+  }
+
+  function restorePendingLocally(){
+    const pending=readPending();
+    if(!pending||!Array.isArray(pending.achats))return;
+    try{if(typeof S!=='undefined'&&S)S.achats=pending.achats.map(function(a){return {...a};});}catch(e){}
+    try{
+      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+      const cached=raw?JSON.parse(raw):{};
+      if(cached&&typeof cached==='object'){
+        cached.achats=pending.achats.map(function(a){return {...a};});
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+      }
+    }catch(e){}
   }
 
   function idFromOnclick(raw){
@@ -163,7 +236,7 @@
     toastSafe('Achat enregistré — synchronisation en arrière-plan');
     renderSoon();
     persistCacheSoon();
-    queueCurrent();
+    queueCurrent({upsertIds:[id]});
     return true;
   }
 
@@ -199,7 +272,7 @@
       toastSafe('Achat supprimé — synchronisation en arrière-plan');
       renderSoon();
       persistCacheSoon();
-      queueCurrent();
+      queueCurrent({removeIds:[id]});
     };
     document.body.appendChild(overlay);
   }
@@ -235,7 +308,23 @@
     return fastSave(modal,txt(id));
   };
 
+  window.__yayaFinanceQueueCurrent=queueCurrent;
+  window.__yayaFinanceFlushPending=worker;
+
+  restorePendingLocally();
   window.addEventListener('online',function(){setTimeout(worker,250);});
-  window.addEventListener('focus',function(){setTimeout(worker,500);});
+  window.addEventListener('focus',function(){restorePendingLocally();setTimeout(worker,500);});
+  window.addEventListener('pagehide',function(){
+    // Pas de réseau à la fermeture : la file locale est déjà la source de reprise.
+    // On force seulement le cache courant de façon synchrone.
+    try{
+      const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+      const cached=raw?JSON.parse(raw):{};
+      if(cached&&typeof cached==='object'){
+        cached.achats=cloneAchats();
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+      }
+    }catch(e){}
+  },{passive:true});
   setTimeout(worker,1200);
 })();
