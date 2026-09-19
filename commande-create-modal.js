@@ -389,7 +389,7 @@
         dropboxPath:'',
         oneDriveId:'',
         oneDriveWebUrl:'',
-        statutValidation:'VALIDEE',
+        statutValidation:'VALIDEE|YAYA_STATUS=choice',
         statut:'choice',
         origine:'YAYA',
         gmailMessageId:'',
