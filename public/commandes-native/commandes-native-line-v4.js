@@ -55,6 +55,17 @@ function driveId(url){
   let m=s.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);if(m&&m[1])return m[1];
   m=s.match(/[?&]id=([^&#]+)/i);return m&&m[1]?decodeURIComponent(m[1]):'';
 }
+function directDownloadUrl(url){
+  url=String(url||'').trim();if(!url)return '';
+  const id=driveId(url);
+  if(id)return 'https://drive.usercontent.google.com/download?id='+encodeURIComponent(id)+'&export=download&confirm=t';
+  try{
+    const u=new URL(url);
+    if(/(?:^|\.)dropbox\.com$/i.test(u.hostname)){u.searchParams.delete('raw');u.searchParams.set('dl','1');return u.toString();}
+    if(/(?:1drv\.ms|onedrive\.live\.com|sharepoint\.com)$/i.test(u.hostname)){u.searchParams.set('download','1');return u.toString();}
+  }catch(_){}
+  return url;
+}
 function yayaApiUrl(){
   try{if(typeof API!=='undefined'&&API)return String(API);}catch(_){ }
   return 'https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
@@ -270,7 +281,8 @@ function injectStyle(){
     #${MODAL_ID} .v4-drive-nav button{width:29px;height:27px;border:0;border-radius:14px;background:#fff;color:#162d49;font-size:18px;font-weight:900;line-height:1;cursor:pointer}
     #${MODAL_ID} .v4-drive-nav button:disabled{opacity:.35}
     #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-head-actions{display:flex;align-items:center;gap:9px}
-    #${MODAL_ID} .v4-edit{border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
+    #${MODAL_ID} .v4-edit,#${MODAL_ID} .v4-download{border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
+    #${MODAL_ID} .v4-download{border-color:#b9dfc5;background:#eef9f1;color:#17653a}
     #${MODAL_ID} .v4-edit:hover{background:#e2f0fd;border-color:#7eacd8}
     #${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
     @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{padding:9px!important}.yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}}
@@ -280,9 +292,18 @@ function injectStyle(){
 function ensureModal(){
   let m=document.getElementById(MODAL_ID);if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-head-actions"><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);
   m.querySelector('.v4-close').onclick=closeModal;
+  m.querySelector('.v4-download').onclick=function(e){
+    e.preventDefault();e.stopPropagation();
+    const url=String(m.dataset.yayaDownloadUrl||'').trim();
+    if(!url)return;
+    const a=document.createElement('a');
+    a.href=directDownloadUrl(url);
+    a.target='_blank';a.rel='noopener';a.download='';
+    document.body.appendChild(a);a.click();a.remove();
+  };
   m.querySelector('.v4-edit').onclick=function(e){
     e.preventDefault();e.stopPropagation();
     const id=String(currentOrderId||'').trim();
@@ -325,6 +346,8 @@ function renderModal(){
   });
   const d=list[currentPieceIndex],url=docUrl(d),title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));
   if(card)card.dataset.yayaDownloadUrl=url||'';
+  if(m)m.dataset.yayaDownloadUrl=url||'';
+  const dlBtn=m&&m.querySelector('.v4-download');if(dlBtn)dlBtn.style.display=url?'inline-flex':'none';
   if(!url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
   const id=driveId(url);
   if(id){
