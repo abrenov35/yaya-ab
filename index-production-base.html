@@ -300,8 +300,10 @@
       });
     });
   }
-  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',function(){setTimeout(show,0);},{once:true});
-  else setTimeout(show,0);
+  // Le script est injecté en fin de <body> : la structure principale existe déjà.
+  // Ne pas attendre DOMContentLoaded, car celui-ci attend l'exécution de tous les scripts defer.
+  // On affiche donc Yaya dès que l'en-tête est prêt, puis les modules secondaires finissent de se charger.
+  setTimeout(show,0);
   setTimeout(function(){
     if(revealed)return;
     revealed=true;
