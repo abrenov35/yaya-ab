@@ -9,7 +9,7 @@
 <body>
 <script>
 (async()=>{
-  let base=await fetch('index-production-base.html?v=fastboot-1',{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
+  let base=await fetch('index-production-base.html?v=fastboot-2',{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
   const sourceLoader="  const source=await fetch('index-legacy.html?v=marcheht-6',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});";
   const apiGetPatch=`async function apiGet(forceNetwork){
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2'; const CACHE_META_KEY='YAYA_CACHE_META_V2';
