@@ -3,8 +3,7 @@
 if(window.__YAYA_COMMANDES_EDIT_MODAL_V5)return;
 window.__YAYA_COMMANDES_EDIT_MODAL_V5=true;
 
-const GAS='https://script.google.com/macros/s/AKfycbxswcobk2vJMh0qlbxseImn1SZ7GBubSblW5LXFrRLI3zxs-M9zb3NwfUS-rVHDtoY/exec';
-const CACHE_KEYS=['AB_COMMANDES_LOCAL_STATE_V1','AB_COMMANDES_EMBED_CACHE_V2'];
+const CACHE_KEYS=['YAYA_COMMANDES_EMBED_CACHE_V3'];
 const PENDING_KEY='YAYA_COMMANDES_NATIVE_PENDING_V1';
 const TOMBSTONE_KEY='YAYA_COMMANDES_NATIVE_DELETED_SESSION_V1';
 let activeId='';
@@ -18,33 +17,37 @@ function toast(message,kind=''){
   clearTimeout(el.__modalV5T);el.__modalV5T=setTimeout(()=>{el.className='ycn-toast';},3200);
 }
 function readState(){
-  for(const key of CACHE_KEYS){
-    try{const d=JSON.parse(localStorage.getItem(key)||'null');if(Array.isArray(d?.orders))return d;}catch(_){ }
-  }
+  try{
+    if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)){
+      let docs=[];
+      try{const d=JSON.parse(localStorage.getItem(CACHE_KEYS[0])||'{}');docs=Array.isArray(d?.documents)?d.documents:[];}catch(_){}
+      return {orders:S.commandes.slice(),documents:docs};
+    }
+  }catch(_){}
+  try{const d=JSON.parse(localStorage.getItem(CACHE_KEYS[0])||'null');if(Array.isArray(d?.orders))return d;}catch(_){}
   return {orders:[],documents:[]};
 }
 function findOrder(id){return (readState().orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;}
-function orderUrl(o){return txt(o?.url||o?.urlCommande||o?.url_commande||o?.lienUrl||o?.lien_url||o?.lien||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||'');}
+function orderUrl(o){const piece=txt(o?.pieceNom||o?.piece_nom);return txt(o?.lienUrl||o?.lien_url||o?.urlCommande||o?.url_commande||o?.url||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||(!piece?o?.lien:'')||'');}
 function writeOrders(next){
-  for(const key of CACHE_KEYS){
-    try{
-      const raw=localStorage.getItem(key);if(!raw)continue;
-      const d=JSON.parse(raw);if(!Array.isArray(d?.orders))continue;
-      d.orders=next;d.savedAt=Date.now();localStorage.setItem(key,JSON.stringify(d));
-    }catch(_){ }
-  }
+  try{if(typeof S!=='undefined'&&S)S.commandes=Array.isArray(next)?next.slice():[];}catch(_){}
+  try{
+    const raw=localStorage.getItem(CACHE_KEYS[0]);
+    const d=raw?JSON.parse(raw):{};
+    d.orders=Array.isArray(next)?next.slice():[];d.documents=Array.isArray(d.documents)?d.documents:[];d.savedAt=Date.now();
+    localStorage.setItem(CACHE_KEYS[0],JSON.stringify(d));
+  }catch(_){}
+  try{
+    const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+    if(raw){const d=JSON.parse(raw);if(d&&typeof d==='object'){d.commandes=Array.isArray(next)?next.slice():[];localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(d));}}
+  }catch(_){}
 }
 function updateOrderInCaches(order){
   if(!order?.id)return;
-  for(const key of CACHE_KEYS){
-    try{
-      const raw=localStorage.getItem(key);if(!raw)continue;
-      const d=JSON.parse(raw);if(!Array.isArray(d?.orders))continue;
-      const i=d.orders.findIndex(o=>String(o?.id||'')===String(order.id));
-      if(i>=0)d.orders[i]={...d.orders[i],...order};else d.orders.push(order);
-      d.savedAt=Date.now();localStorage.setItem(key,JSON.stringify(d));
-    }catch(_){ }
-  }
+  const state=readState(),rows=Array.isArray(state.orders)?state.orders.slice():[];
+  const i=rows.findIndex(o=>String(o?.id||'')===String(order.id));
+  if(i>=0)rows[i]={...rows[i],...order};else rows.push(order);
+  writeOrders(rows);
 }
 function removePending(id){
   try{const p=JSON.parse(localStorage.getItem(PENDING_KEY)||'[]');if(Array.isArray(p))localStorage.setItem(PENDING_KEY,JSON.stringify(p.filter(x=>String(x?.id||'')!==String(id))));}catch(_){ }
@@ -52,7 +55,25 @@ function removePending(id){
 function tombstones(){try{const a=JSON.parse(sessionStorage.getItem(TOMBSTONE_KEY)||'[]');return Array.isArray(a)?a:[];}catch(_){return [];}}
 function addTombstone(id){const a=tombstones().filter(x=>String(x)!==String(id));a.push(String(id));try{sessionStorage.setItem(TOMBSTONE_KEY,JSON.stringify(a));}catch(_){}}
 function isTombstone(id){return tombstones().some(x=>String(x)===String(id));}
-function post(data){const b=new URLSearchParams();Object.entries(data||{}).forEach(([k,v])=>b.append(k,v==null?'':String(v)));return fetch(GAS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body:b});}
+async function post(data){
+  const action=String(data?.action||'');
+  let rows=[];
+  try{rows=Array.isArray(S?.commandes)?S.commandes.slice():(readState().orders||[]).slice();}catch(_){rows=(readState().orders||[]).slice();}
+  if(action==='delete'){
+    const id=String(data?.id||'');
+    rows=rows.filter(o=>String(o?.id||'')!==id);
+    writeOrders(rows);
+  }else if(action==='upsert'){
+    const order={...data};delete order.action;
+    const i=rows.findIndex(o=>String(o?.id||'')===String(order.id||''));
+    if(i>=0)rows[i]={...rows[i],...order};else rows.push(order);
+    writeOrders(rows);
+  }else return {ok:true};
+  if(typeof apiPost!=='function')throw new Error('API Yaya indisponible');
+  const ok=await apiPost('setCommandes',rows);
+  if(!ok)throw new Error('Écriture Yaya refusée');
+  return {ok:true};
+}
 
 function injectStyle(){
   let s=document.getElementById('ycn-edit-modal-v5-style');
