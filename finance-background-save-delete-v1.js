@@ -3,7 +3,7 @@
 
   if(!window.__yayaAchatsConcurrencyGuardV1 && !document.querySelector('script[data-yaya-achats-guard]')){
     const guard=document.createElement('script');
-    guard.src='achats-concurrency-guard.js?v=guard-2';
+    guard.src='achats-concurrency-guard.js?v=guard-3';
     guard.async=false;
     guard.dataset.yayaAchatsGuard='1';
     (document.head||document.documentElement).appendChild(guard);
