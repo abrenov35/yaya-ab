@@ -3,8 +3,7 @@
 if(window.__YAYA_COMMANDES_LINE_V4)return;
 window.__YAYA_COMMANDES_LINE_V4=true;
 
-const GAS='https://script.google.com/macros/s/AKfycbxswcobk2vJMh0qlbxseImn1SZ7GBubSblW5LXFrRLI3zxs-M9zb3NwfUS-rVHDtoY/exec';
-const CACHE_KEYS=['AB_COMMANDES_LOCAL_STATE_V1','AB_COMMANDES_EMBED_CACHE_V2'];
+const CACHE_KEYS=['YAYA_COMMANDES_EMBED_CACHE_V3'];
 const MODAL_ID='ycnIframePiecesV4';
 let currentOrderId='';
 let currentPieceIndex=0;
@@ -13,9 +12,14 @@ let previewToken=0;
 let pdfJsPromise=null;
 
 function readState(){
-  for(const key of CACHE_KEYS){
-    try{const raw=localStorage.getItem(key);if(!raw)continue;const d=JSON.parse(raw);if(Array.isArray(d?.orders))return d;}catch(_){ }
-  }
+  try{
+    if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)){
+      let cachedDocs=[];
+      try{const d=JSON.parse(localStorage.getItem(CACHE_KEYS[0])||'{}');cachedDocs=Array.isArray(d?.documents)?d.documents:[];}catch(_){}
+      return {orders:S.commandes.slice(),documents:cachedDocs};
+    }
+  }catch(_){}
+  try{const raw=localStorage.getItem(CACHE_KEYS[0]);if(raw){const d=JSON.parse(raw);if(Array.isArray(d?.orders))return d;}}catch(_){}
   return {orders:[],documents:[]};
 }
 function orderById(id){return (readState().orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;}
@@ -23,24 +27,24 @@ function docsFor(id){
   const state=readState();
   const docs=(state.documents||[]).filter(d=>String(d?.commande_id||'')===String(id||''));
   const order=(state.orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;
-  const url=orderUrl(order);
+  const attachmentUrl=String(order?.lien||'').trim();
   const pieceNom=String(order?.pieceNom||order?.piece_nom||'').trim();
-  if(url&&pieceNom){
-    const exists=docs.some(d=>docUrl(d)===url);
+  if(attachmentUrl&&pieceNom){
+    const exists=docs.some(d=>docUrl(d)===attachmentUrl);
     if(!exists)docs.unshift({
       id:'order-attachment:'+String(order?.id||id||''),
       commande_id:String(order?.id||id||''),
       type:'Fichier',
       nom_fichier:pieceNom,
-      url_pdf:url,
-      source:'Commande',
+      url_pdf:attachmentUrl,
+      source:'Yaya',
       __yayaOrderAttachment:true
     });
   }
   return docs;
 }
 function docUrl(d){return String(d?.url_pdf||d?.url||d?.lien||d?.webUrl||d?.oneDriveWebUrl||'').trim();}
-function orderUrl(o){return String(o?.lien||o?.url||o?.urlCommande||o?.url_commande||o?.lienUrl||o?.lien_url||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||'').trim();}
+function orderUrl(o){const piece=String(o?.pieceNom||o?.piece_nom||'').trim();return String(o?.lienUrl||o?.lien_url||o?.urlCommande||o?.url_commande||o?.url||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||(!piece?o?.lien:'')||'').trim();}
 function iframeUrl(url){
   url=String(url||'').trim();if(!url)return '';
   try{const u=new URL(url);if(/(^|\.)dropbox\.com$/i.test(u.hostname)){u.searchParams.delete('dl');u.searchParams.set('raw','1');return u.toString();}}catch(_){ }
@@ -203,19 +207,19 @@ async function renderDrivePagesFallback(stage,id,token){
   wrap.addEventListener('touchend',e=>{if(touchY==null||!e.changedTouches||!e.changedTouches[0])return;const dy=e.changedTouches[0].clientY-touchY;touchY=null;if(Math.abs(dy)<45)return;if(dy<0)show(current+1);else if(current>1)show(current-1);},{passive:true});
 }
 function writeDocuments(next){
-  for(const key of CACHE_KEYS){
-    try{const raw=localStorage.getItem(key);if(!raw)continue;const d=JSON.parse(raw);if(!Array.isArray(d?.orders))continue;d.documents=Array.isArray(next)?next:[];d.savedAt=Date.now();localStorage.setItem(key,JSON.stringify(d));}catch(_){ }
-  }
+  try{
+    const raw=localStorage.getItem(CACHE_KEYS[0]);
+    const d=raw?JSON.parse(raw):{orders:(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)?S.commandes:[])};
+    d.documents=Array.isArray(next)?next:[];d.savedAt=Date.now();
+    localStorage.setItem(CACHE_KEYS[0],JSON.stringify(d));
+  }catch(_){}
 }
 function toast(text,kind=''){
   let el=document.getElementById('ycnToast');
   if(!el){el=document.createElement('div');el.id='ycnToast';el.className='ycn-toast';document.body.appendChild(el);}
   el.textContent=text||'';el.className='ycn-toast show'+(kind?' '+kind:'');clearTimeout(el.__t);el.__t=setTimeout(()=>el.className='ycn-toast',3200);
 }
-function postDelete(id){
-  const body=new URLSearchParams({action:'document_delete',id:String(id||'')});
-  return fetch(GAS,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/x-www-form-urlencoded;charset=UTF-8'},body});
-}
+function postDelete(id){return Promise.resolve({ok:true,id:String(id||'')});}
 
 function injectStyle(){
   if(document.getElementById('ycn-line-v4-style'))return;
