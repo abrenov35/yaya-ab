@@ -14,8 +14,7 @@
     const s=document.createElement('style');
     s.id=STYLE_ID;
     s.textContent=`
-      @media(max-width:860px){
-        .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final{
+      .yaya-cmd-native-root .ycn-row > .ycn-mobile-actions-final{
           display:flex!important;
           width:calc(100% - 16px)!important;
           max-width:none!important;
@@ -59,7 +58,6 @@
           visibility:hidden!important;
           pointer-events:none!important;
         }
-      }
     `;
     document.head.appendChild(s);
   }
@@ -165,10 +163,8 @@
 
   function refresh(){
     installStyle();
-    const mobile=window.matchMedia(MOBILE_QUERY).matches;
     document.querySelectorAll('.yaya-cmd-native-root .ycn-row').forEach(function(row){
-      if(mobile)moveMobile(row);
-      else restoreDesktop(row);
+      moveMobile(row);
     });
   }
 
