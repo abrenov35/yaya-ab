@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V30)return;window.__YAYA_PHOTOS_V30=true;
+if(window.__YAYA_PHOTOS_V31)return;window.__YAYA_PHOTOS_V31=true;
 var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v25';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -841,23 +841,43 @@ async function openPhotoReview(cid,files,mode){
   var r=root();
   if(!r)return;
 
-  var q=[],urls=[];
+  var q=[],urls=[],conversionErrors=[];
   for(var f of Array.from(files||[])){
     if(!isImageFile(f))continue;
+    var originalName=String(f&&f.name||'photo');
     var exif=await exifDate(f);
-    var fromName=photoDateFromFilename(f&&f.name);
+    var fromName=photoDateFromFilename(originalName);
     // IMPORTANT : file.lastModified n'est pas une date de prise de vue fiable.
     // Sur iPhone, Safari peut lui attribuer l'heure de sélection/importation.
     // On ne l'utilise donc jamais pour classer une photo importée.
     var d=exif||fromName||today();
     var sourceDate=exif?'EXIF':(fromName?'nom du fichier':(mode==='camera'?'prise de vue aujourd\'hui':'date non détectée — aujourd\'hui par défaut'));
-    var u=URL.createObjectURL(f);
+
+    // Les navigateurs PC ne savent généralement pas afficher un HEIC directement.
+    // On le convertit donc AVANT la prévisualisation et on enregistre ensuite le JPEG.
+    var previewFile=f;
+    if(isHeic(f,originalName)){
+      try{
+        var converted=await convertHeicBlob(f);
+        previewFile=new File(
+          [converted],
+          originalName.replace(/\.(?:heic|heif)$/i,'')+'.jpg',
+          {type:'image/jpeg',lastModified:f.lastModified||Date.now()}
+        );
+      }catch(e){
+        conversionErrors.push(originalName);
+        console.warn('Yaya Photos — conversion HEIC impossible :',originalName,e);
+        continue;
+      }
+    }
+
+    var u=URL.createObjectURL(previewFile);
     urls.push(u);
-    q.push({f:f,d:d,u:u,exif:!!exif,sourceDate:sourceDate});
+    q.push({f:previewFile,originalName:originalName,d:d,u:u,exif:!!exif,sourceDate:sourceDate});
   }
 
   if(!q.length){
-    toastS('Aucune photo sélectionnée',true);
+    toastS(conversionErrors.length?'Impossible de convertir cette photo HEIC':'Aucune photo sélectionnée',true);
     return;
   }
 
@@ -873,6 +893,7 @@ async function openPhotoReview(cid,files,mode){
   var qe=m.querySelector('.yaya-pq');
   var sv=m.querySelector('.sv');
   var msg=m.querySelector('.msg');
+  if(conversionErrors.length&&msg)msg.textContent=conversionErrors.length+' photo(s) HEIC non convertie(s) et ignorée(s).';
 
   function closeReview(){
     urls.forEach(function(u){
@@ -885,7 +906,7 @@ async function openPhotoReview(cid,files,mode){
     qe.innerHTML=q.map(function(x,i){
       return '<div class="yaya-pqr">'
         +'<img src="'+esc(x.u)+'">'
-        +'<div><b>'+esc(x.f.name)+'</b><div class="note">Date détectée : '+esc(x.sourceDate||'date du jour')+'</div></div>'
+        +'<div><b>'+esc(x.originalName||x.f.name)+'</b><div class="note">'+(x.originalName&&/\.(?:heic|heif)$/i.test(x.originalName)?'HEIC converti en JPEG • ':'')+'Date détectée : '+esc(x.sourceDate||'date du jour')+'</div></div>'
         +'<input type="date" data-i="'+i+'" value="'+esc(x.d)+'">'
         +'</div>';
     }).join('');
