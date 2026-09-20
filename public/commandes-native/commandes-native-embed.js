@@ -257,8 +257,8 @@ function saveEdit(e){e.preventDefault();const old=editId?orders.find(x=>String(x
 function changeStatus(id,value){
  const key=String(id||''),workflow=normalizeStatus(value);
  const i=orders.findIndex(x=>String(x.id)===key),o=i>=0?orders[i]:null;
- if(!o)return;
- if((workflow==='ordered'||workflow==='received')&&!o.fournisseur){alert('Renseigne d’abord le fournisseur.');render();return;}
+ if(!o)return false;
+ if((workflow==='ordered'||workflow==='received')&&!o.fournisseur){alert('Renseigne d’abord le fournisseur.');render();return false;}
  const u=normalize({...o,status:workflow});
  orders[i]=u;
  try{
@@ -275,6 +275,7 @@ function changeStatus(id,value){
  queueStatus(key,workflow);
  render();
  toast('Statut modifié — synchronisation…');
+ return true;
 }
 function renderRow(o){const open=stateGet(ROW_KEY,o.id);return `<article class="ycn-row${open?' open':''}" data-ycn-row="${esc(o.id)}"><div class="ycn-row-top"><div class="ycn-row-summary"><strong>${esc(o.produit||'—')}</strong><span class="ycn-supplier">${esc(o.fournisseur||'—')}</span><span class="ycn-qte">${esc(o.qte||'—')}</span><span class="ycn-resp">${esc(o.responsable||'—')}</span></div><button class="ycn-row-toggle" type="button" data-ycn-toggle-row="${esc(o.id)}">${open?'▴':'▾'}</button></div><div class="ycn-row-detail"><div class="ycn-detail-grid"><div class="ycn-box"><small>Produit</small><strong>${esc(o.produit||'—')}</strong></div><div class="ycn-box"><small>Fournisseur</small><span>${esc(o.fournisseur||'—')}</span></div><div class="ycn-box"><small>Quantité</small><span>${esc(o.qte||'—')}</span></div><div class="ycn-box"><small>Responsable</small><span>${esc(o.responsable||'—')}</span></div><div class="ycn-box"><small>Statut</small><select class="ycn-status" data-ycn-status="${esc(o.id)}">${statusOptions(o.status)}</select></div><div class="ycn-box"><small>Pièces jointes</small><span>${docCount(o.id)}</span></div><div class="ycn-box note"><small>Note</small><span>${esc(o.notes||'—')}</span></div></div><div class="ycn-actions"><button type="button" class="ycn-doc" data-ycn-doc="${esc(o.id)}">📎 Documents${docCount(o.id)?' ('+docCount(o.id)+')':''}</button><button type="button" class="ycn-edit" data-ycn-edit="${esc(o.id)}">Modifier</button></div></div></article>`;}
 function renderGroup(g,all){const rows=all.filter(o=>o.status===g.key);return `<section class="ycn-group open" data-ycn-group="${g.key}"><div class="ycn-group-head"><span class="ycn-group-left"><span class="ycn-dot ${g.tone}"></span><span>${esc(g.label)}</span></span><span class="ycn-group-right"><span class="ycn-count">${rows.length}</span></span></div><div class="ycn-group-body">${rows.length?rows.map(renderRow).join(''):'<div class="ycn-empty">Aucune commande.</div>'}</div></section>`;}
@@ -344,5 +345,5 @@ window.addEventListener('online',()=>scheduleStatusSync(150),{passive:true});
 window.addEventListener('focus',()=>scheduleStatusSync(350),{passive:true});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleStatusSync(350);});
 window.addEventListener('pagehide',()=>{saveStatusPending();},{passive:true});
-window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,version:'1.4-local-first-status-click-guard'};
+window.YayaCommandesNativeEmbed={mount,unmount,setChantier,refresh,render,changeStatus,version:'1.5-direct-status-action'};
 })();
