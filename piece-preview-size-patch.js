@@ -173,12 +173,10 @@
 
     const vp=viewport();
     const mobile=vp.width<=640;
-    const top=toolbarBottom()+(mobile?5:8);
-    const side=mobile?4:8;
-    const bottom=mobile?4:8;
-    const width=mobile
-      ?Math.max(300,vp.width-(side*2))
-      :Math.min(1100,Math.max(500,vp.width-(side*2)));
+    const top=mobile?3:6;
+    const side=mobile?3:6;
+    const bottom=mobile?3:6;
+    const width=Math.max(300,vp.width-(side*2));
     const height=Math.max(300,vp.height-top-bottom);
 
     const overlay=modal.closest('.piece-preview-overlay');
@@ -193,7 +191,7 @@
     modal.dataset.yayaPreviewUnified='v46';
     modal.style.setProperty('width',width+'px','important');
     modal.style.setProperty('height',height+'px','important');
-    modal.style.setProperty('max-width',mobile?'calc(100vw - 8px)':'min(1100px,calc(100vw - 16px))','important');
+    modal.style.setProperty('max-width','calc(100vw - '+(side*2)+'px)','important');
     modal.style.setProperty('max-height',height+'px','important');
     modal.style.setProperty('min-height','0','important');
     modal.style.setProperty('margin','0 auto','important');
