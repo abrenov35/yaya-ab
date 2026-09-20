@@ -6,10 +6,10 @@ window.syncMsg=function(m){
 
 (function(){
   'use strict';
-  if(window.__yayaMailModalButtonsAlignV4)return;
-  window.__yayaMailModalButtonsAlignV4=true;
+  if(window.__yayaMailModalButtonsAlignV5)return;
+  window.__yayaMailModalButtonsAlignV5=true;
 
-  const STYLE_ID='yaya-mail-modal-buttons-align-v4';
+  const STYLE_ID='yaya-mail-modal-buttons-align-v5';
   let raf=0;
 
   function installStyle(){
@@ -72,6 +72,17 @@ window.syncMsg=function(m){
       #modalRoot .message-modal .yaya-close{
         visibility:visible!important;
         opacity:1!important;
+        background:#5f6b7a!important;
+        border-color:#5f6b7a!important;
+        color:#fff!important;
+        font-weight:700!important;
+        box-shadow:none!important;
+      }
+      #modalRoot .yaya-mail-body-modal .yaya-close:hover,
+      #modalRoot .message-modal .yaya-close:hover{
+        background:#485463!important;
+        border-color:#485463!important;
+        color:#fff!important;
       }
 
       @media(max-width:640px){
