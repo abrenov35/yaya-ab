@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__YAYA_PHOTOS_V29)return;window.__YAYA_PHOTOS_V29=true;
+if(window.__YAYA_PHOTOS_V30)return;window.__YAYA_PHOTOS_V30=true;
 var DEF='Titre à définir',TYPE='PHOTO',MAX=8*1024*1024,STYLE='yaya-photos-v25';
 function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toUpperCase()}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -811,7 +811,7 @@ function pickPhotos(cid,mode){
   cid=String(cid||'');
   var input=document.createElement('input');
   input.type='file';
-  input.accept='image/*';
+  input.accept='image/*,.heic,.HEIC,.heif,.HEIF,image/heic,image/heif,image/heic-sequence,image/heif-sequence';
   if(mode==='camera')input.setAttribute('capture','environment');
   else input.multiple=true;
   input.style.position='fixed';
