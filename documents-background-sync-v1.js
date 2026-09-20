@@ -143,6 +143,7 @@
       writePending(latest);
 
       if(Object.keys(latest.items||{}).length||Object.keys(latest.removes||{}).length)setTimeout(worker,0);
+      else toastSafe('Document enregistré ✓',false);
     }catch(err){
       console.warn('Yaya documents — synchronisation arrière-plan en attente :',err);
       const now=Date.now();

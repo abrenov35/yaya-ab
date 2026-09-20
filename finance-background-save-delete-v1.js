@@ -143,7 +143,7 @@
           await sendSnapshot(snapshot);
           clearPendingIfSame(snapshot.token);
           const newer=readPending();
-          if(!newer)break;
+          if(!newer){toastSafe('Achat enregistré ✓');break;}
           if(newer.token===snapshot.token)break;
         }catch(err){
           console.warn('Yaya finance — synchronisation arrière-plan en attente :',err);

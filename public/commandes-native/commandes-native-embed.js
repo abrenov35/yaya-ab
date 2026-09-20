@@ -259,7 +259,10 @@ function changeStatus(id,value){
  const i=orders.findIndex(x=>String(x.id)===key),o=i>=0?orders[i]:null;
  if(!o)return false;
  if((workflow==='ordered'||workflow==='received')&&!o.fournisseur){alert('Renseigne d’abord le fournisseur.');render();return false;}
- const u=normalize({...o,status:workflow});
+ // Keep the persisted workflow field aligned before normalizing. Otherwise
+ // workflowStatus() gives the old `statut` priority over the freshly selected
+ // transient `status`, and the card is rendered back in its previous column.
+ const u=normalize({...o,statut:workflow,status:workflow,statutValidation:workflowValidation(o.statutValidation,workflow)});
  orders[i]=u;
  try{
    if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)){
