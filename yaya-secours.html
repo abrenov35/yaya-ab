@@ -7,6 +7,7 @@
   <style>html{background:#f4f6f8}body{margin:0;background:#f4f6f8;color:#162d49;font-family:Arial,sans-serif}#yaya-rescue-loading{min-height:100vh;display:grid;place-items:center;text-align:center;font-size:22px;font-weight:800;padding:24px;box-sizing:border-box}</style>
 </head>
 <body>
+<div id="yaya-rescue-loading">Chargement de Yaya…<br><small style="font-size:14px;font-weight:500;margin-top:12px;display:block">Les données sont en cours de récupération.</small></div>
 <script>
 (async()=>{
   let base=await fetch('index-production-base.html?v=fastboot-2',{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
