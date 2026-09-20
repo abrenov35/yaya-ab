@@ -114,6 +114,7 @@ async function ensureCentral(){
 function css(){if(document.getElementById('yaya-devis-docs-css'))return;const s=document.createElement('style');s.id='yaya-devis-docs-css';s.textContent=`
 #pane-chantiers .yaya-detail-section-tab[data-section="marche"]{display:none!important}#pane-chantiers [data-yaya-devis-docs="1"]{cursor:pointer!important}
 .ydd-ov{position:fixed;inset:0;z-index:100000;background:rgba(15,23,42,.58);display:flex;align-items:center;justify-content:center;padding:18px}.ydd-modal{width:min(520px,calc(100vw - 28px));background:#fff;border-radius:13px;overflow:hidden;color:#162d49;box-shadow:0 20px 65px rgba(15,23,42,.28)}.ydd-modal.docs{width:90vw;max-width:90vw;height:90vh;display:flex;flex-direction:column}.ydd-head{display:flex;align-items:center;gap:14px;padding:16px 18px;border-bottom:1px solid #e5eaf0}.ydd-title{font-size:18px;font-weight:850}.ydd-actions{display:flex;gap:9px;margin-left:auto}.ydd-btn{min-height:38px;padding:0 14px;border-radius:8px;border:1px solid #c8d4e0;background:#fff;color:#173b60;font-size:12.5px;font-weight:800}.ydd-btn.primary{background:#003d7a;border-color:#003d7a;color:#fff}.ydd-empty{padding:34px 22px;text-align:center;color:#66758a;font-size:13px}.ydd-empty strong{display:block;margin-bottom:7px;color:#243b58;font-size:15px}.ydd-tabs{display:flex;gap:5px;padding:10px 12px 0;overflow-x:auto;background:#f7f9fb;border-bottom:1px solid #dfe6ee}.ydd-tab{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 9px 0 13px;border:1px solid #d5dee8;border-bottom:0;border-radius:8px 8px 0 0;background:#edf1f5;color:#4b5f72;font-size:12px;font-weight:750;white-space:nowrap}.ydd-tab.on{background:#fff;color:#003d7a}.ydd-del{border:0;background:transparent;color:#8a98a8;font-size:17px}.ydd-view{flex:1;min-height:0;background:#eef1f4}.ydd-frame{width:100%;height:100%;border:0;background:#fff}.ydd-add{width:min(480px,calc(100vw - 28px));padding:20px;background:#fff;border-radius:13px}.ydd-file{display:none}.ydd-state{text-align:center;margin:14px 0;font-size:13px}.ydd-add-actions{display:flex;justify-content:center;gap:10px;margin-top:18px}.ydd-add-actions button{height:42px;padding:0 20px}.ydd-import{background:#249457!important;color:#fff!important;border:1px solid #249457!important}@media(max-width:700px){.ydd-ov{padding:6px}.ydd-modal.docs{width:calc(100vw - 12px);max-width:none;height:calc(100dvh - 12px)}.ydd-head{padding:10px;flex-wrap:wrap}.ydd-actions{width:100%;margin-left:0}.ydd-btn{flex:1}.ydd-tabs{padding-left:6px;padding-right:6px}}
+.ydd-confirm-ov{position:fixed;inset:0;z-index:100100;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(15,23,42,.58);box-sizing:border-box}.ydd-confirm{width:min(440px,calc(100vw - 28px));padding:24px;background:#fff;border:1px solid #dce4ec;border-radius:14px;box-shadow:0 22px 70px rgba(15,23,42,.32);color:#162d49;text-align:center}.ydd-confirm-icon{display:grid;place-items:center;width:50px;height:50px;margin:0 auto 13px;border-radius:50%;background:#fff0ee;color:#c43228;font-size:24px}.ydd-confirm h3{margin:0 0 9px;font-size:19px}.ydd-confirm p{margin:0;color:#607084;font-size:13px;line-height:1.5}.ydd-confirm-actions{display:flex;justify-content:center;gap:10px;margin-top:22px}.ydd-confirm-actions button{min-width:120px;min-height:42px;padding:0 18px;border-radius:9px;font-size:13px;font-weight:800;cursor:pointer}.ydd-confirm-cancel{border:1px solid #cbd6e2;background:#fff;color:#173b60}.ydd-confirm-delete{border:1px solid #c43228;background:#c43228;color:#fff}@media(max-width:520px){.ydd-confirm{padding:20px 16px}.ydd-confirm-actions{flex-direction:column-reverse}.ydd-confirm-actions button{width:100%}}
 `;document.head.appendChild(s);}
 
 function showDoc(cid,i){
@@ -132,7 +133,21 @@ function showDoc(cid,i){
   const v=root&&root.querySelector('.ydd-view');
   if(v)v.innerHTML='<iframe class="ydd-frame" title="Visualisation du devis" src="'+esc(viewer)+'" loading="eager"></iframe>';
 }
-async function removeDoc(cid,id){if(!confirm('Supprimer ce devis de Yaya ?\n\nLe fichier original est conservé.'))return;try{if(centralState==='ready')await deleteCentral(id);else localSave(localLoad().filter(d=>String(d.id)!==String(id)));renderViewer(cid);}catch(e){toastSafe('Suppression impossible : '+String(e&&e.message||e),true);}}
+function confirmDeleteDoc(){
+  return new Promise(resolve=>{
+    document.querySelectorAll('.ydd-confirm-ov').forEach(el=>el.remove());
+    const ov=document.createElement('div');
+    ov.className='ydd-confirm-ov';
+    ov.innerHTML='<div class="ydd-confirm" role="dialog" aria-modal="true" aria-labelledby="yddConfirmTitle"><div class="ydd-confirm-icon">🗑️</div><h3 id="yddConfirmTitle">Supprimer ce devis ?</h3><p>Le devis sera retiré de Yaya.<br>Le fichier original sera conservé.</p><div class="ydd-confirm-actions"><button type="button" class="ydd-confirm-cancel">Annuler</button><button type="button" class="ydd-confirm-delete">Supprimer</button></div></div>';
+    const finish=value=>{document.removeEventListener('keydown',onKey);ov.remove();resolve(value);};
+    const onKey=e=>{if(e.key==='Escape')finish(false);};
+    ov.addEventListener('click',e=>{if(e.target===ov||e.target.closest('.ydd-confirm-cancel'))finish(false);else if(e.target.closest('.ydd-confirm-delete'))finish(true);});
+    document.addEventListener('keydown',onKey);
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=>ov.querySelector('.ydd-confirm-delete')?.focus());
+  });
+}
+async function removeDoc(cid,id){if(!await confirmDeleteDoc())return;try{if(centralState==='ready')await deleteCentral(id);else localSave(localLoad().filter(d=>String(d.id)!==String(id)));renderViewer(cid);}catch(e){toastSafe('Suppression impossible : '+String(e&&e.message||e),true);}}
 function renderViewer(cid){
   closeViewer();
   const a=docsFor(cid),o=document.createElement('div');
