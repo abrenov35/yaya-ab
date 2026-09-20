@@ -190,7 +190,10 @@
 
     if(oldParent&&oldParent!==wrap&&oldParent!==document.body){
       const isLegacySearchBlock=oldParent.closest&&oldParent.closest('#pane-chantiers');
-      if(isLegacySearchBlock&&oldParent.parentElement&&oldParent.children.length===0)oldParent.remove();
+      // renderChantiers() recrée un conteneur avec l'input, une loupe et parfois
+      // une croix. Une fois l'input déplacé dans l'en-tête, supprimer tout le
+      // conteneur : sinon les deux icônes restent seules dans une barre vide.
+      if(isLegacySearchBlock&&oldParent.parentElement)oldParent.remove();
     }
 
     if(wrap.parentElement!==tabs || wrap.previousElementSibling!==chantierBtn){
