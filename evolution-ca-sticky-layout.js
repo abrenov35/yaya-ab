@@ -1,9 +1,9 @@
 (function(){
   'use strict';
-  if(window.__yayaEvolutionStickyV50Boot)return;
-  window.__yayaEvolutionStickyV50Boot=true;
+  if(window.__yayaEvolutionStickyV52Boot)return;
+  window.__yayaEvolutionStickyV52Boot=true;
 
-  const STYLE_ID='yaya-evolution-sticky-v50';
+  const STYLE_ID='yaya-evolution-sticky-v52';
   let observer=null;
   let resizeTimer=0;
 
@@ -32,74 +32,71 @@
 
       @media (min-width:761px){
         #pane-evolution.evo50-ready{
-          height:var(--evo50-height,680px)!important;
-          max-height:var(--evo50-height,680px)!important;
-          overflow:hidden!important;
+          height:auto!important;
+          max-height:none!important;
+          overflow:visible!important;
         }
         #pane-evolution.evo50-ready .evo2-shell{
-          height:100%!important;
+          height:auto!important;
           min-height:0!important;
           display:grid!important;
-          grid-template-rows:auto minmax(0,1fr)!important;
+          grid-template-rows:auto auto!important;
           gap:10px!important;
-          overflow:hidden!important;
+          overflow:visible!important;
         }
         #pane-evolution.evo50-ready .evo50-fixed{
-          position:relative!important;
-          z-index:5!important;
+          position:static!important;
+          z-index:auto!important;
           display:grid!important;
           gap:10px!important;
-          background:#f4f6f8!important;
-          padding:6px 2px 0!important;
+          background:transparent!important;
+          padding:0!important;
         }
         #pane-evolution.evo50-ready .evo50-scroll{
           min-height:0!important;
-          height:100%!important;
-          overflow-y:auto!important;
-          overflow-x:hidden!important;
-          overscroll-behavior-y:contain!important;
-          scroll-snap-type:y mandatory!important;
-          scroll-behavior:smooth!important;
-          scrollbar-gutter:stable;
+          height:auto!important;
+          overflow:visible!important;
+          scroll-snap-type:none!important;
+          scroll-behavior:auto!important;
         }
         #pane-evolution.evo50-ready .evo50-page{
-          height:100%!important;
-          min-height:100%!important;
-          max-height:100%!important;
+          height:auto!important;
+          min-height:0!important;
+          max-height:none!important;
           box-sizing:border-box!important;
-          scroll-snap-align:start!important;
-          scroll-snap-stop:always!important;
-          display:flex!important;
-          flex-direction:column!important;
-          padding:2px 2px 8px!important;
-          overflow:hidden!important;
+          display:block!important;
+          padding:0 0 10px!important;
+          overflow:visible!important;
         }
         #pane-evolution.evo50-ready .evo50-page>.evo2-card{
-          flex:1 1 auto!important;
           min-height:0!important;
-          height:100%!important;
-          display:flex!important;
-          flex-direction:column!important;
+          height:auto!important;
+          display:block!important;
+        }
+        #pane-evolution.evo50-ready .evo50-chart .evo2-card{
+          overflow:hidden!important;
         }
         #pane-evolution.evo50-ready .evo50-chart .evo2-chart-scroll{
-          flex:1 1 auto!important;
           min-height:0!important;
+          height:auto!important;
           overflow-x:auto!important;
           overflow-y:hidden!important;
+          padding-bottom:8px!important;
         }
         #pane-evolution.evo50-ready .evo50-chart .evo2-chart{
-          height:100%!important;
-          min-height:330px!important;
+          height:420px!important;
+          min-height:420px!important;
+          max-height:420px!important;
         }
-        #pane-evolution.evo50-ready .evo50-chart .evo2-card-head,
-        #pane-evolution.evo50-ready .evo50-chart .evo2-legend,
-        #pane-evolution.evo50-ready .evo50-table .evo2-table-head{
-          flex:0 0 auto!important;
+        #pane-evolution.evo50-ready .evo50-chart .evo2-card-head{
+          padding-top:10px!important;
+          padding-bottom:8px!important;
         }
         #pane-evolution.evo50-ready .evo50-table .evo2-table-wrap{
-          flex:1 1 auto!important;
           min-height:0!important;
-          overflow:auto!important;
+          height:auto!important;
+          overflow-x:auto!important;
+          overflow-y:visible!important;
         }
       }
 
@@ -178,7 +175,7 @@
           width:100%!important;
           max-width:100%!important;
           min-width:0!important;
-          height:270px!important;
+          height:300px!important;
           padding:12px 2px 0 38px!important;
           box-sizing:border-box!important;
         }
@@ -353,35 +350,12 @@
 
   function sizePane(pane){
     if(!pane)return;
-    if(window.innerWidth<=760){
-      pane.style.removeProperty('--evo50-height');
-      return;
-    }
-    const top=Math.max(0,Math.round(pane.getBoundingClientRect().top));
-    const height=Math.max(560,viewportHeight()-top-8);
-    pane.style.setProperty('--evo50-height',height+'px');
+    pane.style.removeProperty('--evo50-height');
   }
 
   function installWheel(scroll){
-    if(!scroll||scroll.dataset.evo50Wheel==='1')return;
-    scroll.dataset.evo50Wheel='1';
-    let lock=false;
-
-    scroll.addEventListener('wheel',function(e){
-      if(window.innerWidth<=760||Math.abs(e.deltaY)<8)return;
-      e.stopPropagation();
-      e.preventDefault();
-      if(lock)return;
-
-      const h=scroll.clientHeight||1;
-      const current=Math.round(scroll.scrollTop/h);
-      const target=Math.max(0,Math.min(1,current+(e.deltaY>0?1:-1)));
-      if(target===current)return;
-
-      lock=true;
-      scroll.scrollTo({top:target*h,behavior:'smooth'});
-      setTimeout(function(){lock=false;},520);
-    },{passive:false});
+    // Mise en page compacte : on conserve le défilement normal de la page.
+    if(scroll)scroll.dataset.evo50Wheel='1';
   }
 
   function arrange(){
