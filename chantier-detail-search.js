@@ -1,6 +1,11 @@
 (function(){
   'use strict';
 
+  // Désactivé : cette recherche secondaire dans la fiche chantier faisait
+  // doublon avec la recherche principale et ajoutait une barre parasite.
+  document.querySelectorAll('.yaya-detail-search-wrap').forEach(el=>el.remove());
+  return;
+
   const STYLE_ID='yaya-chantier-detail-search-style';
   const WRAP_CLASS='yaya-detail-search-wrap';
   const INPUT_CLASS='yaya-detail-search-input';
