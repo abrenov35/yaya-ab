@@ -30,16 +30,67 @@
   }
 
   function txt(v){return String(v==null?'':v).trim();}
-  function val(id){const el=document.getElementById(id);return el?txt(el.value):'';}
   function toastSafe(message,isError){try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}}
   function currentSection(){
     const b=document.querySelector('#pane-chantiers .yaya-detail-section-tab.on[data-section]');
     return b?txt(b.dataset.section):'';
   }
+  function titleOf(modal){
+    const h=modal&&modal.querySelector('h5,h4,h3');
+    return txt(h&&h.textContent);
+  }
+  function fieldBy(modal,id,pattern,selector){
+    if(!modal)return null;
+    let el=id?modal.querySelector('#'+id):null;
+    if(el)return el;
+    const nodes=Array.from(modal.querySelectorAll(selector||'input,select,textarea'));
+    return nodes.find(function(node){
+      const hay=[
+        node.getAttribute('placeholder'),
+        node.getAttribute('aria-label'),
+        node.getAttribute('name'),
+        node.id
+      ].map(txt).join(' ');
+      return pattern&&pattern.test(hay);
+    })||null;
+  }
+  function fieldValue(el){return el?txt(el.value):'';}
+  function currentChantierId(){
+    const ch=document.querySelector('#pane-chantiers .card[data-yaya-detail-section]')?.closest('.card');
+    try{
+      if(typeof focusChantier!=='undefined'&&focusChantier)return txt(focusChantier);
+    }catch(e){}
+    try{return txt(new URL(location.href).searchParams.get('chantier'));}catch(e){}
+    return '';
+  }
+  function resolveFields(modal){
+    return {
+      chantier:fieldBy(modal,'acCh',/chantier/i,'input,select'),
+      fournisseur:fieldBy(modal,'acFour',/fournisseur|intervenant|sous.?traitant/i,'input,select'),
+      designation:fieldBy(modal,'acDes',/d[ée]signation|description|objet/i,'input,textarea'),
+      montant:fieldBy(modal,'acMt',/montant|prix/i,'input'),
+      date:fieldBy(modal,'acDate',/date/i,'input'),
+      type:fieldBy(modal,'acType',/type/i,'input,select')
+    };
+  }
   function isCreateAchatModal(modal){
-    if(!modal||!modal.querySelector('#acFour,#acMt'))return false;
-    const h=modal.querySelector('h5,h4,h3');
-    return /Enregistrer un achat|Ajouter une charge/i.test(txt(h&&h.textContent));
+    if(!modal)return false;
+    const title=titleOf(modal);
+    if(!/Enregistrer un achat|Ajouter une charge|Ajouter une d[ée]pense/i.test(title))return false;
+    if(/^Modifier\b/i.test(title))return false;
+    const f=resolveFields(modal);
+    return !!(f.fournisseur&&f.designation&&f.montant);
+  }
+  function closeCreateModalNow(modal){
+    try{
+      const overlay=modal&&modal.closest&&modal.closest('.overlay');
+      if(overlay&&overlay.isConnected){overlay.remove();return;}
+    }catch(e){}
+    try{
+      const root=document.getElementById('modalRoot');
+      if(root)root.replaceChildren();
+    }catch(e){}
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
   }
   function hasId(rows,id){
     return Array.isArray(rows)&&rows.some(function(r){return txt(r&&r.id)===txt(id);});
@@ -234,19 +285,20 @@
   async function save(button,modal){
     if(busy)return;
 
-    const chantierId=val('acCh');
-    const fournisseur=val('acFour');
-    const designation=val('acDes');
-    const montantTexte=val('acMt').replace(/\s/g,'').replace(',','.');
+    const fields=resolveFields(modal);
+    const chantierId=fieldValue(fields.chantier)||currentChantierId();
+    const fournisseur=fieldValue(fields.fournisseur);
+    const designation=fieldValue(fields.designation);
+    const montantTexte=fieldValue(fields.montant).replace(/\s/g,'').replace(',','.');
     const montantHT=Number(montantTexte);
-    const date=val('acDate')||new Date().toISOString().slice(0,10);
-    const charge=currentSection()==='charges'||/Ajouter une charge/i.test(txt(modal&&modal.textContent));
-    const typeDoc=charge?'Facture sous-traitant':(val('acType')||'Facture');
+    const date=fieldValue(fields.date)||new Date().toISOString().slice(0,10);
+    const charge=currentSection()==='charges'||/Ajouter une charge/i.test(titleOf(modal));
+    const typeDoc=charge?'Facture sous-traitant':(fieldValue(fields.type)||'Facture');
 
     if(!chantierId){toastSafe('Chantier non identifié',true);return;}
-    if(!fournisseur){document.getElementById('acFour')?.focus();toastSafe(charge?'Indique le sous-traitant':'Indique le fournisseur',true);return;}
-    if(!designation){document.getElementById('acDes')?.focus();toastSafe('Indique la désignation',true);return;}
-    if(!Number.isFinite(montantHT)||montantHT<=0){document.getElementById('acMt')?.focus();toastSafe('Indique le montant HT',true);return;}
+    if(!fournisseur){try{fields.fournisseur&&fields.fournisseur.focus();}catch(e){}toastSafe(charge?'Indique le sous-traitant':'Indique le fournisseur',true);return;}
+    if(!designation){try{fields.designation&&fields.designation.focus();}catch(e){}toastSafe('Indique la désignation',true);return;}
+    if(!Number.isFinite(montantHT)||montantHT<=0){try{fields.montant&&fields.montant.focus();}catch(e){}toastSafe('Indique le montant HT',true);return;}
 
     let lien='';
     try{lien=txt(achatLien);}catch(e){try{lien=txt(window.achatLien);}catch(_) {}}
@@ -269,11 +321,16 @@
     applyLocal(row);
     queuePending(row);
     try{achatLien='';}catch(e){try{window.achatLien='';}catch(_) {}}
-    try{if(typeof closeModal==='function')closeModal();}catch(e){}
-    try{if(typeof render==='function')render();}catch(e){}
+
+    // Priorité opérateur : la modale disparaît avant render() et avant tout réseau.
+    closeCreateModalNow(modal);
     toastSafe(charge?'Charge enregistrée — synchronisation…':'Achat enregistré — synchronisation…');
 
-    setTimeout(function(){persistInBackground(row);},0);
+    // Le rendu et la synchronisation se font après restitution de l'interface.
+    setTimeout(function(){
+      try{if(typeof render==='function')render();}catch(e){}
+      setTimeout(function(){persistInBackground(row);},0);
+    },0);
   }
 
   document.addEventListener('click',function(e){
