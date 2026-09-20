@@ -134,6 +134,47 @@
     }
   };
 
+  window.saveCaManuel2026Month=async function(index,montant){
+    index=Number(index);
+    montant=Number(String(montant==null?'':montant).replace(',','.'));
+    if(index<0||index>7||!Number.isFinite(montant)||montant<0){
+      toast('Montant incorrect',true);
+      return false;
+    }
+
+    const valeurs=lireBrut();
+    while(valeurs.length<12)valeurs.push(null);
+    valeurs[index]=montant;
+    for(let i=8;i<12;i++)valeurs[i]=null;
+
+    const avant=(S.documents||[]).map(d=>({...d}));
+    if(!Array.isArray(S.documents))S.documents=[];
+    let doc=S.documents.find(d=>String(d.id)===ID);
+    if(!doc){
+      doc={id:ID,chantierId:'',type:'Divers',titre:'Historique CA signé 2026',sujet:'',date:'2026-01-01',lien:''};
+      S.documents.push(doc);
+    }
+    doc.sujet=JSON.stringify(normaliser(valeurs));
+    ecrireShadow(valeurs);
+    sauverCache();
+    if(typeof renderEvolution==='function')renderEvolution();
+
+    const ok=await apiPost('setDocuments',S.documents);
+    if(ok){
+      reappliquerShadow();
+      sauverCache();
+      if(typeof renderEvolution==='function')renderEvolution();
+      toast(MOIS[index]+' 2026 enregistré ✓');
+      return true;
+    }
+
+    S.documents=avant;
+    supprimerShadow();
+    sauverCache();
+    if(typeof renderEvolution==='function')renderEvolution();
+    return false;
+  };
+
   function rafraichir(){
     try{
       if(reappliquerShadow())sauverCache();

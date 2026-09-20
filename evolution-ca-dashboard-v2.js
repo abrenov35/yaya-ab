@@ -83,14 +83,7 @@
         display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 8px;
       }
       #pane-evolution .evo2-card-title{font-size:14px;font-weight:900;color:#143a69;display:flex;align-items:center;gap:8px}
-      #pane-evolution .evo2-card-head-actions{display:flex;align-items:center;gap:9px}
       #pane-evolution .evo2-card-note{font-size:10.5px;color:#71849a;font-weight:600}
-      #pane-evolution .evo2-manual-entry{
-        min-height:34px;padding:0 13px;border:1px solid #167a55;border-radius:9px;
-        background:#109b67;color:#fff;font-size:11px;font-weight:900;cursor:pointer;
-        box-shadow:0 3px 9px rgba(16,155,103,.2);white-space:nowrap;
-      }
-      #pane-evolution .evo2-manual-entry:hover{background:#0b8658}
       #pane-evolution .evo2-chart-scroll{overflow-x:auto;padding:0 12px 9px}
       #pane-evolution .evo2-chart{position:relative;min-width:910px;height:332px;padding:14px 8px 0 66px}
       #pane-evolution .evo2-y-axis{position:absolute;left:0;top:14px;bottom:43px;width:58px}
@@ -118,6 +111,19 @@
       #pane-evolution .evo2-bar:hover{filter:saturate(1.18) brightness(1.03)}
       #pane-evolution .evo2-bar.best{background:linear-gradient(180deg,#26d8c2,#0ba58f);box-shadow:0 4px 13px rgba(13,165,143,.28)}
       #pane-evolution .evo2-bar.previous{background:linear-gradient(180deg,#ffc763,#f29b0e);opacity:.58;box-shadow:none}
+      #pane-evolution .evo2-bar.evo2-manual-click{cursor:pointer;outline:1px solid transparent}
+      #pane-evolution .evo2-bar.evo2-manual-click:hover{outline-color:#0b5ca1;filter:saturate(1.16) brightness(1.04)}
+      #pane-evolution .evo2-month-editor{
+        position:absolute;left:50%;top:8px;z-index:20;transform:translateX(-50%);width:150px;
+        padding:9px;background:#fff;border:1px solid #b9cce0;border-radius:10px;
+        box-shadow:0 10px 28px rgba(15,45,78,.22);box-sizing:border-box;
+      }
+      #pane-evolution .evo2-month-editor strong{display:block;margin-bottom:6px;font-size:11px;color:#143a69;text-align:center}
+      #pane-evolution .evo2-month-editor input{width:100%;height:34px;padding:0 8px;border:1px solid #aac0d6;border-radius:7px;font-size:12px;text-align:right;box-sizing:border-box}
+      #pane-evolution .evo2-month-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:7px}
+      #pane-evolution .evo2-month-editor button{height:30px;padding:0 5px;border-radius:7px;font-size:10px;font-weight:800;cursor:pointer}
+      #pane-evolution .evo2-month-save{border:1px solid #075da8;background:#075da8;color:#fff}
+      #pane-evolution .evo2-month-cancel{border:1px solid #cbd6e2;background:#fff;color:#526579}
       #pane-evolution .evo2-value{
         position:absolute;bottom:calc(var(--bar-height) + 6px);left:50%;transform:translateX(-50%);
         font-size:9px;font-weight:900;color:#174f91;white-space:nowrap;z-index:3;
@@ -167,9 +173,6 @@
         #pane-evolution .evo2-controls{width:100%}
         #pane-evolution .evo2-history{flex:1}
         #pane-evolution .evo2-chart{height:300px}
-        #pane-evolution .evo2-card-head{align-items:flex-start;flex-direction:column}
-        #pane-evolution .evo2-card-head-actions{width:100%;justify-content:space-between}
-        #pane-evolution .evo2-manual-entry{flex:1}
       }
     `;
     document.head.appendChild(style);
@@ -275,7 +278,7 @@
     let html='<div class="evo2-shell">';
     html+='<div class="evo2-toolbar">'
       +'<div class="evo2-title"><div class="evo2-title-icon">▥</div><div><h3>Évolution du CA signé HT</h3><div class="evo2-sub">Chantiers signés à partir du 1er janvier 2026</div></div></div>'
-      +'<div class="evo2-controls"><button class="evo2-history" type="button" onclick="openCaManuel2026()">↻ Historique 2026</button><select class="evo2-year" onchange="anneeEvolution=Number(this.value);renderEvolution()">'+options+'</select></div>'
+      +'<div class="evo2-controls"><select class="evo2-year" onchange="anneeEvolution=Number(this.value);renderEvolution()">'+options+'</select></div>'
       +'</div>';
 
     html+='<div class="evo2-kpis">'
@@ -286,9 +289,7 @@
       +'</div>';
 
     html+='<div class="evo2-card">'
-      +'<div class="evo2-card-head"><div class="evo2-card-title">▥ Évolution mensuelle du CA signé HT — '+year+'</div><div class="evo2-card-head-actions">'
-      +(year===2026?'<button class="evo2-manual-entry" type="button" onclick="openCaManuel2026()">✎ Saisir les CA janv.–août 2026</button>':'')
-      +'<div class="evo2-card-note">Montants en euros (€)</div></div></div>'
+      +'<div class="evo2-card-head"><div class="evo2-card-title">▥ Évolution mensuelle du CA signé HT — '+year+'</div><div class="evo2-card-note">'+(year===2026?'Cliquez sur une barre de janvier à août pour modifier le montant':'Montants en euros (€)')+'</div></div>'
       +'<div class="evo2-chart-scroll"><div class="evo2-chart">';
 
     const levels=[1,.75,.5,.25,0];
@@ -312,7 +313,7 @@
       html+='<div class="evo2-bar-wrap" style="width:'+currentWidth+';--bar-height:'+h+'%">'
         +'<span class="evo2-value'+(isBest?' best':'')+'" style="--bar-height:'+h+'%">'+money(value)+'</span>'
         +(isBest?'<span class="evo2-trophy" style="--bar-height:'+h+'%">★</span>':'')
-        +'<div class="evo2-bar'+(isBest?' best':'')+'" title="'+safeEsc(year+' : '+money(value))+'" style="height:'+h+'%"></div></div>';
+        +'<div class="evo2-bar'+(isBest?' best':'')+(year===2026&&i<8?' evo2-manual-click':'')+'" title="'+safeEsc(year===2026&&i<8?'Modifier '+month+' 2026 : '+money(value):year+' : '+money(value))+'"'+(year===2026&&i<8?' onclick="openCaMonthEditor(event,'+i+')"':'')+' style="height:'+h+'%"></div></div>';
       html+='</div><div class="evo2-month-label">'+SHORT[i]+'</div></div>';
     });
     html+='</div></div></div>';
@@ -337,6 +338,33 @@
 
     el.innerHTML=html;
   }
+
+  window.openCaMonthEditor=function(event,index){
+    if(event){event.preventDefault();event.stopPropagation();}
+    index=Number(index);
+    if(index<0||index>7)return;
+    document.querySelectorAll('#pane-evolution .evo2-month-editor').forEach(function(el){el.remove();});
+    const bar=event&&event.currentTarget;
+    const zone=bar&&bar.closest('.evo2-bars-zone');
+    if(!zone)return;
+    const current=valuesFor(2026).montants[index]||0;
+    const editor=document.createElement('div');
+    editor.className='evo2-month-editor';
+    editor.onclick=function(e){e.stopPropagation();};
+    editor.innerHTML='<strong>'+MONTHS[index]+' 2026</strong><input type="number" min="0" step="0.01" inputmode="decimal" value="'+current+'" aria-label="CA HT '+MONTHS[index]+' 2026"><div class="evo2-month-editor-actions"><button type="button" class="evo2-month-cancel">Annuler</button><button type="button" class="evo2-month-save">Valider</button></div>';
+    zone.appendChild(editor);
+    const input=editor.querySelector('input');
+    editor.querySelector('.evo2-month-cancel').onclick=function(){editor.remove();};
+    editor.querySelector('.evo2-month-save').onclick=async function(){
+      const value=String(input.value||'').trim();
+      if(value===''){input.focus();return;}
+      const button=this;button.disabled=true;button.textContent='…';
+      const ok=typeof window.saveCaManuel2026Month==='function'&&await window.saveCaManuel2026Month(index,value);
+      if(!ok&&editor.isConnected){button.disabled=false;button.textContent='Valider';}
+    };
+    input.onkeydown=function(e){if(e.key==='Enter')editor.querySelector('.evo2-month-save').click();else if(e.key==='Escape')editor.remove();};
+    requestAnimationFrame(function(){input.focus();input.select();});
+  };
 
   function install(){
     installStyle();
