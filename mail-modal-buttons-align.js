@@ -6,10 +6,10 @@ window.syncMsg=function(m){
 
 (function(){
   'use strict';
-  if(window.__yayaMailModalButtonsAlignV5)return;
-  window.__yayaMailModalButtonsAlignV5=true;
+  if(window.__yayaMailModalButtonsAlignV6)return;
+  window.__yayaMailModalButtonsAlignV6=true;
 
-  const STYLE_ID='yaya-mail-modal-buttons-align-v5';
+  const STYLE_ID='yaya-mail-modal-buttons-align-v6';
   let raf=0;
 
   function installStyle(){
@@ -69,20 +69,43 @@ window.syncMsg=function(m){
         box-sizing:border-box!important;
       }
       #modalRoot .yaya-mail-body-modal .yaya-close,
-      #modalRoot .message-modal .yaya-close{
+      #modalRoot .message-modal .yaya-close,
+      #modalRoot .yaya-mail-fullscreen-modal .yaya-close,
+      #modalRoot .yaya-mail-fullscreen-modal .yaya-mail-read-actions > button:last-child,
+      #modalRoot .yaya-mail-fullscreen-modal .yaya-read-actions > button:last-child{
         visibility:visible!important;
         opacity:1!important;
         background:#5f6b7a!important;
+        background-color:#5f6b7a!important;
+        border:1px solid #5f6b7a!important;
         border-color:#5f6b7a!important;
         color:#fff!important;
+        -webkit-text-fill-color:#fff!important;
         font-weight:700!important;
         box-shadow:none!important;
+        filter:none!important;
+        pointer-events:auto!important;
+        cursor:pointer!important;
       }
       #modalRoot .yaya-mail-body-modal .yaya-close:hover,
-      #modalRoot .message-modal .yaya-close:hover{
+      #modalRoot .message-modal .yaya-close:hover,
+      #modalRoot .yaya-mail-fullscreen-modal .yaya-close:hover{
         background:#485463!important;
+        background-color:#485463!important;
         border-color:#485463!important;
         color:#fff!important;
+        -webkit-text-fill-color:#fff!important;
+      }
+      #modalRoot .yaya-mail-body-modal .yaya-close:disabled,
+      #modalRoot .message-modal .yaya-close:disabled,
+      #modalRoot .yaya-mail-fullscreen-modal .yaya-close:disabled{
+        opacity:1!important;
+        background:#5f6b7a!important;
+        background-color:#5f6b7a!important;
+        border-color:#5f6b7a!important;
+        color:#fff!important;
+        -webkit-text-fill-color:#fff!important;
+        filter:none!important;
       }
 
       @media(max-width:640px){
@@ -191,6 +214,18 @@ window.syncMsg=function(m){
       actions.appendChild(close);
     }
     close.classList.add('yaya-close');
+    close.disabled=false;
+    close.removeAttribute('disabled');
+    close.setAttribute('aria-disabled','false');
+    close.style.setProperty('background','#5f6b7a','important');
+    close.style.setProperty('background-color','#5f6b7a','important');
+    close.style.setProperty('border','1px solid #5f6b7a','important');
+    close.style.setProperty('border-color','#5f6b7a','important');
+    close.style.setProperty('color','#fff','important');
+    close.style.setProperty('-webkit-text-fill-color','#fff','important');
+    close.style.setProperty('opacity','1','important');
+    close.style.setProperty('filter','none','important');
+    close.style.setProperty('pointer-events','auto','important');
 
     /* Ordre stable : Supprimer | espace libre | Modifier l'objet | Fermer. */
     if(del&&actions.firstElementChild!==del)actions.insertBefore(del,actions.firstElementChild);
@@ -202,7 +237,7 @@ window.syncMsg=function(m){
     installStyle();
     const root=document.getElementById('modalRoot');
     if(!root)return;
-    root.querySelectorAll('.yaya-mail-body-modal,.message-modal').forEach(normalize);
+    root.querySelectorAll('.yaya-mail-body-modal,.message-modal,.yaya-mail-fullscreen-modal').forEach(normalize);
   }
 
   function schedule(){
