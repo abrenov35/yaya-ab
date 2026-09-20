@@ -148,9 +148,14 @@
     const root=document.getElementById('modalRoot');
     if(!root){setTimeout(observeModal,150);return;}
     cleanOpenAIWarning();
-    new MutationObserver(function(){
-      cleanOpenAIWarning();
-    }).observe(root,{childList:true,subtree:true,characterData:true});
+    new MutationObserver(function(records){
+      for(const record of records){
+        if(record.addedNodes&&record.addedNodes.length){
+          cleanOpenAIWarning();
+          break;
+        }
+      }
+    }).observe(root,{childList:true,subtree:true});
   }
 
   install();
@@ -249,7 +254,11 @@
   clean();
   const root=document.getElementById('modalRoot');
   if(root){
-    new MutationObserver(clean).observe(root,{childList:true,subtree:true,characterData:true});
+    new MutationObserver(function(records){
+      for(const record of records){
+        if(record.addedNodes&&record.addedNodes.length){clean();break;}
+      }
+    }).observe(root,{childList:true,subtree:true});
   }
 })();
 
