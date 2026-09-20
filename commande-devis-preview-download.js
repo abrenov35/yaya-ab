@@ -1,11 +1,11 @@
 (function(){
   'use strict';
-  if(window.__yayaCommandeDevisPreviewDownloadV2)return;
-  window.__yayaCommandeDevisPreviewDownloadV2=true;
+  if(window.__yayaCommandeDevisPreviewDownloadV3)return;
+  window.__yayaCommandeDevisPreviewDownloadV3=true;
 
-  const STYLE_ID='yaya-commande-devis-preview-download-v2';
-  const OBS_FLAG='__yayaCommandeDevisPreviewDownloadObservedV2';
-  const FRAME_FLAG='__yayaCommandeDevisPreviewDownloadFrameV2';
+  const STYLE_ID='yaya-commande-devis-preview-download-v3';
+  const OBS_FLAG='__yayaCommandeDevisPreviewDownloadObservedV3';
+  const FRAME_FLAG='__yayaCommandeDevisPreviewDownloadFrameV3';
   const TITLE_RE=/^(?:visualisation\s+des\s+pi[eè]ces|pi[eè]ces\s+de\s+la\s+commande|devis\s+du\s+chantier)$/i;
 
   function txt(v){return String(v==null?'':v).replace(/\s+/g,' ').trim();}
@@ -128,6 +128,9 @@
         a.href=u;a.target='_blank';a.rel='noopener';a.download='';(d.body||d.documentElement).appendChild(a);a.click();a.remove();
       });
     }
+    [...head.querySelectorAll('button,a')].forEach(function(el){
+      if(el!==btn&&/^t[eé]l[eé]charger$/i.test(txt(el.textContent)))el.remove();
+    });
     if(!ok){btn.disabled=true;btn.dataset.url='';return;}
     btn.disabled=false;btn.dataset.url=toDownloadUrl(source);
 
