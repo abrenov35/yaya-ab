@@ -10,8 +10,8 @@ const CSS_URL='/yaya-ab/public/commandes-native/commandes-native-embed-line-v2.c
 const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=14';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=2';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=4';
-const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=22';
-const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=10';
+const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=23';
+const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=11';
 const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=1';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
 const COMMANDES_BASE_MIGRATION_KEY='YAYA_COMMANDES_BASE_LINKS_20260919_V2';
@@ -287,5 +287,5 @@ const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserve
 const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
 bodyObserver.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.22-yaya-commandes-live-on-open';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.23-multi-pieces';
 })();
