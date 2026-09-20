@@ -152,6 +152,9 @@
       return window.apiPost('setChantiers',next);
     }).then(function(ok){
       if(!ok)throw new Error('enregistrement refusé');
+      if(typeof window.__yayaUpdateLockedSignature==='function'){
+        window.__yayaUpdateLockedSignature(id,signature);
+      }
       try{localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(S));}catch(e){}
       toastSafe('Signé le enregistré ✓');
     }).catch(function(err){

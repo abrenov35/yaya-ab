@@ -151,7 +151,9 @@
         matched++;
         if(!Object.prototype.hasOwnProperty.call(remote,'dateSignature'))return;
         found++;
-        const fresh=remote.dateSignature==null?'':String(remote.dateSignature).trim();
+        const locked=typeof window.__yayaLockedSignatureFor==='function'
+          ?window.__yayaLockedSignatureFor(local.id):'';
+        const fresh=locked||(remote.dateSignature==null?'':String(remote.dateSignature).trim());
         const current=local.dateSignature==null?'':String(local.dateSignature).trim();
         if(current!==fresh){
           local.dateSignature=fresh;
