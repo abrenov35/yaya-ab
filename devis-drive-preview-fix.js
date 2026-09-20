@@ -27,8 +27,7 @@
       #yayaDevisViewer .ydd-actions .ydd-btn.primary[data-add]{background:#0057a8!important;border-color:#0057a8!important;color:#fff!important;opacity:1!important;filter:none!important;box-shadow:0 2px 6px rgba(0,87,168,.25)!important}
       #yayaDevisViewer .ydd-view{position:relative!important;background:#fff!important}
       #yayaDevisViewer .ydd-frame{width:100%!important;height:100%!important;border:0!important;background:#fff!important;display:block!important}
-      #yayaDevisViewer .ydd-download{position:absolute;right:10px;bottom:10px;z-index:20;display:inline-flex;align-items:center;justify-content:center;min-height:38px;padding:0 14px;border-radius:8px;background:#003d7a;color:#fff!important;text-decoration:none;font-size:12px;font-weight:800;box-shadow:0 2px 8px rgba(15,23,42,.22)}
-      #yayaDevisViewer .ydd-download:active{transform:translateY(1px)}
+      #yayaDevisViewer .ydd-download{display:none!important}
     `;
     document.head.appendChild(s);
   }
@@ -36,16 +35,7 @@
   function ensureDownloadButton(view,id){
     if(!view||!id)return;
     view.querySelectorAll('.ydd-open-drive').forEach(function(el){el.remove();});
-    let a=view.querySelector('.ydd-download');
-    if(!a){
-      a=document.createElement('a');
-      a.className='ydd-download';
-      a.rel='noopener';
-      a.textContent='Télécharger';
-      a.setAttribute('download','');
-      view.appendChild(a);
-    }
-    a.href=downloadDriveUrl(id);
+    view.querySelectorAll('.ydd-download').forEach(function(el){el.remove();});
   }
 
   function upgradeFrame(frame){

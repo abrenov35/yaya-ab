@@ -140,7 +140,7 @@ function renderViewer(cid){
   if(!a.length){
     o.innerHTML='<div class="ydd-modal"><div class="ydd-head"><div class="ydd-title">Devis du chantier</div><div class="ydd-actions"><button class="ydd-btn primary" data-add>Ajouter un devis</button><button class="ydd-btn" data-close>Fermer</button></div></div><div class="ydd-empty"><strong>Aucun devis enregistré</strong>Ajoutez le premier devis pour ce chantier.</div></div>';
   }else{
-    o.innerHTML='<div class="ydd-modal docs"><div class="ydd-head"><div class="ydd-title">Devis du chantier</div><div class="ydd-actions"><button class="ydd-btn" data-download-current>Télécharger</button><button class="ydd-btn primary" data-add>＋ Ajouter un devis</button><button class="ydd-btn" data-close>Fermer</button></div></div><div class="ydd-tabs">'+a.map((d,i)=>'<button class="ydd-tab'+(i?'':' on')+'" data-i="'+i+'">Devis '+d.numero+' <span class="ydd-del" data-del="'+esc(d.id)+'">×</span></button>').join('')+'</div><div class="ydd-view"></div></div>';
+    o.innerHTML='<div class="ydd-modal docs"><div class="ydd-head"><div class="ydd-title">Devis du chantier</div><div class="ydd-actions"><button class="ydd-btn primary" data-add>＋ Ajouter un devis</button><button class="ydd-btn" data-close>Fermer</button></div></div><div class="ydd-tabs">'+a.map((d,i)=>'<button class="ydd-tab'+(i?'':' on')+'" data-i="'+i+'">Devis '+d.numero+' <span class="ydd-del" data-del="'+esc(d.id)+'">×</span></button>').join('')+'</div><div class="ydd-view"></div></div>';
   }
   document.body.appendChild(o);
   o.onclick=e=>{
