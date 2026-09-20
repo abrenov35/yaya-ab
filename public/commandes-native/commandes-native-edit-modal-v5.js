@@ -129,6 +129,8 @@ function injectStyle(){
     body #ycnEditModal .ycn-doc-v5{background:#eaf4ff!important;border:1px solid #a9c9e8!important;color:#145c96!important;font-weight:900!important}
     body #ycnEditModal .ycn-doc-v5::before{content:'＋ '!important}
     body #ycnEditModal .ycn-doc-v5:hover{background:#dfefff!important;border-color:#88b4dd!important}
+    body #ycnEditModal .ycn-pieces-v5{background:#eff9f2!important;border:1px solid #a8cfb5!important;color:#17653a!important;font-weight:900!important}
+    body #ycnEditModal .ycn-pieces-v5:hover{background:#e4f5e9!important;border-color:#8cbe9d!important}
     body #ycnEditModal .ycn-delete-v5{margin-right:auto!important;background:#fff5f4!important;border:1px solid #efb8b2!important;color:#b42318!important;font-weight:900!important}
     body #ycnEditModal .ycn-delete-v5:hover{background:#ffe9e7!important;border-color:#e99c94!important}
     body #ycnEditModal [data-ycn-close="edit"].ycn-btn{background:#fff!important;border:1px solid #c8d4e0!important;color:#38506a!important}
@@ -221,18 +223,21 @@ function deleteOrder(modal){
   toast('Commande supprimée — serveur en arrière-plan');
   post({action:'delete',id}).then(()=>toast('Commande supprimée','ok')).catch(()=>toast('Suppression serveur à contrôler','err'));
 }
-function openDocuments(idOverride){
+function addPieces(idOverride){
   const id=String(idOverride||activeId||'');
   if(!id){toast('Commande non enregistrée','err');return;}
-  let row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');
-  let btn=row?.querySelector('[data-ycn-doc]');
-  if(!btn){try{window.YayaCommandesNativeEmbed?.render();}catch(_){ }row=document.querySelector('.yaya-cmd-native-root .ycn-row[data-ycn-row="'+CSS.escape(id)+'"]');btn=row?.querySelector('[data-ycn-doc]');}
-  if(!btn){toast('Module document indisponible','err');return;}
-  btn.click();
+  if(typeof window.yayaCommandeAddPieces==='function'){window.yayaCommandeAddPieces(id);return;}
+  toast('Ajout de pièce indisponible — recharge Yaya','err');
 }
-function saveThenOpenDocuments(modal){
+function openPieces(idOverride){
+  const id=String(idOverride||activeId||'');
+  if(!id){toast('Commande non enregistrée','err');return;}
+  if(typeof window.yayaCommandeOpenPieces==='function'){window.yayaCommandeOpenPieces(id);return;}
+  toast('Visualisation des pièces indisponible — recharge Yaya','err');
+}
+function saveThenAddPieces(modal){
   const form=modal.querySelector('#ycnEditForm');if(!form)return;
-  if(activeId){openDocuments(activeId);return;}
+  if(activeId){addPieces(activeId);return;}
   const snapshot=currentSnapshot(modal);
   if(!snapshot.produit){modal.querySelector('#ycnProduit')?.focus();return;}
   const beforeIds=new Set((readState().orders||[]).map(o=>String(o?.id||'')));
@@ -240,10 +245,10 @@ function saveThenOpenDocuments(modal){
   let attempt=0;
   const waitCreated=()=>{
     const created=matchNewOrder(snapshot,beforeIds);
-    if(created?.id){activeId=String(created.id);setTimeout(()=>openDocuments(activeId),20);return;}
-    if(attempt++<14)setTimeout(waitCreated,35);else toast('Commande enregistrée — ouvre Documents depuis la ligne','err');
+    if(created?.id){activeId=String(created.id);setTimeout(()=>addPieces(activeId),30);return;}
+    if(attempt++<20)setTimeout(waitCreated,50);else toast('Commande enregistrée — ouvre-la pour ajouter les pièces','err');
   };
-  setTimeout(waitCreated,20);
+  setTimeout(waitCreated,30);
 }
 
 function enhanceModal(){
@@ -263,10 +268,14 @@ function enhanceModal(){
   let del=actions.querySelector('.ycn-delete-v5');
   if(!del){del=document.createElement('button');del.type='button';del.className='ycn-btn ycn-delete-v5';del.textContent='Supprimer';actions.insertBefore(del,actions.firstChild);del.onclick=()=>deleteOrder(modal);}
   del.style.display=activeId?'inline-flex':'none';
+  let pieces=actions.querySelector('.ycn-pieces-v5');
+  if(!pieces){pieces=document.createElement('button');pieces.type='button';pieces.className='ycn-btn ycn-pieces-v5';pieces.textContent='Gérer les pièces';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(pieces,cancel||save);pieces.onclick=()=>openPieces(activeId);}
+  pieces.style.display=activeId?'inline-flex':'none';
+
   let doc=actions.querySelector('.ycn-doc-v5');
-  if(!doc){doc=document.createElement('button');doc.type='button';doc.className='ycn-btn ycn-doc-v5';doc.textContent='Ajouter document';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(doc,cancel||save);doc.onclick=()=>saveThenOpenDocuments(modal);}
+  if(!doc){doc=document.createElement('button');doc.type='button';doc.className='ycn-btn ycn-doc-v5';doc.textContent='Ajouter une pièce';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(doc,cancel||save);doc.onclick=()=>saveThenAddPieces(modal);}
   doc.style.display='inline-flex';
-  doc.textContent='Ajouter document';
+  doc.textContent='Ajouter une pièce';
   if(!form.dataset.ycnUrlSubmitV5){
     form.addEventListener('submit',()=>{
       const snapshot=currentSnapshot(modal),url=txt(modal.querySelector('#ycnUrlV5')?.value);
@@ -289,5 +298,5 @@ const obs=new MutationObserver(records=>{
 });
 obs.observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['class']});
 window.addEventListener('yaya:data-refreshed',schedule);
-window.__YAYA_COMMANDES_EDIT_MODAL_V5_VERSION='5.7-fit-no-scroll';
+window.__YAYA_COMMANDES_EDIT_MODAL_V5_VERSION='5.8-multi-pieces';
 })();
