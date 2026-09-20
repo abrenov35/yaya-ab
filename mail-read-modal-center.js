@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-mail-read-modal-center-style';
-  const CENTER_CLASS='yaya-mail-read-centered';
+  const STYLE_ID='yaya-mail-read-fullscreen-style-v2';
+  const CENTER_CLASS='yaya-mail-read-fullscreen';
 
   function installStyle(){
     if(document.getElementById(STYLE_ID)) return;
@@ -11,19 +11,50 @@
     style.id=STYLE_ID;
     style.textContent=`
       .overlay.${CENTER_CLASS}{
-        align-items:center!important;
-        justify-content:center!important;
-        padding:var(--yaya-mail-safe-top,20px) 20px 18px!important;
+        position:fixed!important;
+        inset:0!important;
+        align-items:flex-start!important;
+        justify-content:stretch!important;
+        padding:var(--yaya-mail-safe-top,54px) 0 0!important;
+        box-sizing:border-box!important;
+        overflow:hidden!important;
+        background:#fff!important;
       }
 
       .overlay.${CENTER_CLASS} > .modal{
-        margin:auto!important;
-        width:min(680px, calc(100vw - 24px))!important;
-        max-width:680px!important;
-        max-height:calc(100vh - var(--yaya-mail-safe-top,20px) - 18px)!important;
-        max-height:calc(100dvh - var(--yaya-mail-safe-top,20px) - 18px)!important;
+        width:100vw!important;
+        max-width:none!important;
+        height:calc(100dvh - var(--yaya-mail-safe-top,54px))!important;
+        max-height:none!important;
+        min-height:0!important;
+        margin:0!important;
+        padding:10px 14px 14px!important;
+        border-radius:0!important;
+        box-shadow:none!important;
+        box-sizing:border-box!important;
         overflow-y:auto!important;
         overscroll-behavior:contain!important;
+        background:#fff!important;
+      }
+
+      .overlay.${CENTER_CLASS} > .modal > h5{
+        position:sticky!important;
+        top:-10px!important;
+        z-index:40!important;
+        margin:0!important;
+        padding:8px 0 10px!important;
+        background:#fff!important;
+      }
+
+      .overlay.${CENTER_CLASS} > .modal > .yaya-read-actions,
+      .overlay.${CENTER_CLASS} > .modal > .yaya-mail-read-actions,
+      .overlay.${CENTER_CLASS} > .modal > .yaya-global-actions{
+        position:sticky!important;
+        top:38px!important;
+        z-index:39!important;
+        margin:0 0 12px!important;
+        padding:7px 0 10px!important;
+        background:#fff!important;
       }
 
       .overlay.${CENTER_CLASS} .yaya-mail-clickable-link{
@@ -37,17 +68,25 @@
 
       @media(max-width:640px){
         .overlay.${CENTER_CLASS}{
-          padding:var(--yaya-mail-safe-top,14px) 10px 12px!important;
+          padding:var(--yaya-mail-safe-top,48px) 0 0!important;
         }
-
         .overlay.${CENTER_CLASS} > .modal{
-          width:min(100%, calc(100vw - 18px))!important;
-          max-width:none!important;
-          max-height:calc(100vh - var(--yaya-mail-safe-top,14px) - 12px)!important;
-          max-height:calc(100dvh - var(--yaya-mail-safe-top,14px) - 12px)!important;
+          width:100vw!important;
+          height:calc(100dvh - var(--yaya-mail-safe-top,48px))!important;
+          padding:7px 8px 10px!important;
+        }
+        .overlay.${CENTER_CLASS} > .modal > h5{
+          top:-7px!important;
+          padding:6px 0 8px!important;
+        }
+        .overlay.${CENTER_CLASS} > .modal > .yaya-read-actions,
+        .overlay.${CENTER_CLASS} > .modal > .yaya-mail-read-actions,
+        .overlay.${CENTER_CLASS} > .modal > .yaya-global-actions{
+          top:34px!important;
+          padding:5px 0 8px!important;
         }
       }
-    `;
+`;
     document.head.appendChild(style);
   }
 
@@ -56,9 +95,11 @@
 
     const txt=String(modal.textContent || '').replace(/\s+/g,' ').trim();
 
+    if(modal.classList.contains('message-modal')||modal.classList.contains('yaya-mail-body-modal')) return true;
     if(modal.querySelector('.b-mail')) return true;
     if(/Objet non renseigné/i.test(txt)) return true;
     if(/Voir mail/i.test(txt)) return true;
+    if(/Échange chantier|Echange chantier/i.test(txt)) return true;
 
     return false;
   }
@@ -163,10 +204,12 @@
 
       if(isMailReadModal(modal)){
         overlay.classList.add(CENTER_CLASS);
+        modal.classList.add('yaya-mail-fullscreen-modal');
         overlay.style.setProperty('--yaya-mail-safe-top',safeTopPx()+'px');
         makeLinksClickable(modal);
       } else {
         overlay.classList.remove(CENTER_CLASS);
+        modal.classList.remove('yaya-mail-fullscreen-modal');
         overlay.style.removeProperty('--yaya-mail-safe-top');
       }
     });
