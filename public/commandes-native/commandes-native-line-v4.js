@@ -72,7 +72,9 @@ document.addEventListener('pointerdown',function(e){
 window.addEventListener('resize',closeStatusMenu,{passive:true});
 window.addEventListener('scroll',closeStatusMenu,true);
 
+let enhanceStateSnapshot=null;
 function readState(){
+  if(enhanceStateSnapshot)return enhanceStateSnapshot;
   try{
     if(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)){
       let cachedDocs=[];
@@ -503,7 +505,17 @@ function enhance(row){
   if(!top.dataset.ycnV4Edit){top.dataset.ycnV4Edit='1';top.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea,label'))return;e.preventDefault();e.stopPropagation();edit.click();});}
   row.dataset.ycnLineV4='1';
 }
-function enhanceAll(){scheduled=false;closeStatusMenu();injectStyle();document.querySelectorAll('.yaya-cmd-native-root .ycn-row[data-ycn-row]').forEach(enhance);}
+function enhanceAll(){
+  scheduled=false;
+  closeStatusMenu();
+  injectStyle();
+  enhanceStateSnapshot=readState();
+  try{
+    document.querySelectorAll('.yaya-cmd-native-root .ycn-row[data-ycn-row]').forEach(enhance);
+  }finally{
+    enhanceStateSnapshot=null;
+  }
+}
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(enhanceAll);}
 
 injectStyle();ensureModal();schedule();
