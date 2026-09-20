@@ -19,7 +19,7 @@ function close(){if(window.__yayaPhotoKeyHandler){try{document.removeEventListen
 function driveId(u){var s=String(u||''),m=s.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);if(m)return m[1];m=s.match(/[?&]id=([^&#]+)/i);return m?decodeURIComponent(m[1]):''}
 function preview(u){var x=driveId(u);return x?'https://drive.google.com/file/d/'+encodeURIComponent(x)+'/preview':String(u||'')}
 function thumb(u,w){var x=driveId(u),z=Math.max(200,Number(w)||500);return x?'https://drive.google.com/thumbnail?id='+encodeURIComponent(x)+'&sz=w'+z:String(u||'')}
-function download(u){var x=driveId(u);return x?'https://drive.google.com/uc?export=download&id='+encodeURIComponent(x):String(u||'')}
+function download(u){var x=driveId(u);return x?'https://drive.usercontent.google.com/download?id='+encodeURIComponent(x)+'&export=download&confirm=t':String(u||'')}
 
 function apiUrl(){
   try{if(typeof API!=='undefined'&&API)return String(API)}catch(e){}
@@ -1012,7 +1012,7 @@ async function openPic(p){
   if(currentIndex<0){gallery=[p];currentIndex=0}
   var countHtml=gallery.length>1?'<span class="yaya-photo-view-count">'+(currentIndex+1)+' / '+gallery.length+'</span>':'';
   var navHtml=gallery.length>1?'<span class="yaya-photo-nav"><button type="button" class="btn2 prev"'+(currentIndex<=0?' disabled':'')+'>Photo précédente</button><button type="button" class="btn2 next"'+(currentIndex>=gallery.length-1?' disabled':'')+'>Photo suivante</button></span>':'';
-  r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><div class="yaya-photo-head"><div class="yaya-photo-head-title">'+esc(fr(p.date))+' — '+esc(p.titre||DEF)+'</div><div class="yaya-photo-head-actions"><button type="button" class="btn2 dl">Télécharger</button><button type="button" class="btnp cl">Fermer</button></div></div><div class="yaya-photo-view-stage"><span class="yaya-photo-placeholder">📷</span>'+countHtml+(direct?'<img class="yaya-photo-view-img" src="'+esc(direct)+'" alt="Photo chantier">':'')+'</div><div class="yaya-pfoot"><button class="btn2 del">Supprimer</button>'+navHtml+'</div></div></div>';
+  r.innerHTML='<div class="overlay yaya-photo-overlay yaya-photo-view-overlay"><div class="modal yaya-photo-view-modal"><div class="yaya-photo-head"><div class="yaya-photo-head-title">'+esc(fr(p.date))+' — '+esc(p.titre||DEF)+'</div><div class="yaya-photo-head-actions"><button type="button" class="btn2 dl">Télécharger</button><button type="button" class="btnp cl">Fermer</button></div></div><div class="yaya-photo-view-stage"><span class="yaya-photo-placeholder">📷</span>'+countHtml+(direct?'<img class="yaya-photo-view-img" src="'+esc(direct)+'" alt="Photo chantier">':'')+'</div><div class="yaya-pfoot"><button class="btn2 del">Supprimer</button>'+navHtml+'</div></div></div>';
   r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});
   var stage=r.querySelector('.yaya-photo-view-stage'),view=stage&&stage.querySelector('img'),del=r.querySelector('.del'),dl=r.querySelector('.dl'),prev=r.querySelector('.prev'),next=r.querySelector('.next'),file=null,fallbackStarted=false;
 
