@@ -141,10 +141,17 @@
   },true);
 
   let raf=0;
-  new MutationObserver(function(){
-    if(raf)return;
-    raf=requestAnimationFrame(function(){raf=0;patch();});
-  }).observe(document.documentElement,{childList:true,subtree:true,characterData:true});
+  const modalRoot=document.getElementById('modalRoot');
+  if(modalRoot){
+    new MutationObserver(function(records){
+      let relevant=false;
+      for(const record of records){
+        if(record.addedNodes&&record.addedNodes.length){relevant=true;break;}
+      }
+      if(!relevant||raf)return;
+      raf=requestAnimationFrame(function(){raf=0;patch();});
+    }).observe(modalRoot,{childList:true,subtree:true});
+  }
 
   setTimeout(patch,0);
 })();
