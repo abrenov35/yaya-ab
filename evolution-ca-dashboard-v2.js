@@ -83,7 +83,14 @@
         display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px 8px;
       }
       #pane-evolution .evo2-card-title{font-size:14px;font-weight:900;color:#143a69;display:flex;align-items:center;gap:8px}
+      #pane-evolution .evo2-card-head-actions{display:flex;align-items:center;gap:9px}
       #pane-evolution .evo2-card-note{font-size:10.5px;color:#71849a;font-weight:600}
+      #pane-evolution .evo2-manual-entry{
+        min-height:34px;padding:0 13px;border:1px solid #167a55;border-radius:9px;
+        background:#109b67;color:#fff;font-size:11px;font-weight:900;cursor:pointer;
+        box-shadow:0 3px 9px rgba(16,155,103,.2);white-space:nowrap;
+      }
+      #pane-evolution .evo2-manual-entry:hover{background:#0b8658}
       #pane-evolution .evo2-chart-scroll{overflow-x:auto;padding:0 12px 9px}
       #pane-evolution .evo2-chart{position:relative;min-width:910px;height:332px;padding:14px 8px 0 66px}
       #pane-evolution .evo2-y-axis{position:absolute;left:0;top:14px;bottom:43px;width:58px}
@@ -160,6 +167,9 @@
         #pane-evolution .evo2-controls{width:100%}
         #pane-evolution .evo2-history{flex:1}
         #pane-evolution .evo2-chart{height:300px}
+        #pane-evolution .evo2-card-head{align-items:flex-start;flex-direction:column}
+        #pane-evolution .evo2-card-head-actions{width:100%;justify-content:space-between}
+        #pane-evolution .evo2-manual-entry{flex:1}
       }
     `;
     document.head.appendChild(style);
@@ -276,7 +286,9 @@
       +'</div>';
 
     html+='<div class="evo2-card">'
-      +'<div class="evo2-card-head"><div class="evo2-card-title">▥ Évolution mensuelle du CA signé HT — '+year+'</div><div class="evo2-card-note">Montants en euros (€)</div></div>'
+      +'<div class="evo2-card-head"><div class="evo2-card-title">▥ Évolution mensuelle du CA signé HT — '+year+'</div><div class="evo2-card-head-actions">'
+      +(year===2026?'<button class="evo2-manual-entry" type="button" onclick="openCaManuel2026()">✎ Saisir les CA janv.–août 2026</button>':'')
+      +'<div class="evo2-card-note">Montants en euros (€)</div></div></div>'
       +'<div class="evo2-chart-scroll"><div class="evo2-chart">';
 
     const levels=[1,.75,.5,.25,0];
