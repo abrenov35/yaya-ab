@@ -11,6 +11,7 @@
 <script>
 (async()=>{
   let base=await fetch('index-production-base.html?v=fastboot-2',{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
+  base=base.replace('body{visibility:hidden!important}','body{visibility:visible!important}').replace('<body><script>','<body><div style="min-height:100vh;display:grid;place-items:center;text-align:center;color:#162d49;font:800 22px Arial,sans-serif">Chargement de Yaya…</div><script>');
   const sourceLoader="  const source=await fetch('index-legacy.html?v=marcheht-6',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});";
   const apiGetPatch=`async function apiGet(forceNetwork){
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2'; const CACHE_META_KEY='YAYA_CACHE_META_V2';
