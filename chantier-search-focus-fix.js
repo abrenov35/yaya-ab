@@ -4,10 +4,16 @@
   /* Masque uniquement la loupe héritée du champ de recherche chantier. */
   const loupeStyle=document.createElement('style');
   loupeStyle.id='yaya-hide-legacy-search-magnifier';
-  loupeStyle.textContent='#pane-chantiers span[style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;color:#aaa"]{display:none!important}';
+  loupeStyle.textContent='span[style*="position:absolute"][style*="left:10px"][style*="translateY(-50%)"][style*="font-size:15px"][style*="color:#aaa"]{display:none!important}';
   if(!document.getElementById(loupeStyle.id))document.head.appendChild(loupeStyle);
 
   function cleanSearchChrome(){
+    document.querySelectorAll('span').forEach(function(el){
+      const t=String(el.textContent||'').trim();
+      if(t!=='🔍'&&t!=='🔎'&&t!=='⌕')return;
+      if(el.style.position==='absolute'&&el.style.left==='10px')el.remove();
+    });
+
     const input=document.getElementById('filtreInput');
     if(input){
       input.type='text';
