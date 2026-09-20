@@ -1,6 +1,12 @@
 (function(){
   'use strict';
 
+  /* Masque uniquement la loupe héritée du champ de recherche chantier. */
+  const loupeStyle=document.createElement('style');
+  loupeStyle.id='yaya-hide-legacy-search-magnifier';
+  loupeStyle.textContent='#pane-chantiers span[style="position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:15px;color:#aaa"]{display:none!important}';
+  if(!document.getElementById(loupeStyle.id))document.head.appendChild(loupeStyle);
+
   function cleanSearchChrome(){
     const input=document.getElementById('filtreInput');
     if(input){
