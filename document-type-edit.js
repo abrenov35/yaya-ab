@@ -16,7 +16,7 @@
     style.textContent=`
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
         display:grid!important;
-        grid-template-columns:minmax(0,1fr) 120px 100px 44px!important;
+        grid-template-columns:minmax(0,1fr) 120px 100px!important;
         align-items:center!important;
         column-gap:14px!important;
         min-height:54px!important;
@@ -71,37 +71,11 @@
         display:none!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-delete{
-        grid-column:4!important;
-        justify-self:center!important;
-        align-self:center!important;
-        width:30px!important;
-        min-width:30px!important;
-        max-width:30px!important;
-        height:30px!important;
-        min-height:30px!important;
-        max-height:30px!important;
-        padding:0!important;
-        margin:0!important;
-        display:inline-flex!important;
-        align-items:center!important;
-        justify-content:center!important;
-        color:#d92d20!important;
-        border:1px solid #f1a8a1!important;
-        border-radius:8px!important;
-        background:#fff7f6!important;
-        font-weight:700!important;
-        font-size:0!important;
-        line-height:1!important;
-      }
-      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-delete::before{
-        content:'×'!important;
-        font-size:20px!important;
-        line-height:1!important;
-        color:#d92d20!important;
+        display:none!important;
       }
       @media(max-width:640px){
         #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
-          grid-template-columns:minmax(0,1fr) 88px 74px 38px!important;
+          grid-template-columns:minmax(0,1fr) 88px 74px!important;
           column-gap:8px!important;
           min-height:52px!important;
           padding:8px 9px!important;
@@ -163,9 +137,9 @@
         view.tabIndex=-1;
       }
       if(del){
-        del.textContent='×';
-        del.setAttribute('title','Supprimer');
-        del.setAttribute('aria-label','Supprimer');
+        del.style.setProperty('display','none','important');
+        del.setAttribute('aria-hidden','true');
+        del.tabIndex=-1;
       }
 
       prepareViewText(row);
