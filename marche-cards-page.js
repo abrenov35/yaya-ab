@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-if(window.__yayaDevisDocsV2)return;window.__yayaDevisDocsV2=true;
+if(window.__yayaDevisDocsV3)return;window.__yayaDevisDocsV3=true;window.__yayaDevisDocsV2=true;
 const KEY='YAYA_DEVIS_DOCUMENTS_V1';
 let centralDocs=[];
 let centralState='unknown';
@@ -84,8 +84,92 @@ async function openViewer(cid){await ensureCentral();renderViewer(cid);}
 async function postUpload(action,payload){return postYaya(action,payload);}
 function archiveUnsupported(err){const m=String(err&&err.message||'');return err&&err.yayaAction==='archiverDevis'&&/action.*(?:inconnue|introuvable|non g[eé]r[eé]e|non support[eé]e)|archiverDevis/i.test(m);}
 async function archiveQuote(payload){try{return await postUpload('archiverDevis',payload);}catch(err){if(!archiveUnsupported(err))throw err;return postUpload('extraireDevis',payload);}}
-function uploadFile(file,state,holder){if(!file)return;if(file.size>8*1024*1024){state.textContent='Fichier trop lourd (8 Mo max)';return;}state.textContent='Import en cours…';holder.url='';holder.filename=String(file.name||'devis.pdf');const rd=new FileReader();rd.onerror=()=>{holder.url='';state.textContent='Import impossible : lecture du fichier impossible';};rd.onload=async()=>{try{const b64=String(rd.result||'').split(',')[1]||'';if(!b64)throw new Error('Document vide ou illisible');const payload={filename:holder.filename,mimeType:String(file.type||'application/pdf'),base64:b64};const j=await archiveQuote(payload);const d=j.data||{};holder.url=String(d.lienDrive||d.lien||'').trim();if(!holder.url)throw new Error(String(d.archiveErreur||'Lien du fichier absent'));state.textContent='✓ Pièce jointe enregistrée';}catch(e){holder.url='';state.textContent='Import impossible : '+String(e&&e.message||e);}};rd.readAsDataURL(file);}
-function openAdd(cid){closeAdd();const n=nextNo(cid),holder={url:'',filename:''},o=document.createElement('div');o.id='yayaDevisAdd';o.className='ydd-ov';o.innerHTML='<div class="ydd-add"><div class="ydd-title" style="text-align:center">Ajouter le devis '+n+'</div><div class="ydd-state">Importer le PDF ou la photo du devis.</div><input class="ydd-file" type="file" accept="application/pdf,image/*"><div class="ydd-add-actions"><button class="ydd-btn" data-save>Enregistrer</button><button class="ydd-btn ydd-import" data-import>Importer</button><button class="ydd-btn" data-cancel>Fermer</button></div></div>';document.body.appendChild(o);const input=o.querySelector('input'),state=o.querySelector('.ydd-state');o.querySelector('[data-import]').onclick=()=>input.click();input.onchange=()=>{uploadFile(input.files&&input.files[0],state,holder);input.value='';};o.querySelector('[data-cancel]').onclick=closeAdd;o.onclick=e=>{if(e.target===o)closeAdd();};o.querySelector('[data-save]').onclick=async()=>{if(!holder.url){toastSafe('Importe d’abord la pièce jointe',true);return;}const doc=enrichDoc({id:'dv_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7),chantierId:String(cid),nomChantier:chantierName(cid),numero:n,date:new Date().toISOString().slice(0,10),nomFichier:holder.filename||('Devis '+n),url:holder.url});const local=localLoad();if(!local.some(d=>String(d.id)===String(doc.id)))local.push(doc);localSave(local);try{if(centralState==='ready')await upsertCentral(doc);}catch(e){toastSafe('Devis conservé sur cet appareil, synchronisation Sheet impossible',true);console.warn(e);}closeAdd();toastSafe('Devis '+n+' enregistré ✓');renderViewer(cid);};}
+function fileBase64(file){
+  return new Promise((resolve,reject)=>{
+    const rd=new FileReader();
+    rd.onerror=()=>reject(new Error('Lecture du fichier impossible'));
+    rd.onload=()=>{
+      const b64=String(rd.result||'').split(',')[1]||'';
+      if(!b64){reject(new Error('Document vide ou illisible'));return;}
+      resolve(b64);
+    };
+    rd.readAsDataURL(file);
+  });
+}
+
+async function importQuoteBackground(cid,n,file){
+  const filename=String(file&&file.name||('Devis '+n+'.pdf'));
+  const docId='dv_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7);
+
+  try{
+    const b64=await fileBase64(file);
+    const payload={filename:filename,mimeType:String(file&&file.type||'application/pdf'),base64:b64};
+    const j=await archiveQuote(payload);
+    const d=j.data||{};
+    const url=String(d.lienDrive||d.lien||'').trim();
+    if(!url)throw new Error(String(d.archiveErreur||'Lien du fichier absent'));
+
+    const doc=enrichDoc({
+      id:docId,
+      chantierId:String(cid),
+      nomChantier:chantierName(cid),
+      numero:n,
+      date:new Date().toISOString().slice(0,10),
+      nomFichier:filename,
+      url:url
+    });
+
+    // Sécurisation locale immédiate dès que Drive a renvoyé le lien.
+    const local=localLoad();
+    if(!local.some(x=>String(x.id)===String(doc.id)))local.push(doc);
+    localSave(local);
+
+    try{
+      const centralReady=centralState==='ready'||await ensureCentral();
+      if(centralReady)await upsertCentral(doc);
+    }catch(syncErr){
+      console.warn('Yaya devis — synchronisation centrale différée :',syncErr);
+      toastSafe('Devis '+n+' archivé — synchronisation Yaya à reprendre',true);
+      return;
+    }
+
+    try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['DEVIS'],source:'devis-background-import'}}));}catch(_){}
+    toastSafe('Devis '+n+' enregistré ✓');
+  }catch(e){
+    console.error('Yaya devis — import en arrière-plan :',e);
+    toastSafe('Import du devis '+n+' impossible : '+String(e&&e.message||e),true);
+  }
+}
+
+function openAdd(cid){
+  closeAdd();
+  const n=nextNo(cid),o=document.createElement('div');
+  o.id='yayaDevisAdd';o.className='ydd-ov';
+  o.innerHTML='<div class="ydd-add"><div class="ydd-title" style="text-align:center">Ajouter le devis '+n+'</div><div class="ydd-state">Importer le PDF ou la photo du devis.</div><input class="ydd-file" type="file" accept="application/pdf,image/*"><div class="ydd-add-actions"><button class="ydd-btn ydd-import" data-import>Importer</button><button class="ydd-btn" data-cancel>Fermer</button></div></div>';
+  document.body.appendChild(o);
+
+  const input=o.querySelector('input');
+  o.querySelector('[data-import]').onclick=()=>input.click();
+
+  input.onchange=()=>{
+    const file=input.files&&input.files[0];
+    input.value='';
+    if(!file)return;
+    if(file.size>8*1024*1024){
+      toastSafe('Fichier trop lourd (8 Mo max)',true);
+      return;
+    }
+
+    // Le File reste référencé par la tâche JS même après destruction de la modale.
+    // On libère donc immédiatement l'opérateur.
+    closeAdd();
+    toastSafe('Import du devis '+n+' lancé — vous pouvez continuer');
+    setTimeout(()=>{importQuoteBackground(cid,n,file);},0);
+  };
+
+  o.querySelector('[data-cancel]').onclick=closeAdd;
+  o.onclick=e=>{if(e.target===o)closeAdd();};
+}
 
 function cardId(card){if(!card)return '';if(card.dataset.id)return String(card.dataset.id);if(card.dataset.chantierId)return String(card.dataset.chantierId);for(const el of card.querySelectorAll('[data-id],[data-chantier-id],[onclick]')){if(el.dataset.chantierId)return String(el.dataset.chantierId);const raw=String(el.getAttribute('onclick')||''),m=raw.match(/(?:toggleChantier|delChantier|editMontantDevis|openAvenant|openDocumentModal|openAchat|openExistingChantierModal)\(['\"]([^'\"]+)/);if(m)return m[1];}const title=String(card.querySelector('.top b')&&card.querySelector('.top b').textContent||'').trim();try{const c=(S.chantiers||[]).find(x=>norm(x.nom)===norm(title));return c?String(c.id):'';}catch(e){return '';}}
 function marketTarget(card){if(!card)return null;const label=[...card.querySelectorAll('small')].find(sm=>{const x=norm(sm.textContent);return x==='MARCHE'||x==='MARCHE HT';});if(!label)return null;let target=label.parentElement;if(!target)return null;while(target.parentElement&&target.parentElement!==card){const parent=target.parentElement;if(parent.querySelectorAll('small').length!==1)break;target=parent;}return target;}
