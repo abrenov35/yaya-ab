@@ -28,27 +28,15 @@
   function apply(){ensureStyle();const root=document.getElementById('modalRoot');if(!root)return;root.querySelectorAll('.overlay .modal').forEach(ensureModal);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',apply,{once:true});else apply();const root=document.getElementById('modalRoot');if(root){let raf=0;new MutationObserver(function(){if(raf)return;raf=requestAnimationFrame(function(){raf=0;apply();});}).observe(root,{childList:true,subtree:true});}setTimeout(apply,100);setTimeout(apply,500);
 
+  // Les modules principaux sont chargés par index.html. Ne pas les recharger
+  // ici avec Date.now() : cela forçait des requêtes + parsing inutiles et
+  // ralentissait la navigation après ouverture d'une modale Finance.
   setTimeout(function(){
-    [
-      ['achat-create-actions-fix.js?v=3','yaya-achat-create-actions-loader-v3'],
-      ['achat-create-central-save-fix.js?v=2-'+Date.now(),'yaya-achat-create-central-save-v2'],
-      ['achat-add-reliable-save.js?v=1-'+Date.now(),'yaya-achat-add-reliable-save-v1'],
-      ['yaya-central-authoritative-sync.js?v='+Date.now(),'yaya-central-authority-loader'],
-      ['commande-modal-performance-fix.js?v=2','yaya-command-perf-loader'],
-      ['mail-documents-force-render.js?v=4','yaya-mail-force-loader'],
-      ['documents-central-display-fix.js?v=1','yaya-central-documents-display-loader'],
-      ['documents-mails-live-refresh.js?v=9','yaya-shared-data-sync-loader-v9']
-    ].forEach(function(x){
-      if(document.querySelector('script[data-'+x[1]+']'))return;
-      const s=document.createElement('script');s.src=x[0];s.setAttribute('data-'+x[1],'1');s.async=false;document.head.appendChild(s);
-    });
-    setTimeout(function(){
-      if(document.querySelector('script[data-yaya-achat-create-modal-stable]'))return;
-      const s=document.createElement('script');
-      s.src='achat-create-modal-stable-fix.js?v=1-'+Date.now();
-      s.setAttribute('data-yaya-achat-create-modal-stable','1');
-      s.async=false;
-      document.head.appendChild(s);
-    },300);
-  },0);
+    if(window.__yayaAchatCreateModalStableV1||document.querySelector('script[data-yaya-achat-create-modal-stable]'))return;
+    const s=document.createElement('script');
+    s.src='achat-create-modal-stable-fix.js?v=stable-1';
+    s.setAttribute('data-yaya-achat-create-modal-stable','1');
+    s.async=false;
+    document.head.appendChild(s);
+  },120);
 })();
