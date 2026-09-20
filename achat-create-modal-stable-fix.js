@@ -1,7 +1,6 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatCreateModalStableV2)return;
-  window.__yayaAchatCreateModalStableV2=true;
+  if(window.__yayaAchatCreateModalStableV1)return;
   window.__yayaAchatCreateModalStableV1=true;
 
   function escHtml(v){
@@ -13,59 +12,16 @@
     try{return new URL(window.location.href).searchParams.get('chantier')||'';}catch(e){return '';}
   }
 
-  let cachedRowsRef=null;
-  let cachedRowsLength=-1;
-  let cachedOptionsHtml='';
-
-  function buildChantierOptions(){
-    let rows=[];
-    try{rows=(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))?S.chantiers:[];}catch(e){}
-
-    // Si la liste centrale n'a pas changé de référence ni de taille, on réutilise
-    // directement le HTML déjà calculé. L'ouverture de la modale ne refait aucun tri.
-    if(rows===cachedRowsRef&&rows.length===cachedRowsLength&&cachedOptionsHtml){
-      return cachedOptionsHtml;
-    }
-
-    const seen=new Set();
-    const active=[];
-    rows.forEach(function(c){
-      if(!c)return;
-      const id=String(c.id==null?'':c.id).trim();
-      const nom=String(c.nom==null?'':c.nom).trim();
-      const statut=String(c.statut==null?'':c.statut).trim();
-      // Important : les lignes vides/techniques du Sheet ne doivent jamais devenir
-      // des options natives. C'est ce qui peut rendre le select très lent.
-      if(!id||!nom||seen.has(id))return;
-      if(statut==='Terminé'||statut==='Archivé')return;
-      seen.add(id);
-      active.push({id:id,nom:nom});
-    });
-
-    active.sort(function(a,b){
-      return a.nom.localeCompare(b.nom,'fr',{sensitivity:'base'});
-    });
-
-    cachedRowsRef=rows;
-    cachedRowsLength=rows.length;
-    cachedOptionsHtml='<option value="">— Choisir le chantier —</option>'+
-      active.map(function(c){
-        return '<option value="'+escHtml(c.id)+'">'+escHtml(c.nom)+'</option>';
-      }).join('');
-
-    return cachedOptionsHtml;
-  }
-
-  function invalidateChantierOptions(){
-    cachedRowsRef=null;
-    cachedRowsLength=-1;
-    cachedOptionsHtml='';
-  }
-
   function chantierSelectHtml(){
     const cid=currentChantierId();
     if(cid)return '<input type="hidden" id="acCh" value="'+escHtml(cid)+'">';
-    return '<select class="inp" id="acCh" style="width:100%">'+buildChantierOptions()+'</select>';
+    let rows=[];
+    try{rows=(typeof S!=='undefined'&&S&&Array.isArray(S.chantiers))?S.chantiers:[];}catch(e){}
+    return '<select class="inp" id="acCh" style="width:100%"><option value="">— Choisir le chantier —</option>'+
+      rows.filter(function(c){return c&&c.statut!=="Terminé"&&c.statut!=="Archivé";})
+        .sort(function(a,b){return String(a.nom||'').localeCompare(String(b.nom||''),'fr',{sensitivity:'base'});})
+        .map(function(c){return '<option value="'+escHtml(c.id)+'">'+escHtml(c.nom||'')+'</option>';}).join('')+
+      '</select>';
   }
 
   function openStable(){
@@ -101,19 +57,6 @@
   }
 
   install();
-
-  // Pré-calcul hors interaction utilisateur : quand l'opérateur ouvre le champ,
-  // les choix sont déjà prêts.
-  const warm=function(){try{buildChantierOptions();}catch(e){}};
-  if(typeof requestIdleCallback==='function')requestIdleCallback(warm,{timeout:700});
-  else setTimeout(warm,80);
-
-  window.addEventListener('yaya:data-refreshed',function(){
-    invalidateChantierOptions();
-    if(typeof requestIdleCallback==='function')requestIdleCallback(warm,{timeout:700});
-    else setTimeout(warm,80);
-  },{passive:true});
-
   setTimeout(install,100);
   setTimeout(install,500);
   setTimeout(install,1500);
