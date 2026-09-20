@@ -223,13 +223,20 @@ async function mountCard(card){
  if(!id&&!name){block.innerHTML='<div class="yaya-cmd-direct-wait">Chargement du chantier…</div>';return;}
  if(activeBlock&&activeBlock!==block){try{window.YayaCommandesNativeEmbed?.unmount(activeBlock);}catch(_){} }
  activeCard=card;activeBlock=block;
+ const chantierKey=String(id||'')+'::'+String(name||'');
+
+ // Si le bon chantier est déjà monté, ne surtout pas reconstruire le Kanban.
+ if(block.dataset.ycnReady==='1'&&block.dataset.ycnChantierKey===chantierKey){
+   ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureEditV5Patch();ensureCreateV6Patch();
+   return;
+ }
+
  if(!block.dataset.ycnReady)block.innerHTML='<div class="yaya-cmd-direct-wait">Chargement des commandes…</div>';
  try{
    const api=await loadAssets();
-   await ensureFreshCommandesAfterBaseMigration();
-   await refreshCommandesFromBase(false);
    if(!block.isConnected)return;
-   const chantierKey=String(id||'')+'::'+String(name||'');
+
+   // Affichage immédiat depuis S.commandes / cache local. Aucun GET avant rendu.
    if(block.dataset.ycnReady==='1'){
      block.dataset.ycnChantierKey=chantierKey;
      api.setChantier(id,name);
@@ -238,7 +245,19 @@ async function mountCard(card){
      block.dataset.ycnChantierKey=chantierKey;
      api.mount(block,id,name);
    }
+
    ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureEditV5Patch();ensureCreateV6Patch();setTimeout(ensureCommandModalTweaks,0);
+
+   // Contrôle serveur uniquement après avoir rendu la main à l'opérateur.
+   const syncLater=async()=>{
+     if(!block.isConnected)return;
+     try{
+       await ensureFreshCommandesAfterBaseMigration();
+       await refreshCommandesFromBase(false);
+     }catch(_){}
+   };
+   if(typeof requestIdleCallback==='function')requestIdleCallback(()=>syncLater(),{timeout:1800});
+   else setTimeout(syncLater,900);
  }catch(err){block.innerHTML='<div class="yaya-cmd-direct-wait">Commandes indisponibles : '+String(err?.message||err)+'</div>';}
 }
 
@@ -254,9 +273,14 @@ function findActiveCard(){const c=document.querySelector('#pane-chantiers .card[
 function scan(){clearTimeout(scanTimer);scanTimer=setTimeout(()=>{ensureRefreshButton();ensureCommandModalTweaks();const card=findActiveCard();if(card)mountCard(card);},35);}
 
 installBaseStyle();installDeleteConfirmPatch();ensureRowModalPatch();ensureActionsPatch();ensureLineV4Patch();ensureEditV5Patch();ensureCreateV6Patch();ensureRefreshButton();
+
+ // Précharge le moteur Commandes hors interaction utilisateur pour que le clic soit instantané.
+ const warmAssets=()=>{loadAssets().catch(()=>{});};
+ if(typeof requestIdleCallback==='function')requestIdleCallback(warmAssets,{timeout:1600});
+ else setTimeout(warmAssets,900);
 document.addEventListener('click',e=>{
  const b=e.target?.closest?.('.yaya-detail-section-tab[data-section]');
- if(b){const card=b.closest('.card');if(String(b.dataset.section||'')==='commandes'){setTimeout(()=>mountCard(card),0);setTimeout(()=>mountCard(card),80);}setTimeout(ensureRefreshButton,0);}
+ if(b){const card=b.closest('.card');if(String(b.dataset.section||'')==='commandes'){setTimeout(()=>mountCard(card),0);}setTimeout(ensureRefreshButton,0);}
  if(e.target?.closest?.('[data-ycn-add],.ycn-row[data-ycn-row],#ycnEditModal')){setTimeout(ensureCommandModalTweaks,0);setTimeout(ensureCommandModalTweaks,80);}
 },true);
 const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
