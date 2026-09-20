@@ -12,9 +12,12 @@
   let saveTimer=0;
 
   function idKey(v){return String(v==null?'':v).trim().toUpperCase();}
-  function month(v){
-    const m=String(v==null?'':v).trim().match(/^(\d{4})-(\d{2})/);
-    return m?m[1]+'-'+m[2]:'';
+  function signatureValue(v){
+    const raw=String(v==null?'':v).trim();
+    const full=raw.match(/^(\d{4})-(\d{2})(?:-(\d{2}))?/);
+    if(full)return full[1]+'-'+full[2]+(full[3]?'-'+full[3]:'');
+    const year=raw.match(/^(\d{4})$/);
+    return year?year[1]:'';
   }
   function isExtranet(c){
     return /^C\d+$/i.test(String(c&&c.id||'').trim()) ||
@@ -40,7 +43,7 @@
   function clean(source){
     const out={};
     Object.keys(source||{}).forEach(function(id){
-      const value=month(source[id]);
+      const value=signatureValue(source[id]);
       if(idKey(id)&&value)out[idKey(id)]=value;
     });
     return out;
@@ -67,10 +70,15 @@
     if(!s||saving)return;
     storeDoc(s);
     saveCache(s);
-    if(typeof window.apiPost!=='function')return;
+    const post=typeof apiPost==='function'?apiPost:
+      (typeof window.apiPost==='function'?window.apiPost:null);
+    if(!post){
+      console.warn('Verrou des dates de signature : apiPost indisponible');
+      return;
+    }
     saving=true;
     try{
-      const ok=await window.apiPost('setDocuments',s.documents);
+      const ok=await post('setDocuments',s.documents);
       if(ok===false)throw new Error('enregistrement refusé');
     }catch(e){
       console.warn('Verrou des dates de signature non enregistré :',e);
@@ -87,12 +95,12 @@
       const id=idKey(c.id);
       if(!id)return;
       if(locks[id]){
-        if(month(c.dateSignature)!==locks[id]){
+        if(signatureValue(c.dateSignature)!==locks[id]){
           c.dateSignature=locks[id];
           changed=true;
         }
       }else{
-        const value=month(c.dateSignature);
+        const value=signatureValue(c.dateSignature);
         if(value){locks[id]=value;newLock=true;}
       }
     });
@@ -107,7 +115,7 @@
   };
   window.__yayaUpdateLockedSignature=function(id,value){
     const key=idKey(id);
-    const normalized=month(value);
+    const normalized=signatureValue(value);
     if(!key)return Promise.resolve(false);
     if(normalized)locks[key]=normalized;else delete locks[key];
     const s=state();
