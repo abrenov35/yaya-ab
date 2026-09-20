@@ -10,6 +10,67 @@ let currentPieceIndex=0;
 let scheduled=false;
 let previewToken=0;
 let pdfJsPromise=null;
+const STATUS_CHOICES=[
+  {key:'choice',label:'Attente choix'},
+  {key:'todo',label:'À commander'},
+  {key:'ordered',label:'Commandé'},
+  {key:'received',label:'Reçu'}
+];
+let openStatusMenu=null;
+
+function statusLabel(key){
+  const row=STATUS_CHOICES.find(function(x){return x.key===String(key||'');});
+  return row?row.label:'Attente choix';
+}
+
+function closeStatusMenu(){
+  if(openStatusMenu&&openStatusMenu.isConnected)openStatusMenu.remove();
+  openStatusMenu=null;
+}
+
+function openFastStatusMenu(anchor,current,onPick){
+  closeStatusMenu();
+  if(!anchor||!anchor.isConnected)return;
+
+  const rect=anchor.getBoundingClientRect();
+  const menu=document.createElement('div');
+  menu.className='ycn-v4-status-menu';
+  menu.setAttribute('role','menu');
+
+  STATUS_CHOICES.forEach(function(item){
+    const b=document.createElement('button');
+    b.type='button';
+    b.className='ycn-v4-status-choice'+(item.key===current?' selected':'');
+    b.textContent=item.label;
+    b.dataset.value=item.key;
+    b.onclick=function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      closeStatusMenu();
+      onPick(item.key,item.label);
+    };
+    menu.appendChild(b);
+  });
+
+  document.body.appendChild(menu);
+  openStatusMenu=menu;
+
+  const viewportW=document.documentElement.clientWidth||window.innerWidth||1024;
+  const minW=Math.max(190,Math.round(rect.width));
+  let left=Math.round(rect.left);
+  if(left+minW>viewportW-8)left=Math.max(8,viewportW-minW-8);
+  menu.style.left=left+'px';
+  menu.style.top=Math.round(rect.bottom+4)+'px';
+  menu.style.width=minW+'px';
+}
+
+document.addEventListener('pointerdown',function(e){
+  if(!openStatusMenu)return;
+  if(e.target&&e.target.closest&&e.target.closest('.ycn-v4-status-menu,.ycn-v4-status'))return;
+  closeStatusMenu();
+},true);
+window.addEventListener('resize',closeStatusMenu,{passive:true});
+window.addEventListener('scroll',closeStatusMenu,true);
 
 function readState(){
   try{
@@ -255,7 +316,12 @@ function injectStyle(){
     .yaya-cmd-native-root .ycn-row-summary .ycn-qte,.yaya-cmd-native-root .ycn-row-summary .ycn-resp{display:none!important}
     .yaya-cmd-native-root .ycn-row-summary strong{display:block!important;grid-column:1/-1!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#102b48!important;font-size:13px!important;font-weight:900!important;line-height:1.25!important}
     .yaya-cmd-native-root .ycn-row-summary .ycn-supplier{display:block!important;grid-column:1/-1!important;min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#6b7b8d!important;font-size:10.8px!important;line-height:1.2!important}
-    .yaya-cmd-native-root .ycn-v4-status{grid-column:1/-1!important;width:100%!important;min-width:0!important;max-width:none!important;height:30px!important;border:1px solid #cbd7e4!important;border-radius:7px!important;background:#fff!important;color:#17324f!important;padding:0 8px!important;font:inherit!important;font-size:10.8px!important;font-weight:800!important;cursor:pointer!important}
+    .yaya-cmd-native-root .ycn-v4-status{grid-column:1/-1!important;width:100%!important;min-width:0!important;max-width:none!important;height:30px!important;border:1px solid #cbd7e4!important;border-radius:7px!important;background:#fff!important;color:#17324f!important;padding:0 8px!important;font:inherit!important;font-size:10.8px!important;font-weight:800!important;cursor:pointer!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:8px!important;text-align:left!important}
+    .yaya-cmd-native-root .ycn-v4-status:after{content:'⌄';font-size:13px;line-height:1;color:#61758a}
+    .ycn-v4-status-menu{position:fixed;z-index:2147483646;display:grid;gap:2px;padding:5px;background:#fff;border:1px solid #cbd7e4;border-radius:9px;box-shadow:0 12px 34px rgba(15,38,64,.22);box-sizing:border-box}
+    .ycn-v4-status-choice{display:block;width:100%;min-height:34px;padding:7px 10px;border:0;border-radius:6px;background:#fff;color:#17324f;text-align:left;font:inherit;font-size:12px;font-weight:750;cursor:pointer}
+    .ycn-v4-status-choice:hover,.ycn-v4-status-choice:focus{background:#eef4fa;outline:none}
+    .ycn-v4-status-choice.selected{background:#e4edf7;color:#102b48;font-weight:900}
     .yaya-cmd-native-root .ycn-v4-pieces,.yaya-cmd-native-root .ycn-v4-url{width:100%!important;min-width:0!important;height:30px!important;border:1px solid #cbd7e4!important;border-radius:7px!important;background:#fff!important;padding:0 8px!important;font:inherit!important;font-size:10.5px!important;font-weight:850!important;white-space:nowrap!important;cursor:pointer!important;display:inline-flex!important;align-items:center!important;justify-content:center!important}
     .yaya-cmd-native-root .ycn-v4-pieces{grid-column:1!important;color:#1f5f9f!important}
     .yaya-cmd-native-root .ycn-v4-pieces.has{background:#edf7ff!important;border-color:#b9d8f4!important}
@@ -408,14 +474,29 @@ function enhance(row){
   const id=String(row?.dataset?.ycnRow||'');if(!id)return;
   const top=row.querySelector('.ycn-row-top'),edit=row.querySelector('[data-ycn-edit]'),hiddenStatus=row.querySelector('.ycn-row-detail [data-ycn-status]');if(!top||!edit||!hiddenStatus)return;
   sanitize(row,top);row.classList.remove('open');
-  const status=hiddenStatus.cloneNode(true);status.removeAttribute('data-ycn-status');status.className='ycn-v4-status';status.value=hiddenStatus.value;status.onclick=e=>e.stopPropagation();status.onchange=e=>{e.stopPropagation();hiddenStatus.value=status.value;hiddenStatus.dispatchEvent(new Event('change',{bubbles:true}));};
+  const status=document.createElement('button');
+  status.type='button';
+  status.className='ycn-v4-status';
+  status.dataset.value=String(hiddenStatus.value||'choice');
+  status.textContent=statusLabel(status.dataset.value);
+  status.onclick=function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    const current=String(status.dataset.value||hiddenStatus.value||'choice');
+    openFastStatusMenu(status,current,function(value,label){
+      status.dataset.value=value;
+      status.textContent=label;
+      hiddenStatus.value=value;
+      hiddenStatus.dispatchEvent(new Event('change',{bubbles:true}));
+    });
+  };
   const n=docsFor(id).length,pieces=document.createElement('button');pieces.type='button';pieces.className='ycn-v4-pieces'+(n?' has':'');pieces.textContent=n>1?('📎 '+n):'📎 Pièce';pieces.title=n===1?'Voir la pièce jointe':(n>1?'Voir les '+n+' pièces jointes':'Aucune pièce jointe');pieces.setAttribute('aria-label',pieces.title);pieces.onclick=e=>{e.preventDefault();e.stopPropagation();openModal(id);};
   const o=orderById(id),url=orderUrl(o),pieceNom=String(o?.pieceNom||o?.piece_nom||'').trim(),link=document.createElement('button');link.type='button';link.className='ycn-v4-url';link.textContent='🔗 Lien';link.disabled=!url;link.title=url&&!pieceNom?'Ouvrir le lien':'Aucun lien';link.setAttribute('aria-label',link.title);link.onclick=e=>{e.preventDefault();e.stopPropagation();if(url&&!pieceNom)window.open(url,'_blank','noopener');};
   const bar=document.createElement('div');bar.className='ycn-v4-actions';bar.append(status,pieces,link);styleActionBar(bar,status,pieces,link);row.appendChild(bar);
   if(!top.dataset.ycnV4Edit){top.dataset.ycnV4Edit='1';top.addEventListener('click',e=>{if(e.target.closest('button,a,input,select,textarea,label'))return;e.preventDefault();e.stopPropagation();edit.click();});}
   row.dataset.ycnLineV4='1';
 }
-function enhanceAll(){scheduled=false;injectStyle();document.querySelectorAll('.yaya-cmd-native-root .ycn-row[data-ycn-row]').forEach(enhance);}
+function enhanceAll(){scheduled=false;closeStatusMenu();injectStyle();document.querySelectorAll('.yaya-cmd-native-root .ycn-row[data-ycn-row]').forEach(enhance);}
 function schedule(){if(scheduled)return;scheduled=true;requestAnimationFrame(enhanceAll);}
 
 injectStyle();ensureModal();schedule();
