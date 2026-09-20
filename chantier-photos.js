@@ -849,8 +849,8 @@ async function openPhotoReview(cid,files,mode){
     // IMPORTANT : file.lastModified n'est pas une date de prise de vue fiable.
     // Sur iPhone, Safari peut lui attribuer l'heure de sélection/importation.
     // On ne l'utilise donc jamais pour classer une photo importée.
-    var d=exif||fromName||(mode==='camera'?today():'');
-    var sourceDate=exif?'EXIF':(fromName?'nom du fichier':(mode==='camera'?'prise de vue aujourd\'hui':'non détectée — à renseigner'));
+    var d=exif||fromName||today();
+    var sourceDate=exif?'EXIF':(fromName?'nom du fichier':(mode==='camera'?'prise de vue aujourd\'hui':'date non détectée — aujourd\'hui par défaut'));
     var u=URL.createObjectURL(f);
     urls.push(u);
     q.push({f:f,d:d,u:u,exif:!!exif,sourceDate:sourceDate});
@@ -863,7 +863,7 @@ async function openPhotoReview(cid,files,mode){
 
   r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal yaya-pa">'
     +'<h5>Photos sélectionnées<button class="cl">Fermer</button></h5>'
-    +'<div class="note">Vérifiez la date puis cliquez sur Enregistrer.</div>'
+    +'<div class="note">La date de prise de vue est utilisée si elle est détectée. Sinon, la date du jour est appliquée automatiquement.</div>'
     +'<div class="yaya-pq"></div>'
     +'<div class="msg note" style="min-height:20px;margin-top:8px"></div>'
     +'<div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer les photos</button></div>'
