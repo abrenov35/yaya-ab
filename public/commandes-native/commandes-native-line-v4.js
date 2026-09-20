@@ -484,6 +484,13 @@ function enhance(row){
     e.stopPropagation();
     const current=String(status.dataset.value||hiddenStatus.value||'choice');
     openFastStatusMenu(status,current,function(value,label){
+      const api=window.YayaCommandesNativeEmbed;
+      if(api&&typeof api.changeStatus==='function'){
+        const ok=api.changeStatus(id,value);
+        if(ok===false)return;
+        return;
+      }
+      // Secours pour une ancienne version du moteur encore en cache.
       status.dataset.value=value;
       status.textContent=label;
       hiddenStatus.value=value;
