@@ -4,10 +4,12 @@
   /* Masque uniquement la loupe héritée du champ de recherche chantier. */
   const loupeStyle=document.createElement('style');
   loupeStyle.id='yaya-hide-legacy-search-magnifier';
-  loupeStyle.textContent='span[style*="position:absolute"][style*="left:10px"][style*="translateY(-50%)"][style*="font-size:15px"][style*="color:#aaa"]{display:none!important}';
+  loupeStyle.textContent='span[style*="position:absolute"][style*="left:10px"][style*="translateY(-50%)"][style*="font-size:15px"][style*="color:#aaa"],button[onclick*="filtreChantier"][onclick*="renderChantiers"]{display:none!important}';
   if(!document.getElementById(loupeStyle.id))document.head.appendChild(loupeStyle);
 
   function cleanSearchChrome(){
+    document.querySelectorAll('button[onclick*="filtreChantier"][onclick*="renderChantiers"]').forEach(function(el){el.remove();});
+
     document.querySelectorAll('span').forEach(function(el){
       const t=String(el.textContent||'').trim();
       if(t!=='🔍'&&t!=='🔎'&&t!=='⌕')return;
