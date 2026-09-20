@@ -1,5 +1,7 @@
 (function(){
   'use strict';
+  if(window.__yayaMailReadFullscreenV2)return;
+  window.__yayaMailReadFullscreenV2=true;
 
   const STYLE_ID='yaya-mail-read-fullscreen-style-v2';
   const CENTER_CLASS='yaya-mail-read-fullscreen';
