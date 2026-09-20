@@ -4,6 +4,8 @@ if(window.__YAYA_COMMANDES_LINE_V4)return;
 window.__YAYA_COMMANDES_LINE_V4=true;
 
 const CACHE_KEYS=['YAYA_COMMANDES_EMBED_CACHE_V3'];
+const PIECE_META_PREFIX='YAYA_PIECES_V1:';
+const PIECE_MAX_BYTES=8*1024*1024;
 const MODAL_ID='ycnIframePiecesV4';
 let currentOrderId='';
 let currentPieceIndex=0;
@@ -86,24 +88,68 @@ function readState(){
   return {orders:[],documents:[]};
 }
 function orderById(id){return (readState().orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;}
+function parsePieceMeta(order){
+  const raw=String(order?.pieceEmpreinte||'').trim();
+  if(!raw.startsWith(PIECE_META_PREFIX))return {empreinte:raw,pieces:[]};
+  try{
+    const data=JSON.parse(raw.slice(PIECE_META_PREFIX.length));
+    const pieces=Array.isArray(data?.pieces)?data.pieces.filter(p=>p&&String(p.url||'').trim()).map((p,i)=>({
+      id:String(p.id||('extra-'+i)),
+      name:String(p.name||('Pièce '+(i+2))),
+      url:String(p.url||'').trim()
+    })):[];
+    return {empreinte:String(data?.empreinte||''),pieces};
+  }catch(_){return {empreinte:'',pieces:[]};}
+}
+function encodePieceMeta(order,pieces){
+  const parsed=parsePieceMeta(order);
+  const clean=(Array.isArray(pieces)?pieces:[]).filter(p=>p&&String(p.url||'').trim()).map((p,i)=>({
+    id:String(p.id||('extra-'+Date.now()+'-'+i)),
+    name:String(p.name||('Pièce '+(i+2))),
+    url:String(p.url||'').trim()
+  }));
+  if(!clean.length)return parsed.empreinte||'';
+  return PIECE_META_PREFIX+JSON.stringify({v:1,empreinte:parsed.empreinte||'',pieces:clean});
+}
+function orderPieceDocs(order,id){
+  if(!order)return [];
+  const out=[];
+  const primaryUrl=String(order?.lien||'').trim();
+  const primaryName=String(order?.pieceNom||order?.piece_nom||'').trim();
+  if(primaryUrl&&primaryName){
+    out.push({
+      id:'order-attachment:'+String(order?.id||id||''),
+      commande_id:String(order?.id||id||''),
+      type:'Fichier',
+      nom_fichier:primaryName,
+      url_pdf:primaryUrl,
+      source:'Yaya',
+      __yayaOrderAttachment:true,
+      __yayaPieceKind:'primary'
+    });
+  }
+  parsePieceMeta(order).pieces.forEach((p,i)=>{
+    out.push({
+      id:'order-extra:'+String(order?.id||id||'')+':'+String(p.id||i),
+      commande_id:String(order?.id||id||''),
+      type:'Fichier',
+      nom_fichier:p.name||('Pièce '+(i+2)),
+      url_pdf:p.url,
+      source:'Yaya',
+      __yayaOrderAttachment:true,
+      __yayaPieceKind:'extra',
+      __yayaPieceId:String(p.id||i)
+    });
+  });
+  return out;
+}
 function docsFor(id){
   const state=readState();
   const docs=(state.documents||[]).filter(d=>String(d?.commande_id||'')===String(id||''));
   const order=(state.orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;
-  const attachmentUrl=String(order?.lien||'').trim();
-  const pieceNom=String(order?.pieceNom||order?.piece_nom||'').trim();
-  if(attachmentUrl&&pieceNom){
-    const exists=docs.some(d=>docUrl(d)===attachmentUrl);
-    if(!exists)docs.unshift({
-      id:'order-attachment:'+String(order?.id||id||''),
-      commande_id:String(order?.id||id||''),
-      type:'Fichier',
-      nom_fichier:pieceNom,
-      url_pdf:attachmentUrl,
-      source:'Yaya',
-      __yayaOrderAttachment:true
-    });
-  }
+  orderPieceDocs(order,id).forEach(piece=>{
+    if(!docs.some(d=>docUrl(d)===docUrl(piece)))docs.push(piece);
+  });
   return docs;
 }
 function docUrl(d){return String(d?.url_pdf||d?.url||d?.lien||d?.webUrl||d?.oneDriveWebUrl||'').trim();}
@@ -306,6 +352,99 @@ function toast(text,kind=''){
   el.textContent=text||'';el.className='ycn-toast show'+(kind?' '+kind:'');clearTimeout(el.__t);el.__t=setTimeout(()=>el.className='ycn-toast',3200);
 }
 function postDelete(id){return Promise.resolve({ok:true,id:String(id||'')});}
+function saveOrderCaches(rows){
+  try{
+    if(typeof S!=='undefined'&&S)S.commandes=Array.isArray(rows)?rows.slice():[];
+  }catch(_){}
+  try{
+    const raw=localStorage.getItem(CACHE_KEYS[0]),d=raw?JSON.parse(raw):{};
+    d.orders=Array.isArray(rows)?rows.slice():[];
+    d.documents=Array.isArray(d.documents)?d.documents:[];
+    d.savedAt=Date.now();
+    localStorage.setItem(CACHE_KEYS[0],JSON.stringify(d));
+  }catch(_){}
+  try{
+    const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+    if(raw){
+      const d=JSON.parse(raw);
+      if(d&&typeof d==='object'){d.commandes=Array.isArray(rows)?rows.slice():[];localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(d));}
+    }
+  }catch(_){}
+}
+async function persistOrder(order){
+  if(!order?.id)throw new Error('Commande introuvable');
+  const rows=(typeof S!=='undefined'&&S&&Array.isArray(S.commandes)?S.commandes.slice():(readState().orders||[]).slice());
+  const idx=rows.findIndex(o=>String(o?.id||'')===String(order.id));
+  if(idx<0)throw new Error('Commande introuvable');
+  rows[idx]={...rows[idx],...order};
+  saveOrderCaches(rows);
+  try{window.YayaCommandesNativeEmbed?.render();}catch(_){}
+  if(typeof window.apiPost!=='function')throw new Error('API Yaya indisponible');
+  window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
+  try{
+    const ok=await window.apiPost('setCommandes',rows);
+    if(!ok)throw new Error('Enregistrement des pièces refusé');
+    window.__yayaLastWriteAt=Date.now();
+    try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['commandes'],source:'pieces'}}));}catch(_){}
+    return rows[idx];
+  }finally{
+    window.__yayaWriteInFlight=Math.max(0,(Number(window.__yayaWriteInFlight)||1)-1);
+  }
+}
+function fileBase64(file){
+  return new Promise((resolve,reject)=>{
+    const r=new FileReader();
+    r.onload=()=>resolve(String(r.result||'').split(',').pop()||'');
+    r.onerror=()=>reject(new Error('Lecture du fichier impossible'));
+    r.readAsDataURL(file);
+  });
+}
+function yayaPieceApiUrl(){
+  try{return (typeof API==='string'&&API)?API:'';}catch(_){return '';}
+}
+async function uploadPieceFile(file){
+  if(!file)throw new Error('Fichier absent');
+  if(Number(file.size||0)>PIECE_MAX_BYTES)throw new Error(file.name+' dépasse 8 Mo');
+  const api=yayaPieceApiUrl();if(!api)throw new Error('API Yaya indisponible');
+  const base64=await fileBase64(file);
+  const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+  const timer=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(_){ }},60000):0;
+  try{
+    const options={method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'application/octet-stream',base64}})};
+    if(ctrl)options.signal=ctrl.signal;
+    const r=await fetch(api,options);
+    const j=await r.json();
+    if(!j||j.ok!==true)throw new Error(j?.error||'Import impossible');
+    const url=String(j?.data?.lienDrive||j?.data?.lien||'').trim();
+    if(!url)throw new Error('Pièce non archivée');
+    return {id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),name:String(file.name||'Pièce'),url};
+  }finally{if(timer)clearTimeout(timer);}
+}
+async function addFilesToOrder(id,files){
+  const order=orderById(id);if(!order)throw new Error('Commande introuvable');
+  const selected=Array.from(files||[]).filter(Boolean);if(!selected.length)return;
+  const uploaded=[];
+  for(let i=0;i<selected.length;i++){
+    toast('Import '+(i+1)+' / '+selected.length+' : '+selected[i].name);
+    uploaded.push(await uploadPieceFile(selected[i]));
+  }
+  const meta=parsePieceMeta(order),extras=meta.pieces.slice();
+  const patch={...order};
+  let start=0;
+  const existingPrimary=String(order?.lien||'').trim()&&String(order?.pieceNom||order?.piece_nom||'').trim();
+  if(!existingPrimary&&uploaded.length){
+    const genericUrl=String(orderUrl(order)||'').trim();
+    if(genericUrl&&!String(order?.lienUrl||order?.lien_url||'').trim())patch.lienUrl=genericUrl;
+    patch.lien=uploaded[0].url;
+    patch.pieceNom=uploaded[0].name;
+    start=1;
+  }
+  for(let i=start;i<uploaded.length;i++)extras.push(uploaded[i]);
+  patch.pieceEmpreinte=encodePieceMeta(order,extras);
+  await persistOrder(patch);
+  toast(uploaded.length+' pièce(s) ajoutée(s)','ok');
+}
+
 
 function injectStyle(){
   if(document.getElementById('ycn-line-v4-style'))return;
@@ -349,8 +488,10 @@ function injectStyle(){
     #${MODAL_ID} .v4-drive-nav button{width:29px;height:27px;border:0;border-radius:14px;background:#fff;color:#162d49;font-size:18px;font-weight:900;line-height:1;cursor:pointer}
     #${MODAL_ID} .v4-drive-nav button:disabled{opacity:.35}
     #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-head-actions{display:flex;align-items:center;gap:9px}
-    #${MODAL_ID} .v4-edit,#${MODAL_ID} .v4-download{border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
+    #${MODAL_ID} .v4-edit,#${MODAL_ID} .v4-download,#${MODAL_ID} .v4-add{border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
     #${MODAL_ID} .v4-download{border-color:#b9dfc5;background:#eef9f1;color:#17653a}
+    #${MODAL_ID} .v4-add{border-color:#9fc8b1;background:#eff9f2;color:#17653a}
+    #${MODAL_ID} .v4-add:disabled{opacity:.55;cursor:default}
     #${MODAL_ID} .v4-edit:hover{background:#e2f0fd;border-color:#7eacd8}
     #${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
     @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{padding:9px!important}.yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}}
@@ -360,9 +501,19 @@ function injectStyle(){
 function ensureModal(){
   let m=document.getElementById(MODAL_ID);if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-head-actions"><input type="file" class="v4-file" multiple accept="application/pdf,image/*,.pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.txt,.heic,.heif" hidden><button type="button" class="v4-add">+ Ajouter une pièce</button><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);
   m.querySelector('.v4-close').onclick=closeModal;
+  const picker=m.querySelector('.v4-file');
+  const addBtn=m.querySelector('.v4-add');
+  addBtn.onclick=function(e){e.preventDefault();e.stopPropagation();if(!currentOrderId)return;picker.value='';picker.click();};
+  picker.onchange=async function(){
+    const files=Array.from(picker.files||[]);if(!files.length)return;
+    addBtn.disabled=true;const old=addBtn.textContent;addBtn.textContent='Import…';
+    try{await addFilesToOrder(currentOrderId,files);renderModal();}
+    catch(err){toast('Échec ajout pièce : '+String(err?.message||err),'err');}
+    finally{addBtn.disabled=false;addBtn.textContent=old;picker.value='';}
+  };
   m.querySelector('.v4-download').onclick=function(e){
     e.preventDefault();e.stopPropagation();
     const url=String(m.dataset.yayaDownloadUrl||'').trim();
@@ -409,7 +560,7 @@ function renderModal(){
     const wrap=document.createElement('span');wrap.className='v4-piece';
     const view=document.createElement('button');view.type='button';view.className='v4-view'+(i===currentPieceIndex?' on':'');view.textContent='Pièce '+(i+1);view.title=String(d?.nom_fichier||d?.type||('Pièce '+(i+1)));view.onclick=()=>{currentPieceIndex=i;renderModal();};
     wrap.append(view);
-    if(!d?.__yayaOrderAttachment){const del=document.createElement('button');del.type='button';del.className='v4-del';del.textContent='×';del.title='Supprimer cette pièce';del.onclick=()=>deletePiece(d);wrap.append(del);}
+    const del=document.createElement('button');del.type='button';del.className='v4-del';del.textContent='×';del.title='Supprimer cette pièce';del.setAttribute('aria-label','Supprimer cette pièce');del.onclick=()=>deletePiece(d);wrap.append(del);
     tabs.appendChild(wrap);
   });
   const d=list[currentPieceIndex],url=docUrl(d),title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));
@@ -427,14 +578,47 @@ function renderModal(){
   renderExternalInStage(stage,url,title);
 }
 function openModal(id){currentOrderId=String(id||'');currentPieceIndex=0;const m=ensureModal();renderModal();m.classList.add('show');m.setAttribute('aria-hidden','false');}
-function deletePiece(d){
+async function deletePiece(d){
   if(!d?.id||!confirm('Supprimer cette pièce ?'))return;
-  const state=readState(),next=(state.documents||[]).filter(x=>String(x?.id||'')!==String(d.id));writeDocuments(next);renderModal();
-  try{window.YayaCommandesNativeEmbed?.render();}catch(_){ }
-  schedule();toast('Pièce supprimée localement — serveur en arrière-plan');
-  postDelete(d.id).then(()=>toast('Pièce supprimée','ok')).catch(()=>toast('Suppression serveur à contrôler','err'));
+  try{
+    if(d.__yayaOrderAttachment){
+      const order=orderById(currentOrderId);if(!order)throw new Error('Commande introuvable');
+      const meta=parsePieceMeta(order),extras=meta.pieces.slice(),patch={...order};
+      if(d.__yayaPieceKind==='primary'){
+        if(extras.length){
+          const promoted=extras.shift();
+          patch.lien=promoted.url;patch.pieceNom=promoted.name;
+        }else{
+          patch.lien='';patch.pieceNom='';
+        }
+      }else{
+        const pieceId=String(d.__yayaPieceId||'');
+        const idx=extras.findIndex(p=>String(p.id||'')===pieceId);
+        if(idx>=0)extras.splice(idx,1);
+      }
+      patch.pieceEmpreinte=encodePieceMeta(order,extras);
+      await persistOrder(patch);
+      const count=docsFor(currentOrderId).length;
+      currentPieceIndex=Math.max(0,Math.min(currentPieceIndex,count-1));
+      renderModal();schedule();toast('Pièce supprimée','ok');
+      return;
+    }
+    const state=readState(),next=(state.documents||[]).filter(x=>String(x?.id||'')!==String(d.id));writeDocuments(next);renderModal();
+    try{window.YayaCommandesNativeEmbed?.render();}catch(_){ }
+    schedule();toast('Pièce supprimée');
+  }catch(err){toast('Suppression impossible : '+String(err?.message||err),'err');}
 }
 
+
+window.yayaCommandeOpenPieces=function(id){openModal(String(id||''));};
+window.yayaCommandeAddPieces=function(id){
+  const key=String(id||'');if(!key){toast('Commande non enregistrée','err');return;}
+  currentOrderId=key;
+  const m=ensureModal(),picker=m.querySelector('.v4-file');
+  if(!picker)return;
+  picker.value='';
+  picker.click();
+};
 
 function fitStatusWidth(sel){
   if(!sel)return;
@@ -529,5 +713,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.5-native-action-bar';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.23-multi-pieces';
 })();
