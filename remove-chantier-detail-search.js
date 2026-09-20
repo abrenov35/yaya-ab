@@ -3,14 +3,12 @@
 if(window.__YAYA_REMOVE_DETAIL_SEARCH_V1)return;
 window.__YAYA_REMOVE_DETAIL_SEARCH_V1=true;
 
-const id='yaya-remove-detail-search-v2';
+const id='yaya-remove-detail-search-v1';
 if(!document.getElementById(id)){
   const style=document.createElement('style');
   style.id=id;
   style.textContent=`
-    .yaya-detail-search-wrap,
-    #pane-chantiers .yaya-detail-search-input,
-    #pane-chantiers .yaya-detail-search-clear{
+    #pane-chantiers .yaya-detail-search-wrap{
       display:none!important;
     }
   `;
@@ -18,7 +16,7 @@ if(!document.getElementById(id)){
 }
 
 function remove(){
-  document.querySelectorAll('.yaya-detail-search-wrap').forEach(function(el){el.remove();});
+  document.querySelectorAll('#pane-chantiers .yaya-detail-search-wrap').forEach(function(el){el.remove();});
 }
 
 remove();
