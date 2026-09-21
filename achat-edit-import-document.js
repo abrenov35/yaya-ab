@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditImportDocumentV4)return;
+  if(window.__yayaAchatEditImportDocumentV5)return;
+  window.__yayaAchatEditImportDocumentV5=true;
   window.__yayaAchatEditImportDocumentV4=true;
   window.__yayaAchatEditImportDocumentV3=true;
 
@@ -255,6 +256,68 @@
     };
   }
 
+  function openFreshImportPicker(modal,btn){
+    if(!modal||!btn)return;
+    const id=modalId(modal);
+    if(!id){
+      toastSafe('Achat introuvable',true);
+      return;
+    }
+
+    resetStaleEditUploadLock(modal);
+    btn.disabled=false;
+    btn.removeAttribute('disabled');
+    btn.removeAttribute('aria-disabled');
+    btn.removeAttribute('aria-busy');
+    btn.style.removeProperty('pointer-events');
+    btn.style.removeProperty('opacity');
+    btn.style.removeProperty('cursor');
+
+    const input=document.createElement('input');
+    input.type='file';
+    input.accept='application/pdf,image/*';
+    input.className='yaya-achat-edit-import-input yaya-achat-edit-import-input-fresh';
+    input.style.position='fixed';
+    input.style.left='-10000px';
+    input.style.top='0';
+    input.style.width='1px';
+    input.style.height='1px';
+    input.style.opacity='0';
+    document.body.appendChild(input);
+
+    bindImportInput(modal,btn,input,id);
+
+    const oldChange=input.onchange;
+    input.onchange=function(){
+      try{
+        if(typeof oldChange==='function')oldChange.call(input);
+      }finally{
+        setTimeout(function(){try{input.remove();}catch(_){}},0);
+      }
+    };
+
+    try{
+      input.click();
+    }catch(err){
+      try{input.remove();}catch(_){}
+      toastSafe('Ouverture du fichier impossible',true);
+    }
+  }
+
+  // Secours prioritaire : intercepte le clic avant les autres correctifs de modale.
+  // Le sélecteur est recréé à chaque clic pour éviter toute référence DOM périmée.
+  window.addEventListener('click',function(e){
+    const target=e.target;
+    const btn=target&&target.closest?target.closest('.yaya-achat-edit-import-doc'):null;
+    if(!btn)return;
+    const modal=btn.closest&&btn.closest('.achat-edit-modal,.yaya-finance-edit-modal,.modal');
+    if(!modal||!isEditModal(modal))return;
+    e.preventDefault();
+    e.stopPropagation();
+    if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
+    openFreshImportPicker(modal,btn);
+  },true);
+
   function enhance(modal){
     if(!isEditModal(modal))return;
     resetStaleEditUploadLock(modal);
@@ -318,9 +381,10 @@
     new MutationObserver(function(){
       if(raf)return;
       raf=requestAnimationFrame(function(){raf=0;apply();});
-    }).observe(root,{childList:true,subtree:true});
+    }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','aria-busy','class','style']});
   }
 
   setTimeout(apply,100);
   setTimeout(apply,500);
+  setTimeout(apply,1200);
 })();
