@@ -130,11 +130,11 @@
 
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
         display:grid!important;
-        grid-template-columns:minmax(150px,.85fr) minmax(240px,1.55fr) 94px 94px!important;
+        grid-template-columns:minmax(180px,1fr) minmax(360px,2fr) 100px 100px!important;
         align-items:center!important;
-        gap:14px!important;
-        min-height:42px!important;
-        padding:6px 10px!important;
+        gap:16px!important;
+        min-height:54px!important;
+        padding:8px 12px!important;
         border-bottom:1px solid #e7ecf2!important;
         background:#fff!important;
         cursor:pointer!important;
@@ -146,7 +146,7 @@
         min-width:0!important;
         overflow:hidden!important;
         color:#17324f!important;
-        font-size:12px!important;
+        font-size:12.5px!important;
         font-weight:850!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row > strong > small{
@@ -164,21 +164,23 @@
         grid-column:2!important;
         grid-row:1!important;
         min-width:0!important;
-        padding:2px 16px!important;
+        padding:5px 20px!important;
         border-left:1px solid #e1e8f0!important;
-        overflow:hidden!important;
-        text-overflow:ellipsis!important;
-        white-space:nowrap!important;
-        color:#53677c!important;
-        font-size:11.5px!important;
-        font-weight:500!important;
+        overflow:visible!important;
+        text-overflow:clip!important;
+        white-space:normal!important;
+        overflow-wrap:anywhere!important;
+        color:#334e68!important;
+        font-size:13px!important;
+        line-height:1.35!important;
+        font-weight:600!important;
         text-align:center!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours{
         grid-column:3!important;
         grid-row:1!important;
         color:#6d7e90!important;
-        font-size:10.5px!important;
+        font-size:11px!important;
         font-weight:600!important;
         text-align:left!important;
         white-space:nowrap!important;
@@ -189,7 +191,7 @@
         grid-column:4!important;
         grid-row:1!important;
         color:#8793a1!important;
-        font-size:10.5px!important;
+        font-size:11px!important;
         font-weight:500!important;
         text-align:right!important;
         white-space:nowrap!important;
@@ -327,6 +329,32 @@
             secondary.className='yaya-document-field-2';
             primary.insertAdjacentElement('afterend',secondary);
           }
+        }
+        const type=row.querySelector(':scope > .yaya-detail-charge-hours');
+        const date=row.querySelector(':scope > .yaya-detail-charge-cost');
+        const mobile=window.matchMedia('(max-width:760px) and (orientation:portrait)').matches;
+
+        row.style.setProperty('display','grid','important');
+        row.style.setProperty(
+          'grid-template-columns',
+          mobile ? 'minmax(0,1fr) auto auto' : 'minmax(180px,28%) minmax(360px,1fr) 100px 100px',
+          'important'
+        );
+        primary.style.setProperty('grid-column','1','important');
+        primary.style.setProperty('grid-row','1','important');
+        secondary.style.setProperty('grid-column',mobile ? '1 / -1' : '2','important');
+        secondary.style.setProperty('grid-row',mobile ? '2' : '1','important');
+        secondary.style.setProperty('white-space',mobile ? 'normal' : 'normal','important');
+        secondary.style.setProperty('overflow','visible','important');
+        secondary.style.setProperty('text-overflow','clip','important');
+        secondary.style.setProperty('text-align','center','important');
+        if(type){
+          type.style.setProperty('grid-column',mobile ? '2' : '3','important');
+          type.style.setProperty('grid-row','1','important');
+        }
+        if(date){
+          date.style.setProperty('grid-column',mobile ? '3' : '4','important');
+          date.style.setProperty('grid-row','1','important');
         }
       });
     });
