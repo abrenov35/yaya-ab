@@ -1,6 +1,7 @@
 (function(){
 'use strict';
-if(window.__yayaModalTypingFastV3)return;
+if(window.__yayaModalTypingFastV4)return;
+window.__yayaModalTypingFastV4=true;
 window.__yayaModalTypingFastV3=true;
 window.__yayaModalTypingFastV2=true;
 window.__yayaModalTypingFastV1=true;
@@ -28,14 +29,18 @@ body #ycnEditModal .ycn-dialog,
   contain:layout paint!important;
 }
 body.yaya-fast-finance-typing > .hdr,
-body.yaya-fast-finance-typing > .body{
+body.yaya-fast-finance-typing > .body,
+body.yaya-fast-mail-subject-typing > .hdr,
+body.yaya-fast-mail-subject-typing > .body{
   visibility:hidden!important;
   pointer-events:none!important;
 }
-body.yaya-fast-finance-typing #modalRoot .overlay{
+body.yaya-fast-finance-typing #modalRoot .overlay,
+body.yaya-fast-mail-subject-typing #modalRoot .yaya-mail-subject-overlay{
   background:#eef2f6!important;
 }
-body.yaya-fast-finance-typing #modalRoot .modal{
+body.yaya-fast-finance-typing #modalRoot .modal,
+body.yaya-fast-mail-subject-typing #modalRoot .yaya-mail-subject-modal{
   box-shadow:0 12px 32px rgba(15,23,42,.18)!important;
   isolation:isolate!important;
 }
@@ -61,10 +66,23 @@ function isFinanceEditOpen(){
   const modal=root.querySelector('.modal');
   return !!(modal&&modal.querySelector('#eaFour')&&modal.querySelector('#eaDes')&&modal.querySelector('#eaMt'));
 }
+function isMailSubjectEditOpen(){
+  const input=document.getElementById('edDocTitre');
+  return !!(input&&input.closest('#modalRoot .yaya-mail-subject-modal'));
+}
 function syncFastMode(){
-  const active=isFinanceEditOpen();
-  document.body.classList.toggle('yaya-fast-finance-typing',active);
-  if(!active)return;
+  const financeActive=isFinanceEditOpen();
+  const mailSubjectActive=isMailSubjectEditOpen();
+  document.body.classList.toggle('yaya-fast-finance-typing',financeActive);
+  document.body.classList.toggle('yaya-fast-mail-subject-typing',mailSubjectActive);
+  if(mailSubjectActive){
+    const subject=document.getElementById('edDocTitre');
+    subject.spellcheck=false;
+    subject.autocomplete='off';
+    subject.setAttribute('autocorrect','off');
+    subject.setAttribute('autocapitalize','off');
+  }
+  if(!financeActive)return;
   document.querySelectorAll('#modalRoot #eaFour,#modalRoot #eaDes').forEach(function(input){
     input.spellcheck=false;
     input.autocomplete='off';
