@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaMailAttachmentsButtonV8)return;
-  window.__yayaMailAttachmentsButtonV8=true;
+  if(window.__yayaMailAttachmentsButtonV9)return;
+  window.__yayaMailAttachmentsButtonV9=true;
   window.__yayaMailAttachmentsButtonV5=true;
   window.__yayaMailAttachmentsButtonV4=true;
   window.__yayaMailAttachmentsButtonV2=true;
@@ -274,6 +274,8 @@
     closeList();
     openPiece(list[0],list);
   }
+
+  window.yayaOpenMailAttachments=openList;
 
   function injectModalButton(){
     const modal=document.querySelector('#modalRoot .yaya-mail-body-modal,#modalRoot .message-modal,#modalRoot .yaya-mail-fullscreen-modal');
