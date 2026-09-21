@@ -20,4 +20,20 @@
 (function(){'use strict';if(window.__yayaDocumentsMailListRestoreLoaderV1)return;window.__yayaDocumentsMailListRestoreLoaderV1=true;const s=document.createElement('script');s.src='documents-mail-list-restore.js?v=mailrestore-1';s.async=false;document.head.appendChild(s);})();
 (function(){'use strict';if(window.__yayaMailEditBackgroundSaveLoaderV3)return;window.__yayaMailEditBackgroundSaveLoaderV3=true;const s=document.createElement('script');s.src='mail-edit-background-save-fix.js?v=mailbg-3';s.async=false;document.head.appendChild(s);})();
 (function(){'use strict';if(window.__yayaMailModalButtonsAlignLoaderV4)return;window.__yayaMailModalButtonsAlignLoaderV4=true;const s=document.createElement('script');s.src='mail-modal-buttons-align.js?v=align-4';s.async=false;document.head.appendChild(s);})();
+(function(){
+  'use strict';
+  if(window.__yayaMailSeparateStorageLoaderV1)return;
+  window.__yayaMailSeparateStorageLoaderV1=true;
+  const adapter=document.createElement('script');
+  adapter.src='mail-storage-adapter-v1.js?v=mailstore-2';
+  adapter.async=false;
+  adapter.onload=function(){
+    const edit=document.createElement('script');
+    edit.src='mail-storage-edit-v1.js?v=mailstoreedit-2';
+    edit.async=false;
+    document.head.appendChild(edit);
+  };
+  document.head.appendChild(adapter);
+})();
+
 (function(){'use strict';if(window.__yayaGlobalModalActionsLoaderV1)return;window.__yayaGlobalModalActionsLoaderV1=true;const s=document.createElement('script');s.src='modal-actions-download-v1.js?v=2';s.async=false;s.onerror=function(){console.error('Yaya : correctif global modales/PDF non chargé');};document.head.appendChild(s);})();
