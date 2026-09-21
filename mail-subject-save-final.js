@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaMailSubjectSaveFinalV2)return;
+  if(window.__yayaMailSubjectSaveFinalV3)return;
+  window.__yayaMailSubjectSaveFinalV3=true;
   window.__yayaMailSubjectSaveFinalV2=true;
   window.__yayaMailSubjectSaveFinalV1=true;
 
@@ -36,10 +37,22 @@
     }catch(e){}
   }
   async function freshDocuments(){
-    if(typeof apiGet!=='function')throw new Error('Lecture serveur indisponible');
-    const data=await apiGet(true);
-    if(!data||!Array.isArray(data.documents))throw new Error('Documents serveur indisponibles');
-    return data.documents.map(row=>Object.assign({},row));
+    let api='';
+    try{api=(typeof API==='string'&&API)?API:'';}catch(e){}
+    if(!api)throw new Error('Lecture serveur indisponible');
+    const sep=api.includes('?')?'&':'?';
+    const ctrl=new AbortController();
+    const timer=setTimeout(()=>ctrl.abort(),9000);
+    try{
+      const response=await fetch(api+sep+'tabs=documents&_yaya_mail_subject='+Date.now(),{
+        method:'GET',cache:'no-store',signal:ctrl.signal
+      });
+      const raw=await response.text();
+      const result=JSON.parse(raw);
+      const rows=result&&result.ok&&result.data&&result.data.documents;
+      if(!Array.isArray(rows))throw new Error('Documents serveur indisponibles');
+      return rows.map(row=>Object.assign({},row));
+    }finally{clearTimeout(timer);}
   }
   function replaceDocuments(rows){
     if(typeof S==='undefined'||!S)throw new Error('État Yaya indisponible');
@@ -68,6 +81,9 @@
     const subject=text(input.value);
     if(!subject){toastSafe('Indique un objet',true);input.focus();return false;}
 
+    const button=document.querySelector('#modalRoot .yaya-mail-subject-save');
+    const buttonLabel=button&&button.textContent;
+    if(button){button.disabled=true;button.textContent='Enregistrement…';}
     toastSafe('Enregistrement de l’objet…');
 
     saving=true;
@@ -92,7 +108,10 @@
       console.error('Yaya — objet du mail non enregistré :',error);
       toastSafe('Objet non enregistré — aucune autre donnée modifiée',true);
       return false;
-    }finally{saving=false;}
+    }finally{
+      saving=false;
+      if(button&&button.isConnected){button.disabled=false;button.textContent=buttonLabel||'Enregistrer';}
+    }
   };
 
   /* Empêche les anciens installateurs différés de remplacer ce gestionnaire. */
