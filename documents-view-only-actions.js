@@ -297,7 +297,7 @@
 
   function renameTitle(){
     document.querySelectorAll('#pane-chantiers .yaya-detail-section-action-row[data-section="documents"] .yaya-detail-section-action-title').forEach(el=>{
-      if(el.textContent!=='DOCUMENTS & MAILS')el.textContent='DOCUMENTS & MAILS';
+      if(el.textContent!=='DOC & MAILS')el.textContent='DOC & MAILS';
     });
   }
 
