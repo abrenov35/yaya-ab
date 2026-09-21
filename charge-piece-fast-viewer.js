@@ -1,10 +1,10 @@
 (function(){
 'use strict';
-if(window.__yayaChargePieceFastViewerV3)return;
-window.__yayaChargePieceFastViewerV3=true;
+if(window.__yayaChargePieceFastViewerV4)return;
+window.__yayaChargePieceFastViewerV4=true;
 
 const VIEWER_ID='yayaChargePieceFastViewer';
-const STYLE_ID='yaya-charge-piece-fast-viewer-v3';
+const STYLE_ID='yaya-charge-piece-fast-viewer-v4';
 
 function txt(v){return String(v==null?'':v).trim();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -141,25 +141,58 @@ function toastSafe(message,isError){
 }
 
 async function detachAchatPiece(achatId){
+  achatId=txt(achatId);
   const achat=achatById(achatId);
   if(!achat)throw new Error('Achat introuvable');
+
+  const ancienLien=txt(achat.lien);
   achat.lien='';
   persistAchatsCache();
-
-  if(typeof window.__yayaFinanceQueueCurrent==='function'){
-    window.__yayaFinanceQueueCurrent({upsertIds:[txt(achatId)]});
-    if(typeof window.__yayaFinanceFlushPending==='function'){
-      setTimeout(function(){window.__yayaFinanceFlushPending();},0);
-    }
-  }else if(typeof apiPost==='function'){
-    const ok=await apiPost('addAchat',achat);
-    if(ok===false)throw new Error('Enregistrement refusé');
-  }else{
-    throw new Error('Synchronisation Yaya indisponible');
-  }
-
   try{if(typeof render==='function')render();}catch(e){}
-  return true;
+
+  try{
+    if(typeof window.__yayaFinanceQueueCurrent==='function'){
+      window.__yayaFinanceQueueCurrent({upsertIds:[achatId]});
+      if(typeof window.__yayaFinanceFlushPending==='function'){
+        await window.__yayaFinanceFlushPending();
+      }
+    }else if(typeof apiPost==='function'){
+      const ok=await apiPost('addAchat',achat);
+      if(ok===false)throw new Error('Enregistrement refusé');
+    }else{
+      throw new Error('Synchronisation Yaya indisponible');
+    }
+
+    // Relire le serveur avant d'afficher "supprimée" afin d'éviter qu'un
+    // rafraîchissement central ne réinjecte temporairement l'ancien lien.
+    if(typeof window.apiGet==='function'){
+      const fresh=await window.apiGet(true);
+      const achats=fresh&&Array.isArray(fresh.achats)?fresh.achats:null;
+      if(achats){
+        const saved=achats.find(function(a){return txt(a&&a.id)===achatId;});
+        if(!saved)throw new Error('Achat absent après synchronisation');
+        if(txt(saved.lien))throw new Error('Le lien est encore présent dans le Sheet');
+        try{if(typeof S!=='undefined'&&S)S.achats=achats;}catch(e){}
+        persistAchatsCache();
+      }
+    }
+
+    try{if(typeof render==='function')render();}catch(e){}
+    try{
+      window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{
+        detail:{tabs:['achats'],source:'achat-piece-delete'}
+      }));
+    }catch(e){}
+    return true;
+  }catch(err){
+    // Si le serveur refuse réellement la suppression, remettre l'état local
+    // pour ne pas afficher un faux succès.
+    const current=achatById(achatId);
+    if(current&&!txt(current.lien))current.lien=ancienLien;
+    persistAchatsCache();
+    try{if(typeof render==='function')render();}catch(e){}
+    throw err;
+  }
 }
 
 function showDetachConfirm(wrap,achatId){
