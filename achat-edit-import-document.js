@@ -1,7 +1,6 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditImportDocumentV6)return;
-  window.__yayaAchatEditImportDocumentV6=true;
+  if(window.__yayaAchatEditImportDocumentV5)return;
   window.__yayaAchatEditImportDocumentV5=true;
   window.__yayaAchatEditImportDocumentV4=true;
   window.__yayaAchatEditImportDocumentV3=true;
@@ -141,14 +140,6 @@
       }
       #modalRoot .achat-edit-modal .yaya-finance-edit-actions{
         grid-template-columns:repeat(auto-fit,minmax(125px,1fr))!important;
-      }
-      #modalRoot .achat-edit-modal .yaya-achat-import-native-wrap{
-        position:relative!important;
-        display:flex!important;
-        min-width:0!important;
-      }
-      #modalRoot .achat-edit-modal .yaya-achat-import-native-wrap .yaya-achat-edit-import-doc{
-        width:100%!important;
       }
       @media(max-width:640px){
         #modalRoot .achat-edit-modal .yaya-finance-edit-actions{
@@ -327,70 +318,6 @@
     openFreshImportPicker(modal,btn);
   },true);
 
-  function installNativePickerOverlay(modal,btn,input,id){
-    if(!modal||!btn||!input||!id)return;
-
-    let wrap=btn.parentElement;
-    if(!wrap||!wrap.classList.contains('yaya-achat-import-native-wrap')){
-      wrap=document.createElement('span');
-      wrap.className='yaya-achat-import-native-wrap';
-      wrap.style.position='relative';
-      wrap.style.display='inline-flex';
-      wrap.style.flex='1 1 0';
-      wrap.style.minWidth='0';
-
-      btn.parentElement.insertBefore(wrap,btn);
-      wrap.appendChild(btn);
-
-      btn.style.width='100%';
-      btn.style.height='100%';
-      btn.style.margin='0';
-    }
-
-    let nativeInput=wrap.querySelector('.yaya-achat-edit-native-picker');
-    if(!nativeInput){
-      nativeInput=document.createElement('input');
-      nativeInput.type='file';
-      nativeInput.accept='application/pdf,image/*';
-      nativeInput.className='yaya-achat-edit-native-picker';
-      nativeInput.setAttribute('aria-label','Importer document');
-      Object.assign(nativeInput.style,{
-        position:'absolute',
-        inset:'0',
-        width:'100%',
-        height:'100%',
-        opacity:'0',
-        cursor:'pointer',
-        zIndex:'10'
-      });
-      wrap.appendChild(nativeInput);
-    }
-
-    nativeInput.onchange=function(){
-      const file=nativeInput.files&&nativeInput.files[0];
-      nativeInput.value='';
-      if(!file)return;
-      if(file.size>MAX_FILE_SIZE){
-        toastSafe('Fichier trop lourd (8 Mo max)',true);
-        return;
-      }
-
-      const row=findRow(id);
-      if(!row){
-        toastSafe('Achat introuvable',true);
-        return;
-      }
-
-      applyFormToRow(modal,row);
-      queueRow(id);
-      try{if(typeof render==='function')render();}catch(e){}
-
-      closeModalNow(modal);
-      toastSafe('Import du document lancé — vous pouvez continuer');
-      setTimeout(function(){importDocument(id,file);},0);
-    };
-  }
-
   function enhance(modal){
     if(!isEditModal(modal))return;
     resetStaleEditUploadLock(modal);
@@ -415,7 +342,6 @@
       }
       armImportButton(modal,existing,existingInput);
       bindImportInput(modal,existing,existingInput,id);
-      installNativePickerOverlay(modal,existing,existingInput,id);
       return;
     }
 
@@ -436,7 +362,6 @@
     bindImportInput(modal,btn,input,id);
 
     foot.insertBefore(btn,save.nextSibling);
-    installNativePickerOverlay(modal,btn,input,id);
     foot.appendChild(input);
   }
 
