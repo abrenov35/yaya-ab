@@ -1,8 +1,8 @@
 (function(){
   'use strict';
 
-  if(window.__yayaMailEditPersistV2)return;
-  window.__yayaMailEditPersistV2=true;
+  if(window.__yayaMailEditPersistV3)return;
+  window.__yayaMailEditPersistV3=true;
 
   const originalSave=typeof window.saveDocumentEdit==='function'?window.saveDocumentEdit:null;
   const PENDING_KEY='YAYA_MAIL_EDIT_PENDING_V2';
@@ -49,13 +49,33 @@
     row.type=String(edit.type||'MAIL');
     row.sujet=String(edit.sender||'').trim();
     row.nomMail=row.sujet;
-    row.objetMail=String(edit.object||'').trim();
+    const object=String(edit.object||'').trim();
+    // Les différentes vues historiques de Yaya ne lisent pas toutes le même
+    // champ. On les maintient ensemble pour que le nouvel objet soit visible
+    // immédiatement et reste correct après un rechargement serveur.
+    row.objetMail=object;
+    row.mailSubject=object;
+    row.emailSubject=object;
+    row.subject=object;
+    row.objet=object;
     row.origineMail='MAIL';
     if(edit.body){
       row.contenuMail=String(edit.body);
       row.titre=durableTitle(edit.object,edit.body);
     }else row.titre=String(edit.object||'').trim();
     return row;
+  }
+
+  function refreshSubjectInDom(id,subject){
+    const wanted=String(id);
+    const value=text(subject)||'Objet non renseigné';
+    document.querySelectorAll('[data-mail-id]').forEach(function(el){
+      if(String(el.getAttribute('data-mail-id')||'')!==wanted)return;
+      const row=el.closest('.yaya-detail-mail-row,.yaya-doc-mail-row,.message-ligne,.ligR');
+      if(!row)return;
+      const label=row.querySelector('.yaya-mail-subject,.yaya-doc-mail-subject');
+      if(label){label.textContent=value;label.title=value;}
+    });
   }
 
   function cacheDocuments(rows){
@@ -128,6 +148,7 @@
     setPending(id,edit);
     applyEdit(getDoc(id),edit);
     cacheDocuments(docs());
+    refreshSubjectInDom(id,edit.object);
     try{if(typeof render==='function')render();}catch(e){}
 
     window.__yayaWriteInFlight=(Number(window.__yayaWriteInFlight)||0)+1;
@@ -162,6 +183,7 @@
       if(matches(check,edit)){
         clearPending(id);
         replaceLocal(verified);
+        refreshSubjectInDom(id,edit.object);
         try{if(typeof render==='function')render();}catch(e){}
         try{if(typeof toast==='function')toast('Mail modifié ✓');}catch(e){}
         try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['documents'],source:'mail-edit-persist'}}));}catch(e){}
@@ -171,11 +193,14 @@
       // Ne jamais laisser une synchro écraser visuellement la modification
       // tant que le serveur n'a pas confirmé la nouvelle valeur.
       replaceLocal(verified);
+      applyPendingLocally();
+      refreshSubjectInDom(id,edit.object);
       try{if(typeof render==='function')render();}catch(e){}
       try{if(typeof toast==='function')toast('Mail modifié — synchronisation à confirmer',true);}catch(e){}
       return false;
     }catch(e){
       applyPendingLocally();
+      refreshSubjectInDom(id,edit.object);
       try{if(typeof render==='function')render();}catch(err){}
       try{if(typeof toast==='function')toast('Modification conservée localement — synchronisation en attente',true);}catch(err){}
       console.warn('Yaya mail edit persist:',e);
