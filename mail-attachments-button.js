@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaMailAttachmentsButtonV5)return;
+  if(window.__yayaMailAttachmentsButtonV7)return;
+  window.__yayaMailAttachmentsButtonV7=true;
   window.__yayaMailAttachmentsButtonV5=true;
   window.__yayaMailAttachmentsButtonV4=true;
   window.__yayaMailAttachmentsButtonV2=true;
