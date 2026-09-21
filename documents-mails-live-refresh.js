@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierTabsLiveRefreshV9)return;
+  if(window.__yayaChantierTabsLiveRefreshV10)return;
+  window.__yayaChantierTabsLiveRefreshV10=true;
   window.__yayaChantierTabsLiveRefreshV9=true;
   window.__yayaChantierTabsLiveRefreshV8=true;
   window.__yayaChantierTabsLiveRefreshV7=true;
@@ -12,6 +13,8 @@
   let inFlight=null;
   let lastRefresh=0;
   let lastFocus='';
+  let documentsInFlight=null;
+  let lastDocumentsSignature='';
 
   function apiEndpoint(){
     try{return (typeof API==='string'&&API)?API.trim():'';}catch(e){return '';}
@@ -157,6 +160,81 @@
     });
   }
 
+  function documentsSignature(rows){
+    return (Array.isArray(rows)?rows:[]).map(function(d){
+      return [
+        String(d&&d.id||''),
+        String(d&&d.chantierId||''),
+        String(d&&d.type||''),
+        String(d&&d.date||''),
+        String(d&&d.objetMail||d&&d.objet||''),
+        String(d&&d.lien||'')
+      ].join('|');
+    }).join('§');
+  }
+
+  async function fetchDocumentsOnly(){
+    const api=apiEndpoint();
+    if(!api)throw new Error('API Yaya indisponible');
+    const sep=api.includes('?')?'&':'?';
+    const ctrl=new AbortController();
+    const timer=setTimeout(function(){ctrl.abort();},7000);
+    try{
+      const url=api+sep+'tabs=documents&_yaya_mail_live='+Date.now();
+      const r=await fetch(url,{method:'GET',cache:'no-store',signal:ctrl.signal});
+      const txt=await r.text();
+      const j=JSON.parse(txt);
+      if(!j||j.ok!==true||!j.data||!Array.isArray(j.data.documents)){
+        throw new Error(j&&j.error||'Documents Yaya indisponibles');
+      }
+      return j.data.documents;
+    }finally{
+      clearTimeout(timer);
+    }
+  }
+
+  async function refreshDocumentsLive(){
+    if(documentsInFlight)return documentsInFlight;
+    if(document.visibilityState==='hidden'||!canRefresh())return false;
+
+    documentsInFlight=(async function(){
+      try{
+        const rows=await fetchDocumentsOnly();
+        const signature=documentsSignature(rows);
+
+        if(!lastDocumentsSignature){
+          try{
+            lastDocumentsSignature=documentsSignature(
+              typeof S!=='undefined'&&S&&Array.isArray(S.documents)?S.documents:[]
+            );
+          }catch(e){}
+        }
+
+        if(signature===lastDocumentsSignature)return true;
+
+        if(typeof S!=='undefined'&&S)S.documents=rows;
+        saveCache({documents:rows});
+        lastDocumentsSignature=signature;
+
+        try{
+          window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{
+            detail:{tabs:['documents'],source:'mail-live'}
+          }));
+        }catch(e){}
+
+        try{if(typeof render==='function')render();}catch(e){}
+        setTimeout(function(){forceDocumentsDom({documents:rows});},100);
+        setTimeout(function(){forceDocumentsDom({documents:rows});},350);
+        return true;
+      }catch(e){
+        console.warn('Yaya · actualisation mails/documents impossible :',e);
+        return false;
+      }
+    })();
+
+    try{return await documentsInFlight;}finally{documentsInFlight=null;}
+  }
+
   async function fetchShared(){
     const api=apiEndpoint();
     if(!api)throw new Error('API Yaya indisponible');
@@ -255,10 +333,27 @@
 
   window.yayaRefreshSharedNow=function(){return refreshShared(true);};
   window.yayaRefreshChantiersNow=function(){return refreshShared(true);};
-  window.yayaRefreshDocumentsNow=function(){return refreshShared(true);};
+  window.yayaRefreshDocumentsNow=function(){return refreshDocumentsLive();};
   window.yayaRefreshAchatsNow=function(){return refreshShared(true);};
   window.yayaRefreshCommandesNow=function(){return refreshShared(true);};
 
+  // Surveillance légère des mails/documents externes.
+  // Uniquement lorsque Yaya est visible et qu'aucune écriture/modale n'est active.
+  const documentsLiveTimer=setInterval(function(){
+    if(document.visibilityState!=='hidden'&&canRefresh())refreshDocumentsLive();
+  },10000);
+
+  document.addEventListener('visibilitychange',function(){
+    if(document.visibilityState==='visible'&&canRefresh()){
+      setTimeout(refreshDocumentsLive,250);
+    }
+  });
+
+  window.addEventListener('focus',function(){
+    if(canRefresh())setTimeout(refreshDocumentsLive,250);
+  });
+
   setTimeout(checkFocus,300);
   setTimeout(bootRefresh,120);
+  setTimeout(refreshDocumentsLive,1200);
 })();
