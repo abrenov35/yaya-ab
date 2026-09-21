@@ -147,6 +147,10 @@
         input.focus();
         return;
       }
+      if(typeof window.__yayaSaveMailSubject==='function'){
+        window.__yayaSaveMailSubject(id);
+        return;
+      }
       if(typeof window.saveDocumentEdit==='function'){
         window.saveDocumentEdit(id);
         return;
