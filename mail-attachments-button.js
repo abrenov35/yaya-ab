@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaMailAttachmentsButtonV7)return;
-  window.__yayaMailAttachmentsButtonV7=true;
+  if(window.__yayaMailAttachmentsButtonV8)return;
+  window.__yayaMailAttachmentsButtonV8=true;
   window.__yayaMailAttachmentsButtonV5=true;
   window.__yayaMailAttachmentsButtonV4=true;
   window.__yayaMailAttachmentsButtonV2=true;
@@ -233,6 +233,10 @@
       #pane-mails .mail-last-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS}{grid-column:4!important;grid-row:1!important}
       #pane-mails .mail-last-row:has(.${ROW_BUTTON_CLASS}) .mail-last-view{grid-column:5!important;grid-row:1!important}
 
+      #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS}{
+        grid-column:4!important;grid-row:1!important;display:inline-flex!important;visibility:visible!important;opacity:1!important;
+        justify-self:center!important;align-self:center!important;position:relative!important;z-index:5!important;
+      }
       #pane-chantiers .message-actions .${ROW_BUTTON_CLASS}{width:36px!important;min-width:36px!important;max-width:36px!important;height:26px!important;padding:0!important;font-size:10.5px!important}
       tr .${ROW_BUTTON_CLASS}{margin-left:6px!important}
 
@@ -333,13 +337,14 @@
     document.querySelectorAll(
       '#pane-chantiers .yaya-detail-mail-row,'+
       '#pane-chantiers .yaya-mail-restored-row,'+
+      '#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row,'+
       '#pane-chantiers .message-ligne,'+
       '#pane-documents .yaya-doc-mail-row,'+
       '#pane-mails .mail-last-row'
     ).forEach(add);
 
     document.querySelectorAll('[data-mail-id],[data-yaya-mail-delete],[data-yaya-mail-edit],[onclick*="voirMessageYaya"]').forEach(function(el){
-      const row=el.closest('tr,.yaya-detail-mail-row,.yaya-mail-restored-row,.message-ligne,.yaya-doc-mail-row,.mail-last-row');
+      const row=el.closest('tr,.yaya-detail-mail-row,.yaya-mail-restored-row,.yaya-detail-document-row,.message-ligne,.yaya-doc-mail-row,.mail-last-row');
       if(row)add(row);
     });
   }
