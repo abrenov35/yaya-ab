@@ -109,7 +109,7 @@
 
     // Titre de la section chantier.
     document.querySelectorAll('#pane-chantiers .yaya-detail-section-action-row[data-section="documents"] .yaya-detail-section-action-title').forEach(el=>{
-      el.textContent='DOCUMENTS & MAILS';
+      el.textContent='DOC & MAILS';
     });
   }
 
