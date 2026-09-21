@@ -76,7 +76,9 @@
 
   function mails(){
     try{
-      const list=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];
+      const list=typeof window.yayaMailRows==='function'
+        ? window.yayaMailRows()
+        : ((typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[]);
       return list.map(function(d,i){return {d:d,i:i};})
         .filter(function(x){return isMail(x.d);})
         .sort(function(a,b){return mailTime(b.d,b.i)-mailTime(a.d,a.i)||b.i-a.i;})
