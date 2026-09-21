@@ -8,6 +8,7 @@ const PENDING_KEY='YAYA_COMMANDES_NATIVE_PENDING_V1';
 const TOMBSTONE_KEY='YAYA_COMMANDES_NATIVE_DELETED_SESSION_V1';
 let activeId='';
 let scheduled=false;
+let pendingCreateFile=null;
 
 function txt(v){return String(v==null?'':v).trim();}
 function toast(message,kind=''){
@@ -150,7 +151,7 @@ function injectStyle(){
 }
 
 function captureRow(e){
-  const add=e.target?.closest?.('[data-ycn-add]');if(add){activeId='';return;}
+  const add=e.target?.closest?.('[data-ycn-add]');if(add){activeId='';pendingCreateFile=null;return;}
   const row=e.target?.closest?.('.ycn-row[data-ycn-row]');if(row)activeId=String(row.dataset.ycnRow||'');
 }
 document.addEventListener('pointerdown',captureRow,true);
@@ -175,6 +176,50 @@ function persistUrlAfterCore(snapshot,url){
     post({action:'upsert',...patched}).then(()=>toast('Commande enregistrée','ok')).catch(()=>toast('URL en attente d’envoi','err'));
     window.dispatchEvent(new Event('yaya:data-refreshed'));
   },40);
+}
+
+function fileBase64(file){
+  return new Promise((resolve,reject)=>{
+    const reader=new FileReader();
+    reader.onload=()=>resolve(String(reader.result||'').split(',').pop()||'');
+    reader.onerror=()=>reject(new Error('Lecture du document impossible'));
+    reader.readAsDataURL(file);
+  });
+}
+async function uploadCreateFile(file){
+  if(!file)throw new Error('Document absent');
+  if(Number(file.size||0)>8*1024*1024)throw new Error('Document trop lourd (8 Mo max)');
+  const base64=await fileBase64(file);
+  if(!base64)throw new Error('Document vide ou illisible');
+  let api='';try{api=String(typeof API!=='undefined'&&API?API:'');}catch(_){ }
+  if(!api)api='https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
+  const response=await fetch(api,{method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'application/octet-stream',base64}})});
+  const json=await response.json();
+  if(!json||json.ok!==true)throw new Error(String(json?.error||'Import impossible'));
+  const link=txt(json?.data?.lienDrive||json?.data?.lien);
+  if(!link)throw new Error('Document non archivé');
+  return {link,name:String(file.name||'Document')};
+}
+function persistCreateFileAfterCore(snapshot,file,beforeIds){
+  let attempt=0;
+  const waitCreated=()=>{
+    const created=matchNewOrder(snapshot,beforeIds);
+    if(!created?.id){
+      if(attempt++<30){setTimeout(waitCreated,50);return;}
+      toast('Commande enregistrée — document non ajouté','err');
+      return;
+    }
+    toast('Commande enregistrée — import du document…');
+    uploadCreateFile(file).then(piece=>{
+      const patched={...created,lien:piece.link,pieceNom:piece.name};
+      updateOrderInCaches(patched);
+      return post({action:'upsert',...patched});
+    }).then(()=>{
+      toast('Commande et document enregistrés','ok');
+      window.dispatchEvent(new Event('yaya:data-refreshed'));
+    }).catch(err=>toast('Commande enregistrée — document non ajouté : '+String(err?.message||err),'err'));
+  };
+  setTimeout(waitCreated,30);
 }
 
 function updateTitle(modal){
@@ -236,19 +281,21 @@ function openPieces(idOverride){
   toast('Visualisation des pièces indisponible — recharge Yaya','err');
 }
 function saveThenAddPieces(modal){
-  const form=modal.querySelector('#ycnEditForm');if(!form)return;
   if(activeId){addPieces(activeId);return;}
-  const snapshot=currentSnapshot(modal);
-  if(!snapshot.produit){modal.querySelector('#ycnProduit')?.focus();return;}
-  const beforeIds=new Set((readState().orders||[]).map(o=>String(o?.id||'')));
-  form.requestSubmit();
-  let attempt=0;
-  const waitCreated=()=>{
-    const created=matchNewOrder(snapshot,beforeIds);
-    if(created?.id){activeId=String(created.id);setTimeout(()=>addPieces(activeId),30);return;}
-    if(attempt++<20)setTimeout(waitCreated,50);else toast('Commande enregistrée — ouvre-la pour ajouter les pièces','err');
-  };
-  setTimeout(waitCreated,30);
+  let picker=modal.querySelector('#ycnCreateFileV5');
+  if(!picker){
+    picker=document.createElement('input');picker.id='ycnCreateFileV5';picker.type='file';picker.hidden=true;
+    picker.accept='application/pdf,image/*,.pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.txt,.heic,.heif';
+    picker.onchange=()=>{
+      const file=picker.files?.[0];if(!file)return;
+      if(Number(file.size||0)>8*1024*1024){pendingCreateFile=null;picker.value='';toast('Document trop lourd (8 Mo max)','err');return;}
+      pendingCreateFile=file;
+      const doc=modal.querySelector('.ycn-doc-v5');if(doc)doc.textContent='✓ '+file.name;
+    };
+    modal.appendChild(picker);
+  }
+  picker.value='';
+  picker.click();
 }
 
 function enhanceModal(){
@@ -275,11 +322,13 @@ function enhanceModal(){
   let doc=actions.querySelector('.ycn-doc-v5');
   if(!doc){doc=document.createElement('button');doc.type='button';doc.className='ycn-btn ycn-doc-v5';doc.textContent='Ajouter une pièce';const cancel=actions.querySelector('[data-ycn-close="edit"]');actions.insertBefore(doc,cancel||save);doc.onclick=()=>saveThenAddPieces(modal);}
   doc.style.display='inline-flex';
-  doc.textContent='Ajouter une pièce';
+  doc.textContent=!activeId&&pendingCreateFile?'✓ '+pendingCreateFile.name:'Ajouter une pièce';
   if(!form.dataset.ycnUrlSubmitV5){
     form.addEventListener('submit',()=>{
-      const snapshot=currentSnapshot(modal),url=txt(modal.querySelector('#ycnUrlV5')?.value);
+      const snapshot=currentSnapshot(modal),url=txt(modal.querySelector('#ycnUrlV5')?.value),file=!snapshot.id?pendingCreateFile:null;
+      const beforeIds=file?new Set((readState().orders||[]).map(o=>String(o?.id||''))):null;
       persistUrlAfterCore(snapshot,url);
+      if(file){pendingCreateFile=null;persistCreateFileAfterCore(snapshot,file,beforeIds);}
     },true);
     form.dataset.ycnUrlSubmitV5='1';
   }
