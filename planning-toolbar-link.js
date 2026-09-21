@@ -161,10 +161,11 @@
       link.setAttribute('aria-label','Créer une nouvelle opportunité dans un nouvel onglet');
     }
 
+    const search=document.getElementById('yayaChantierDropboxSearch');
     const createBtn=document.getElementById('yayaCreateChantierBtn');
-    const anchor=createBtn&&createBtn.parentElement===planning.parentElement
-      ?createBtn
-      :planning;
+    const anchor=search&&search.parentElement===planning.parentElement
+      ?search
+      :(createBtn&&createBtn.parentElement===planning.parentElement?createBtn:planning);
 
     if(link.parentElement!==anchor.parentElement || link.previousElementSibling!==anchor){
       anchor.insertAdjacentElement('afterend',link);
