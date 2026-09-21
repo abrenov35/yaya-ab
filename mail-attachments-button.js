@@ -1,6 +1,8 @@
 (function(){
   'use strict';
-  if(window.__yayaMailAttachmentsButtonV4)return;
+  if(window.__yayaMailAttachmentsButtonV5)return;
+  window.__yayaMailAttachmentsButtonV5=true;
+  window.__yayaMailAttachmentsButtonV4=true;
   window.__yayaMailAttachmentsButtonV2=true;
 
   const TYPE='MAIL_PJ';
@@ -47,15 +49,22 @@
     const m=raw.match(/(?:voirMessageYaya|editDocument|delDocument)\(['"]([^'"]+)/i);
     return m&&m[1]?text(m[1]):'';
   }
-  function openPiece(d){
+  function openPiece(d,knownList){
     if(!d)return;
     const url=text(d.lien||d.url||d.webUrl||d.downloadUrl);if(!url)return;
     const docId=text(d.id);
+    const list=Array.isArray(knownList)&&knownList.length?knownList:attachmentsForMail(linkedMailId(d));
+    window.__yayaMailAttachmentPreview={
+      mailId:linkedMailId(d),
+      ids:list.map(function(item){return text(item&&item.id);}).filter(Boolean),
+      activeId:docId
+    };
     try{window.__yayaPreviewDocumentId=docId;}catch(e){}
     try{
       if(typeof window.voirPiece==='function'){
         window.voirPiece(url);
         scheduleMailAttachmentFullscreen(docId);
+        scheduleAttachmentChoices();
         return;
       }
     }catch(e){}
@@ -63,12 +72,44 @@
       if(typeof voirPiece==='function'){
         voirPiece(url);
         scheduleMailAttachmentFullscreen(docId);
+        scheduleAttachmentChoices();
         return;
       }
     }catch(e){}
     window.open(url,'_blank','noopener');
   }
   function fileLabel(d){return text(d.pieceNom||d.titre||d.nomFichier||d.filename||d.fileName)||'Pièce jointe';}
+
+  function injectAttachmentChoices(){
+    const context=window.__yayaMailAttachmentPreview;
+    if(!context||!Array.isArray(context.ids)||context.ids.length<2)return false;
+    const currentId=text(window.__yayaUnifiedPreviewDocumentId||window.__yayaPreviewDocumentId);
+    if(currentId&&context.ids.indexOf(currentId)===-1){window.__yayaMailAttachmentPreview=null;return false;}
+    const modal=document.querySelector('#modalRoot .piece-preview-modal');if(!modal)return false;
+    const actions=modal.querySelector('.yaya-document-unified-actions,.piece-preview-head');if(!actions)return false;
+    let group=actions.querySelector('.yaya-mail-pj-switcher');
+    if(!group){group=document.createElement('span');group.className='yaya-mail-pj-switcher';actions.insertBefore(group,actions.firstChild||null);}
+    group.replaceChildren();
+    context.ids.forEach(function(id,index){
+      const d=docById(id);if(!d)return;
+      const button=document.createElement('button');
+      button.type='button';button.className='yaya-mail-pj-choice';button.textContent='Pièce '+(index+1);
+      button.title=fileLabel(d);
+      if(id===text(context.activeId))button.classList.add('active');
+      button.addEventListener('click',function(event){
+        event.preventDefault();event.stopPropagation();
+        if(id===text(window.__yayaMailAttachmentPreview&&window.__yayaMailAttachmentPreview.activeId))return;
+        const list=context.ids.map(docById).filter(Boolean);
+        openPiece(d,list);
+      });
+      group.appendChild(button);
+    });
+    return true;
+  }
+
+  function scheduleAttachmentChoices(){
+    [0,30,120,350,800].forEach(function(delay){setTimeout(injectAttachmentChoices,delay);});
+  }
 
   function forceMailAttachmentFullscreen(docId){
     const expected=text(docId);
@@ -154,6 +195,10 @@
       #modalRoot .${MODAL_CLASS} .yaya-mail-pj-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#24364d!important;font-size:13px!important;font-weight:700!important}
       #modalRoot .${MODAL_CLASS} .yaya-mail-pj-view{min-height:36px!important;padding:0 14px!important;border:1px solid #17639f!important;border-radius:8px!important;background:#17639f!important;color:#fff!important;font-weight:800!important;cursor:pointer!important}
 
+      #modalRoot .yaya-mail-pj-switcher{display:inline-flex!important;align-items:center!important;gap:4px!important;padding:3px!important;border:1px solid #c7d5e4!important;border-radius:9px!important;background:#edf3f8!important;flex:0 0 auto!important;max-width:100%!important;overflow-x:auto!important}
+      #modalRoot .yaya-mail-pj-switcher .yaya-mail-pj-choice{min-height:31px!important;height:31px!important;padding:0 11px!important;border:1px solid transparent!important;border-radius:6px!important;background:transparent!important;color:#34516f!important;font-size:11.5px!important;font-weight:800!important;box-shadow:none!important}
+      #modalRoot .yaya-mail-pj-switcher .yaya-mail-pj-choice.active{border-color:#17639f!important;background:#17639f!important;color:#fff!important}
+
       .${ROW_BUTTON_CLASS}{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:36px!important;min-width:36px!important;max-width:36px!important;height:26px!important;min-height:26px!important;padding:0!important;border:1px solid #d3a53a!important;border-radius:6px!important;background:#fff8e6!important;color:#765400!important;font-size:10.5px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;white-space:nowrap!important;box-shadow:none!important;justify-self:center!important;align-self:center!important}
       .${ROW_BUTTON_CLASS}:hover{background:#ffefbd!important;border-color:#bd8c16!important}
       .${ROW_BUTTON_CLASS}[data-count]:not([data-count="1"])::after{content:' (' attr(data-count) ')'!important}
@@ -221,23 +266,8 @@
   function openList(mailId){
     const list=attachmentsForMail(mailId);
     if(!list.length)return;
-    if(list.length===1){openPiece(list[0]);return;}
-    const root=document.getElementById('modalRoot');if(!root)return;
     closeList();
-    const overlay=document.createElement('div');overlay.className=MODAL_CLASS;
-    overlay.innerHTML=''
-      +'<div class="yaya-mail-pj-list-modal" role="dialog" aria-modal="true" aria-label="Pièces jointes du mail">'
-      +'<h5>Pièces jointes du mail<button type="button" class="yaya-mail-pj-close" aria-label="Fermer">×</button></h5>'
-      +'<div class="yaya-mail-pj-list">'
-      +list.map(function(d){return '<div class="yaya-mail-pj-item"><div class="yaya-mail-pj-name" title="'+esc(fileLabel(d))+'">'+esc(fileLabel(d))+'</div><button type="button" class="yaya-mail-pj-view" data-doc-id="'+esc(text(d.id))+'">Voir</button></div>';}).join('')
-      +'</div></div>';
-    root.appendChild(overlay);
-    overlay.addEventListener('click',function(e){
-      if(e.target===overlay||e.target.closest('.yaya-mail-pj-close')){e.preventDefault();closeList();return;}
-      const btn=e.target.closest('.yaya-mail-pj-view');if(!btn)return;
-      e.preventDefault();e.stopPropagation();
-      const d=docById(btn.dataset.docId);if(d)openPiece(d);
-    });
+    openPiece(list[0],list);
   }
 
   function injectModalButton(){
@@ -334,6 +364,7 @@
     if(scheduled)return;scheduled=true;
     requestAnimationFrame(function(){
       scheduled=false;ensureStyle();injectModalButton();injectRowButtons();
+      injectAttachmentChoices();
       hideAttachmentRows(document.getElementById('pane-documents'));
       hideAttachmentRows(document.getElementById('pane-chantiers'));
     });
