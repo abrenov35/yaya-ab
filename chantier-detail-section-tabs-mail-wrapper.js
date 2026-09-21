@@ -74,6 +74,11 @@ rep("    );\n  }\n\n  function photosFor(card){","    ).sort((a,b)=>String(b.dat
 rep("      if(normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;","      if(normalise(row.type)==='MAIL'||normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;");
 rep("+'<span class=\"yaya-detail-charge-hours\">'+escapeHtml(item.row.type||'Document')+'</span>'","+'<span class=\"yaya-detail-charge-hours\">'+escapeHtml(item.vientMail?'Mail':'Document')+'</span>'");
 
+// Source unique des mails : feuille MAILS. Les anciennes lignes MAIL présentes
+// dans DOCUMENTS restent temporairement en sauvegarde mais ne sont plus lues ici.
+rep("    return S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL_PJ'\n      && normalise(d.type)!=='PHOTO'\n    ).sort((a,b)=>String(b.date||b.horodatage||b.createdAt||'').localeCompare(String(a.date||a.horodatage||a.createdAt||''))||String(b.id||'').localeCompare(String(a.id||'')));",
+"    const documents=S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL'\n      && normalise(d.type)!=='MAIL_PJ'\n      && normalise(d.type)!=='PHOTO'\n    );\n    const mails=(typeof window.yayaMailRows==='function'?window.yayaMailRows():[]).filter(d=>String(d.chantierId)===cid);\n    return documents.concat(mails).sort((a,b)=>String(b.date||b.horodatage||b.createdAt||'').localeCompare(String(a.date||a.horodatage||a.createdAt||''))||String(b.id||'').localeCompare(String(a.id||'')));");
+
 (0,eval)(src+'\n//# sourceURL=chantier-detail-section-tabs-native-commandes-mail.js');
 
 window.__YAYA_DIRECT_LINK_VERSION='1.0';
