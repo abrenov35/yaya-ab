@@ -1,10 +1,10 @@
 (function(){
 'use strict';
-if(window.__yayaChargePieceFastViewerV4)return;
-window.__yayaChargePieceFastViewerV4=true;
+if(window.__yayaChargePieceFastViewerV5)return;
+window.__yayaChargePieceFastViewerV5=true;
 
 const VIEWER_ID='yayaChargePieceFastViewer';
-const STYLE_ID='yaya-charge-piece-fast-viewer-v4';
+const STYLE_ID='yaya-charge-piece-fast-viewer-v5';
 
 function txt(v){return String(v==null?'':v).trim();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -140,6 +140,44 @@ function toastSafe(message,isError){
   try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
 }
 
+function reconcileConfirmedAchatState(achatId,serverRow){
+  achatId=txt(achatId);
+  if(!achatId||!serverRow)return;
+
+  // 1) État mémoire courant
+  try{
+    if(typeof S!=='undefined'&&S&&Array.isArray(S.achats)){
+      const i=S.achats.findIndex(function(a){return txt(a&&a.id)===achatId;});
+      if(i>=0)S.achats[i]=Object.assign({},serverRow);
+    }
+  }catch(e){}
+
+  // 2) Cache de démarrage
+  try{
+    const key='YAYA_CACHE_DATA_V2';
+    const raw=localStorage.getItem(key);
+    const cached=raw?JSON.parse(raw):{};
+    if(cached&&Array.isArray(cached.achats)){
+      const i=cached.achats.findIndex(function(a){return txt(a&&a.id)===achatId;});
+      if(i>=0)cached.achats[i]=Object.assign({},serverRow);
+      localStorage.setItem(key,JSON.stringify(cached));
+    }
+  }catch(e){}
+
+  // 3) File de synchronisation finance : empêcher une ancienne copie
+  //    locale de réinjecter le lien supprimé lors d'un prochain flush.
+  try{
+    const key='YAYA_FINANCE_PENDING_ACHATS_V1';
+    const raw=localStorage.getItem(key);
+    const pending=raw?JSON.parse(raw):null;
+    if(pending&&Array.isArray(pending.achats)){
+      const i=pending.achats.findIndex(function(a){return txt(a&&a.id)===achatId;});
+      if(i>=0)pending.achats[i]=Object.assign({},serverRow);
+      localStorage.setItem(key,JSON.stringify(pending));
+    }
+  }catch(e){}
+}
+
 async function detachAchatPiece(achatId){
   achatId=txt(achatId);
   const achat=achatById(achatId);
@@ -172,7 +210,20 @@ async function detachAchatPiece(achatId){
         const saved=achats.find(function(a){return txt(a&&a.id)===achatId;});
         if(!saved)throw new Error('Achat absent après synchronisation');
         if(txt(saved.lien))throw new Error('Le lien est encore présent dans le Sheet');
-        try{if(typeof S!=='undefined'&&S)S.achats=achats;}catch(e){}
+
+        // Le Sheet fait foi : réconcilier immédiatement tous les états locaux
+        // avec cette ligne serveur confirmée.
+        reconcileConfirmedAchatState(achatId,saved);
+
+        // Les autres achats issus de la lecture réseau restent également frais,
+        // mais on conserve la ligne réconciliée ci-dessus pour cet achat précis.
+        try{
+          if(typeof S!=='undefined'&&S&&Array.isArray(achats)){
+            S.achats=achats.map(function(a){
+              return txt(a&&a.id)===achatId?Object.assign({},saved):a;
+            });
+          }
+        }catch(e){}
         persistAchatsCache();
       }
     }
