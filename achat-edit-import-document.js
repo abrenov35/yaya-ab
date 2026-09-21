@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditImportDocumentV5)return;
+  if(window.__yayaAchatEditImportDocumentV8)return;
+  window.__yayaAchatEditImportDocumentV8=true;
   window.__yayaAchatEditImportDocumentV5=true;
   window.__yayaAchatEditImportDocumentV4=true;
   window.__yayaAchatEditImportDocumentV3=true;
@@ -378,13 +379,13 @@
   const root=document.getElementById('modalRoot');
   if(root){
     let raf=0;
-    new MutationObserver(function(){
-      if(raf)return;
+    new MutationObserver(function(records){
+      const hasDomChange=records.some(function(r){return r.type==='childList'&&(r.addedNodes.length||r.removedNodes.length);});
+      if(!hasDomChange||raf)return;
       raf=requestAnimationFrame(function(){raf=0;apply();});
-    }).observe(root,{childList:true,subtree:true,attributes:true,attributeFilter:['disabled','aria-disabled','aria-busy','class','style']});
+    }).observe(root,{childList:true,subtree:true});
   }
 
   setTimeout(apply,100);
   setTimeout(apply,500);
-  setTimeout(apply,1200);
 })();
