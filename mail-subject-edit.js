@@ -53,6 +53,10 @@
         width:min(520px,calc(100vw - 28px))!important;max-width:520px!important;
         padding:0!important;overflow:hidden!important;border-radius:16px!important;
       }
+      #modalRoot .yaya-mail-subject-overlay{
+        align-items:center!important;justify-content:center!important;
+        padding:16px!important;overflow:auto!important;
+      }
       #modalRoot .yaya-mail-subject-head{
         display:flex!important;align-items:center!important;justify-content:space-between!important;
         gap:12px!important;padding:18px 20px!important;background:#173e69!important;color:#fff!important;

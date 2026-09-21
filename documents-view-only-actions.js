@@ -364,7 +364,7 @@
   if(window.__yayaMailReadActionsLoaderV6)return;
   window.__yayaMailReadActionsLoaderV6=true;
   const s=document.createElement('script');
-  s.src='mail-subject-edit.js?v=mailreadactions-6';
+  s.src='mail-subject-edit.js?v=mailreadactions-7';
   s.async=false;
   s.onerror=()=>console.error('Yaya : chargement actions mail V6 impossible');
   document.head.appendChild(s);
