@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaMailSubjectSaveFinalV3)return;
+  if(window.__yayaMailSubjectSaveFinalV4)return;
+  window.__yayaMailSubjectSaveFinalV4=true;
   window.__yayaMailSubjectSaveFinalV3=true;
   window.__yayaMailSubjectSaveFinalV2=true;
   window.__yayaMailSubjectSaveFinalV1=true;
@@ -67,11 +68,8 @@
     return text(row.titre)===wanted||!!(match&&text(match[1])===wanted);
   }
   function toastSafe(message,error){try{if(typeof toast==='function')toast(message,!!error);}catch(e){}}
-  function showUpdatedMail(id){
+  function refreshAfterSave(){
     try{if(typeof render==='function')render();}catch(e){}
-    requestAnimationFrame(function(){
-      try{if(typeof window.voirMessageYaya==='function')window.voirMessageYaya(String(id));}catch(e){}
-    });
   }
 
   const authoritativeSave=async function(id){
@@ -85,6 +83,15 @@
     const buttonLabel=button&&button.textContent;
     if(button){button.disabled=true;button.textContent='Enregistrement…';}
     toastSafe('Enregistrement de l’objet…');
+
+    /* La saisie est capturée : libère immédiatement l'interface pendant l'écriture. */
+    try{
+      if(typeof closeModal==='function')closeModal();
+      else{
+        const root=document.getElementById('modalRoot');
+        if(root)root.innerHTML='';
+      }
+    }catch(e){}
 
     saving=true;
     try{
@@ -100,7 +107,7 @@
       const saved=verified.find(item=>String(item&&item.id||'')===String(id));
       if(!subjectMatches(saved,subject))throw new Error('Objet non confirmé par le serveur');
       replaceDocuments(verified);
-      showUpdatedMail(id);
+      refreshAfterSave();
       toastSafe('Objet du mail enregistré ✓');
       try{window.dispatchEvent(new CustomEvent('yaya:mail-subject-saved',{detail:{id:String(id),subject:subject}}));}catch(e){}
       return true;
