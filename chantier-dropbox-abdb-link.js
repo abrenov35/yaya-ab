@@ -57,8 +57,9 @@
       #${WRAP_ID}{position:relative!important;flex:0 0 230px!important;width:230px!important;min-width:230px!important;z-index:800!important}
       #${WRAP_ID} input{width:100%!important;height:42px!important;box-sizing:border-box!important;padding:0 34px 0 13px!important;border:1px solid #7d91c7!important;border-radius:7px!important;background:#fff!important;color:#193451!important;font-size:12px!important;outline:none!important}
       #${WRAP_ID} input:focus{border-color:#4d83bd!important;box-shadow:0 0 0 3px rgba(77,131,189,.14)!important}
-      .hdr,.hdr .tabs{overflow:visible!important}
-      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:47px!important;left:0!important;right:0!important;display:block!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important;z-index:99999!important}
+      .hdr{overflow:visible!important;z-index:50000!important;isolation:isolate!important}
+      .hdr .tabs{overflow:visible!important;position:relative!important;z-index:50001!important}
+      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:47px!important;left:0!important;right:0!important;display:block!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important;z-index:50002!important}
       #${WRAP_ID} .yaya-abdb-results[hidden]{display:none!important}
       #${WRAP_ID} .yaya-abdb-result{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;padding:8px!important;border-radius:7px!important;color:#183d63!important;text-decoration:none!important}
       #${WRAP_ID} .yaya-abdb-result:hover{background:#edf5fd!important}#${WRAP_ID} .yaya-abdb-result strong,#${WRAP_ID} .yaya-abdb-result small{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
