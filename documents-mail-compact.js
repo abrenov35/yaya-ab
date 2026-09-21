@@ -332,12 +332,15 @@
         }
         const type=row.querySelector(':scope > .yaya-detail-charge-hours');
         const date=row.querySelector(':scope > .yaya-detail-charge-cost');
+        const pj=row.querySelector(':scope > .yaya-mail-pj-row-button');
         const mobile=window.matchMedia('(max-width:760px) and (orientation:portrait)').matches;
 
         row.style.setProperty('display','grid','important');
         row.style.setProperty(
           'grid-template-columns',
-          mobile ? 'minmax(0,1fr) auto auto' : 'minmax(180px,28%) minmax(360px,1fr) 100px 100px',
+          mobile
+            ? (pj ? 'minmax(0,1fr) auto 38px auto' : 'minmax(0,1fr) auto auto')
+            : (pj ? 'minmax(180px,28%) minmax(360px,1fr) 100px 44px 100px' : 'minmax(180px,28%) minmax(360px,1fr) 100px 100px'),
           'important'
         );
         primary.style.setProperty('grid-column','1','important');
@@ -352,8 +355,17 @@
           type.style.setProperty('grid-column',mobile ? '2' : '3','important');
           type.style.setProperty('grid-row','1','important');
         }
+        if(pj){
+          pj.style.setProperty('grid-column',mobile ? '3' : '4','important');
+          pj.style.setProperty('grid-row','1','important');
+          pj.style.setProperty('display','inline-flex','important');
+          pj.style.setProperty('visibility','visible','important');
+          pj.style.setProperty('opacity','1','important');
+          pj.style.setProperty('justify-self','center','important');
+          pj.style.setProperty('align-self','center','important');
+        }
         if(date){
-          date.style.setProperty('grid-column',mobile ? '3' : '4','important');
+          date.style.setProperty('grid-column',mobile ? (pj?'4':'3') : (pj?'5':'4'),'important');
           date.style.setProperty('grid-row','1','important');
         }
       });
