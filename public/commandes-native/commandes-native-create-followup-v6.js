@@ -29,8 +29,10 @@ function apply(){
 }
 
 apply();
-const obs=new MutationObserver(()=>apply());
+const obs=new MutationObserver(records=>{
+  if(records.some(r=>[...r.addedNodes].some(n=>n?.nodeType===1&&(n.id==='ycnEditModal'||n.querySelector?.('#ycnEditModal')))))apply();
+});
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',apply);
-window.__YAYA_COMMANDES_CREATE_FOLLOWUP_V6_VERSION='6.2-pascale-center-doc';
+window.__YAYA_COMMANDES_CREATE_FOLLOWUP_V6_VERSION='6.3-no-typing-observer';
 })();

@@ -11,8 +11,8 @@ const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=15';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=2';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=4';
 const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=23';
-const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=12';
-const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=1';
+const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=14';
+const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=2';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
 const COMMANDES_BASE_MIGRATION_KEY='YAYA_COMMANDES_BASE_LINKS_20260919_V2';
 let commandesMigrationPromise=null;
@@ -284,8 +284,10 @@ document.addEventListener('click',e=>{
  if(e.target?.closest?.('[data-ycn-add],.ycn-row[data-ycn-row],#ycnEditModal')){setTimeout(ensureCommandModalTweaks,0);setTimeout(ensureCommandModalTweaks,80);}
 },true);
 const pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(records=>{for(const r of records){const target=r.target?.nodeType===1?r.target:null;if(target?.closest?.('.'+BLOCK_CLASS))continue;if([...r.addedNodes].some(n=>n?.nodeType===1&&(n.matches?.('.card,.yaya-detail-section-tabs')||n.querySelector?.('.yaya-detail-section-tabs')))){scan();break;}}}).observe(pane,{childList:true,subtree:true});
-const bodyObserver=new MutationObserver(()=>ensureCommandModalTweaks());
+const bodyObserver=new MutationObserver(records=>{
+ if(records.some(r=>[...r.addedNodes].some(n=>n?.nodeType===1&&(n.id==='ycnEditModal'||n.querySelector?.('#ycnEditModal')))))ensureCommandModalTweaks();
+});
 bodyObserver.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('hashchange',scan);setTimeout(scan,0);setTimeout(scan,300);setTimeout(ensureRefreshButton,700);
-window.__YAYA_AB_COMMANDES_LINK_VERSION='6.24-status-column-fix';
+window.__YAYA_AB_COMMANDES_LINK_VERSION='6.25-zero-lag-modal-typing';
 })();
