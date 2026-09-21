@@ -141,6 +141,8 @@
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row:last-child{border-bottom:0!important}
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row > strong{
+        grid-column:1!important;
+        grid-row:1!important;
         min-width:0!important;
         overflow:hidden!important;
         color:#17324f!important;
@@ -159,6 +161,8 @@
         font-weight:500!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-document-field-2{
+        grid-column:2!important;
+        grid-row:1!important;
         min-width:0!important;
         padding:2px 16px!important;
         border-left:1px solid #e1e8f0!important;
@@ -171,6 +175,8 @@
         text-align:center!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours{
+        grid-column:3!important;
+        grid-row:1!important;
         color:#6d7e90!important;
         font-size:10.5px!important;
         font-weight:600!important;
@@ -180,6 +186,8 @@
         text-overflow:ellipsis!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-cost{
+        grid-column:4!important;
+        grid-row:1!important;
         color:#8793a1!important;
         font-size:10.5px!important;
         font-weight:500!important;
