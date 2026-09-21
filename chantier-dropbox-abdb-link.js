@@ -1,84 +1,69 @@
 (function(){
   'use strict';
+  if(window.__yayaChantierDropboxAbdbV2)return;
+  window.__yayaChantierDropboxAbdbV2=true;
 
-  if(window.__yayaChantierDropboxAbdbV1)return;
-  window.__yayaChantierDropboxAbdbV1=true;
+  const WRAP_ID='yayaChantierDropboxSearch';
+  const API_URL='https://script.google.com/macros/s/AKfycbx3WxWC-GuwmYUaB99Wi3LQ3-DAUZtG6CJcTLp2entOd8PN5vz-251Lh20TEE_uA40O/exec';
+  let pending=false,observed=false,timer=0,requestNumber=0;
 
-  const BUTTON_ID='yayaChantierDropboxBtn';
-  const ABDB_URL='https://abrenov35.github.io/ab-db/';
-  let pending=false;
-  let observed=false;
-
-  function currentId(){
-    try{
-      if(typeof focusChantier==='object'&&focusChantier)return String(focusChantier.id||'').trim();
-      return String(typeof focusChantier!=='undefined'?focusChantier:'').trim();
-    }catch(e){return '';}
+  function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function jsonp(query){
+    return new Promise(function(resolve,reject){
+      const callback='yaya_abdb_'+Date.now()+'_'+Math.floor(Math.random()*100000),script=document.createElement('script');
+      const timeout=setTimeout(function(){cleanup();reject(new Error('Délai dépassé'));},30000);
+      function cleanup(){clearTimeout(timeout);delete window[callback];script.remove();}
+      window[callback]=function(data){cleanup();resolve(data);};
+      script.onerror=function(){cleanup();reject(new Error('Recherche indisponible'));};
+      const url=new URL(API_URL);url.searchParams.set('action','search');url.searchParams.set('q',query);url.searchParams.set('callback',callback);
+      script.src=url.toString();document.body.appendChild(script);
+    });
   }
-
-  function openFolderSearch(){
-    if(!currentId()){
-      try{if(typeof toast==='function')toast('Chantier introuvable',true);}catch(e){}
-      return;
-    }
-    window.open(ABDB_URL,'_blank','noopener');
+  function showResults(wrap,items,message){
+    const box=wrap.querySelector('.yaya-abdb-results');if(!box)return;
+    if(message){box.innerHTML='<div class="yaya-abdb-message">'+esc(message)+'</div>';box.hidden=false;return;}
+    if(!items.length){box.innerHTML='<div class="yaya-abdb-message">Aucun dossier trouvé</div>';box.hidden=false;return;}
+    box.innerHTML=items.map(function(item){
+      return '<a class="yaya-abdb-result" href="'+esc(item.dropbox_url||'#')+'" target="_blank" rel="noopener"><span>📁</span><span><strong>'+esc(item.name||'Dossier')+'</strong><small>'+esc(item.path_display||item.path_lower||'')+'</small></span></a>';
+    }).join('');box.hidden=false;
   }
-
+  async function search(wrap){
+    const input=wrap.querySelector('input'),query=String(input&&input.value||'').trim(),box=wrap.querySelector('.yaya-abdb-results');
+    if(query.length<2){if(box){box.hidden=true;box.innerHTML='';}return;}
+    const ownRequest=++requestNumber;showResults(wrap,[],'Recherche Dropbox…');
+    try{const data=await jsonp(query);if(ownRequest!==requestNumber)return;if(!data||!data.ok)throw new Error('Recherche indisponible');showResults(wrap,Array.isArray(data.items)?data.items:[],'');}
+    catch(e){if(ownRequest===requestNumber)showResults(wrap,[],'Recherche Dropbox indisponible');}
+  }
+  function createSearch(){
+    const wrap=document.createElement('div');wrap.id=WRAP_ID;
+    wrap.innerHTML='<input type="search" autocomplete="off" placeholder="Rechercher un dossier sur Dropbox" aria-label="Rechercher un dossier sur Dropbox"><div class="yaya-abdb-results" hidden></div>';
+    const input=wrap.querySelector('input');
+    input.addEventListener('click',function(event){event.stopPropagation();});
+    input.addEventListener('keydown',function(event){event.stopPropagation();if(event.key==='Enter'){event.preventDefault();clearTimeout(timer);search(wrap);}if(event.key==='Escape'){wrap.querySelector('.yaya-abdb-results').hidden=true;input.blur();}});
+    input.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(function(){search(wrap);},350);});
+    wrap.addEventListener('click',function(event){event.stopPropagation();});return wrap;
+  }
   function ensureStyle(){
     if(document.getElementById('yaya-chantier-dropbox-abdb-style'))return;
-    const style=document.createElement('style');
-    style.id='yaya-chantier-dropbox-abdb-style';
+    const style=document.createElement('style');style.id='yaya-chantier-dropbox-abdb-style';
     style.textContent=`
-      #${BUTTON_ID}{
-        min-height:34px!important;height:34px!important;padding:0 13px!important;
-        display:inline-flex!important;align-items:center!important;justify-content:center!important;gap:6px!important;
-        border:1px solid #a7c7b1!important;border-radius:8px!important;background:#edf8f0!important;
-        color:#23633a!important;font-size:11.5px!important;font-weight:750!important;line-height:1!important;
-        white-space:nowrap!important;box-shadow:none!important;cursor:pointer!important;
-      }
-      #${BUTTON_ID}:hover{background:#dff1e4!important;border-color:#86b695!important}
-      #${BUTTON_ID}:active{transform:translateY(1px)!important}
-      @media(max-width:640px){#${BUTTON_ID}{min-height:32px!important;height:32px!important;padding:0 10px!important;font-size:10.5px!important}}
-    `;
-    document.head.appendChild(style);
+      #${WRAP_ID}{position:relative!important;margin-left:auto!important;width:min(300px,30vw)!important;min-width:220px!important;z-index:80!important}
+      #${WRAP_ID} input{width:100%!important;height:34px!important;box-sizing:border-box!important;padding:0 12px!important;border:1px solid #b9c9dc!important;border-radius:8px!important;background:#fff!important;color:#193451!important;font-size:11.5px!important;outline:none!important}
+      #${WRAP_ID} input:focus{border-color:#4d83bd!important;box-shadow:0 0 0 3px rgba(77,131,189,.14)!important}
+      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:39px!important;left:0!important;right:0!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important}
+      #${WRAP_ID} .yaya-abdb-result{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;padding:8px!important;border-radius:7px!important;color:#183d63!important;text-decoration:none!important}
+      #${WRAP_ID} .yaya-abdb-result:hover{background:#edf5fd!important}#${WRAP_ID} .yaya-abdb-result strong,#${WRAP_ID} .yaya-abdb-result small{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+      #${WRAP_ID} .yaya-abdb-result strong{font-size:11.5px!important}#${WRAP_ID} .yaya-abdb-result small{margin-top:2px!important;color:#75859a!important;font-size:9.5px!important}#${WRAP_ID} .yaya-abdb-message{padding:10px!important;color:#66778b!important;font-size:11px!important;text-align:center!important}
+      @media(max-width:760px){#${WRAP_ID}{order:20!important;width:100%!important;min-width:100%!important;margin:7px 0 0!important}#${WRAP_ID} input{height:36px!important}#${WRAP_ID} .yaya-abdb-results{top:41px!important}}
+    `;document.head.appendChild(style);
   }
-
   function sync(){
-    pending=false;
-    const card=document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');
-    let btn=document.getElementById(BUTTON_ID);
-    if(!card){if(btn)btn.remove();return;}
-    const top=card.querySelector(':scope > .top');
-    if(!top)return;
-    if(!btn){
-      btn=document.createElement('button');
-      btn.type='button';
-      btn.id=BUTTON_ID;
-      btn.textContent='📁 Dossier Dropbox';
-      btn.title='Rechercher un dossier Dropbox dans AB-DB';
-      btn.setAttribute('aria-label','Ouvrir le dossier Dropbox du chantier');
-      btn.addEventListener('click',function(event){event.preventDefault();event.stopPropagation();openFolderSearch();});
-    }
-    const manage=top.querySelector('#yayaManageChantierCardBtn');
-    if(manage){
-      if(btn.parentNode!==top||btn.nextElementSibling!==manage)top.insertBefore(btn,manage);
-    }else if(btn.parentNode!==top)top.appendChild(btn);
+    pending=false;const card=document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');let wrap=document.getElementById(WRAP_ID);
+    if(!card){if(wrap)wrap.remove();return;}const top=card.querySelector(':scope > .top');if(!top)return;if(!wrap)wrap=createSearch();
+    const manage=top.querySelector('#yayaManageChantierCardBtn');if(manage){if(wrap.parentNode!==top||wrap.nextElementSibling!==manage)top.insertBefore(wrap,manage);}else if(wrap.parentNode!==top)top.appendChild(wrap);
   }
-
   function schedule(){if(pending)return;pending=true;requestAnimationFrame(sync);}
-
-  function observePane(){
-    if(observed)return;
-    const pane=document.getElementById('pane-chantiers');
-    if(!pane){setTimeout(observePane,120);return;}
-    observed=true;
-    new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
-    schedule();
-  }
-
-  ensureStyle();
-  observePane();
-  window.addEventListener('yaya:data-refreshed',schedule);
-  schedule();
-  [250,800,1600].forEach(function(ms){setTimeout(schedule,ms);});
+  function observePane(){if(observed)return;const pane=document.getElementById('pane-chantiers');if(!pane){setTimeout(observePane,120);return;}observed=true;new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});schedule();}
+  document.addEventListener('click',function(event){const wrap=document.getElementById(WRAP_ID);if(!wrap||wrap.contains(event.target))return;const box=wrap.querySelector('.yaya-abdb-results');if(box)box.hidden=true;});
+  ensureStyle();observePane();window.addEventListener('yaya:data-refreshed',schedule);[250,800,1600].forEach(function(ms){setTimeout(schedule,ms);});
 })();
