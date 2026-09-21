@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditImportDocumentV3)return;
+  if(window.__yayaAchatEditImportDocumentV4)return;
+  window.__yayaAchatEditImportDocumentV4=true;
   window.__yayaAchatEditImportDocumentV3=true;
 
   const MAX_FILE_SIZE=8*1024*1024;
@@ -198,16 +199,60 @@
     btn.style.removeProperty('cursor');
     btn.textContent='Importer document';
 
-    if(btn.__yayaAchatEditImportArmedV3)return;
-    btn.__yayaAchatEditImportArmedV3=true;
+    // Toujours pointer vers l'input actuellement présent dans la modale.
+    // Cela évite un bouton visuellement actif mais relié à un ancien input supprimé.
+    btn.__yayaAchatEditImportInput=input;
+    btn.__yayaAchatEditImportModal=modal;
+
+    if(btn.__yayaAchatEditImportArmedV4)return;
+    btn.__yayaAchatEditImportArmedV4=true;
     btn.addEventListener('click',function(e){
       e.preventDefault();
       e.stopPropagation();
-      resetStaleEditUploadLock(modal);
+      const liveModal=btn.__yayaAchatEditImportModal||modal;
+      const liveInput=btn.__yayaAchatEditImportInput
+        ||(liveModal&&liveModal.querySelector('.yaya-achat-edit-import-input'));
+      resetStaleEditUploadLock(liveModal);
       btn.disabled=false;
       btn.removeAttribute('disabled');
-      input.click();
+      if(!liveInput){
+        toastSafe('Import impossible : sélecteur de fichier introuvable',true);
+        return;
+      }
+      try{liveInput.value='';}catch(_){}
+      liveInput.click();
     },true);
+  }
+
+  function bindImportInput(modal,btn,input,id){
+    if(!modal||!btn||!input||!id)return;
+    input.onchange=function(){
+      const file=input.files&&input.files[0];
+      input.value='';
+      resetStaleEditUploadLock(modal);
+      if(!file){
+        armImportButton(modal,btn,input);
+        return;
+      }
+      if(file.size>MAX_FILE_SIZE){
+        toastSafe('Fichier trop lourd (8 Mo max)',true);
+        return;
+      }
+
+      const row=findRow(id);
+      if(!row){
+        toastSafe('Achat introuvable',true);
+        return;
+      }
+
+      applyFormToRow(modal,row);
+      queueRow(id);
+      try{if(typeof render==='function')render();}catch(e){}
+
+      closeModalNow(modal);
+      toastSafe('Import du document lancé — vous pouvez continuer');
+      setTimeout(function(){importDocument(id,file);},0);
+    };
   }
 
   function enhance(modal){
@@ -233,6 +278,7 @@
         foot.appendChild(existingInput);
       }
       armImportButton(modal,existing,existingInput);
+      bindImportInput(modal,existing,existingInput,id);
       return;
     }
 
@@ -250,35 +296,7 @@
     btn.disabled=false;
 
     armImportButton(modal,btn,input);
-
-    input.onchange=function(){
-      const file=input.files&&input.files[0];
-      input.value='';
-      resetStaleEditUploadLock(modal);
-      if(!file){
-        armImportButton(modal,btn,input);
-        return;
-      }
-      if(file.size>MAX_FILE_SIZE){
-        toastSafe('Fichier trop lourd (8 Mo max)',true);
-        return;
-      }
-
-      const row=findRow(id);
-      if(!row){
-        toastSafe('Achat introuvable',true);
-        return;
-      }
-
-      // Sauvegarder immédiatement les champs visibles avant de fermer.
-      applyFormToRow(modal,row);
-      queueRow(id);
-      try{if(typeof render==='function')render();}catch(e){}
-
-      closeModalNow(modal);
-      toastSafe('Import du document lancé — vous pouvez continuer');
-      setTimeout(function(){importDocument(id,file);},0);
-    };
+    bindImportInput(modal,btn,input,id);
 
     foot.insertBefore(btn,save.nextSibling);
     foot.appendChild(input);
