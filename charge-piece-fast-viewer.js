@@ -1,10 +1,10 @@
 (function(){
 'use strict';
-if(window.__yayaChargePieceFastViewerV2)return;
-window.__yayaChargePieceFastViewerV2=true;
+if(window.__yayaChargePieceFastViewerV3)return;
+window.__yayaChargePieceFastViewerV3=true;
 
 const VIEWER_ID='yayaChargePieceFastViewer';
-const STYLE_ID='yaya-charge-piece-fast-viewer-v2';
+const STYLE_ID='yaya-charge-piece-fast-viewer-v3';
 
 function txt(v){return String(v==null?'':v).trim();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -257,6 +257,28 @@ function achatById(id){
   return null;
 }
 
+function achatIdFromButton(btn){
+  if(!btn)return '';
+  let id=txt(btn.dataset&&btn.dataset.achatId||btn.getAttribute&&btn.getAttribute('data-achat-id'));
+  if(id)return id;
+
+  const row=btn.closest&&btn.closest('.yaya-detail-charge-row,.charge-row,.achligne,.charge-row-standard,.controle-ligne,.charge-validee-ligne');
+  if(!row)return '';
+
+  id=txt(row.dataset&&row.dataset.achatId||row.dataset&&row.dataset.id||row.getAttribute&&row.getAttribute('data-achat-id')||row.getAttribute&&row.getAttribute('data-id'));
+  if(id)return id;
+
+  const candidates=Array.from(row.querySelectorAll('button[onclick],[data-achat-id]'));
+  for(const el of candidates){
+    id=txt(el.dataset&&el.dataset.achatId||el.getAttribute&&el.getAttribute('data-achat-id'));
+    if(id)return id;
+    const raw=txt(el.getAttribute&&el.getAttribute('onclick'));
+    let m=raw.match(/(?:editAchat|saveAchat|validerChargeAuto|classerChargeAuto)\s*\(\s*['"]([^'"]+)['"]/i);
+    if(m&&m[1])return txt(m[1]);
+  }
+  return '';
+}
+
 function urlFromButton(btn){
   const direct=txt(
     btn.dataset.lien||btn.dataset.url||btn.dataset.href||
@@ -264,7 +286,7 @@ function urlFromButton(btn){
   );
   if(direct)return direct;
 
-  const id=txt(btn.dataset.achatId||btn.getAttribute('data-achat-id'));
+  const id=achatIdFromButton(btn);
   if(id){
     const a=achatById(id);
     if(a&&txt(a.lien))return txt(a.lien);
@@ -305,7 +327,7 @@ document.addEventListener('click',function(e){
   e.stopPropagation();
   if(typeof e.stopImmediatePropagation==='function')e.stopImmediatePropagation();
 
-  const id=txt(btn.dataset.achatId||btn.getAttribute('data-achat-id'));
+  const id=achatIdFromButton(btn);
   const a=id?achatById(id):null;
   const label=a
     ? [txt(a.fournisseur),txt(a.designation)].filter(Boolean).join(' — ')
