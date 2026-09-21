@@ -5,9 +5,12 @@
 
   const WRAP_ID='yayaChantierDropboxSearch';
   const API_URL='https://script.google.com/macros/s/AKfycbx3WxWC-GuwmYUaB99Wi3LQ3-DAUZtG6CJcTLp2entOd8PN5vz-251Lh20TEE_uA40O/exec';
+  const CACHE_PREFIX='YAYA_ABDB_SEARCH_V1_';
   let pending=false,observed=false,timer=0,requestNumber=0;
 
   function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function readCache(query){try{const data=JSON.parse(localStorage.getItem(CACHE_PREFIX+query.toUpperCase())||'null');return data&&Array.isArray(data.items)?data.items:null;}catch(e){return null;}}
+  function writeCache(query,items){try{localStorage.setItem(CACHE_PREFIX+query.toUpperCase(),JSON.stringify({items:items,savedAt:Date.now()}));}catch(e){}}
   function jsonp(query){
     return new Promise(function(resolve,reject){
       const callback='yaya_abdb_'+Date.now()+'_'+Math.floor(Math.random()*100000),script=document.createElement('script');
@@ -30,9 +33,13 @@
   async function search(wrap){
     const input=wrap.querySelector('input'),query=String(input&&input.value||'').trim(),box=wrap.querySelector('.yaya-abdb-results');
     if(query.length<2){if(box){box.hidden=true;box.innerHTML='';}return;}
-    const ownRequest=++requestNumber;showResults(wrap,[],'Recherche Dropbox…');
-    try{const data=await jsonp(query);if(ownRequest!==requestNumber)return;if(!data||!data.ok)throw new Error('Recherche indisponible');showResults(wrap,Array.isArray(data.items)?data.items:[],'');}
-    catch(e){if(ownRequest===requestNumber)showResults(wrap,[],'Recherche Dropbox indisponible');}
+    const ownRequest=++requestNumber,cached=readCache(query);
+    if(cached)showResults(wrap,cached,'');
+    else showResults(wrap,[],'Recherche Dropbox en cours… Patientez quelques secondes.');
+    try{
+      const data=await jsonp(query);if(ownRequest!==requestNumber)return;if(!data||!data.ok)throw new Error('Recherche indisponible');
+      const items=Array.isArray(data.items)?data.items:[];writeCache(query,items);showResults(wrap,items,'');
+    }catch(e){if(ownRequest===requestNumber&&!cached)showResults(wrap,[],'Recherche Dropbox indisponible. Réessayez dans quelques secondes.');}
   }
   function createSearch(){
     const wrap=document.createElement('div');wrap.id=WRAP_ID;
@@ -50,7 +57,9 @@
       #${WRAP_ID}{position:relative!important;margin-left:auto!important;width:min(300px,30vw)!important;min-width:220px!important;z-index:80!important}
       #${WRAP_ID} input{width:100%!important;height:34px!important;box-sizing:border-box!important;padding:0 12px!important;border:1px solid #b9c9dc!important;border-radius:8px!important;background:#fff!important;color:#193451!important;font-size:11.5px!important;outline:none!important}
       #${WRAP_ID} input:focus{border-color:#4d83bd!important;box-shadow:0 0 0 3px rgba(77,131,189,.14)!important}
-      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:39px!important;left:0!important;right:0!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important}
+      #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{overflow:visible!important}
+      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:39px!important;left:0!important;right:0!important;display:block!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important;z-index:99999!important}
+      #${WRAP_ID} .yaya-abdb-results[hidden]{display:none!important}
       #${WRAP_ID} .yaya-abdb-result{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;padding:8px!important;border-radius:7px!important;color:#183d63!important;text-decoration:none!important}
       #${WRAP_ID} .yaya-abdb-result:hover{background:#edf5fd!important}#${WRAP_ID} .yaya-abdb-result strong,#${WRAP_ID} .yaya-abdb-result small{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
       #${WRAP_ID} .yaya-abdb-result strong{font-size:11.5px!important}#${WRAP_ID} .yaya-abdb-result small{margin-top:2px!important;color:#75859a!important;font-size:9.5px!important}#${WRAP_ID} .yaya-abdb-message{padding:10px!important;color:#66778b!important;font-size:11px!important;text-align:center!important}
