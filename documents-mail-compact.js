@@ -260,6 +260,11 @@
   function apply(){
     installStyle();
 
+    document.querySelectorAll('#pane-chantiers .card[data-yaya-detail-section="documents"] > .yaya-detail-mails-pane, #pane-chantiers .card[data-yaya-detail-section="documents"] > .yaya-force-mails-pane').forEach(function(pane){
+      pane.style.setProperty('display','none','important');
+      pane.setAttribute('aria-hidden','true');
+    });
+
     document.querySelectorAll('#pane-chantiers .yaya-detail-section-action-row[data-section="documents"] .yaya-detail-section-action-title').forEach(function(el){
       if(el.textContent!=='DOC & MAILS')el.textContent='DOC & MAILS';
     });
