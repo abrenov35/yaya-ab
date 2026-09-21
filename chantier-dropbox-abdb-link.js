@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierDropboxAbdbV2)return;
-  window.__yayaChantierDropboxAbdbV2=true;
+  if(window.__yayaChantierDropboxAbdbV3)return;
+  window.__yayaChantierDropboxAbdbV3=true;
 
   const WRAP_ID='yayaChantierDropboxSearch';
   const API_URL='https://script.google.com/macros/s/AKfycbx3WxWC-GuwmYUaB99Wi3LQ3-DAUZtG6CJcTLp2entOd8PN5vz-251Lh20TEE_uA40O/exec';
@@ -43,7 +43,7 @@
   }
   function createSearch(){
     const wrap=document.createElement('div');wrap.id=WRAP_ID;
-    wrap.innerHTML='<input type="search" autocomplete="off" placeholder="Rechercher un dossier sur Dropbox" aria-label="Rechercher un dossier sur Dropbox"><div class="yaya-abdb-results" hidden></div>';
+    wrap.innerHTML='<input type="search" autocomplete="off" placeholder="Rechercher dans AB DB" aria-label="Rechercher un dossier dans AB DB"><div class="yaya-abdb-results" hidden></div>';
     const input=wrap.querySelector('input');
     input.addEventListener('click',function(event){event.stopPropagation();});
     input.addEventListener('keydown',function(event){event.stopPropagation();if(event.key==='Enter'){event.preventDefault();clearTimeout(timer);search(wrap);}if(event.key==='Escape'){wrap.querySelector('.yaya-abdb-results').hidden=true;input.blur();}});
@@ -54,25 +54,31 @@
     if(document.getElementById('yaya-chantier-dropbox-abdb-style'))return;
     const style=document.createElement('style');style.id='yaya-chantier-dropbox-abdb-style';
     style.textContent=`
-      #${WRAP_ID}{position:relative!important;margin-left:auto!important;width:min(300px,30vw)!important;min-width:220px!important;z-index:80!important}
-      #${WRAP_ID} input{width:100%!important;height:34px!important;box-sizing:border-box!important;padding:0 12px!important;border:1px solid #b9c9dc!important;border-radius:8px!important;background:#fff!important;color:#193451!important;font-size:11.5px!important;outline:none!important}
+      #${WRAP_ID}{position:relative!important;flex:0 0 230px!important;width:230px!important;min-width:230px!important;z-index:800!important}
+      #${WRAP_ID} input{width:100%!important;height:42px!important;box-sizing:border-box!important;padding:0 34px 0 13px!important;border:1px solid #7d91c7!important;border-radius:7px!important;background:#fff!important;color:#193451!important;font-size:12px!important;outline:none!important}
       #${WRAP_ID} input:focus{border-color:#4d83bd!important;box-shadow:0 0 0 3px rgba(77,131,189,.14)!important}
-      #pane-chantiers .card:has(> .yaya-detail-section-tabs) > .top{overflow:visible!important}
-      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:39px!important;left:0!important;right:0!important;display:block!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important;z-index:99999!important}
+      .hdr,.hdr .tabs{overflow:visible!important}
+      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:47px!important;left:0!important;right:0!important;display:block!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important;z-index:99999!important}
       #${WRAP_ID} .yaya-abdb-results[hidden]{display:none!important}
       #${WRAP_ID} .yaya-abdb-result{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;padding:8px!important;border-radius:7px!important;color:#183d63!important;text-decoration:none!important}
       #${WRAP_ID} .yaya-abdb-result:hover{background:#edf5fd!important}#${WRAP_ID} .yaya-abdb-result strong,#${WRAP_ID} .yaya-abdb-result small{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
       #${WRAP_ID} .yaya-abdb-result strong{font-size:11.5px!important}#${WRAP_ID} .yaya-abdb-result small{margin-top:2px!important;color:#75859a!important;font-size:9.5px!important}#${WRAP_ID} .yaya-abdb-message{padding:10px!important;color:#66778b!important;font-size:11px!important;text-align:center!important}
-      @media(max-width:760px){#${WRAP_ID}{order:20!important;width:100%!important;min-width:100%!important;margin:7px 0 0!important}#${WRAP_ID} input{height:36px!important}#${WRAP_ID} .yaya-abdb-results{top:41px!important}}
+      @media(max-width:1050px){#${WRAP_ID}{flex-basis:195px!important;width:195px!important;min-width:195px!important}#${WRAP_ID} input{padding-left:10px!important;font-size:11px!important}}
     `;document.head.appendChild(style);
   }
   function sync(){
-    pending=false;const card=document.querySelector('#pane-chantiers .card:has(> .yaya-detail-section-tabs)');let wrap=document.getElementById(WRAP_ID);
-    if(!card){if(wrap)wrap.remove();return;}const top=card.querySelector(':scope > .top');if(!top)return;if(!wrap)wrap=createSearch();
-    const manage=top.querySelector('#yayaManageChantierCardBtn');if(manage){if(wrap.parentNode!==top||wrap.nextElementSibling!==manage)top.insertBefore(wrap,manage);}else if(wrap.parentNode!==top)top.appendChild(wrap);
+    pending=false;
+    const planning=document.getElementById('yayaPlanningToolbarLink');
+    const tabs=document.querySelector('.hdr .tabs');
+    if(!planning||!tabs){setTimeout(schedule,120);return;}
+    let wrap=document.getElementById(WRAP_ID);
+    if(!wrap)wrap=createSearch();
+    if(wrap.parentNode!==tabs||wrap.previousElementSibling!==planning){
+      planning.insertAdjacentElement('afterend',wrap);
+    }
   }
   function schedule(){if(pending)return;pending=true;requestAnimationFrame(sync);}
-  function observePane(){if(observed)return;const pane=document.getElementById('pane-chantiers');if(!pane){setTimeout(observePane,120);return;}observed=true;new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});schedule();}
+  function observePane(){if(observed)return;if(!document.body){setTimeout(observePane,120);return;}observed=true;new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();}
   document.addEventListener('click',function(event){const wrap=document.getElementById(WRAP_ID);if(!wrap||wrap.contains(event.target))return;const box=wrap.querySelector('.yaya-abdb-results');if(box)box.hidden=true;});
   ensureStyle();observePane();window.addEventListener('yaya:data-refreshed',schedule);[250,800,1600].forEach(function(ms){setTimeout(schedule,ms);});
 })();
