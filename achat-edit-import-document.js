@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditImportDocumentV1)return;
-  window.__yayaAchatEditImportDocumentV1=true;
+  if(window.__yayaAchatEditImportDocumentV2)return;
+  window.__yayaAchatEditImportDocumentV2=true;
 
   const MAX_FILE_SIZE=8*1024*1024;
   const STYLE_ID='yaya-achat-edit-import-document-v1';
@@ -157,7 +157,20 @@
     });
     if(!save)return;
     const foot=save.closest('.yaya-finance-edit-actions,.mfoot')||save.parentElement;
-    if(!foot||foot.querySelector('.yaya-achat-edit-import-doc'))return;
+    if(!foot)return;
+    const existing=foot.querySelector('.yaya-achat-edit-import-doc');
+    if(existing){
+      if(modal.dataset.yayaUploadBusy!=='1'&&modal.dataset.yayaAchatUploadBusy!=='1'){
+        existing.disabled=false;
+        existing.removeAttribute('disabled');
+        existing.removeAttribute('aria-disabled');
+        existing.removeAttribute('aria-busy');
+        existing.style.removeProperty('pointer-events');
+        existing.style.removeProperty('opacity');
+        existing.style.removeProperty('cursor');
+      }
+      return;
+    }
 
     const input=document.createElement('input');
     input.type='file';
@@ -170,12 +183,16 @@
     btn.className='yaya-achat-edit-import-doc';
     btn.textContent='Importer document';
     btn.title='Importer ou remplacer la pièce jointe de cet achat';
+    btn.disabled=false;
 
-    btn.onclick=function(e){
+    btn.addEventListener('click',function(e){
       e.preventDefault();
       e.stopPropagation();
+      if(modal.dataset.yayaUploadBusy==='1'||modal.dataset.yayaAchatUploadBusy==='1')return;
+      btn.disabled=false;
+      btn.removeAttribute('aria-disabled');
       input.click();
-    };
+    },true);
 
     input.onchange=function(){
       const file=input.files&&input.files[0];
