@@ -126,7 +126,7 @@
 (function(){
   if(document.querySelector('script[data-yaya-chantier-edit-actions-loader-v3]'))return;
   const s=document.createElement('script');
-  s.src='chantier-edit-actions-fix.js?v=chantieractions-3';
+  s.src='chantier-edit-actions-fix.js?v=chantieractions-4';
   s.async=false;
   s.setAttribute('data-yaya-chantier-edit-actions-loader-v3','1');
   document.head.appendChild(s);

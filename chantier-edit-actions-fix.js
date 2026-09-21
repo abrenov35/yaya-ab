@@ -1,10 +1,10 @@
 (function(){
   'use strict';
 
-  const STYLE_ID='yaya-chantier-edit-actions-fix-v4';
+  const STYLE_ID='yaya-chantier-edit-actions-fix-v5';
 
   function installStyle(){
-    ['yaya-chantier-edit-actions-fix-v3'].forEach(function(id){
+    ['yaya-chantier-edit-actions-fix-v3','yaya-chantier-edit-actions-fix-v4'].forEach(function(id){
       const old=document.getElementById(id);if(old)old.remove();
     });
     if(document.getElementById(STYLE_ID))return;
@@ -12,12 +12,21 @@
     style.id=STYLE_ID;
     style.textContent=`
       .yaya-chantier-edit-modal h5 > button{display:none!important;}
+      .yaya-chantier-edit-modal{
+        width:min(560px,calc(100vw - 24px))!important;max-width:560px!important;
+        overflow-x:hidden!important;box-sizing:border-box!important;
+      }
+      .yaya-chantier-edit-modal label{margin-bottom:13px!important;}
+      .yaya-chantier-edit-modal .inp{min-height:42px!important;box-sizing:border-box!important;}
       .yaya-chantier-edit-modal .mfoot.yaya-chantier-edit-actions-fixed{
-        display:flex!important;align-items:center!important;justify-content:center!important;
-        gap:12px!important;flex-wrap:nowrap!important;
+        display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+        align-items:stretch!important;gap:8px!important;width:100%!important;
+        margin-top:16px!important;padding:14px 0 0!important;border-top:1px solid #dfe6ee!important;
+        overflow:visible!important;box-sizing:border-box!important;
       }
       .yaya-chantier-edit-modal .mfoot.yaya-chantier-edit-actions-fixed > button{
-        height:42px!important;min-height:42px!important;margin:0!important;white-space:nowrap!important;
+        width:100%!important;min-width:0!important;height:42px!important;min-height:42px!important;
+        margin:0!important;padding:0 8px!important;white-space:nowrap!important;font-size:12px!important;
       }
       .yaya-chantier-edit-modal .yaya-delete-chantier-modal-btn{
         width:auto!important;margin:0!important;background:#d93636!important;
@@ -25,6 +34,16 @@
       }
       .yaya-chantier-edit-modal .yaya-delete-chantier-modal-btn:hover{
         background:#bf2f2f!important;border-color:#bf2f2f!important;color:#fff!important;
+      }
+      .yaya-chantier-edit-modal .yaya-archive-chantier-modal-btn{
+        width:auto!important;margin:0!important;background:#fff3df!important;
+        border:1px solid #e4a14f!important;color:#99500b!important;box-shadow:none!important;
+      }
+      .yaya-chantier-edit-modal .yaya-archive-chantier-modal-btn:hover{
+        background:#ffe6bf!important;border-color:#cf8127!important;color:#7c3e06!important;
+      }
+      @media(max-width:560px){
+        .yaya-chantier-edit-modal .mfoot.yaya-chantier-edit-actions-fixed{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
       }
     `;
     document.head.appendChild(style);
@@ -67,11 +86,12 @@
     if(!del||!save||!cancel)return;
 
     footer.classList.add('yaya-chantier-edit-actions-fixed');
-    footer.style.setProperty('display','flex','important');
-    footer.style.setProperty('align-items','center','important');
-    footer.style.setProperty('justify-content','center','important');
-    footer.style.setProperty('gap','12px','important');
-    footer.style.setProperty('flex-wrap','nowrap','important');
+    footer.style.setProperty('display','grid','important');
+    footer.style.removeProperty('grid-template-columns');
+    footer.style.setProperty('align-items','stretch','important');
+    footer.style.setProperty('gap','8px','important');
+    footer.style.setProperty('width','100%','important');
+    footer.style.setProperty('overflow','visible','important');
 
     del.style.setProperty('background','#d93636','important');
     del.style.setProperty('border','1px solid #d93636','important');
@@ -79,6 +99,8 @@
     del.style.setProperty('margin','0','important');
 
     [archive,del,save,cancel].filter(Boolean).forEach(function(button){
+      button.style.setProperty('width','100%','important');
+      button.style.setProperty('min-width','0','important');
       button.style.setProperty('height','42px','important');
       button.style.setProperty('min-height','42px','important');
       button.style.setProperty('margin','0','important');
@@ -90,7 +112,7 @@
      * ce qui annulait le clic navigateur. Résultat : Supprimer inactif et Enregistrer
      * nécessitant plusieurs clics. On ne touche au DOM que si l'ordre est réellement faux.
      */
-    const desired=[archive,del,save,cancel].filter(Boolean);
+    const desired=[archive,del,cancel,save].filter(Boolean);
     if(!sameOrder(footer,desired)){
       const others=[...footer.children].filter(function(n){return desired.indexOf(n)===-1;});
       footer.replaceChildren.apply(footer,desired.concat(others));
