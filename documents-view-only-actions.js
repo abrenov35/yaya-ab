@@ -274,6 +274,7 @@
     const mail=isMail(row,d);
     const piece=attachmentUrl(row,d,mail);
     if(mail&&id)return openMailBody(d,id);
+    if(id&&typeof window.yayaOpenUnifiedDocument==='function')return window.yayaOpenUnifiedDocument(id,piece);
     if(row&&row.closest('#pane-chantiers')&&id)return openDocumentModalRead(row,d,id,piece);
     if(piece)return openPiece(piece);
     return false;
@@ -328,7 +329,8 @@
 
     const row=findRow(e.target);if(!row)return;
     if(e.target.closest('button,a,input,select,textarea,label'))return;
-    e.preventDefault();e.stopPropagation();openRow(row);
+    e.preventDefault();e.stopPropagation();
+    if(openRow(row))e.__yayaDocumentRouteHandled=true;
   },true);
 
   let scheduled=false;
