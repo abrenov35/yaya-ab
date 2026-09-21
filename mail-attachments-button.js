@@ -376,7 +376,35 @@
   ['pane-documents','pane-chantiers','pane-mails'].forEach(function(id){
     const pane=document.getElementById(id);if(pane)new MutationObserver(schedule).observe(pane,{childList:true,subtree:true});
   });
-  window.addEventListener('yaya:data-refreshed',schedule);
-  window.addEventListener('hashchange',schedule);
-  schedule();
+  function scheduleBurst(){
+    schedule();
+    [50,150,400,900].forEach(function(delay){
+      setTimeout(schedule,delay);
+    });
+  }
+
+  function installRenderHook(){
+    if(typeof window.render!=='function'){
+      setTimeout(installRenderHook,150);
+      return;
+    }
+    if(window.render.__yayaMailPjPersistentV6)return;
+    const original=window.render;
+    const wrapped=function(){
+      const result=original.apply(this,arguments);
+      scheduleBurst();
+      return result;
+    };
+    wrapped.__yayaMailPjPersistentV6=true;
+    wrapped.__yayaOriginalRender=original;
+    window.render=wrapped;
+    try{render=wrapped;}catch(e){}
+  }
+
+  window.yayaRefreshMailPjButtons=scheduleBurst;
+  window.addEventListener('yaya:data-refreshed',scheduleBurst);
+  window.addEventListener('hashchange',scheduleBurst);
+  window.addEventListener('focus',scheduleBurst);
+  installRenderHook();
+  scheduleBurst();
 })();
