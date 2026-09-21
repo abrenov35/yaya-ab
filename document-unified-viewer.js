@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaDocumentUnifiedViewerV1)return;
+  if(window.__yayaDocumentUnifiedViewerV2)return;
+  window.__yayaDocumentUnifiedViewerV2=true;
   window.__yayaDocumentUnifiedViewerV1=true;
 
   const ROW_SELECTOR=[
@@ -106,6 +107,9 @@
       #modalRoot .yaya-document-action-download{border:1px solid #207342!important;background:#2e854f!important;color:#fff!important}
       #modalRoot .yaya-document-action-delete{border:1px solid #e6a29c!important;background:#fff3f2!important;color:#c62820!important}
       #modalRoot .yaya-document-action-close{border:1px solid #c7d2df!important;background:#fff!important;color:#233b55!important}
+      #modalRoot .yaya-document-unified-modal .piece-preview-head>.yaya-download,
+      #modalRoot .yaya-document-unified-modal .piece-preview-head>.yaya-preview-download-top,
+      #modalRoot .yaya-document-unified-modal .piece-preview-head>.yaya-preview-download-direct{display:none!important}
       @media(max-width:700px){
         #modalRoot .piece-preview-head.yaya-document-unified-head{grid-template-columns:1fr!important}
         #modalRoot .yaya-document-unified-actions{justify-content:flex-start!important;overflow-x:auto!important;padding-bottom:2px!important}
@@ -119,6 +123,7 @@
     if(!modal||!modal.isConnected)return;
     const id=text(window.__yayaUnifiedPreviewDocumentId||window.__yayaPreviewDocumentId);
     if(!id)return;
+    modal.classList.add('yaya-document-unified-modal');
     const d=doc(id),url=text(window.__yayaUnifiedPreviewUrl)||rowUrl(null,d);
     const head=modal.querySelector('.piece-preview-head');if(!head)return;
     if(head.classList.contains('yaya-document-unified-head')&&head.querySelectorAll('.yaya-document-unified-actions > button').length===4)return;
