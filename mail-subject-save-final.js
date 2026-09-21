@@ -42,7 +42,7 @@
     });
   }
 
-  window.saveDocumentEdit=async function(id){
+  const authoritativeSave=async function(id){
     if(saving)return false;
     const row=getMail(id),input=document.getElementById('edDocTitre');
     if(!row||!input)return false;
@@ -74,5 +74,11 @@
       return false;
     }finally{saving=false;}
   };
-  window.saveDocumentEdit.__yayaMailSubjectFinal=true;
+
+  /* Empêche les anciens installateurs différés de remplacer ce gestionnaire. */
+  authoritativeSave.__yayaMailSubjectFinal=true;
+  authoritativeSave.__yayaDirectSave=true;
+  authoritativeSave.__yayaBackgroundV1=true;
+  window.saveDocumentEdit=authoritativeSave;
+  try{saveDocumentEdit=authoritativeSave;}catch(e){}
 })();
