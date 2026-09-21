@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaChantierDropboxAbdbV3)return;
-  window.__yayaChantierDropboxAbdbV3=true;
+  if(window.__yayaChantierDropboxAbdbV4)return;
+  window.__yayaChantierDropboxAbdbV4=true;
 
   const WRAP_ID='yayaChantierDropboxSearch';
   const RESULTS_ID='yayaChantierDropboxResults';
@@ -55,6 +55,7 @@
   }
   function createSearch(){
     const wrap=document.createElement('div');wrap.id=WRAP_ID;
+    wrap.dataset.yayaAbdbPortal='1';
     wrap.innerHTML='<input type="search" autocomplete="off" placeholder="Rechercher dans AB DB" aria-label="Rechercher un dossier dans AB DB">';
     let box=resultBox();
     if(!box){
@@ -93,6 +94,10 @@
     const tabs=document.querySelector('.hdr .tabs');
     if(!planning||!tabs){setTimeout(schedule,120);return;}
     let wrap=document.getElementById(WRAP_ID);
+    if(wrap&&wrap.dataset.yayaAbdbPortal!=='1'){
+      wrap.remove();
+      wrap=null;
+    }
     if(!wrap)wrap=createSearch();
     if(wrap.parentNode!==tabs||wrap.previousElementSibling!==planning){
       planning.insertAdjacentElement('afterend',wrap);
