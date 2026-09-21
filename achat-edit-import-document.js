@@ -1,7 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaAchatEditImportDocumentV2)return;
-  window.__yayaAchatEditImportDocumentV2=true;
+  if(window.__yayaAchatEditImportDocumentV3)return;
+  window.__yayaAchatEditImportDocumentV3=true;
 
   const MAX_FILE_SIZE=8*1024*1024;
   const STYLE_ID='yaya-achat-edit-import-document-v1';
@@ -148,8 +148,71 @@
     document.head.appendChild(s);
   }
 
+  function resetStaleEditUploadLock(modal){
+    if(!modal||!isEditModal(modal))return;
+
+    // Cette modale utilise son propre input d'import et se ferme dès qu'un fichier est choisi.
+    // Aucun verrou global ne doit donc survivre à une réouverture de la modale.
+    modal.dataset.yayaUploadBusy='0';
+    modal.dataset.yayaAchatUploadBusy='0';
+    delete modal.dataset.yayaChargeUploadSoft;
+    modal.classList.remove('yaya-upload-modal-busy');
+
+    const progress=document.getElementById('yaya-upload-progress-overlay');
+    if(progress)progress.remove();
+
+    modal.querySelectorAll('button').forEach(function(btn){
+      if(btn.dataset.yayaUploadLockSaved==='1'){
+        btn.disabled=btn.dataset.yayaUploadWasDisabled==='1';
+        if(btn.dataset.yayaUploadOriginalText)btn.textContent=btn.dataset.yayaUploadOriginalText;
+      }
+      if(btn.dataset.yayaGlobalUploadSaved==='1'){
+        btn.disabled=btn.dataset.yayaGlobalUploadDisabled==='1';
+        if(btn.dataset.yayaGlobalUploadText)btn.textContent=btn.dataset.yayaGlobalUploadText;
+      }
+
+      btn.removeAttribute('aria-busy');
+      btn.removeAttribute('aria-disabled');
+      btn.style.removeProperty('pointer-events');
+      btn.style.removeProperty('opacity');
+      btn.style.removeProperty('cursor');
+
+      delete btn.dataset.yayaUploadLockSaved;
+      delete btn.dataset.yayaUploadWasDisabled;
+      delete btn.dataset.yayaUploadOriginalText;
+      delete btn.dataset.yayaGlobalUploadSaved;
+      delete btn.dataset.yayaGlobalUploadDisabled;
+      delete btn.dataset.yayaGlobalUploadText;
+    });
+  }
+
+  function armImportButton(modal,btn,input){
+    if(!modal||!btn||!input)return;
+    resetStaleEditUploadLock(modal);
+    btn.disabled=false;
+    btn.removeAttribute('disabled');
+    btn.removeAttribute('aria-disabled');
+    btn.removeAttribute('aria-busy');
+    btn.style.removeProperty('pointer-events');
+    btn.style.removeProperty('opacity');
+    btn.style.removeProperty('cursor');
+    btn.textContent='Importer document';
+
+    if(btn.__yayaAchatEditImportArmedV3)return;
+    btn.__yayaAchatEditImportArmedV3=true;
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      resetStaleEditUploadLock(modal);
+      btn.disabled=false;
+      btn.removeAttribute('disabled');
+      input.click();
+    },true);
+  }
+
   function enhance(modal){
     if(!isEditModal(modal))return;
+    resetStaleEditUploadLock(modal);
     const id=modalId(modal);
     if(!id)return;
     const save=Array.from(modal.querySelectorAll('button')).find(function(b){
@@ -160,15 +223,16 @@
     if(!foot)return;
     const existing=foot.querySelector('.yaya-achat-edit-import-doc');
     if(existing){
-      if(modal.dataset.yayaUploadBusy!=='1'&&modal.dataset.yayaAchatUploadBusy!=='1'){
-        existing.disabled=false;
-        existing.removeAttribute('disabled');
-        existing.removeAttribute('aria-disabled');
-        existing.removeAttribute('aria-busy');
-        existing.style.removeProperty('pointer-events');
-        existing.style.removeProperty('opacity');
-        existing.style.removeProperty('cursor');
+      let existingInput=modal.querySelector('.yaya-achat-edit-import-input');
+      if(!existingInput){
+        existingInput=document.createElement('input');
+        existingInput.type='file';
+        existingInput.accept='application/pdf,image/*';
+        existingInput.style.display='none';
+        existingInput.className='yaya-achat-edit-import-input';
+        foot.appendChild(existingInput);
       }
+      armImportButton(modal,existing,existingInput);
       return;
     }
 
@@ -185,19 +249,16 @@
     btn.title='Importer ou remplacer la pièce jointe de cet achat';
     btn.disabled=false;
 
-    btn.addEventListener('click',function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      if(modal.dataset.yayaUploadBusy==='1'||modal.dataset.yayaAchatUploadBusy==='1')return;
-      btn.disabled=false;
-      btn.removeAttribute('aria-disabled');
-      input.click();
-    },true);
+    armImportButton(modal,btn,input);
 
     input.onchange=function(){
       const file=input.files&&input.files[0];
       input.value='';
-      if(!file)return;
+      resetStaleEditUploadLock(modal);
+      if(!file){
+        armImportButton(modal,btn,input);
+        return;
+      }
       if(file.size>MAX_FILE_SIZE){
         toastSafe('Fichier trop lourd (8 Mo max)',true);
         return;
