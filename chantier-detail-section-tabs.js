@@ -671,7 +671,7 @@
       '<div class="yaya-detail-document-row">'
         +'<strong>'+escapeHtml(item.operateur)+(item.detail?'<small style="display:block;font-weight:500;color:#718096">'+escapeHtml(item.detail)+'</small>':'')+'</strong>'
         +'<span class="yaya-detail-charge-hours">'+escapeHtml(item.row.type||'Document')+'</span>'
-        +'<span class="yaya-detail-charge-cost">'+escapeHtml(item.date||'—')+'</span>'
+        +'<span class="yaya-detail-charge-cost yaya-mail-edit-date" data-mail-id="'+escapeHtml(item.row.id||'')+'" role="button" tabindex="0" title="Modifier le mail">'+escapeHtml(item.date||'—')+'</span>'
         +'<button type="button" class="yaya-detail-document-view" title="Voir" aria-label="Voir" data-doc-id="'+escapeHtml(item.row.id||'')+'" data-lien="'+escapeHtml(item.lien)+'" data-mail-linked="'+(item.vientMail?'1':'0')+'"'+(item.vientMail||item.lien.startsWith('http')?'':' disabled')+'>👁</button>'
         +'<button type="button" class="yaya-detail-document-edit" title="Modifier" aria-label="Modifier" data-doc-id="'+escapeHtml(item.row.id||'')+'">✏️</button>'
         +'<button type="button" class="yaya-detail-document-delete" title="Supprimer" aria-label="Supprimer" data-doc-id="'+escapeHtml(item.row.id||'')+'">🗑️</button>'
@@ -786,6 +786,12 @@
     pane.querySelectorAll('.yaya-detail-document-edit').forEach(btn=>{
       if(btn._yayaBound)return;btn._yayaBound=true;
       btn.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const id=String(btn.dataset.mailId||'');if(id&&typeof editDocument==='function')editDocument(id);});
+    });
+    pane.querySelectorAll('.yaya-mail-edit-date').forEach(date=>{
+      if(date._yayaBound)return;date._yayaBound=true;
+      const edit=()=>{const id=String(date.dataset.mailId||'');if(id&&typeof editDocument==='function')editDocument(id);};
+      date.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();edit();});
+      date.addEventListener('keydown',e=>{if(e.key!=='Enter'&&e.key!==' ')return;e.preventDefault();e.stopPropagation();edit();});
     });
     pane.querySelectorAll('.yaya-detail-document-delete').forEach(btn=>{
       if(btn._yayaBound)return;btn._yayaBound=true;
