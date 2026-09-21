@@ -107,6 +107,6 @@
   if(document.getElementById('yaya-shared-tabs-live-sync'))return;
   const s=document.createElement('script');
   s.id='yaya-shared-tabs-live-sync';
-  s.src='documents-mails-live-refresh.js?v=multi-2';
+  s.src='documents-mails-live-refresh.js?v=multi-3';
   document.head.appendChild(s);
 })();
