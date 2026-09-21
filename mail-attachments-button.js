@@ -1,13 +1,13 @@
 (function(){
   'use strict';
-  if(window.__yayaMailAttachmentsButtonV2)return;
+  if(window.__yayaMailAttachmentsButtonV3)return;
   window.__yayaMailAttachmentsButtonV2=true;
 
   const TYPE='MAIL_PJ';
   const BUTTON_CLASS='yaya-mail-pj-button';
   const ROW_BUTTON_CLASS='yaya-mail-pj-row-button';
   const MODAL_CLASS='yaya-mail-pj-list-overlay';
-  const STYLE_ID='yaya-mail-pj-style-v2';
+  const STYLE_ID='yaya-mail-pj-style-v3';
 
   function text(v){return String(v==null?'':v).trim();}
   function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch];});}
@@ -73,12 +73,58 @@
       #modalRoot .${MODAL_CLASS} .yaya-mail-pj-name{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;color:#24364d!important;font-size:13px!important;font-weight:700!important}
       #modalRoot .${MODAL_CLASS} .yaya-mail-pj-view{min-height:36px!important;padding:0 14px!important;border:1px solid #17639f!important;border-radius:8px!important;background:#17639f!important;color:#fff!important;font-weight:800!important;cursor:pointer!important}
 
-      .${ROW_BUTTON_CLASS}{display:inline-flex!important;align-items:center!important;justify-content:center!important;min-width:42px!important;height:30px!important;padding:0 10px!important;border:1px solid #d3a53a!important;border-radius:7px!important;background:#fff8e6!important;color:#765400!important;font-size:11px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;white-space:nowrap!important;box-shadow:none!important}
+      .${ROW_BUTTON_CLASS}{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:36px!important;min-width:36px!important;max-width:36px!important;height:26px!important;min-height:26px!important;padding:0!important;border:1px solid #d3a53a!important;border-radius:6px!important;background:#fff8e6!important;color:#765400!important;font-size:10.5px!important;font-weight:900!important;line-height:1!important;cursor:pointer!important;white-space:nowrap!important;box-shadow:none!important;justify-self:center!important;align-self:center!important}
       .${ROW_BUTTON_CLASS}:hover{background:#ffefbd!important;border-color:#bd8c16!important}
       .${ROW_BUTTON_CLASS}[data-count]:not([data-count="1"])::after{content:' (' attr(data-count) ')'!important}
-      #pane-chantiers .yaya-detail-mails-pane .${ROW_BUTTON_CLASS}{display:inline-flex!important}
-      #pane-chantiers .message-actions .${ROW_BUTTON_CLASS}{width:auto!important;min-width:42px!important;height:30px!important;padding:0 9px!important;font-size:11px!important}
+
+      /* PJ sur la même ligne que l'expéditeur et l'objet. */
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}),
+      #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}){
+        grid-template-columns:minmax(125px,.85fr) minmax(0,1.7fr) 44px 92px!important;
+      }
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-sender,
+      #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-restored-sender{grid-column:1!important}
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-subject,
+      #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-restored-subject{grid-column:2!important}
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS},
+      #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS}{grid-column:3!important;grid-row:1!important}
+      #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-detail-charge-cost,
+      #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-restored-date{grid-column:4!important;grid-row:1!important}
+
+      #pane-documents .yaya-doc-mail-row:has(.${ROW_BUTTON_CLASS}){
+        grid-template-columns:minmax(190px,.8fr) minmax(320px,1.8fr) 44px minmax(150px,.7fr) 100px!important;
+      }
+      #pane-documents .yaya-doc-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-doc-mail-sender{grid-column:1!important}
+      #pane-documents .yaya-doc-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-doc-mail-subject{grid-column:2!important}
+      #pane-documents .yaya-doc-mail-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS}{grid-column:3!important;grid-row:1!important}
+      #pane-documents .yaya-doc-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-doc-mail-chantier{grid-column:4!important}
+      #pane-documents .yaya-doc-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-doc-mail-date{grid-column:5!important}
+
+      #pane-mails .mail-last-row:has(.${ROW_BUTTON_CLASS}){
+        grid-template-columns:minmax(0,1fr) 155px 82px 36px 32px!important;
+      }
+      #pane-mails .mail-last-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS}{grid-column:4!important;grid-row:1!important}
+      #pane-mails .mail-last-row:has(.${ROW_BUTTON_CLASS}) .mail-last-view{grid-column:5!important;grid-row:1!important}
+
+      #pane-chantiers .message-actions .${ROW_BUTTON_CLASS}{width:36px!important;min-width:36px!important;max-width:36px!important;height:26px!important;padding:0!important;font-size:10.5px!important}
       tr .${ROW_BUTTON_CLASS}{margin-left:6px!important}
+
+      @media(max-width:760px) and (orientation:portrait){
+        #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}),
+        #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}){
+          grid-template-columns:minmax(0,1fr) 38px auto!important;
+          grid-template-rows:auto auto!important;
+          gap:3px 7px!important;
+        }
+        #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-sender,
+        #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-restored-sender{grid-column:1!important;grid-row:1!important}
+        #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS},
+        #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .${ROW_BUTTON_CLASS}{grid-column:2!important;grid-row:1!important}
+        #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-detail-charge-cost,
+        #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-restored-date{grid-column:3!important;grid-row:1!important}
+        #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-subject,
+        #pane-chantiers .yaya-force-mails-pane .yaya-mail-restored-row:has(.${ROW_BUTTON_CLASS}) .yaya-mail-restored-subject{grid-column:1/-1!important;grid-row:2!important}
+      }
 
       #pane-documents .achligne.ligR[data-yaya-mail-pj-hidden="1"],
       #pane-chantiers [data-yaya-mail-pj-hidden="1"]{display:none!important}
