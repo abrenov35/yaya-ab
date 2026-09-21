@@ -517,6 +517,24 @@
           date.style.setProperty('grid-row','1','important');
           date.style.setProperty('text-align','right','important');
         }
+
+        // Un mail affiché dans DOC & MAILS doit rester modifiable,
+        // y compris les anciens dépôts Yaya Mail migrés vers la feuille MAILS.
+        const mailView=row.querySelector(':scope > .yaya-detail-document-view[data-mail-linked="1"]');
+        const mailId=String(mailView&&mailView.dataset.docId||'').trim();
+        if(mailId){
+          [primary,secondary,date].forEach(function(el){
+            if(!el||el.__yayaMailEditBound)return;
+            el.__yayaMailEditBound=true;
+            el.style.setProperty('cursor','pointer','important');
+            el.setAttribute('title','Modifier le mail');
+            el.addEventListener('click',function(e){
+              e.preventDefault();
+              e.stopPropagation();
+              if(typeof editDocument==='function')editDocument(mailId);
+            });
+          });
+        }
       });
     });
   }
