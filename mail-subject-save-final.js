@@ -34,6 +34,24 @@
       localStorage.setItem(CACHE_KEY,JSON.stringify(cache));
     }catch(e){}
   }
+  async function freshDocuments(){
+    if(typeof apiGet!=='function')throw new Error('Lecture serveur indisponible');
+    const data=await apiGet();
+    if(!data||!Array.isArray(data.documents))throw new Error('Documents serveur indisponibles');
+    return data.documents.map(row=>Object.assign({},row));
+  }
+  function replaceDocuments(rows){
+    if(typeof S==='undefined'||!S)throw new Error('État Yaya indisponible');
+    S.documents=(rows||[]).map(row=>Object.assign({},row));
+    updateCache();
+  }
+  function subjectMatches(row,subject){
+    if(!row)return false;
+    const wanted=text(subject);
+    if([row.objetMail,row.mailSubject,row.emailSubject,row.subject,row.objet].some(value=>text(value)===wanted))return true;
+    const match=String(row.titre||'').match(/^\s*(?:objet|subject)\s*:\s*([^\r\n]+)/i);
+    return text(row.titre)===wanted||!!(match&&text(match[1])===wanted);
+  }
   function toastSafe(message,error){try{if(typeof toast==='function')toast(message,!!error);}catch(e){}}
   function showUpdatedMail(id){
     try{if(typeof render==='function')render();}catch(e){}
@@ -49,28 +67,29 @@
     const subject=text(input.value);
     if(!subject){toastSafe('Indique un objet',true);input.focus();return false;}
 
-    const previous=Object.assign({},row);
-    applySubject(row,subject);
-    updateCache();
-    showUpdatedMail(id);
     toastSafe('Enregistrement de l’objet…');
 
     saving=true;
     try{
       if(typeof apiPost!=='function')throw new Error('API indisponible');
-      const ok=await apiPost('setDocuments',documents());
+      const latest=await freshDocuments();
+      const remote=latest.find(item=>String(item&&item.id||'')===String(id));
+      if(!remote)throw new Error('Mail absent du serveur — aucune donnée écrasée');
+      applySubject(remote,subject);
+      const ok=await apiPost('setDocuments',latest);
       if(ok===false)throw new Error('Écriture refusée');
-      applySubject(row,subject);
-      updateCache();
+
+      const verified=await freshDocuments();
+      const saved=verified.find(item=>String(item&&item.id||'')===String(id));
+      if(!subjectMatches(saved,subject))throw new Error('Objet non confirmé par le serveur');
+      replaceDocuments(verified);
       showUpdatedMail(id);
       toastSafe('Objet du mail enregistré ✓');
       try{window.dispatchEvent(new CustomEvent('yaya:mail-subject-saved',{detail:{id:String(id),subject:subject}}));}catch(e){}
       return true;
     }catch(error){
-      Object.keys(row).forEach(key=>delete row[key]);Object.assign(row,previous);
-      updateCache();
-      try{if(typeof render==='function')render();}catch(e){}
-      toastSafe('Objet non enregistré — réessayez',true);
+      console.error('Yaya — objet du mail non enregistré :',error);
+      toastSafe('Objet non enregistré — aucune autre donnée modifiée',true);
       return false;
     }finally{saving=false;}
   };
