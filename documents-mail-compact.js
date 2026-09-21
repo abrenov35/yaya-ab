@@ -130,9 +130,9 @@
 
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
         display:grid!important;
-        grid-template-columns:minmax(0,1.7fr) 94px 94px!important;
+        grid-template-columns:minmax(150px,.85fr) minmax(240px,1.55fr) 94px 94px!important;
         align-items:center!important;
-        gap:10px!important;
+        gap:14px!important;
         min-height:42px!important;
         padding:6px 10px!important;
         border-bottom:1px solid #e7ecf2!important;
@@ -157,6 +157,18 @@
         color:#53677c!important;
         font-size:10.8px!important;
         font-weight:500!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-document-field-2{
+        min-width:0!important;
+        padding:2px 16px!important;
+        border-left:1px solid #e1e8f0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        color:#53677c!important;
+        font-size:11.5px!important;
+        font-weight:500!important;
+        text-align:center!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours{
         color:#6d7e90!important;
@@ -214,7 +226,7 @@
         }
 
         #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{
-          grid-template-columns:minmax(0,1fr) auto!important;
+          grid-template-columns:minmax(0,1fr) auto auto!important;
           grid-template-rows:auto auto!important;
           gap:3px 10px!important;
           min-height:54px!important;
@@ -222,25 +234,33 @@
         }
         #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row > strong{
           grid-column:1!important;
-          grid-row:1/3!important;
+          grid-row:1!important;
           align-self:center!important;
           padding-right:8px!important;
           font-size:11.5px!important;
         }
         #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-cost{
-          grid-column:2!important;
+          grid-column:3!important;
           grid-row:1!important;
           align-self:center!important;
           font-size:9.8px!important;
         }
         #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours{
           grid-column:2!important;
-          grid-row:2!important;
+          grid-row:1!important;
           align-self:center!important;
           justify-self:end!important;
           max-width:110px!important;
           font-size:9.8px!important;
           text-align:right!important;
+        }
+        #pane-chantiers .yaya-detail-documents-pane .yaya-document-field-2{
+          grid-column:1/-1!important;
+          grid-row:2!important;
+          padding:4px 0 0!important;
+          border-left:0!important;
+          border-top:1px solid #edf1f5!important;
+          text-align:center!important;
         }
       }
     `;
@@ -282,9 +302,25 @@
     });
 
     document.querySelectorAll('#pane-chantiers .yaya-detail-documents-pane').forEach(function(pane){
-      const rows=pane.querySelectorAll(':scope > .yaya-detail-document-row:not(.yaya-detail-mail-row)');
+      const rows=pane.querySelectorAll(':scope > .yaya-detail-document-row');
       const title=pane.querySelector(':scope > .yaya-documents-compact-title');
       if(title)title.remove();
+      rows.forEach(function(row){
+        const primary=row.querySelector(':scope > strong');
+        if(!primary)return;
+        let secondary=row.querySelector(':scope > .yaya-document-field-2');
+        if(!secondary){
+          secondary=primary.querySelector(':scope > small');
+          if(secondary){
+            secondary.classList.add('yaya-document-field-2');
+            primary.insertAdjacentElement('afterend',secondary);
+          }else{
+            secondary=document.createElement('span');
+            secondary.className='yaya-document-field-2';
+            primary.insertAdjacentElement('afterend',secondary);
+          }
+        }
+      });
     });
   }
 
