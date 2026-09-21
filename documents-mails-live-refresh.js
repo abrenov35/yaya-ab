@@ -155,7 +155,13 @@
     cards.forEach(function(card){
       const cid=cardId(card);
       if(!cid)return;
-      const rows=data.documents.filter(function(d){return canonicalId(d&&d.chantierId)===cid&&String(d&&d.type||'').trim().toUpperCase()!=='MAIL';});
+      const rows=data.documents.filter(function(d){
+        const type=String(d&&d.type||'').trim().toUpperCase();
+        return canonicalId(d&&d.chantierId)===cid
+          && type!=='MAIL'
+          && type!=='MAIL_PJ'
+          && type!=='PHOTO';
+      });
       renderDocumentsPane(card,rows);
     });
   }
