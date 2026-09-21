@@ -70,7 +70,7 @@
     });
     return centralRows.map(function(c){
       const id=canonicalId(c&&c.id);
-      return Object.assign({},localById[id]||{},c||{},id:id||String(c&&c.id||''));
+      return Object.assign({},localById[id]||{},c||{},{id:id||String(c&&c.id||'')});
     });
   }
 
