@@ -1,28 +1,66 @@
 (function(){
   'use strict';
-  if(window.__yayaMailSeparateEditV1)return;
-  window.__yayaMailSeparateEditV1=true;
+  if(window.__yayaMailSeparateStorageV2)return;
+  window.__yayaMailSeparateStorageV2=true;
 
   const previousEdit=window.editDocument;
   const previousSave=window.saveDocumentEdit;
+  const previousApiPost=window.apiPost;
 
   function esc(v){
     return String(v==null?'':v)
       .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
       .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
   }
+
+  function isMailView(row){
+    if(!row)return false;
+    const type=String(row.type||'').trim().toUpperCase();
+    const id=String(row.id||'').trim().toUpperCase();
+    return type==='MAIL'||id.indexOf('MAIL_')===0||String(row.origineMail||row.origine||'').trim().toUpperCase()==='MAIL';
+  }
+
   function raw(id){
     try{
       if(typeof window.yayaMailRawById==='function')return window.yayaMailRawById(id);
     }catch(e){}
     return null;
   }
+
   function mapped(id){
     try{
       if(typeof window.yayaMailById==='function')return window.yayaMailById(id);
     }catch(e){}
     return null;
   }
+
+  function mailViews(){
+    try{return typeof window.yayaMailRows==='function'?window.yayaMailRows():[];}catch(e){return [];}
+  }
+
+  function rebuildDocumentsView(){
+    try{
+      if(typeof S==='undefined'||!S)return false;
+      const docs=Array.isArray(S.documents)?S.documents.filter(function(d){return !isMailView(d);}):[];
+      S.documents=docs.concat(mailViews());
+      return true;
+    }catch(e){return false;}
+  }
+
+  // Sécurité centrale : même si un ancien module appelle encore setDocuments,
+  // aucune ligne MAIL ne peut repartir dans la feuille DOCUMENTS.
+  if(typeof previousApiPost==='function'&&!previousApiPost.__yayaMailStorageGuardV2){
+    const guarded=function(action,data){
+      if(String(action)==='setDocuments'&&Array.isArray(data)){
+        data=data.filter(function(row){return !isMailView(row);});
+      }
+      return previousApiPost.call(this,action,data);
+    };
+    guarded.__yayaMailStorageGuardV2=true;
+    guarded.__yayaWrappedApiPost=previousApiPost;
+    window.apiPost=guarded;
+  }
+
   function syncCache(){
     try{
       const value=localStorage.getItem('YAYA_CACHE_DATA_V2');
@@ -32,20 +70,21 @@
       if(typeof S!=='undefined'&&S&&Array.isArray(S.MAILS)){
         cache.MAILS=S.MAILS.map(function(x){return Object.assign({},x);});
       }
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
+        cache.documents=S.documents.filter(function(x){return !isMailView(x);}).map(function(x){return Object.assign({},x);});
+      }
       localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cache));
     }catch(e){}
   }
+
   function refresh(){
+    rebuildDocumentsView();
     try{if(typeof render==='function')render();}catch(e){}
-    try{window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{detail:{tabs:['MAILS'],source:'mail-storage'}}));}catch(e){}
   }
 
   window.voirMessageYaya=function(id){
     const d=mapped(id);
-    if(!d){
-      if(typeof previousEdit==='function'&&typeof window.__yayaLegacyViewMail==='function')return window.__yayaLegacyViewMail(id);
-      return;
-    }
+    if(!d)return;
     const date=String(d.date||'').slice(0,10).split('-').reverse().join('/');
     const contenu=esc(d.contenuMail||'Contenu du mail indisponible dans Yaya.').replace(/\r?\n/g,'<br>');
     const root=document.getElementById('modalRoot');if(!root)return;
@@ -98,13 +137,13 @@
       expediteur:String(sender.value||'').trim(),
       objet:String(object.value||'').trim()
     };
-    if(!patch.objet){try{if(typeof toast==='function')toast('Indique un objet',true);}catch(e){};object.focus();return;}
+    if(!patch.objet){
+      try{if(typeof toast==='function')toast('Indique un objet',true);}catch(e){}
+      object.focus();
+      return;
+    }
 
-    const before={
-      chantierId:d.chantierId,
-      expediteur:d.expediteur,
-      objet:d.objet
-    };
+    const before={chantierId:d.chantierId,expediteur:d.expediteur,objet:d.objet};
     d.chantierId=patch.chantierId;
     d.expediteur=patch.expediteur;
     d.objet=patch.objet;
@@ -113,11 +152,11 @@
     refresh();
 
     let ok=false;
-    try{ok=typeof apiPost==='function'?await apiPost('updateMail',patch):false;}catch(e){ok=false;}
+    try{ok=typeof window.apiPost==='function'?await window.apiPost('updateMail',patch):false;}catch(e){ok=false;}
     if(ok){
       syncCache();
-      try{if(typeof toast==='function')toast('Mail modifié ✓');}catch(e){}
       refresh();
+      try{if(typeof toast==='function')toast('Mail modifié ✓');}catch(e){}
       return true;
     }
 
@@ -130,12 +169,37 @@
     return false;
   };
 
-  document.addEventListener('click',function(e){
-    const edit=e.target&&e.target.closest&&e.target.closest('[data-mail-id].yaya-detail-document-edit,.yaya-detail-mail-row .yaya-detail-document-edit,.message-ligne .yaya-mail-edit');
-    if(!edit)return;
-    const id=String(edit.getAttribute('data-mail-id')||(edit.closest('[data-mail-id]')&&edit.closest('[data-mail-id]').getAttribute('data-mail-id'))||'');
-    if(!id||!raw(id))return;
-    e.preventDefault();e.stopImmediatePropagation();
-    window.editDocument(id);
-  },true);
+  let refreshing=false;
+  window.addEventListener('yaya:data-refreshed',function(){
+    if(refreshing)return;
+    refreshing=true;
+    try{rebuildDocumentsView();syncCache();}finally{refreshing=false;}
+    try{if(typeof render==='function'&&!document.querySelector('#modalRoot .overlay'))requestAnimationFrame(function(){render();});}catch(e){}
+  });
+
+  async function ensureMailsLoaded(){
+    try{
+      if(typeof S==='undefined'||!S)return;
+      if(Array.isArray(S.MAILS)&&S.MAILS.length){
+        rebuildDocumentsView();
+        syncCache();
+        refresh();
+        return;
+      }
+      if(typeof API!=='string'||!API)return;
+      const sep=API.indexOf('?')>=0?'&':'?';
+      const r=await fetch(API+sep+'tabs=MAILS&_mailstore='+Date.now(),{cache:'no-store'});
+      const j=await r.json();
+      if(j&&j.ok&&j.data&&Array.isArray(j.data.MAILS)){
+        S.MAILS=j.data.MAILS;
+        rebuildDocumentsView();
+        syncCache();
+        refresh();
+      }
+    }catch(e){console.warn('Yaya MAILS chargement différé :',e);}
+  }
+
+  rebuildDocumentsView();
+  syncCache();
+  setTimeout(ensureMailsLoaded,0);
 })();
