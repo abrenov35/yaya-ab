@@ -1,6 +1,7 @@
 (function(){
   'use strict';
-  if(window.__yayaMailSubjectSaveFinalV1)return;
+  if(window.__yayaMailSubjectSaveFinalV2)return;
+  window.__yayaMailSubjectSaveFinalV2=true;
   window.__yayaMailSubjectSaveFinalV1=true;
 
   const CACHE_KEY='YAYA_CACHE_DATA_V2';
@@ -36,7 +37,7 @@
   }
   async function freshDocuments(){
     if(typeof apiGet!=='function')throw new Error('Lecture serveur indisponible');
-    const data=await apiGet();
+    const data=await apiGet(true);
     if(!data||!Array.isArray(data.documents))throw new Error('Documents serveur indisponibles');
     return data.documents.map(row=>Object.assign({},row));
   }
@@ -98,6 +99,7 @@
   authoritativeSave.__yayaMailSubjectFinal=true;
   authoritativeSave.__yayaDirectSave=true;
   authoritativeSave.__yayaBackgroundV1=true;
+  window.__yayaSaveMailSubject=authoritativeSave;
   window.saveDocumentEdit=authoritativeSave;
   try{saveDocumentEdit=authoritativeSave;}catch(e){}
 })();

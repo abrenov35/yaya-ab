@@ -236,6 +236,7 @@
     root.querySelector('.yaya-mail-subject-save')?.addEventListener('click',()=>{
       const input=document.getElementById('edDocTitre');
       if(!input||!text(input.value)){try{if(typeof toast==='function')toast('Indique un objet',true);}catch(e){};input&&input.focus();return;}
+      try{if(typeof window.__yayaSaveMailSubject==='function'){window.__yayaSaveMailSubject(id);return;}}catch(e){}
       try{if(typeof window.saveDocumentEdit==='function'){window.saveDocumentEdit(id);return;}}catch(e){}
       try{if(typeof saveDocumentEdit==='function')saveDocumentEdit(id);}catch(e){}
     });
@@ -364,7 +365,7 @@
   if(window.__yayaMailReadActionsLoaderV6)return;
   window.__yayaMailReadActionsLoaderV6=true;
   const s=document.createElement('script');
-  s.src='mail-subject-edit.js?v=mailreadactions-7';
+  s.src='mail-subject-edit.js?v=mailreadactions-8';
   s.async=false;
   s.onerror=()=>console.error('Yaya : chargement actions mail V6 impossible');
   document.head.appendChild(s);
