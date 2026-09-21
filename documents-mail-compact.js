@@ -164,7 +164,7 @@
         grid-column:2!important;
         grid-row:1!important;
         min-width:0!important;
-        padding:5px 20px!important;
+        padding:5px 0 5px 10px!important;
         border-left:1px solid #e1e8f0!important;
         overflow:visible!important;
         text-overflow:clip!important;
@@ -174,7 +174,10 @@
         font-size:13px!important;
         line-height:1.35!important;
         font-weight:600!important;
-        text-align:center!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-start!important;
+        text-align:left!important;
       }
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-hours{
         grid-column:3!important;
@@ -270,7 +273,8 @@
           padding:4px 0 0!important;
           border-left:0!important;
           border-top:1px solid #edf1f5!important;
-          text-align:center!important;
+          justify-content:flex-start!important;
+          text-align:left!important;
         }
       }
     `;
@@ -347,10 +351,15 @@
         primary.style.setProperty('grid-row','1','important');
         secondary.style.setProperty('grid-column',mobile ? '1 / -1' : '2','important');
         secondary.style.setProperty('grid-row',mobile ? '2' : '1','important');
-        secondary.style.setProperty('white-space',mobile ? 'normal' : 'normal','important');
+        secondary.style.setProperty('white-space','normal','important');
         secondary.style.setProperty('overflow','visible','important');
         secondary.style.setProperty('text-overflow','clip','important');
-        secondary.style.setProperty('text-align','center','important');
+        secondary.style.setProperty('display','flex','important');
+        secondary.style.setProperty('align-items','center','important');
+        secondary.style.setProperty('justify-content','flex-start','important');
+        secondary.style.setProperty('text-align','left','important');
+        secondary.style.setProperty('padding-left',mobile?'0':'10px','important');
+        secondary.style.setProperty('padding-right','0','important');
         if(type){
           type.style.setProperty('grid-column',mobile ? '2' : '3','important');
           type.style.setProperty('grid-row','1','important');
