@@ -17,7 +17,7 @@
         inset:0!important;
         align-items:flex-start!important;
         justify-content:stretch!important;
-        padding:var(--yaya-mail-safe-top,54px) 0 0!important;
+        padding:var(--yaya-mail-safe-top,72px) 0 0!important;
         box-sizing:border-box!important;
         overflow:hidden!important;
         background:#fff!important;
@@ -26,7 +26,7 @@
       .overlay.${CENTER_CLASS} > .modal{
         width:100vw!important;
         max-width:none!important;
-        height:calc(100dvh - var(--yaya-mail-safe-top,54px))!important;
+        height:calc(100dvh - var(--yaya-mail-safe-top,72px))!important;
         max-height:none!important;
         min-height:0!important;
         margin:0!important;
@@ -70,11 +70,11 @@
 
       @media(max-width:640px){
         .overlay.${CENTER_CLASS}{
-          padding:var(--yaya-mail-safe-top,48px) 0 0!important;
+          padding:var(--yaya-mail-safe-top,64px) 0 0!important;
         }
         .overlay.${CENTER_CLASS} > .modal{
           width:100vw!important;
-          height:calc(100dvh - var(--yaya-mail-safe-top,48px))!important;
+          height:calc(100dvh - var(--yaya-mail-safe-top,64px))!important;
           padding:7px 8px 10px!important;
         }
         .overlay.${CENTER_CLASS} > .modal > h5{
@@ -112,7 +112,7 @@
     if(hdr){
       const r=hdr.getBoundingClientRect();
       if(r.height>0 && r.bottom>0){
-        top=Math.ceil(r.bottom)+10;
+        top=Math.ceil(r.bottom)+18;
       }
     }
     return Math.max(12,Math.min(top,180));
@@ -205,9 +205,14 @@
       if(!modal) return;
 
       if(isMailReadModal(modal)){
+        const newlyOpened=!overlay.classList.contains(CENTER_CLASS);
         overlay.classList.add(CENTER_CLASS);
         modal.classList.add('yaya-mail-fullscreen-modal');
         overlay.style.setProperty('--yaya-mail-safe-top',safeTopPx()+'px');
+        if(newlyOpened){
+          modal.scrollTop=0;
+          requestAnimationFrame(function(){modal.scrollTop=0;});
+        }
         makeLinksClickable(modal);
       } else {
         overlay.classList.remove(CENTER_CLASS);
