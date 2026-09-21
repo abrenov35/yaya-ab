@@ -54,6 +54,8 @@
         background:#fff!important;
         box-shadow:none!important;
       }
+      #pane-chantiers .yaya-force-mails-pane,
+      #pane-chantiers .card[data-yaya-detail-section="documents"] > .yaya-detail-mails-pane{display:none!important}
       #pane-chantiers .yaya-force-mails-pane{margin:0 0 7px!important}
       #pane-chantiers .yaya-detail-documents-pane{margin:0!important}
 
@@ -259,23 +261,25 @@
     installStyle();
 
     document.querySelectorAll('#pane-chantiers .yaya-detail-section-action-row[data-section="documents"] .yaya-detail-section-action-title').forEach(function(el){
-      if(el.textContent!=='DOCUMENTS & MAILS')el.textContent='DOCUMENTS & MAILS';
+      if(el.textContent!=='DOC & MAILS')el.textContent='DOC & MAILS';
     });
 
     document.querySelectorAll('#pane-chantiers .yaya-force-mails-pane').forEach(function(pane){
       const rows=pane.querySelectorAll(':scope > .yaya-mail-restored-row');
       const title=pane.querySelector(':scope > .yaya-force-mails-title');
-      if(title)title.textContent='MAILS · '+rows.length;
+      if(title)title.style.setProperty('display','none','important');
     });
 
     document.querySelectorAll('#pane-chantiers .yaya-detail-mails-pane').forEach(function(pane){
       const rows=pane.querySelectorAll(':scope > .yaya-detail-mail-row');
-      if(rows.length)addTitle(pane,'yaya-mails-compact-title','MAILS · '+rows.length);
+      const title=pane.querySelector(':scope > .yaya-mails-compact-title');
+      if(title)title.remove();
     });
 
     document.querySelectorAll('#pane-chantiers .yaya-detail-documents-pane').forEach(function(pane){
       const rows=pane.querySelectorAll(':scope > .yaya-detail-document-row:not(.yaya-detail-mail-row)');
-      if(rows.length)addTitle(pane,'yaya-documents-compact-title','DOCUMENTS · '+rows.length);
+      const title=pane.querySelector(':scope > .yaya-documents-compact-title');
+      if(title)title.remove();
     });
   }
 
