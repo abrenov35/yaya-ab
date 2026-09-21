@@ -154,11 +154,11 @@
       link=document.createElement('a');
       link.id=AB_DOCS_ID;
       link.className='ab-docs-external-tab';
-      link.href='https://abrenov35.github.io/ab-db/';
+      link.href='https://abrenov35.github.io/ab-db/?view=new-opportunity';
       link.target='_blank';
       link.rel='noopener noreferrer';
-      link.textContent='AB Docs';
-      link.setAttribute('aria-label','Ouvrir AB Docs dans un nouvel onglet');
+      link.textContent='+ Opportunité';
+      link.setAttribute('aria-label','Créer une nouvelle opportunité dans un nouvel onglet');
     }
 
     const createBtn=document.getElementById('yayaCreateChantierBtn');
