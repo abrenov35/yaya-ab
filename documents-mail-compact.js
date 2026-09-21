@@ -190,6 +190,35 @@
         overflow:hidden!important;
         text-overflow:ellipsis!important;
       }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-mail-pj-row-button{
+        width:auto!important;
+        min-width:36px!important;
+        max-width:44px!important;
+        height:26px!important;
+        min-height:26px!important;
+        padding:0 5px!important;
+        margin:0!important;
+        display:inline-flex!important;
+        align-items:center!important;
+        justify-content:center!important;
+        justify-self:center!important;
+        align-self:center!important;
+        border:1px solid #d3a53a!important;
+        border-radius:6px!important;
+        background:#fff8e6!important;
+        color:#765400!important;
+        font-size:10px!important;
+        font-weight:900!important;
+        line-height:1!important;
+        cursor:pointer!important;
+        visibility:visible!important;
+        opacity:1!important;
+      }
+      #pane-chantiers .yaya-detail-documents-pane .yaya-mail-pj-row-button[data-count]:not([data-count="1"])::after{
+        content:'(' attr(data-count) ')'!important;
+        margin-left:1px!important;
+      }
+
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-charge-cost{
         grid-column:4!important;
         grid-row:1!important;
@@ -291,6 +320,75 @@
     if(title.textContent!==textValue)title.textContent=textValue;
   }
 
+  function nativeAttachmentsForMail(mailId){
+    mailId=String(mailId||'').trim();
+    if(!mailId)return [];
+    let docs=[];
+    try{docs=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];}catch(e){}
+    return docs.filter(function(d){
+      if(String(d&&d.type||'').trim().toUpperCase()!=='MAIL_PJ')return false;
+      const parent=String(d&&(
+        d.mailId||d.parentMailId||d.messageId||d.mailDocumentId||d.parentId||d.sujet
+      )||'').trim();
+      const lien=String(d&&(d.lien||d.url||d.webUrl||d.downloadUrl)||'').trim();
+      return parent===mailId&&!!lien;
+    });
+  }
+
+  function ensureNativePjButton(row){
+    if(!row)return null;
+    const idNode=row.querySelector(
+      ':scope > [data-mail-id], :scope [data-mail-id], :scope > [data-doc-id], :scope [data-doc-id]'
+    );
+    const mailId=String(
+      row.dataset.mailId||
+      (idNode&&(
+        idNode.dataset.mailId||
+        idNode.dataset.docId
+      ))||
+      ''
+    ).trim();
+
+    let btn=row.querySelector(':scope > .yaya-mail-pj-row-button');
+    const list=nativeAttachmentsForMail(mailId);
+
+    if(!list.length){
+      if(btn)btn.remove();
+      return null;
+    }
+
+    if(!btn){
+      btn=document.createElement('button');
+      btn.type='button';
+      btn.className='yaya-mail-pj-row-button';
+      btn.textContent='PJ';
+      row.appendChild(btn);
+    }
+
+    btn.dataset.mailId=mailId;
+    btn.dataset.count=String(list.length);
+    btn.title=list.length===1?'Visualiser la pièce jointe':'Voir les '+list.length+' pièces jointes';
+
+    if(!btn.__yayaNativePjBound){
+      btn.__yayaNativePjBound=true;
+      btn.addEventListener('click',function(e){
+        e.preventDefault();
+        e.stopPropagation();
+        const id=String(this.dataset.mailId||'');
+        const pieces=nativeAttachmentsForMail(id);
+        if(!pieces.length)return;
+        if(typeof window.yayaOpenMailAttachments==='function'){
+          window.yayaOpenMailAttachments(id);
+          return;
+        }
+        const first=pieces[0];
+        const lien=String(first&&(first.lien||first.url||first.webUrl||first.downloadUrl)||'');
+        if(lien&&typeof voirPiece==='function')voirPiece(lien);
+      });
+    }
+    return btn;
+  }
+
   function apply(){
     installStyle();
 
@@ -336,7 +434,7 @@
         }
         const type=row.querySelector(':scope > .yaya-detail-charge-hours');
         const date=row.querySelector(':scope > .yaya-detail-charge-cost');
-        const pj=row.querySelector(':scope > .yaya-mail-pj-row-button');
+        const pj=ensureNativePjButton(row);
         const mobile=window.matchMedia('(max-width:760px) and (orientation:portrait)').matches;
 
         row.style.setProperty('display','grid','important');
