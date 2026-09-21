@@ -335,6 +335,25 @@
     });
   }
 
+  function nativeMailForId(mailId){
+    mailId=String(mailId||'').trim();
+    if(!mailId)return null;
+    let docs=[];
+    try{docs=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];}catch(e){}
+    return docs.find(function(d){
+      return String(d&&d.id||'').trim()===mailId &&
+        String(d&&d.type||'').trim().toUpperCase()==='MAIL';
+    })||null;
+  }
+
+  function nativeMailMentionsAttachment(mail){
+    if(!mail)return false;
+    const txt=String(
+      (mail.titre||'')+' '+(mail.objetMail||'')+' '+(mail.sujet||'')
+    ).toLowerCase();
+    return /pi[eè]ce\s*jointe|pi[eè]ces\s*jointes|ci[-\s]?joint|\bpj\b|joint\s+le|joint\s+la|joint\s+les/.test(txt);
+  }
+
   function ensureNativePjButton(row){
     if(!row)return null;
     const idNode=row.querySelector(
@@ -351,8 +370,10 @@
 
     let btn=row.querySelector(':scope > .yaya-mail-pj-row-button');
     const list=nativeAttachmentsForMail(mailId);
+    const mail=nativeMailForId(mailId);
+    const fallback=!!(mail&&!list.length&&nativeMailMentionsAttachment(mail));
 
-    if(!list.length){
+    if(!list.length&&!fallback){
       if(btn)btn.remove();
       return null;
     }
@@ -366,8 +387,15 @@
     }
 
     btn.dataset.mailId=mailId;
-    btn.dataset.count=String(list.length);
-    btn.title=list.length===1?'Visualiser la pièce jointe':'Voir les '+list.length+' pièces jointes';
+    if(list.length){
+      btn.dataset.count=String(list.length);
+      btn.removeAttribute('data-fallback');
+      btn.title=list.length===1?'Visualiser la pièce jointe':'Voir les '+list.length+' pièces jointes';
+    }else{
+      btn.removeAttribute('data-count');
+      btn.dataset.fallback='mail';
+      btn.title='Ouvrir le mail contenant la pièce jointe';
+    }
 
     if(!btn.__yayaNativePjBound){
       btn.__yayaNativePjBound=true;
@@ -376,14 +404,21 @@
         e.stopPropagation();
         const id=String(this.dataset.mailId||'');
         const pieces=nativeAttachmentsForMail(id);
-        if(!pieces.length)return;
-        if(typeof window.yayaOpenMailAttachments==='function'){
-          window.yayaOpenMailAttachments(id);
-          return;
+        if(pieces.length){
+          if(typeof window.yayaOpenMailAttachments==='function'){
+            window.yayaOpenMailAttachments(id);
+            return;
+          }
+          const first=pieces[0];
+          const lien=String(first&&(first.lien||first.url||first.webUrl||first.downloadUrl)||'');
+          if(lien&&typeof voirPiece==='function'){
+            voirPiece(lien);
+            return;
+          }
         }
-        const first=pieces[0];
-        const lien=String(first&&(first.lien||first.url||first.webUrl||first.downloadUrl)||'');
-        if(lien&&typeof voirPiece==='function')voirPiece(lien);
+        const mail=nativeMailForId(id);
+        const mailUrl=String(mail&&mail.lien||'').trim();
+        if(mailUrl)window.open(mailUrl,'_blank','noopener');
       });
     }
     return btn;
