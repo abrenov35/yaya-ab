@@ -1,10 +1,10 @@
 (function(){
 'use strict';
-if(window.__yayaChargePieceFastViewerV1)return;
-window.__yayaChargePieceFastViewerV1=true;
+if(window.__yayaChargePieceFastViewerV2)return;
+window.__yayaChargePieceFastViewerV2=true;
 
 const VIEWER_ID='yayaChargePieceFastViewer';
-const STYLE_ID='yaya-charge-piece-fast-viewer-v1';
+const STYLE_ID='yaya-charge-piece-fast-viewer-v2';
 
 function txt(v){return String(v==null?'':v).trim();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -82,6 +82,33 @@ function ensureStyle(){
 #${VIEWER_ID} .ycpf-download{
   border-color:#b9dfc5!important;background:#eef9f1!important;color:#17653a!important;
 }
+#${VIEWER_ID} .ycpf-delete{
+  border-color:#e5a9a5!important;background:#fff1f0!important;color:#a61b12!important;
+}
+#${VIEWER_ID} .ycpf-delete:hover{
+  border-color:#cf6f68!important;background:#ffe5e2!important;
+}
+#${VIEWER_ID} .ycpf-confirm{
+  position:absolute!important;inset:0!important;z-index:30!important;
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  padding:18px!important;background:rgba(15,23,42,.58)!important;box-sizing:border-box!important;
+}
+#${VIEWER_ID} .ycpf-confirm-box{
+  width:min(420px,calc(100vw - 36px))!important;background:#fff!important;
+  border-radius:14px!important;padding:22px!important;box-shadow:0 18px 60px rgba(0,0,0,.35)!important;
+}
+#${VIEWER_ID} .ycpf-confirm-title{
+  font-size:17px!important;font-weight:850!important;color:#162d49!important;margin-bottom:9px!important;
+}
+#${VIEWER_ID} .ycpf-confirm-text{
+  font-size:13px!important;line-height:1.45!important;color:#556579!important;margin-bottom:18px!important;
+}
+#${VIEWER_ID} .ycpf-confirm-actions{
+  display:flex!important;gap:10px!important;justify-content:flex-end!important;
+}
+#${VIEWER_ID} .ycpf-confirm-ok{
+  border-color:#b42318!important;background:#b42318!important;color:#fff!important;
+}
 #${VIEWER_ID} .ycpf-stage{min-width:0!important;min-height:0!important;background:#1f1f1f!important;overflow:hidden!important}
 #${VIEWER_ID} .ycpf-frame{display:block!important;width:100%!important;height:100%!important;border:0!important;background:#fff!important}
 #${VIEWER_ID} .ycpf-img{display:block!important;width:100%!important;height:100%!important;object-fit:contain!important;background:#111!important}
@@ -98,8 +125,87 @@ function closeViewer(){
   document.getElementById(VIEWER_ID)?.remove();
 }
 
-function openViewer(url,label){
+function persistAchatsCache(){
+  try{
+    const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+    const cached=raw?JSON.parse(raw):{};
+    if(cached&&typeof cached==='object'&&typeof S!=='undefined'&&S&&Array.isArray(S.achats)){
+      cached.achats=S.achats.map(function(a){return Object.assign({},a);});
+      localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cached));
+    }
+  }catch(e){}
+}
+
+function toastSafe(message,isError){
+  try{if(typeof toast==='function')toast(message,!!isError);}catch(e){}
+}
+
+async function detachAchatPiece(achatId){
+  const achat=achatById(achatId);
+  if(!achat)throw new Error('Achat introuvable');
+  achat.lien='';
+  persistAchatsCache();
+
+  if(typeof window.__yayaFinanceQueueCurrent==='function'){
+    window.__yayaFinanceQueueCurrent({upsertIds:[txt(achatId)]});
+    if(typeof window.__yayaFinanceFlushPending==='function'){
+      setTimeout(function(){window.__yayaFinanceFlushPending();},0);
+    }
+  }else if(typeof apiPost==='function'){
+    const ok=await apiPost('addAchat',achat);
+    if(ok===false)throw new Error('Enregistrement refusé');
+  }else{
+    throw new Error('Synchronisation Yaya indisponible');
+  }
+
+  try{if(typeof render==='function')render();}catch(e){}
+  return true;
+}
+
+function showDetachConfirm(wrap,achatId){
+  if(!wrap||!achatId)return;
+  wrap.querySelector('.ycpf-confirm')?.remove();
+
+  const confirm=document.createElement('div');
+  confirm.className='ycpf-confirm';
+  confirm.innerHTML=
+    '<div class="ycpf-confirm-box">'+
+      '<div class="ycpf-confirm-title">Supprimer la pièce jointe ?</div>'+
+      '<div class="ycpf-confirm-text">L’achat restera dans Yaya. Seul le document sera détaché de cet achat. Le fichier original sur Drive / Dropbox ne sera pas supprimé.</div>'+
+      '<div class="ycpf-confirm-actions">'+
+        '<button type="button" class="ycpf-btn ycpf-confirm-cancel">Annuler</button>'+
+        '<button type="button" class="ycpf-btn ycpf-confirm-ok">Supprimer la pièce</button>'+
+      '</div>'+
+    '</div>';
+  wrap.appendChild(confirm);
+
+  const cancel=function(){confirm.remove();};
+  confirm.querySelector('.ycpf-confirm-cancel').onclick=function(e){
+    e.preventDefault();e.stopPropagation();cancel();
+  };
+  confirm.onclick=function(e){if(e.target===confirm)cancel();};
+  confirm.querySelector('.ycpf-confirm-ok').onclick=async function(e){
+    e.preventDefault();e.stopPropagation();
+    const btn=e.currentTarget;
+    if(btn.disabled)return;
+    btn.disabled=true;
+    btn.textContent='Suppression…';
+    try{
+      await detachAchatPiece(achatId);
+      confirm.remove();
+      closeViewer();
+      toastSafe('Pièce jointe supprimée de l’achat ✓');
+    }catch(err){
+      btn.disabled=false;
+      btn.textContent='Supprimer la pièce';
+      toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
+    }
+  };
+}
+
+function openViewer(url,label,achatId){
   url=txt(url);
+  achatId=txt(achatId);
   if(!url)return;
   ensureStyle();
   closeViewer();
@@ -108,11 +214,13 @@ function openViewer(url,label){
   wrap.id=VIEWER_ID;
   const purl=previewUrl(url);
   const image=/\.(?:jpe?g|png|webp|gif)(?:[?#].*)?$/i.test(purl);
+  const canDelete=!!(achatId&&achatById(achatId));
 
   wrap.innerHTML=
     '<div class="ycpf-head">'+
       '<div class="ycpf-title">'+esc(label||'Pièce jointe')+'</div>'+
       '<button type="button" class="ycpf-btn ycpf-download">Télécharger</button>'+
+      (canDelete?'<button type="button" class="ycpf-btn ycpf-delete">Supprimer la pièce</button>':'')+
       '<button type="button" class="ycpf-btn ycpf-close">Fermer</button>'+
     '</div>'+
     '<div class="ycpf-stage">'+
@@ -132,6 +240,11 @@ function openViewer(url,label){
     a.href=downloadUrl(url);
     a.target='_blank';a.rel='noopener';a.download='';
     document.body.appendChild(a);a.click();a.remove();
+  };
+  const del=wrap.querySelector('.ycpf-delete');
+  if(del)del.onclick=function(e){
+    e.preventDefault();e.stopPropagation();
+    showDetachConfirm(wrap,achatId);
   };
 }
 
@@ -198,7 +311,7 @@ document.addEventListener('click',function(e){
     ? [txt(a.fournisseur),txt(a.designation)].filter(Boolean).join(' — ')
     : 'Pièce jointe';
 
-  openViewer(url,label);
+  openViewer(url,label,id);
 },true);
 
 document.addEventListener('keydown',function(e){
