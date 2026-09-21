@@ -11,7 +11,7 @@ const JS_URL='/yaya-ab/public/commandes-native/commandes-native-embed.js?v=15';
 const ROW_MODAL_URL='/yaya-ab/public/commandes-native/commandes-native-row-modal.js?v=2';
 const ACTIONS_URL='/yaya-ab/public/commandes-native/commandes-native-actions-v3.js?v=4';
 const LINE_V4_URL='/yaya-ab/public/commandes-native/commandes-native-line-v4.js?v=23';
-const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=12';
+const EDIT_V5_URL='/yaya-ab/public/commandes-native/commandes-native-edit-modal-v5.js?v=13';
 const CREATE_V6_URL='/yaya-ab/public/commandes-native/commandes-native-create-followup-v6.js?v=1';
 let activeCard=null, activeBlock=null, scanTimer=0, assetsPromise=null, deleteConfirmInstalled=false;
 const COMMANDES_BASE_MIGRATION_KEY='YAYA_COMMANDES_BASE_LINKS_20260919_V2';
