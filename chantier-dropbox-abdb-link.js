@@ -4,11 +4,23 @@
   window.__yayaChantierDropboxAbdbV3=true;
 
   const WRAP_ID='yayaChantierDropboxSearch';
+  const RESULTS_ID='yayaChantierDropboxResults';
   const API_URL='https://script.google.com/macros/s/AKfycbx3WxWC-GuwmYUaB99Wi3LQ3-DAUZtG6CJcTLp2entOd8PN5vz-251Lh20TEE_uA40O/exec';
   const CACHE_PREFIX='YAYA_ABDB_SEARCH_V1_';
   let pending=false,observed=false,timer=0,requestNumber=0;
 
   function esc(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+  function resultBox(){return document.getElementById(RESULTS_ID);}
+  function positionResults(wrap){
+    const box=resultBox(),input=wrap&&wrap.querySelector('input');
+    if(!box||!input)return;
+    const rect=input.getBoundingClientRect();
+    const width=Math.min(Math.max(rect.width,340),Math.max(240,window.innerWidth-16));
+    const left=Math.max(8,Math.min(rect.left,window.innerWidth-width-8));
+    box.style.setProperty('top',Math.round(rect.bottom+5)+'px','important');
+    box.style.setProperty('left',Math.round(left)+'px','important');
+    box.style.setProperty('width',Math.round(width)+'px','important');
+  }
   function readCache(query){try{const data=JSON.parse(localStorage.getItem(CACHE_PREFIX+query.toUpperCase())||'null');return data&&Array.isArray(data.items)?data.items:null;}catch(e){return null;}}
   function writeCache(query,items){try{localStorage.setItem(CACHE_PREFIX+query.toUpperCase(),JSON.stringify({items:items,savedAt:Date.now()}));}catch(e){}}
   function jsonp(query){
@@ -23,7 +35,7 @@
     });
   }
   function showResults(wrap,items,message){
-    const box=wrap.querySelector('.yaya-abdb-results');if(!box)return;
+    const box=resultBox();if(!box)return;positionResults(wrap);
     if(message){box.innerHTML='<div class="yaya-abdb-message">'+esc(message)+'</div>';box.hidden=false;return;}
     if(!items.length){box.innerHTML='<div class="yaya-abdb-message">Aucun dossier trouvé</div>';box.hidden=false;return;}
     box.innerHTML=items.map(function(item){
@@ -31,7 +43,7 @@
     }).join('');box.hidden=false;
   }
   async function search(wrap){
-    const input=wrap.querySelector('input'),query=String(input&&input.value||'').trim(),box=wrap.querySelector('.yaya-abdb-results');
+    const input=wrap.querySelector('input'),query=String(input&&input.value||'').trim(),box=resultBox();
     if(query.length<2){if(box){box.hidden=true;box.innerHTML='';}return;}
     const ownRequest=++requestNumber,cached=readCache(query);
     if(cached)showResults(wrap,cached,'');
@@ -43,10 +55,18 @@
   }
   function createSearch(){
     const wrap=document.createElement('div');wrap.id=WRAP_ID;
-    wrap.innerHTML='<input type="search" autocomplete="off" placeholder="Rechercher dans AB DB" aria-label="Rechercher un dossier dans AB DB"><div class="yaya-abdb-results" hidden></div>';
+    wrap.innerHTML='<input type="search" autocomplete="off" placeholder="Rechercher dans AB DB" aria-label="Rechercher un dossier dans AB DB">';
+    let box=resultBox();
+    if(!box){
+      box=document.createElement('div');
+      box.id=RESULTS_ID;
+      box.className='yaya-abdb-results';
+      box.hidden=true;
+      document.body.appendChild(box);
+    }
     const input=wrap.querySelector('input');
     input.addEventListener('click',function(event){event.stopPropagation();});
-    input.addEventListener('keydown',function(event){event.stopPropagation();if(event.key==='Enter'){event.preventDefault();clearTimeout(timer);search(wrap);}if(event.key==='Escape'){wrap.querySelector('.yaya-abdb-results').hidden=true;input.blur();}});
+    input.addEventListener('keydown',function(event){event.stopPropagation();if(event.key==='Enter'){event.preventDefault();clearTimeout(timer);search(wrap);}if(event.key==='Escape'){const results=resultBox();if(results)results.hidden=true;input.blur();}});
     input.addEventListener('input',function(){clearTimeout(timer);timer=setTimeout(function(){search(wrap);},350);});
     wrap.addEventListener('click',function(event){event.stopPropagation();});return wrap;
   }
@@ -59,11 +79,11 @@
       #${WRAP_ID} input:focus{border-color:#4d83bd!important;box-shadow:0 0 0 3px rgba(77,131,189,.14)!important}
       .hdr{overflow:visible!important;z-index:50000!important;isolation:isolate!important}
       .hdr .tabs{overflow:visible!important;position:relative!important;z-index:50001!important}
-      #${WRAP_ID} .yaya-abdb-results{position:absolute!important;top:47px!important;left:0!important;right:0!important;display:block!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.2)!important;z-index:50002!important}
-      #${WRAP_ID} .yaya-abdb-results[hidden]{display:none!important}
-      #${WRAP_ID} .yaya-abdb-result{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;padding:8px!important;border-radius:7px!important;color:#183d63!important;text-decoration:none!important}
-      #${WRAP_ID} .yaya-abdb-result:hover{background:#edf5fd!important}#${WRAP_ID} .yaya-abdb-result strong,#${WRAP_ID} .yaya-abdb-result small{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
-      #${WRAP_ID} .yaya-abdb-result strong{font-size:11.5px!important}#${WRAP_ID} .yaya-abdb-result small{margin-top:2px!important;color:#75859a!important;font-size:9.5px!important}#${WRAP_ID} .yaya-abdb-message{padding:10px!important;color:#66778b!important;font-size:11px!important;text-align:center!important}
+      .yaya-abdb-results{position:fixed!important;display:block!important;box-sizing:border-box!important;max-height:310px!important;overflow:auto!important;padding:5px!important;border:1px solid #c3d0df!important;border-radius:9px!important;background:#fff!important;box-shadow:0 12px 28px rgba(19,45,73,.28)!important;z-index:2147483000!important}
+      .yaya-abdb-results[hidden]{display:none!important}
+      .yaya-abdb-result{display:grid!important;grid-template-columns:22px minmax(0,1fr)!important;gap:7px!important;align-items:center!important;padding:8px!important;border-radius:7px!important;color:#183d63!important;text-decoration:none!important}
+      .yaya-abdb-result:hover{background:#edf5fd!important}.yaya-abdb-result strong,.yaya-abdb-result small{display:block!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important}
+      .yaya-abdb-result strong{font-size:11.5px!important}.yaya-abdb-result small{margin-top:2px!important;color:#75859a!important;font-size:9.5px!important}.yaya-abdb-message{padding:10px!important;color:#66778b!important;font-size:11px!important;text-align:center!important}
       @media(max-width:1050px){#${WRAP_ID}{flex-basis:195px!important;width:195px!important;min-width:195px!important}#${WRAP_ID} input{padding-left:10px!important;font-size:11px!important}}
     `;document.head.appendChild(style);
   }
@@ -80,6 +100,8 @@
   }
   function schedule(){if(pending)return;pending=true;requestAnimationFrame(sync);}
   function observePane(){if(observed)return;if(!document.body){setTimeout(observePane,120);return;}observed=true;new MutationObserver(schedule).observe(document.body,{childList:true,subtree:true});schedule();}
-  document.addEventListener('click',function(event){const wrap=document.getElementById(WRAP_ID);if(!wrap||wrap.contains(event.target))return;const box=wrap.querySelector('.yaya-abdb-results');if(box)box.hidden=true;});
+  document.addEventListener('click',function(event){const wrap=document.getElementById(WRAP_ID),box=resultBox();if((wrap&&wrap.contains(event.target))||(box&&box.contains(event.target)))return;if(box)box.hidden=true;});
+  window.addEventListener('resize',function(){const wrap=document.getElementById(WRAP_ID),box=resultBox();if(wrap&&box&&!box.hidden)positionResults(wrap);});
+  window.addEventListener('scroll',function(){const wrap=document.getElementById(WRAP_ID),box=resultBox();if(wrap&&box&&!box.hidden)positionResults(wrap);},true);
   ensureStyle();observePane();window.addEventListener('yaya:data-refreshed',schedule);[250,800,1600].forEach(function(ms){setTimeout(schedule,ms);});
 })();
