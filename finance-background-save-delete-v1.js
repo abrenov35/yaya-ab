@@ -291,7 +291,7 @@
     overlay.innerHTML=''
       +'<div style="background:#fff;border-radius:14px;padding:22px;max-width:410px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.35);font-family:inherit">'
       +'<div style="font-size:17px;font-weight:800;color:#162D49;margin-bottom:10px">Supprimer cet achat de Yaya ?</div>'
-      +'<div style="font-size:13px;line-height:1.5;color:#556579;margin-bottom:18px">Le fichier original Drive / Dropbox sera conservé. Seule la ligne Yaya sera supprimée.</div>'
+      +'<div style="font-size:13px;line-height:1.5;color:#556579;margin-bottom:18px">La ligne Yaya et sa pièce jointe seront supprimées. Le fichier Google Drive lié sera mis à la corbeille.</div>'
       +'<div style="display:flex;gap:10px;justify-content:flex-end">'
       +'<button type="button" data-bg-cancel style="padding:10px 15px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;cursor:pointer">Annuler</button>'
       +'<button type="button" data-bg-ok style="padding:10px 15px;border-radius:8px;border:0;background:#b42318;color:#fff;font-weight:800;cursor:pointer">Supprimer de Yaya</button>'
@@ -299,8 +299,10 @@
 
     overlay.querySelector('[data-bg-cancel]').onclick=function(){removeConfirm(overlay);};
     overlay.onclick=function(e){if(e.target===overlay)removeConfirm(overlay);};
-    overlay.querySelector('[data-bg-ok]').onclick=function(e){
+    overlay.querySelector('[data-bg-ok]').onclick=async function(e){
       e.preventDefault();e.stopPropagation();
+      const saved=await apiPost('deleteAchatComplet',{id:id});
+      if(!saved){toastSafe('Suppression non enregistrée',true);return;}
       try{
         if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('données indisponibles');
         const before=S.achats.length;
@@ -310,10 +312,10 @@
 
       removeConfirm(overlay);
       try{if(editModal?.closest('.overlay'))editModal.closest('.overlay').remove();else closeModalSafe();}catch(e){closeModalSafe();}
-      toastSafe('Achat supprimé — synchronisation en arrière-plan');
+      toastSafe('Achat et pièce supprimés — fichier Drive mis à la corbeille ✓');
       renderSoon();
       persistCacheSoon();
-      queueCurrent({removeIds:[id]});
+      reconcileCreatePending(id,null);
     };
     document.body.appendChild(overlay);
   }
@@ -353,7 +355,9 @@
     id=txt(id);
     if(!id)return false;
 
-    const execute=function(){
+    const execute=async function(){
+      const saved=await apiPost('deleteAchatComplet',{id:id});
+      if(!saved){toastSafe('Suppression non enregistrée',true);return false;}
       try{
         if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('données indisponibles');
         const before=S.achats.length;
@@ -367,9 +371,9 @@
       }
 
       persistCacheSoon();
-      queueCurrent({removeIds:[id]});
+      reconcileCreatePending(id,null);
       renderSoon();
-      toastSafe('Achat supprimé — synchronisation…');
+      toastSafe('Achat et pièce supprimés — fichier Drive mis à la corbeille ✓');
       return true;
     };
 
@@ -384,7 +388,7 @@
     overlay.innerHTML=''
       +'<div style="background:#fff;border-radius:14px;padding:22px;max-width:410px;width:100%;box-shadow:0 18px 60px rgba(0,0,0,.35);font-family:inherit">'
       +'<div style="font-size:17px;font-weight:800;color:#162D49;margin-bottom:10px">Supprimer cet achat de Yaya ?</div>'
-      +'<div style="font-size:13px;line-height:1.5;color:#556579;margin-bottom:18px">Le fichier original Drive / Dropbox sera conservé. Seule la ligne Yaya sera supprimée.</div>'
+      +'<div style="font-size:13px;line-height:1.5;color:#556579;margin-bottom:18px">La ligne Yaya et sa pièce jointe seront supprimées. Le fichier Google Drive lié sera mis à la corbeille.</div>'
       +'<div style="display:flex;gap:10px;justify-content:flex-end">'
       +'<button type="button" data-bg-cancel style="padding:10px 15px;border-radius:8px;border:1px solid #cbd5e1;background:#fff;color:#334155;font-weight:700;cursor:pointer">Annuler</button>'
       +'<button type="button" data-bg-ok style="padding:10px 15px;border-radius:8px;border:0;background:#b42318;color:#fff;font-weight:800;cursor:pointer">Supprimer de Yaya</button>'
@@ -394,10 +398,10 @@
     const close=function(){try{overlay.remove();}catch(e){}};
     overlay.querySelector('[data-bg-cancel]').onclick=close;
     overlay.onclick=function(e){if(e.target===overlay)close();};
-    overlay.querySelector('[data-bg-ok]').onclick=function(e){
+    overlay.querySelector('[data-bg-ok]').onclick=async function(e){
       e.preventDefault();e.stopPropagation();
       close();
-      execute();
+      await execute();
     };
     return true;
   }
