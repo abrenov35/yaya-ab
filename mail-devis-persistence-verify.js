@@ -4,28 +4,6 @@
   window.__yayaMailDevisPersistenceVerifyV3=true;
 
   function toastSafe(m,e){try{if(typeof toast==='function')toast(m,!!e);}catch(_) {}}
-  function same(a,b){return String(a==null?'':a).trim()===String(b==null?'':b).trim();}
-
-  async function verifyMail(id,subject){
-    if(typeof window.apiGet!=='function')throw new Error('API indisponible');
-    const fresh=await window.apiGet(true);
-    const d=fresh&&Array.isArray(fresh.documents)?fresh.documents.find(x=>String(x&&x.id)===String(id)):null;
-    if(!d)throw new Error('mail absent après écriture');
-    const serverSubject=d.objetMail||d.mailSubject||d.emailSubject||d.subject||d.objet||'';
-    if(!same(serverSubject,subject))throw new Error('objet non confirmé par Sheet');
-    return fresh;
-  }
-
-  window.addEventListener('yaya:mail-edit-local',function(ev){
-    const d=ev&&ev.detail||{};if(!d.id||typeof window.apiPost!=='function')return;
-    const rows=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];
-    toastSafe('Synchronisation du mail…');
-    window.apiPost('setDocuments',rows)
-      .then(function(ok){if(ok===false)throw new Error('écriture Documents refusée');return verifyMail(d.id,d.subject);})
-      .then(function(){toastSafe('Mail enregistré dans Sheet ✓');})
-      .catch(function(err){console.error('Mail persistence:',err);toastSafe('Mail non synchronisé — réessayer',true);});
-  });
-
   function packMeta(label,description){
     const l=String(label||'').trim();
     const d=String(description||'').trim();
