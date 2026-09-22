@@ -301,8 +301,22 @@
     overlay.onclick=function(e){if(e.target===overlay)removeConfirm(overlay);};
     overlay.querySelector('[data-bg-ok]').onclick=async function(e){
       e.preventDefault();e.stopPropagation();
-      const saved=await apiPost('deleteAchatComplet',{id:id});
-      if(!saved){toastSafe('Suppression non enregistrée',true);return;}
+      const button=e.currentTarget;
+      if(button.disabled)return;
+      button.disabled=true;
+      button.textContent='Suppression…';
+      let saved=false;
+      try{
+        saved=await apiPost('deleteAchatComplet',{id:id});
+      }catch(err){
+        console.error('Yaya finance — suppression achat :',err);
+      }
+      if(!saved){
+        button.disabled=false;
+        button.textContent='Supprimer de Yaya';
+        toastSafe('Suppression non enregistrée — API Yaya à vérifier',true);
+        return;
+      }
       try{
         if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('données indisponibles');
         const before=S.achats.length;
