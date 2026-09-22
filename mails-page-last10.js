@@ -25,11 +25,11 @@
   if(window.__yayaMailSeparateStorageLoaderV1)return;
   window.__yayaMailSeparateStorageLoaderV1=true;
   const adapter=document.createElement('script');
-  adapter.src='mail-storage-adapter-v1.js?v=mailstore-2';
+  adapter.src='mail-storage-adapter-v1.js?v=mailstore-3';
   adapter.async=false;
   adapter.onload=function(){
     const edit=document.createElement('script');
-    edit.src='mail-storage-edit-v1.js?v=mailstoreedit-2';
+    edit.src='mail-storage-edit-v1.js?v=mailstoreedit-3';
     edit.async=false;
     document.head.appendChild(edit);
   };
