@@ -46,13 +46,14 @@
   }
 
   window.delDocument=async function(id){
-    if(!Array.isArray(S.documents)||!S.documents.some(function(x){return String(x.id)===String(id);} ))return;
+    const sid=String(id||'').trim();
+    if(!sid||!Array.isArray(S.documents)||!S.documents.some(function(x){return String(x.id)===sid;} ))return;
     const ok=await confirmationSuppression('document');
     if(!ok)return;
     const avant=S.documents.slice();
-    S.documents=S.documents.filter(function(x){return String(x.id)!==String(id);});
+    S.documents=S.documents.filter(function(x){return String(x.id)!==sid;});
     render();
-    const saved=await apiPost('setDocuments',S.documents);
+    const saved=await apiPost('deleteDocument',{id:sid});
     if(saved){
       toastSafe('Document supprimé de Yaya — fichier conservé dans le dossier chantier ✓');
     }else{
