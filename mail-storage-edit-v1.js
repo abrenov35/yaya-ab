@@ -5,6 +5,7 @@
 
   const previousEdit=window.editDocument;
   const previousSave=window.saveDocumentEdit;
+  const previousDelete=window.delDocument;
   const previousApiPost=window.apiPost;
 
   function esc(v){
@@ -39,11 +40,15 @@
   }
 
   function rebuildDocumentsView(){
+    // Architecture actuelle : MAILS et documents sont deux stockages distincts.
+    // On purge seulement d'éventuelles anciennes lignes MAIL de S.documents.
     try{
       if(typeof S==='undefined'||!S)return false;
-      const docs=Array.isArray(S.documents)?S.documents.filter(function(d){return !isMailView(d);}):[];
-      S.documents=docs.concat(mailViews());
-      return true;
+      const before=Array.isArray(S.documents)?S.documents:[];
+      const docs=before.filter(function(d){return !isMailView(d);});
+      const changed=docs.length!==before.length;
+      S.documents=docs;
+      return changed;
     }catch(e){return false;}
   }
 
@@ -119,6 +124,81 @@
       +'<div class="mfoot"><button class="btnp go" onclick="saveDocumentEdit(\''+esc(id)+'\')">Enregistrer</button><button class="btn2" onclick="closeModal()">Annuler</button></div>'
       +'</div></div>';
   };
+
+  window.__yayaSaveMailSubject=async function(id){
+    const d=raw(id);
+    if(!d)return false;
+    const input=document.getElementById('edDocTitre')||document.getElementById('edMailObject');
+    if(!input)return false;
+    const object=String(input.value||'').trim();
+    if(!object){
+      try{if(typeof toast==='function')toast('Indique un objet',true);}catch(e){}
+      input.focus();
+      return false;
+    }
+    const before=String(d.objet||'');
+    d.objet=object;
+    syncCache();
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
+    refresh();
+    let ok=false;
+    try{
+      ok=typeof window.apiPost==='function'
+        ? await window.apiPost('updateMail',{id:String(d.id),objet:object})
+        : false;
+    }catch(e){ok=false;}
+    if(ok){
+      syncCache();refresh();
+      try{if(typeof toast==='function')toast('Objet du mail enregistré ✓');}catch(e){}
+      return true;
+    }
+    d.objet=before;
+    syncCache();refresh();
+    try{if(typeof toast==='function')toast('Objet du mail non enregistré',true);}catch(e){}
+    return false;
+  };
+
+  window.delDocument=async function(id){
+    const d=raw(id);
+    if(!d){
+      if(typeof previousDelete==='function')return previousDelete.apply(this,arguments);
+      return false;
+    }
+    let index=-1;
+    try{
+      index=(typeof S!=='undefined'&&S&&Array.isArray(S.MAILS))
+        ? S.MAILS.findIndex(function(row){return String(row&&row.id||'')===String(id);})
+        : -1;
+    }catch(e){}
+    const backup=index>=0?Object.assign({},S.MAILS[index]):Object.assign({},d);
+    if(index>=0)S.MAILS.splice(index,1);
+    syncCache();
+    try{if(typeof closeModal==='function')closeModal();}catch(e){}
+    refresh();
+
+    let ok=false;
+    try{
+      ok=typeof window.apiPost==='function'
+        ? await window.apiPost('deleteMail',{id:String(id)})
+        : false;
+    }catch(e){ok=false;}
+    if(ok){
+      syncCache();refresh();
+      try{if(typeof toast==='function')toast('Mail supprimé ✓');}catch(e){}
+      return true;
+    }
+
+    try{
+      if(typeof S!=='undefined'&&S){
+        if(!Array.isArray(S.MAILS))S.MAILS=[];
+        if(!S.MAILS.some(function(row){return String(row&&row.id||'')===String(id);}))S.MAILS.push(backup);
+      }
+    }catch(e){}
+    syncCache();refresh();
+    try{if(typeof toast==='function')toast('Suppression du mail non enregistrée',true);}catch(e){}
+    return false;
+  };
+  try{delDocument=window.delDocument;}catch(e){}
 
   window.saveDocumentEdit=async function(id){
     const d=raw(id);
