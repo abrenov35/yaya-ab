@@ -10,6 +10,15 @@
 <div id="yaya-startup">Chargement de Yaya…<br><small style="font-size:14px;font-weight:500;margin-top:12px;display:block">Connexion aux données en cours.</small></div>
 <script>
 (async()=>{
+  try{
+    const resetKey='YAYA_DOCMAIL_UNIFIED_V2_RESET';
+    if(localStorage.getItem(resetKey)!=='1'){
+      localStorage.removeItem('YAYA_CACHE_DATA_V2');
+      localStorage.removeItem('YAYA_CACHE_META_V2');
+      localStorage.removeItem('YAYA_PENDING_DOCUMENT_UPSERT_V1');
+      localStorage.setItem(resetKey,'1');
+    }
+  }catch(e){}
   let base=await fetch('index-production-base.html?v=fastboot-2',{cache:'force-cache'}).then(r=>{if(!r.ok)throw new Error('base '+r.status);return r.text();});
   base=base.replace('body{visibility:hidden!important}','body{visibility:visible!important}').replace('<body><script>','<body><div style="min-height:100vh;display:grid;place-items:center;text-align:center;color:#162d49;font:800 22px Arial,sans-serif">Chargement de Yaya…</div><script>');
   const sourceLoader="  const source=await fetch('index-legacy.html?v=marcheht-6',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('legacy '+r.status);return r.text();});";
@@ -73,7 +82,7 @@
     '<script src="avoir-display-positive.js?v=avoir-1"><\\/script>'+
     '<script src="chantier-create-search-line.js?v=mainline-21"><\\/script>'+
     '<script src="recent-items-limit.js?v=recent-10-3"><\\/script>'+
-    '<script src="documents-page-compact-fix.js?v=doccompact-13"><\\/script>'+
+    '<script src="documents-page-compact-fix.js?v=doccompact-14"><\\/script>'+
     '<script src="chantier-mode-suivi-patch.js?v=mode-2"><\\/script>'+
     '<script src="chantier-view-navigation-fix.js?v=viewnav-2"><\\/script>'+
     '<script src="chantier-planning-status-fix.js?v=planningstatus-8"><\\/script>'+
@@ -93,7 +102,7 @@
     '<script src="yaya-enter-save.js?v=1"><\\/script>'+
     '<script src="documents-background-sync-v1.js?v=4"><\\/script>'+
     '<script src="chantier-note-enter-newline.js?v=note-enter-1"><\\/script>'+
-    '<script src="chantier-detail-section-tabs-mail-wrapper.js?v=detailtabs-native-photos-9"><\\/script>'+
+    '<script src="chantier-detail-section-tabs-mail-wrapper.js?v=detailtabs-native-photos-10"><\\/script>'+
     '<script src="documents-single-header-fix.js?v=singleheader-1"><\\/script>'+
     '<script src="yaya-ab-commandes-link.js?v=commandes-link-57"><\\/script>'+
     '<script src="commandes-central-refresh-fix.js?v=1"><\\/script>'+
@@ -111,7 +120,7 @@
     '<script src="commande-tab-no-count-final.js?v=2"><\\/script>'+
     '<script src="charges-tab-no-count.js?v=2"><\\/script>'+
     '<script src="margin-badge-colors.js?v=margincolors-2"><\\/script>'+
-    '<script src="documents-view-only-actions.js?v=docactions-click-13"><\\/script>'+
+    '<script src="documents-view-only-actions.js?v=docactions-click-14"><\\/script>'+
     '<script src="mail-attachments-button.js?v=mailpj-9"><\\/script>'+
     '<script src="chantier-signed-quotes-display.js?v=signedquotes-2"><\\/script>'+
     '<script src="layout-centering-fix.js?v=layout-8"><\\/script>'+
@@ -129,15 +138,15 @@
     '<script src="onedrive-timeout-diagnostic.js?v=onedrive-timeout-2"><\\/script>'+
     '<script src="onedrive-external-open.js?v=onedrive-binary-preview-12"><\\/script>'+
 
-    '<script src="mail-documents-force-render.js?v=force-mail-5"><\\/script>'+
-    '<script src="documents-mail-compact.js?v=docs-mail-compact-12"><\\/script>'+
+
+    '<script src="documents-mail-compact.js?v=docs-mail-compact-13"><\\/script>'+
     '<script src="chantier-photos.js?v=photos-36"><\\/script>'+
 
 
 
     '<script src="mail-devis-persistence-verify.js?v=mailverify-3"><\\/script>'+
 
-    '<script src="mails-page-last10.js?v=mailslast10-13"><\\/script>'+
+
     '<script src="sous-traitant-page.js?v=stpage-5"><\\/script>'+
     '<script src="heures-toolbar-move.js?v=hours-toolbar-11"><\\/script>'+
     '<script src="heures-save-persistence.js?v=hours-persist-2"><\\/script>'+
