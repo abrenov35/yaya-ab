@@ -180,12 +180,6 @@
   async function ensureMailsLoaded(){
     try{
       if(typeof S==='undefined'||!S)return;
-      if(Array.isArray(S.MAILS)&&S.MAILS.length){
-        rebuildDocumentsView();
-        syncCache();
-        refresh();
-        return;
-      }
       if(typeof API!=='string'||!API)return;
       const sep=API.indexOf('?')>=0?'&':'?';
       const r=await fetch(API+sep+'tabs=MAILS&_mailstore='+Date.now(),{cache:'no-store'});
