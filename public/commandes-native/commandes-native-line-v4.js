@@ -88,28 +88,68 @@ function readState(){
   return {orders:[],documents:[]};
 }
 function orderById(id){return (readState().orders||[]).find(o=>String(o?.id||'')===String(id||''))||null;}
+function normalizePieceMeta_(p,i){
+  if(!p)return null;
+  const rawKind=String(p.kind||p.type||'file').trim().toLowerCase();
+  const kind=rawKind==='mail'?'mail':'file';
+  const url=String(p.url||'').trim();
+  const mailId=String(p.mailId||p.gmailMessageId||p.messageId||'').trim();
+  const yayaMailId=String(p.yayaMailId||p.mailYayaId||'').trim();
+  if(kind==='mail'){
+    if(!mailId&&!yayaMailId)return null;
+    return {
+      id:String(p.id||('mail-'+(mailId||yayaMailId||i))),
+      name:String(p.name||p.subject||'Mail'),
+      kind:'mail',
+      url:'',
+      mailId,
+      yayaMailId,
+      sender:String(p.sender||''),
+      subject:String(p.subject||''),
+      date:String(p.date||'')
+    };
+  }
+  if(!url)return null;
+  return {
+    id:String(p.id||('extra-'+i)),
+    name:String(p.name||('Pièce '+(i+2))),
+    kind:'file',
+    url
+  };
+}
 function parsePieceMeta(order){
   const raw=String(order?.pieceEmpreinte||'').trim();
   if(!raw.startsWith(PIECE_META_PREFIX))return {empreinte:raw,pieces:[]};
   try{
     const data=JSON.parse(raw.slice(PIECE_META_PREFIX.length));
-    const pieces=Array.isArray(data?.pieces)?data.pieces.filter(p=>p&&String(p.url||'').trim()).map((p,i)=>({
-      id:String(p.id||('extra-'+i)),
-      name:String(p.name||('Pièce '+(i+2))),
-      url:String(p.url||'').trim()
-    })):[];
+    const pieces=(Array.isArray(data?.pieces)?data.pieces:[]).map(normalizePieceMeta_).filter(Boolean);
     return {empreinte:String(data?.empreinte||''),pieces};
   }catch(_){return {empreinte:'',pieces:[]};}
 }
 function encodePieceMeta(order,pieces){
   const parsed=parsePieceMeta(order);
-  const clean=(Array.isArray(pieces)?pieces:[]).filter(p=>p&&String(p.url||'').trim()).map((p,i)=>({
-    id:String(p.id||('extra-'+Date.now()+'-'+i)),
-    name:String(p.name||('Pièce '+(i+2))),
-    url:String(p.url||'').trim()
-  }));
+  const clean=(Array.isArray(pieces)?pieces:[]).map((p,i)=>normalizePieceMeta_(p,i)).filter(Boolean).map((p,i)=>{
+    if(p.kind==='mail'){
+      return {
+        id:String(p.id||('mail-'+Date.now()+'-'+i)),
+        name:String(p.name||p.subject||'Mail'),
+        kind:'mail',
+        mailId:String(p.mailId||''),
+        yayaMailId:String(p.yayaMailId||''),
+        sender:String(p.sender||''),
+        subject:String(p.subject||''),
+        date:String(p.date||'')
+      };
+    }
+    return {
+      id:String(p.id||('extra-'+Date.now()+'-'+i)),
+      name:String(p.name||('Pièce '+(i+2))),
+      kind:'file',
+      url:String(p.url||'').trim()
+    };
+  });
   if(!clean.length)return parsed.empreinte||'';
-  return PIECE_META_PREFIX+JSON.stringify({v:1,empreinte:parsed.empreinte||'',pieces:clean});
+  return PIECE_META_PREFIX+JSON.stringify({v:2,empreinte:parsed.empreinte||'',pieces:clean});
 }
 function orderPieceDocs(order,id){
   if(!order)return [];
@@ -129,6 +169,24 @@ function orderPieceDocs(order,id){
     });
   }
   parsePieceMeta(order).pieces.forEach((p,i)=>{
+    if(p.kind==='mail'){
+      out.push({
+        id:'order-mail:'+String(order?.id||id||'')+':'+String(p.id||i),
+        commande_id:String(order?.id||id||''),
+        type:'MAIL',
+        nom_fichier:p.name||'Mail',
+        source:'Yaya',
+        __yayaOrderAttachment:true,
+        __yayaPieceKind:'mail',
+        __yayaPieceId:String(p.id||i),
+        __yayaMailId:String(p.yayaMailId||''),
+        __yayaGmailMessageId:String(p.mailId||''),
+        __yayaMailSender:String(p.sender||''),
+        __yayaMailSubject:String(p.subject||''),
+        __yayaMailDate:String(p.date||'')
+      });
+      return;
+    }
     out.push({
       id:'order-extra:'+String(order?.id||id||'')+':'+String(p.id||i),
       commande_id:String(order?.id||id||''),
@@ -153,6 +211,62 @@ function docsFor(id){
   return docs;
 }
 function docUrl(d){return String(d?.url_pdf||d?.url||d?.lien||d?.webUrl||d?.oneDriveWebUrl||'').trim();}
+function isMailPiece(d){return String(d?.__yayaPieceKind||d?.type||'').trim().toLowerCase()==='mail';}
+function rawMailRows_(){
+  const out=[],seen=new Set();
+  function addRows(rows){
+    (Array.isArray(rows)?rows:[]).forEach(r=>{
+      if(!r||typeof r!=='object')return;
+      const looksMail=String(r.type||r.origine||r.origineMail||'').toUpperCase()==='MAIL'||!!(r.contenuMail||r.corpsMail||r.bodyMail||r.mailBody||r.objetMail||r.expediteur);
+      if(!looksMail)return;
+      const key=String(r.id||'')+'|'+String(r.gmailMessageId||r.messageId||'');
+      if(seen.has(key))return;seen.add(key);out.push(r);
+    });
+  }
+  try{if(typeof window.yayaMailRawRows==='function')addRows(window.yayaMailRawRows());}catch(_){}
+  try{if(typeof S!=='undefined'&&S){addRows(S.mails);addRows(S.MAILS);addRows(S.documents);}}catch(_){}
+  return out;
+}
+function mailForPiece_(d){
+  if(!d)return null;
+  const yid=String(d.__yayaMailId||'').trim(),gid=String(d.__yayaGmailMessageId||'').trim();
+  try{if(yid&&typeof window.yayaMailRawById==='function'){const row=window.yayaMailRawById(yid);if(row)return row;}}catch(_){}
+  const rows=rawMailRows_();
+  if(yid){const row=rows.find(r=>String(r?.id||'')===yid);if(row)return row;}
+  if(gid){const row=rows.find(r=>String(r?.gmailMessageId||r?.messageId||'')===gid);if(row)return row;}
+  return null;
+}
+function appendLinkifiedMail_(el,value){
+  const raw=String(value||'');
+  const re=/(https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/gi;
+  let last=0,m;
+  while((m=re.exec(raw))){
+    if(m.index>last)el.appendChild(document.createTextNode(raw.slice(last,m.index)));
+    let visible=m[0],trail='';
+    while(/[.,;:!?)]$/.test(visible)){trail=visible.slice(-1)+trail;visible=visible.slice(0,-1);}
+    const a=document.createElement('a');a.href=/^www\./i.test(visible)?'https://'+visible:visible;a.target='_blank';a.rel='noopener noreferrer';a.textContent=visible;el.appendChild(a);
+    if(trail)el.appendChild(document.createTextNode(trail));
+    last=m.index+m[0].length;
+  }
+  if(last<raw.length)el.appendChild(document.createTextNode(raw.slice(last)));
+}
+function renderMailInStage_(stage,d){
+  const row=mailForPiece_(d);
+  const sender=String(row?.nomMail||row?.expediteur||row?.from||d?.__yayaMailSender||'Expéditeur non renseigné').trim();
+  const subject=String(row?.objetMail||row?.objet||row?.subject||d?.__yayaMailSubject||d?.nom_fichier||'Mail').trim();
+  const date=String(row?.date||row?.horodatage||d?.__yayaMailDate||'').trim();
+  const body=String(row?.contenuMail||row?.corpsMail||row?.bodyMail||row?.mailBody||row?.titre||'').trim();
+  const box=document.createElement('div');box.className='v4-mail';
+  const head=document.createElement('div');head.className='v4-mail-head';
+  const subj=document.createElement('strong');subj.textContent=subject||'Mail';
+  const meta=document.createElement('div');meta.className='v4-mail-meta';
+  const from=document.createElement('span');from.textContent=sender||'—';meta.appendChild(from);
+  if(date){const dt=document.createElement('span');dt.textContent=date;meta.appendChild(dt);}
+  head.append(subj,meta);
+  const content=document.createElement('div');content.className='v4-mail-body';
+  if(body)appendLinkifiedMail_(content,body);else content.textContent=row?'Contenu du mail vide.':'Contenu du mail indisponible. Actualisez Yaya puis rouvrez la pièce.';
+  box.append(head,content);stage.replaceChildren(box);
+}
 function orderUrl(o){const piece=String(o?.pieceNom||o?.piece_nom||'').trim();return String(o?.lienUrl||o?.lien_url||o?.urlCommande||o?.url_commande||o?.url||o?.webUrl||o?.oneDriveWebUrl||o?.driveUrl||o?.dropboxUrl||(!piece?o?.lien:'')||'').trim();}
 function iframeUrl(url){
   url=String(url||'').trim();if(!url)return '';
@@ -495,6 +609,12 @@ function injectStyle(){
     #${MODAL_ID} .v4-pdf{width:100%;height:100%;overflow:auto;padding:8px;box-sizing:border-box;-webkit-overflow-scrolling:touch}
     #${MODAL_ID} .v4-pdf canvas{display:block;max-width:100%;height:auto!important;margin:0 auto 8px;background:#fff;box-shadow:0 1px 5px rgba(15,23,42,.14)}
     #${MODAL_ID} .v4-image{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
+    #${MODAL_ID} .v4-mail{height:100%;overflow:auto;background:#fff;padding:18px 22px;box-sizing:border-box;color:#21364f}
+    #${MODAL_ID} .v4-mail-head{position:sticky;top:-18px;z-index:2;margin:-18px -22px 16px;padding:15px 22px 12px;border-bottom:1px solid #e3e9f0;background:#fff}
+    #${MODAL_ID} .v4-mail-head strong{display:block;font-size:16px;line-height:1.35;color:#142c48}
+    #${MODAL_ID} .v4-mail-meta{display:flex;justify-content:space-between;gap:12px;margin-top:6px;color:#6b7b8d;font-size:11.5px;font-weight:650}
+    #${MODAL_ID} .v4-mail-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55;color:#243b55}
+    #${MODAL_ID} .v4-mail-body a{color:#0b57d0;text-decoration:underline;text-underline-offset:2px}
     #${MODAL_ID} .v4-drive-page-wrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:6px;box-sizing:border-box;background:#eef2f6;overflow:hidden}
     #${MODAL_ID} .v4-drive-page{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
     #${MODAL_ID} .v4-drive-nav{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:18px;background:rgba(15,23,42,.82);color:#fff;font-size:11px;font-weight:800}
@@ -571,21 +691,24 @@ function renderModal(){
   }
   currentPieceIndex=Math.max(0,Math.min(currentPieceIndex,list.length-1));
   list.forEach((d,i)=>{
+    const mail=isMailPiece(d);
     const wrap=document.createElement('span');wrap.className='v4-piece';
-    const view=document.createElement('button');view.type='button';view.className='v4-view'+(i===currentPieceIndex?' on':'');view.textContent='Pièce '+(i+1);view.title=String(d?.nom_fichier||d?.type||('Pièce '+(i+1)));view.onclick=()=>{currentPieceIndex=i;renderModal();};
+    const view=document.createElement('button');view.type='button';view.className='v4-view'+(i===currentPieceIndex?' on':'');
+    view.textContent=mail?'📧 Mail':('📎 Pièce '+(i+1));
+    view.title=String(d?.nom_fichier||d?.type||('Pièce '+(i+1)));
+    view.onclick=()=>{currentPieceIndex=i;renderModal();};
     wrap.append(view);
     const del=document.createElement('button');del.type='button';del.className='v4-del';del.textContent='×';del.title='Supprimer cette pièce';del.setAttribute('aria-label','Supprimer cette pièce');del.onclick=()=>deletePiece(d);wrap.append(del);
     tabs.appendChild(wrap);
   });
-  const d=list[currentPieceIndex],url=docUrl(d),title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));
-  if(card)card.dataset.yayaDownloadUrl=url||'';
-  if(m)m.dataset.yayaDownloadUrl=url||'';
-  const dlBtn=m&&m.querySelector('.v4-download');if(dlBtn)dlBtn.style.display=url?'inline-flex':'none';
+  const d=list[currentPieceIndex],mail=isMailPiece(d),url=docUrl(d),title=String(d?.nom_fichier||('Pièce '+(currentPieceIndex+1)));
+  if(card)card.dataset.yayaDownloadUrl=mail?'':(url||'');
+  if(m)m.dataset.yayaDownloadUrl=mail?'':(url||'');
+  const dlBtn=m&&m.querySelector('.v4-download');if(dlBtn)dlBtn.style.display=!mail&&url?'inline-flex':'none';
+  if(mail){renderMailInStage_(stage,d);return;}
   if(!url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
   const id=driveId(url);
   if(id){
-    // Chemin ultra-rapide : lecteur Drive natif dans l'iframe.
-    // Aucun base64, aucun PDF.js, aucune reconstruction page par page avant affichage.
     renderDrivePreviewFast(stage,id,title,token);
     return;
   }
@@ -599,8 +722,9 @@ async function deletePiece(d){
       const order=orderById(currentOrderId);if(!order)throw new Error('Commande introuvable');
       const meta=parsePieceMeta(order),extras=meta.pieces.slice(),patch={...order};
       if(d.__yayaPieceKind==='primary'){
-        if(extras.length){
-          const promoted=extras.shift();
+        const fileIndex=extras.findIndex(p=>p&&p.kind!=='mail'&&String(p.url||'').trim());
+        if(fileIndex>=0){
+          const promoted=extras.splice(fileIndex,1)[0];
           patch.lien=promoted.url;patch.pieceNom=promoted.name;
         }else{
           patch.lien='';patch.pieceNom='';
@@ -727,5 +851,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.25-reliable-piece-import';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.26-mail-piece';
 })();
