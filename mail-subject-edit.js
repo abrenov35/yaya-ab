@@ -14,12 +14,12 @@
   }
   function getDoc(id){
     try{
-      if(typeof window.yayaMailById==='function'){
-        const mail=window.yayaMailById(id);
-        if(mail)return mail;
-      }
-    }catch(e){}
-    return null;
+      const docs=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];
+      return docs.find(function(d){
+        return String(d&&d.id||'')===String(id)
+          && String(d&&d.type||'').trim().toUpperCase()==='MAIL';
+      })||null;
+    }catch(e){return null;}
   }
   function mailSender(d){
     try{if(typeof window.nomMailYaya==='function')return text(window.nomMailYaya(d));}catch(e){}
