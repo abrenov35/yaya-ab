@@ -30,6 +30,29 @@
     `;
   }
   function docByRow(row){const id=String(row.dataset.id||'');try{if(typeof S!=='undefined'&&S&&Array.isArray(S.documents))return S.documents.find(d=>String(d.id)===id)||null;}catch(e){}return null;}
+  function installUnifiedSource(){
+    if(window.__yayaUnifiedDocumentsSourceV2)return;
+    window.__yayaUnifiedDocumentsSourceV2=true;
+    window.historiquePiecesYaya=function(){
+      let rows=[];
+      try{rows=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];}catch(e){}
+      return rows
+        .map(function(d,i){return Object.assign({},d,{origine:'document',ordre:i});})
+        .filter(function(d){
+          const id=String(d&&d.id||'');
+          return id!=='__CA_SIGNE_2026__'&&id!=='__YAYA_SIGNATURE_LOCKS_V1__';
+        })
+        .sort(function(a,b){
+          const da=String(a.horodatage||a.createdAt||a.dateCreation||a.date||'');
+          const db=String(b.horodatage||b.createdAt||b.dateCreation||b.date||'');
+          return db.localeCompare(da)||(Number(b.ordre)||0)-(Number(a.ordre)||0);
+        });
+    };
+  }
+  function renameTab(){
+    const tab=document.querySelector('.hdr .tab[data-tab="documents"]');
+    if(tab&&String(tab.textContent||'').trim()!=='Doc & mails')tab.textContent='Doc & mails';
+  }
   function clean(v){return String(v||'').replace(/\s+/g,' ').trim();}
   function formatDate(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?s.split('-').reverse().join('/'):(s||'—');}
   function isMail(d){if(!d)return false;const t=clean(d.type).toUpperCase();return t==='MAIL'||clean(d.origine).toUpperCase().startsWith('MAIL')||clean(d.origineMail).toUpperCase().startsWith('MAIL');}
@@ -90,7 +113,7 @@
       row.append(chantier,objet,date);
     });
   }
-  function run(){installStyle();compact();}
+  function run(){installUnifiedSource();renameTab();installStyle();compact();}
   run();setTimeout(run,50);setTimeout(run,250);setTimeout(run,1000);
   const root=document.getElementById('pane-documents')||document.body||document.documentElement;
   new MutationObserver(()=>requestAnimationFrame(compact)).observe(root,{childList:true,subtree:true});
