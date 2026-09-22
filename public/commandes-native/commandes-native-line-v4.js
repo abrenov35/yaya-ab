@@ -95,8 +95,10 @@ function normalizePieceMeta_(p,i){
   const url=String(p.url||'').trim();
   const mailId=String(p.mailId||p.gmailMessageId||p.messageId||'').trim();
   const yayaMailId=String(p.yayaMailId||p.mailYayaId||'').trim();
+  const body=String(p.body||p.contenuMail||p.corpsMail||'');
+  const gmailUrl=String(p.gmailUrl||p.mailUrl||'').trim();
   if(kind==='mail'){
-    if(!mailId&&!yayaMailId)return null;
+    if(!mailId&&!yayaMailId&&!body&&!String(p.subject||'').trim())return null;
     return {
       id:String(p.id||('mail-'+(mailId||yayaMailId||i))),
       name:String(p.name||p.subject||'Mail'),
@@ -106,7 +108,9 @@ function normalizePieceMeta_(p,i){
       yayaMailId,
       sender:String(p.sender||''),
       subject:String(p.subject||''),
-      date:String(p.date||'')
+      date:String(p.date||''),
+      body,
+      gmailUrl
     };
   }
   if(!url)return null;
@@ -138,7 +142,9 @@ function encodePieceMeta(order,pieces){
         yayaMailId:String(p.yayaMailId||''),
         sender:String(p.sender||''),
         subject:String(p.subject||''),
-        date:String(p.date||'')
+        date:String(p.date||''),
+        body:String(p.body||''),
+        gmailUrl:String(p.gmailUrl||'')
       };
     }
     return {
@@ -183,7 +189,9 @@ function orderPieceDocs(order,id){
         __yayaGmailMessageId:String(p.mailId||''),
         __yayaMailSender:String(p.sender||''),
         __yayaMailSubject:String(p.subject||''),
-        __yayaMailDate:String(p.date||'')
+        __yayaMailDate:String(p.date||''),
+        __yayaMailBody:String(p.body||''),
+        __yayaMailUrl:String(p.gmailUrl||'')
       });
       return;
     }
@@ -255,13 +263,17 @@ function renderMailInStage_(stage,d){
   const sender=String(row?.nomMail||row?.expediteur||row?.from||d?.__yayaMailSender||'Expéditeur non renseigné').trim();
   const subject=String(row?.objetMail||row?.objet||row?.subject||d?.__yayaMailSubject||d?.nom_fichier||'Mail').trim();
   const date=String(row?.date||row?.horodatage||d?.__yayaMailDate||'').trim();
-  const body=String(row?.contenuMail||row?.corpsMail||row?.bodyMail||row?.mailBody||row?.titre||'').trim();
+  const body=String(row?.contenuMail||row?.corpsMail||row?.bodyMail||row?.mailBody||row?.titre||d?.__yayaMailBody||'').trim();
+  const gmailUrl=String(row?.lien||d?.__yayaMailUrl||'').trim();
   const box=document.createElement('div');box.className='v4-mail';
   const head=document.createElement('div');head.className='v4-mail-head';
   const subj=document.createElement('strong');subj.textContent=subject||'Mail';
   const meta=document.createElement('div');meta.className='v4-mail-meta';
   const from=document.createElement('span');from.textContent=sender||'—';meta.appendChild(from);
   if(date){const dt=document.createElement('span');dt.textContent=date;meta.appendChild(dt);}
+  if(gmailUrl){
+    const link=document.createElement('a');link.className='v4-mail-open';link.href=gmailUrl;link.target='_blank';link.rel='noopener';link.textContent='Ouvrir dans Gmail';meta.appendChild(link);
+  }
   head.append(subj,meta);
   const content=document.createElement('div');content.className='v4-mail-body';
   if(body)appendLinkifiedMail_(content,body);else content.textContent=row?'Contenu du mail vide.':'Contenu du mail indisponible. Actualisez Yaya puis rouvrez la pièce.';
@@ -612,7 +624,9 @@ function injectStyle(){
     #${MODAL_ID} .v4-mail{height:100%;overflow:auto;background:#fff;padding:18px 22px;box-sizing:border-box;color:#21364f}
     #${MODAL_ID} .v4-mail-head{position:sticky;top:-18px;z-index:2;margin:-18px -22px 16px;padding:15px 22px 12px;border-bottom:1px solid #e3e9f0;background:#fff}
     #${MODAL_ID} .v4-mail-head strong{display:block;font-size:16px;line-height:1.35;color:#142c48}
-    #${MODAL_ID} .v4-mail-meta{display:flex;justify-content:space-between;gap:12px;margin-top:6px;color:#6b7b8d;font-size:11.5px;font-weight:650}
+    #${MODAL_ID} .v4-mail-meta{display:flex;align-items:center;gap:12px;margin-top:6px;color:#6b7b8d;font-size:11.5px;font-weight:650}
+    #${MODAL_ID} .v4-mail-meta span:nth-child(2){margin-left:auto}
+    #${MODAL_ID} .v4-mail-open{margin-left:auto;color:#0b57d0;text-decoration:none;font-weight:800;white-space:nowrap}
     #${MODAL_ID} .v4-mail-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55;color:#243b55}
     #${MODAL_ID} .v4-mail-body a{color:#0b57d0;text-decoration:underline;text-underline-offset:2px}
     #${MODAL_ID} .v4-drive-page-wrap{position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:6px;box-sizing:border-box;background:#eef2f6;overflow:hidden}
@@ -851,5 +865,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.26-mail-piece';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.27-embedded-mail-piece';
 })();
