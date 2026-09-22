@@ -470,10 +470,10 @@ function injectStyle(){
     .yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important}
     #${MODAL_ID}{position:fixed;inset:0;z-index:33000;display:none;align-items:center;justify-content:center;padding:12px;background:rgba(12,27,47,.58)}
     #${MODAL_ID}.show{display:flex}
-    #${MODAL_ID} .v4-card{width:min(1120px,calc(100vw - 24px));height:min(88dvh,820px);display:grid;grid-template-rows:auto auto minmax(0,1fr);background:#fff;border-radius:14px;box-shadow:0 28px 90px rgba(8,25,46,.34);overflow:hidden}
+    #${MODAL_ID} .v4-card{width:min(1120px,calc(100vw - 24px));height:min(88dvh,820px);display:grid;grid-template-rows:auto minmax(0,1fr);background:#fff;border-radius:14px;box-shadow:0 28px 90px rgba(8,25,46,.34);overflow:hidden}
     #${MODAL_ID} .v4-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border-bottom:1px solid #dfe6ee;color:#162d49}
-    #${MODAL_ID} .v4-head strong{font-size:15px}#${MODAL_ID} .v4-close{border:1px solid #cfd9e6;border-radius:8px;background:#fff;color:#334155;min-height:34px;padding:0 12px;font-weight:800;cursor:pointer}
-    #${MODAL_ID} .v4-tabs{display:flex;gap:8px;align-items:center;overflow-x:auto;padding:9px 12px;border-bottom:1px solid #e6ebf1;background:#f8fafc}
+    #${MODAL_ID} .v4-head strong{font-size:15px;flex:0 0 auto}#${MODAL_ID} .v4-close{border:1px solid #cfd9e6;border-radius:8px;background:#fff;color:#334155;min-height:34px;padding:0 12px;font-weight:800;cursor:pointer}
+    #${MODAL_ID} .v4-tabs{display:flex;gap:8px;align-items:center;min-width:0;flex:1 1 auto;overflow-x:auto;padding:2px 3px;scrollbar-width:thin}
     #${MODAL_ID} .v4-piece{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
     #${MODAL_ID} .v4-view,#${MODAL_ID} .v4-del{min-height:32px;border-radius:7px;font:inherit;font-size:11px;font-weight:800;cursor:pointer}
     #${MODAL_ID} .v4-view{border:1px solid #c8d8e8;background:#fff;color:#205f9d;padding:0 11px}#${MODAL_ID} .v4-view.on{background:#eaf4ff;border-color:#90bce6}
@@ -487,21 +487,21 @@ function injectStyle(){
     #${MODAL_ID} .v4-drive-nav{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:18px;background:rgba(15,23,42,.82);color:#fff;font-size:11px;font-weight:800}
     #${MODAL_ID} .v4-drive-nav button{width:29px;height:27px;border:0;border-radius:14px;background:#fff;color:#162d49;font-size:18px;font-weight:900;line-height:1;cursor:pointer}
     #${MODAL_ID} .v4-drive-nav button:disabled{opacity:.35}
-    #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-head-actions{display:flex;align-items:center;gap:9px}
+    #${MODAL_ID} .v4-loading,#${MODAL_ID} .v4-head-actions{display:flex;align-items:center;gap:9px}#${MODAL_ID} .v4-head-actions{flex:0 0 auto}
     #${MODAL_ID} .v4-edit,#${MODAL_ID} .v4-download,#${MODAL_ID} .v4-add{border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer}
     #${MODAL_ID} .v4-download{border-color:#b9dfc5;background:#eef9f1;color:#17653a}
     #${MODAL_ID} .v4-add{border-color:#9fc8b1;background:#eff9f2;color:#17653a}
     #${MODAL_ID} .v4-add:disabled{opacity:.55;cursor:default}
     #${MODAL_ID} .v4-edit:hover{background:#e2f0fd;border-color:#7eacd8}
     #${MODAL_ID} .v4-error,#${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
-    @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{padding:9px!important}.yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}}
+    @media(max-width:760px){.yaya-cmd-native-root .ycn-row-top{padding:9px!important}.yaya-cmd-native-root .ycn-v4-url:disabled{display:none!important}#${MODAL_ID}{padding:4px}#${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}#${MODAL_ID} .v4-head{flex-wrap:wrap}#${MODAL_ID} .v4-tabs{order:3;flex-basis:100%}#${MODAL_ID} .v4-head-actions{margin-left:auto}}
   `;document.head.appendChild(s);
 }
 
 function ensureModal(){
   let m=document.getElementById(MODAL_ID);if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-head-actions"><input type="file" class="v4-file" multiple accept="application/pdf,image/*,.pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.txt,.heic,.heif" hidden><button type="button" class="v4-add">+ Ajouter une pièce</button><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-tabs"></div><div class="v4-stage"></div></div>';
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong>Visualisation des pièces</strong><div class="v4-tabs"></div><div class="v4-head-actions"><input type="file" class="v4-file" multiple accept="application/pdf,image/*,.pdf,.doc,.docx,.xls,.xlsx,.xlsm,.csv,.txt,.heic,.heif" hidden><button type="button" class="v4-add">+ Ajouter une pièce</button><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);
   m.querySelector('.v4-close').onclick=closeModal;
   const picker=m.querySelector('.v4-file');
