@@ -18,18 +18,17 @@
   install();
 })();
 (function(){'use strict';if(window.__yayaDocumentsMailListRestoreLoaderV1)return;window.__yayaDocumentsMailListRestoreLoaderV1=true;const s=document.createElement('script');s.src='documents-mail-list-restore.js?v=mailrestore-1';s.async=false;document.head.appendChild(s);})();
-(function(){'use strict';if(window.__yayaMailEditBackgroundSaveLoaderV3)return;window.__yayaMailEditBackgroundSaveLoaderV3=true;const s=document.createElement('script');s.src='mail-edit-background-save-fix.js?v=mailbg-3';s.async=false;document.head.appendChild(s);})();
 (function(){'use strict';if(window.__yayaMailModalButtonsAlignLoaderV4)return;window.__yayaMailModalButtonsAlignLoaderV4=true;const s=document.createElement('script');s.src='mail-modal-buttons-align.js?v=align-4';s.async=false;document.head.appendChild(s);})();
 (function(){
   'use strict';
   if(window.__yayaMailSeparateStorageLoaderV1)return;
   window.__yayaMailSeparateStorageLoaderV1=true;
   const adapter=document.createElement('script');
-  adapter.src='mail-storage-adapter-v1.js?v=mailstore-3';
+  adapter.src='mail-storage-adapter-v1.js?v=mailstore-4';
   adapter.async=false;
   adapter.onload=function(){
     const edit=document.createElement('script');
-    edit.src='mail-storage-edit-v1.js?v=mailstoreedit-3';
+    edit.src='mail-storage-edit-v1.js?v=mailstoreedit-4';
     edit.async=false;
     document.head.appendChild(edit);
   };
