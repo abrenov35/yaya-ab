@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>Yaya v205.1558 — AB RENOV 35</title>
+  <title>Yaya v205.1551 — AB RENOV 35</title>
   <style>html{background:#f4f6f8}body{margin:0;background:#f4f6f8;color:#162d49;font-family:Arial,sans-serif}#yaya-startup{min-height:100vh;display:grid;place-items:center;text-align:center;font-size:22px;font-weight:800;padding:24px;box-sizing:border-box}</style>
 </head>
 <body>
@@ -35,7 +35,11 @@
     const valeur=v=>{const s=String(v==null?'':v).trim(),m=s.match(/^(\\d{4})(?:-(\\d{2})(?:-(\\d{2}))?)?$/);return m?(m[1]+(m[2]?'-'+m[2]:'')+(m[3]?'-'+m[3]:'')):'';};
     data.chantiers.forEach(c=>{const id=String(c&&c.id||'').trim().toUpperCase();if(!/^C\\d+$/.test(id))return;const fixe=valeur(c.dateSignatureFixe),v=valeur(c.dateSignature);if(fixe){c.dateSignature=fixe;if(locks[id]!==fixe){locks[id]=fixe;nouveau=true;}}else if(locks[id])c.dateSignature=locks[id];else if(v){locks[id]=v;nouveau=true;}});
     try{localStorage.setItem('YAYA_SIGNATURE_LOCKS_V1',JSON.stringify(locks));}catch(e){}
-    if(nouveau){if(!doc){doc={id:LOCK_ID,chantierId:'',type:'Divers',titre:'Verrou interne dates de signature',sujet:'{}',date:'',lien:''};data.documents.push(doc);}doc.sujet=JSON.stringify(locks);try{await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'setDocuments',data:data.documents})});}catch(e){console.warn('Verrou signature non enregistré',e);}}
+    if(nouveau){
+      // Les dates de signature sont désormais figées dans chantiers.dateSignatureFixe.
+      // Ne jamais réécrire l'onglet documents depuis un cache : Yaya Mail y ajoute
+      // des lignes en parallèle et un setDocuments global pourrait les écraser.
+    }
     return data;
   }
   function actualiserEnArrierePlan(){
