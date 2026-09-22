@@ -254,11 +254,11 @@ function showDetachConfirm(wrap,achatId){
   confirm.className='ycpf-confirm';
   confirm.innerHTML=
     '<div class="ycpf-confirm-box">'+
-      '<div class="ycpf-confirm-title">Supprimer la pièce jointe ?</div>'+
-      '<div class="ycpf-confirm-text">L’achat restera dans Yaya. Seul le document sera détaché de cet achat. Le fichier original sur Drive / Dropbox ne sera pas supprimé.</div>'+
+      '<div class="ycpf-confirm-title">Supprimer cet achat de Yaya ?</div>'+
+      '<div class="ycpf-confirm-text">L’achat et sa pièce jointe seront supprimés ensemble de Yaya. Le fichier Google Drive lié sera mis à la corbeille.</div>'+
       '<div class="ycpf-confirm-actions">'+
         '<button type="button" class="ycpf-btn ycpf-confirm-cancel">Annuler</button>'+
-        '<button type="button" class="ycpf-btn ycpf-confirm-ok">Supprimer la pièce</button>'+
+        '<button type="button" class="ycpf-btn ycpf-confirm-ok">Supprimer de Yaya</button>'+
       '</div>'+
     '</div>';
   wrap.appendChild(confirm);
@@ -275,13 +275,15 @@ function showDetachConfirm(wrap,achatId){
     btn.disabled=true;
     btn.textContent='Suppression…';
     try{
-      await detachAchatPiece(achatId);
+      if(typeof window.__yayaFinanceDeleteById!=='function')throw new Error('suppression de l’achat indisponible');
+      const removed=await window.__yayaFinanceDeleteById(achatId,true);
+      if(removed===false)throw new Error('suppression refusée');
       confirm.remove();
       closeViewer();
-      toastSafe('Pièce jointe supprimée de l’achat ✓');
+      toastSafe('Achat et pièce supprimés — fichier Drive mis à la corbeille ✓');
     }catch(err){
       btn.disabled=false;
-      btn.textContent='Supprimer la pièce';
+      btn.textContent='Supprimer de Yaya';
       toastSafe('Suppression impossible : '+String(err&&err.message||err),true);
     }
   };
