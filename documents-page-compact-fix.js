@@ -12,6 +12,10 @@
       #pane-documents .achligne.ligR>span:nth-child(2){display:flex!important;align-items:center!important;height:34px!important;padding:0!important;background:transparent!important;border:0!important;font-weight:700!important;font-size:12px!important;color:#071b38!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}
       #pane-documents .achligne.ligR .des{display:flex!important;align-items:center!important;height:34px!important;width:100%!important;font-size:11.5px!important;color:#7a8798!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;line-height:1.25!important}
       #pane-documents .achligne.ligR>small:nth-child(4){display:flex!important;align-items:center!important;justify-content:center!important;height:34px!important;font-size:10.5px!important;font-weight:600!important;color:#52657a!important;white-space:nowrap!important}
+      #pane-documents .achligne.ligR[data-yaya-kind="mail"]>span:first-child{background:#f5eff9!important;border-color:#d9c8e7!important;color:#69448a!important}
+      #pane-documents .achligne.ligR[data-yaya-kind="document"]>span:first-child{background:#eef5fb!important;border-color:#cdddeb!important;color:#285f96!important}
+      #pane-documents .achligne.ligR[data-yaya-kind="mail"]:has(.yaya-mail-pj-row-button){grid-template-columns:170px 170px minmax(300px,1fr) 100px 44px!important}
+      #pane-documents .achligne.ligR[data-yaya-kind="mail"]:has(.yaya-mail-pj-row-button)>.yaya-mail-pj-row-button{grid-column:5!important;grid-row:1!important}
       @media(max-width:760px){
         #pane-documents{overflow-x:hidden!important}
         #pane-documents .card{width:100%!important;min-width:0!important;padding:0 8px!important}
@@ -20,6 +24,8 @@
         #pane-documents .achligne.ligR>span:nth-child(2){grid-area:chantier!important}
         #pane-documents .achligne.ligR>.des{grid-area:objet!important;height:auto!important;min-height:22px!important}
         #pane-documents .achligne.ligR>small:nth-child(4){grid-area:date!important;justify-content:flex-end!important}
+        #pane-documents .achligne.ligR[data-yaya-kind="mail"]:has(.yaya-mail-pj-row-button){grid-template-columns:minmax(0,1fr) 44px auto!important;grid-template-areas:"type pj date" "chantier chantier chantier" "objet objet objet"!important}
+        #pane-documents .achligne.ligR[data-yaya-kind="mail"]:has(.yaya-mail-pj-row-button)>.yaya-mail-pj-row-button{grid-area:pj!important}
       }
     `;
   }
