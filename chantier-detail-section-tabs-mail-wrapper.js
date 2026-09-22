@@ -77,7 +77,7 @@ rep("+'<span class=\"yaya-detail-charge-hours\">'+escapeHtml(item.row.type||'Doc
 // Source unique des mails : feuille MAILS. Les anciennes lignes MAIL présentes
 // dans DOCUMENTS restent temporairement en sauvegarde mais ne sont plus lues ici.
 rep("    return S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL_PJ'\n      && normalise(d.type)!=='PHOTO'\n    ).sort((a,b)=>String(b.date||b.horodatage||b.createdAt||'').localeCompare(String(a.date||a.horodatage||a.createdAt||''))||String(b.id||'').localeCompare(String(a.id||'')));",
-"    const documents=S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL'\n      && normalise(d.type)!=='MAIL_PJ'\n      && normalise(d.type)!=='PHOTO'\n    );\n    const mails=(typeof window.yayaMailRows==='function'?window.yayaMailRows():[]).filter(d=>String(d.chantierId)===cid);\n    return documents.concat(mails).sort((a,b)=>String(b.date||b.horodatage||b.createdAt||'').localeCompare(String(a.date||a.horodatage||a.createdAt||''))||String(b.id||'').localeCompare(String(a.id||'')));");
+"    return S.documents.filter(d=>\n      String(d.chantierId)===cid\n      && normalise(d.type)!=='MAIL_PJ'\n      && normalise(d.type)!=='PHOTO'\n    ).sort((a,b)=>String(b.date||b.horodatage||b.createdAt||'').localeCompare(String(a.date||a.horodatage||a.createdAt||''))||String(b.id||'').localeCompare(String(a.id||'')));");
 
 (0,eval)(src+'\n//# sourceURL=chantier-detail-section-tabs-native-commandes-mail.js');
 
