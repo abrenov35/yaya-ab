@@ -102,6 +102,11 @@
   function dataForId(id){
     id=text(id);if(!id)return null;
     try{
+      if(typeof window.yayaMailById==='function'){
+        const m=window.yayaMailById(id);if(m)return m;
+      }
+    }catch(e){}
+    try{
       if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
         const d=S.documents.find(x=>String(x&&x.id||'')===id);if(d)return d;
       }
@@ -367,7 +372,7 @@
   if(window.__yayaMailReadActionsLoaderV6)return;
   window.__yayaMailReadActionsLoaderV6=true;
   const s=document.createElement('script');
-  s.src='mail-subject-edit.js?v=mailreadactions-8';
+  s.src='mail-subject-edit.js?v=mailreadactions-9';
   s.async=false;
   s.onerror=()=>console.error('Yaya : chargement actions mail V6 impossible');
   document.head.appendChild(s);
