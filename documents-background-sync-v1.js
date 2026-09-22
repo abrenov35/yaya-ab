@@ -125,11 +125,31 @@
 
     workerBusy=true;markWrite(1);
     try{
-      const fresh=await window.apiGet(true);
-      if(!fresh||!Array.isArray(fresh.documents))throw new Error('documents serveur indisponibles');
-      const merged=mergeById(fresh.documents,snapshot);
-      const ok=await window.apiPost('setDocuments',merged);
-      if(!ok)throw new Error('écriture documents refusée');
+      // IMPORTANT : ne jamais réécrire tout l'onglet documents.
+      // Yaya Mail peut ajouter un mail/PJ en parallèle ; un setDocuments
+      // global pourrait écraser une ligne arrivée entre-temps.
+      const items=Object.values(snapshot.items||{});
+      for(const item of items){
+        const d=item&&item.doc;
+        const id=idOf(d);
+        if(!id)continue;
+
+        // Tant que l'API backend historique n'est pas totalement migrée,
+        // on remplace une ligne de façon atomique : suppression ciblée puis
+        // ajout ciblé en chemin append sécurisé.
+        const removed=await window.apiPost('deleteDocument',{id:id});
+        if(!removed)throw new Error('suppression préalable document refusée : '+id);
+
+        const safeDoc=Object.assign({},d,{origine:'GMAIL_ADDON'});
+        const saved=await window.apiPost('addDocument',safeDoc);
+        if(!saved)throw new Error('écriture document refusée : '+id);
+      }
+
+      const removeIds=Object.keys(snapshot.removes||{});
+      for(const id of removeIds){
+        const ok=await window.apiPost('deleteDocument',{id:String(id)});
+        if(!ok)throw new Error('suppression document refusée : '+id);
+      }
 
       const latest=readPending();
       Object.keys(snapshot.items||{}).forEach(function(id){
