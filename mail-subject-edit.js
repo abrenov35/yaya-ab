@@ -14,10 +14,12 @@
   }
   function getDoc(id){
     try{
-      return (typeof S!=='undefined'&&S&&Array.isArray(S.documents))
-        ? S.documents.find(d=>String(d&&d.id||'')===String(id))||null
-        : null;
-    }catch(e){return null;}
+      if(typeof window.yayaMailById==='function'){
+        const mail=window.yayaMailById(id);
+        if(mail)return mail;
+      }
+    }catch(e){}
+    return null;
   }
   function mailSender(d){
     try{if(typeof window.nomMailYaya==='function')return text(window.nomMailYaya(d));}catch(e){}
