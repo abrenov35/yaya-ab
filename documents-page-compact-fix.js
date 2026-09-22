@@ -26,26 +26,59 @@
   function docByRow(row){const id=String(row.dataset.id||'');try{if(typeof S!=='undefined'&&S&&Array.isArray(S.documents))return S.documents.find(d=>String(d.id)===id)||null;}catch(e){}return null;}
   function clean(v){return String(v||'').replace(/\s+/g,' ').trim();}
   function formatDate(v){const s=String(v||'').slice(0,10);return /^\d{4}-\d{2}-\d{2}$/.test(s)?s.split('-').reverse().join('/'):(s||'—');}
-  function typeOf(d){if(!d)return 'Document';for(const v of [d.typeDocument,d.typeDoc,d.documentType,d.categorie,d.nature,d.type]){const t=clean(v);if(t&&!/^DOCUMENT$/i.test(t))return t;}const src=clean([d.titre,d.sujet,d.intitule].filter(Boolean).join(' | '));if(/\bfiche\s+chantier\b/i.test(src))return 'Fiche chantier';if(/\bcompte\s+rendu\s+chantier\b/i.test(src))return 'Compte rendu chantier';if(/\bpv\s+(?:de\s+)?r[eé]ception\b/i.test(src))return 'PV de réception';return clean(d.type)||'Document';}
+  function isMail(d){if(!d)return false;const t=clean(d.type).toUpperCase();return t==='MAIL'||clean(d.origine).toUpperCase().startsWith('MAIL')||clean(d.origineMail).toUpperCase().startsWith('MAIL');}
+  function hiddenFromFeed(d){if(!d)return true;const t=clean(d.type).toUpperCase();const id=clean(d.id);return t==='MAIL_PJ'||t==='PHOTO'||id.startsWith('__');}
+  function typeOf(d){return isMail(d)?'MAIL':'DOCUMENT';}
   function chantierOf(d){try{if(d&&typeof chantierById==='function'){const c=chantierById(d.chantierId);if(c)return clean(c.nom);}}catch(e){}return clean(d&&d.chantier)||'?';}
-  function objetOf(d){if(!d)return '';return clean(d.sujet||d.titre||d.intitule||d.nomFichier||d.fichier||'');}
+  function objetOf(d){
+    if(!d)return '';
+    if(isMail(d))return clean(d.objetMail||d.objet||d.subject||d.mailSubject||d.emailSubject||d.titre||'Objet non renseigné');
+    return clean(d.pieceNom||d.titre||d.sujet||d.intitule||d.nomFichier||d.fichier||'Document');
+  }
+  function timeOf(d,index){
+    const raw=d&&(d.createdAt||d.horodatage||d.dateCreation||d.date);
+    if(typeof raw==='number'&&Number.isFinite(raw))return (raw-25569)*86400000;
+    const t=Date.parse(String(raw||''));
+    return Number.isFinite(t)?t:index;
+  }
   function compact(){
-    let visibleIndex=0;
-    [...document.querySelectorAll('#pane-documents .card .achligne.ligR')].forEach(row=>{
-      const id=String(row.dataset.id||'');
+    const rows=[...document.querySelectorAll('#pane-documents .card .achligne.ligR')];
+    const items=[];
+    rows.forEach((row,index)=>{
       const d=docByRow(row);
-      const rowType=clean((d&&d.type)||(row.children[0]&&row.children[0].textContent));
-      if(/^mail$/i.test(rowType)||/^MAIL_/i.test(id)){row.remove();return;}
-      row.style.display=visibleIndex<10?'grid':'none';visibleIndex++;
-      row.style.setProperty('padding','4px 0','important');row.style.setProperty('min-height','0','important');
-      if(row.dataset.yayaCompact==='1')return;
+      if(hiddenFromFeed(d)){row.style.setProperty('display','none','important');return;}
+      items.push({row,d,index,time:timeOf(d,index)});
+    });
+    items.sort((a,b)=>b.time-a.time||String(b.d&&b.d.id||'').localeCompare(String(a.d&&a.d.id||'')));
+
+    const parent=items[0]&&items[0].row.parentElement;
+    if(parent&&items.every(item=>item.row.parentElement===parent)){
+      const current=[...parent.children].filter(el=>items.some(item=>item.row===el));
+      const wanted=items.map(item=>item.row);
+      const different=current.length!==wanted.length||current.some((el,i)=>el!==wanted[i]);
+      if(different)wanted.forEach(row=>parent.appendChild(row));
+    }
+
+    items.forEach(({row,d})=>{
+      row.style.setProperty('display','grid','important');
+      row.style.setProperty('padding','4px 0','important');
+      row.style.setProperty('min-height','0','important');
+      row.dataset.yayaKind=isMail(d)?'mail':'document';
+
+      const values=[typeOf(d),chantierOf(d),objetOf(d),formatDate(d&&d.date)];
+      const sig=JSON.stringify(values);
+      if(row.dataset.yayaCompactSig===sig)return;
+      row.dataset.yayaCompactSig=sig;
       row.dataset.yayaCompact='1';
-      let cells=[...row.children];if(cells.length<4)return;
-      const first=cells[0];first.textContent=typeOf(d);first.title=first.textContent;
+
+      let first=row.children[0];
+      if(!first){first=document.createElement('span');row.appendChild(first);}
+      first.textContent=values[0];first.title=values[0];
       while(row.children.length>1)row.removeChild(row.children[1]);
-      const chantier=document.createElement('span');chantier.textContent=chantierOf(d);chantier.title=chantier.textContent;
-      const objet=document.createElement('small');objet.className='des';objet.textContent=objetOf(d);objet.title=objet.textContent;
-      const date=document.createElement('small');date.textContent=formatDate(d&&d.date);date.title=date.textContent;
+
+      const chantier=document.createElement('span');chantier.textContent=values[1];chantier.title=values[1];
+      const objet=document.createElement('small');objet.className='des';objet.textContent=values[2];objet.title=values[2];
+      const date=document.createElement('small');date.textContent=values[3];date.title=values[3];
       row.append(chantier,objet,date);
     });
   }
