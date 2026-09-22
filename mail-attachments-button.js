@@ -342,11 +342,12 @@
       '#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row,'+
       '#pane-chantiers .message-ligne,'+
       '#pane-documents .yaya-doc-mail-row,'+
+      '#pane-documents .achligne.ligR[data-yaya-kind="mail"],'+
       '#pane-mails .mail-last-row'
     ).forEach(add);
 
     document.querySelectorAll('[data-mail-id],[data-yaya-mail-delete],[data-yaya-mail-edit],[onclick*="voirMessageYaya"]').forEach(function(el){
-      const row=el.closest('tr,.yaya-detail-mail-row,.yaya-mail-restored-row,.yaya-detail-document-row,.message-ligne,.yaya-doc-mail-row,.mail-last-row');
+      const row=el.closest('tr,.yaya-detail-mail-row,.yaya-mail-restored-row,.yaya-detail-document-row,.message-ligne,.yaya-doc-mail-row,.achligne.ligR,.mail-last-row');
       if(row)add(row);
     });
   }
