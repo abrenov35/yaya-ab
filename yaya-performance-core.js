@@ -37,7 +37,7 @@
   addScriptMarker('data-yaya-shared-data-sync-loader-v9');
   addScriptMarker('data-yaya-mail-force-loader');
 
-  const TABS=['chantiers','salaries','heures','achats','avenants','documents','validations','commandes','DEVIS'];
+  const TABS=['chantiers','salaries','heures','achats','avenants','documents','MAILS','validations','commandes','DEVIS'];
   const CACHE_DATA_KEY='YAYA_CACHE_DATA_V2';
   let inFlight=null;
   let lastInteraction=Date.now();
@@ -224,13 +224,17 @@
     const ctrl=new AbortController();
     const timer=setTimeout(()=>ctrl.abort(),6500);
     try{
-      const r=await fetch(api+sep+'tabs=documents&_yaya_docs_live='+Date.now(),{
+      const r=await fetch(api+sep+'tabs=documents,MAILS&_yaya_docs_live='+Date.now(),{
         method:'GET',cache:'no-store',signal:ctrl.signal
       });
       const txt=await r.text();
       const j=JSON.parse(txt);
       if(!j||!j.ok)throw new Error(j&&j.error||'Réponse documents invalide');
-      return (j.data&&Array.isArray(j.data.documents))?j.data.documents:null;
+      if(!j.data||!Array.isArray(j.data.documents))return null;
+      return {
+        documents:j.data.documents,
+        MAILS:Array.isArray(j.data.MAILS)?j.data.MAILS:[]
+      };
     }finally{clearTimeout(timer);}
   }
 
@@ -241,27 +245,40 @@
 
     documentsPollInFlight=true;
     try{
-      const rows=await fetchDocumentsOnly();
-      if(!rows)return false;
+      const fresh=await fetchDocumentsOnly();
+      if(!fresh)return false;
+      const rows=fresh.documents;
+      const mails=fresh.MAILS;
 
-      const signature=documentsSignature(rows);
+      const signature=documentsSignature({documents:rows,MAILS:mails});
       if(!lastDocumentsSignature){
-        try{lastDocumentsSignature=documentsSignature((typeof S!=='undefined'&&S&&S.documents)||[]);}catch(e){}
+        try{lastDocumentsSignature=documentsSignature({
+          documents:(typeof S!=='undefined'&&S&&S.documents)||[],
+          MAILS:(typeof S!=='undefined'&&S&&S.MAILS)||[]
+        });}catch(e){}
       }
       if(signature===lastDocumentsSignature)return true;
 
       // Vérification tardive : ne jamais remplacer l'état pendant une saisie/écriture.
       if(userBusy()||documentsPendingLocally())return false;
 
-      if(typeof S!=='undefined'&&S)S.documents=rows;
+      if(typeof S!=='undefined'&&S){
+        S.documents=rows;
+        S.MAILS=mails;
+      }
       lastDocumentsSignature=signature;
       saveDocumentsCache(rows);
+      try{
+        const cached=JSON.parse(localStorage.getItem(CACHE_DATA_KEY)||'{}')||{};
+        cached.MAILS=mails;
+        localStorage.setItem(CACHE_DATA_KEY,JSON.stringify(cached));
+      }catch(e){}
 
       // Le rendu ne se produit que lorsqu'un document a réellement changé.
       try{if(typeof render==='function')render();}catch(e){}
       try{
         window.dispatchEvent(new CustomEvent('yaya:data-refreshed',{
-          detail:{tabs:['documents'],source:'documents-light-sync'}
+          detail:{tabs:['documents','MAILS'],source:'documents-light-sync'}
         }));
       }catch(e){}
       return true;
