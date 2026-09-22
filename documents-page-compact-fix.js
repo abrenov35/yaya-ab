@@ -47,9 +47,11 @@
     rows.forEach((row,index)=>{
       const d=docByRow(row);
       if(hiddenFromFeed(d)){row.style.setProperty('display','none','important');return;}
-      items.push({row,d,index,time:timeOf(d,index)});
+      let sourceIndex=index;
+      try{sourceIndex=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents.indexOf(d):index;}catch(e){}
+      items.push({row,d,index,sourceIndex,time:timeOf(d,index)});
     });
-    items.sort((a,b)=>b.time-a.time||String(b.d&&b.d.id||'').localeCompare(String(a.d&&a.d.id||'')));
+    items.sort((a,b)=>b.time-a.time||b.sourceIndex-a.sourceIndex);
 
     const parent=items[0]&&items[0].row.parentElement;
     if(parent&&items.every(item=>item.row.parentElement===parent)){
