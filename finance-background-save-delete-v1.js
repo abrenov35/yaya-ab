@@ -299,37 +299,35 @@
 
     overlay.querySelector('[data-bg-cancel]').onclick=function(){removeConfirm(overlay);};
     overlay.onclick=function(e){if(e.target===overlay)removeConfirm(overlay);};
-    overlay.querySelector('[data-bg-ok]').onclick=async function(e){
+    overlay.querySelector('[data-bg-ok]').onclick=function(e){
       e.preventDefault();e.stopPropagation();
       const button=e.currentTarget;
       if(button.disabled)return;
       button.disabled=true;
       button.textContent='Suppression…';
-      let saved=false;
-      try{
-        saved=await apiPost('deleteAchatComplet',{id:id});
-      }catch(err){
-        console.error('Yaya finance — suppression achat :',err);
-      }
-      if(!saved){
-        button.disabled=false;
-        button.textContent='Supprimer de Yaya';
-        toastSafe('Suppression non enregistrée — API Yaya à vérifier',true);
-        return;
-      }
+
       try{
         if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('données indisponibles');
         const before=S.achats.length;
         S.achats=S.achats.filter(function(a){return String(a?.id||'')!==String(id);});
         if(S.achats.length===before)console.warn('Yaya finance — achat déjà absent :',id);
-      }catch(err){toastSafe('Suppression impossible',true);return;}
+      }catch(err){
+        button.disabled=false;
+        button.textContent='Supprimer de Yaya';
+        toastSafe('Suppression impossible',true);
+        return;
+      }
+
+      if(!(window.__yayaAchatsExplicitRemoveIds instanceof Set))window.__yayaAchatsExplicitRemoveIds=new Set();
+      window.__yayaAchatsExplicitRemoveIds.add(String(id));
 
       removeConfirm(overlay);
       try{if(editModal?.closest('.overlay'))editModal.closest('.overlay').remove();else closeModalSafe();}catch(e){closeModalSafe();}
-      toastSafe('Achat et pièce supprimés — fichier Drive mis à la corbeille ✓');
+      toastSafe('Achat supprimé — synchronisation en arrière-plan');
       renderSoon();
       persistCacheSoon();
       reconcileCreatePending(id,null);
+      queueCurrent({removeIds:[id]});
     };
     document.body.appendChild(overlay);
   }
@@ -370,8 +368,6 @@
     if(!id)return false;
 
     const execute=async function(){
-      const saved=await apiPost('deleteAchatComplet',{id:id});
-      if(!saved){toastSafe('Suppression non enregistrée',true);return false;}
       try{
         if(typeof S==='undefined'||!S||!Array.isArray(S.achats))throw new Error('données indisponibles');
         const before=S.achats.length;
@@ -384,10 +380,14 @@
         return false;
       }
 
+      if(!(window.__yayaAchatsExplicitRemoveIds instanceof Set))window.__yayaAchatsExplicitRemoveIds=new Set();
+      window.__yayaAchatsExplicitRemoveIds.add(id);
+
       persistCacheSoon();
       reconcileCreatePending(id,null);
       renderSoon();
-      toastSafe('Achat et pièce supprimés — fichier Drive mis à la corbeille ✓');
+      queueCurrent({removeIds:[id]});
+      toastSafe('Achat supprimé — synchronisation en arrière-plan');
       return true;
     };
 
