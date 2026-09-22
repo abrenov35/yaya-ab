@@ -400,25 +400,38 @@ function fileBase64(file){
   });
 }
 function yayaPieceApiUrl(){
-  try{return (typeof API==='string'&&API)?API:'';}catch(_){return '';}
+  return yayaApiUrl();
 }
 async function uploadPieceFile(file){
   if(!file)throw new Error('Fichier absent');
   if(Number(file.size||0)>PIECE_MAX_BYTES)throw new Error(file.name+' dépasse 8 Mo');
   const api=yayaPieceApiUrl();if(!api)throw new Error('API Yaya indisponible');
   const base64=await fileBase64(file);
-  const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
-  const timer=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(_){ }},60000):0;
-  try{
-    const options={method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'application/octet-stream',base64}})};
-    if(ctrl)options.signal=ctrl.signal;
-    const r=await fetch(api,options);
-    const j=await r.json();
-    if(!j||j.ok!==true)throw new Error(j?.error||'Import impossible');
-    const url=String(j?.data?.lienDrive||j?.data?.lien||'').trim();
-    if(!url)throw new Error('Pièce non archivée');
-    return {id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),name:String(file.name||'Pièce'),url};
-  }finally{if(timer)clearTimeout(timer);}
+  if(!base64)throw new Error('Fichier vide ou illisible');
+  const body=JSON.stringify({action:'archiverDevis',data:{filename:file.name,mimeType:file.type||'application/octet-stream',base64}});
+  let lastError=null;
+  for(let attempt=0;attempt<2;attempt++){
+    const ctrl=typeof AbortController!=='undefined'?new AbortController():null;
+    const timer=ctrl?setTimeout(()=>{try{ctrl.abort();}catch(_){ }},60000):0;
+    try{
+      const options={method:'POST',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body};
+      if(ctrl)options.signal=ctrl.signal;
+      const r=await fetch(api,options);
+      if(!r.ok)throw new Error('Serveur indisponible ('+r.status+')');
+      const j=await r.json();
+      if(!j||j.ok!==true)throw new Error(j?.error||'Import impossible');
+      const url=String(j?.data?.lienDrive||j?.data?.lien||'').trim();
+      if(!url)throw new Error('Pièce non archivée');
+      return {id:'p_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),name:String(file.name||'Pièce'),url};
+    }catch(err){
+      lastError=err;
+      const transient=err?.name==='AbortError'||err instanceof TypeError||/serveur indisponible/i.test(String(err?.message||''));
+      if(!transient||attempt>0)break;
+      toast('Connexion lente — nouvelle tentative automatique…');
+      await new Promise(resolve=>setTimeout(resolve,700));
+    }finally{if(timer)clearTimeout(timer);}
+  }
+  throw lastError||new Error('Import impossible');
 }
 async function addFilesToOrder(id,files){
   const order=orderById(id);if(!order)throw new Error('Commande introuvable');
@@ -509,8 +522,9 @@ function ensureModal(){
   addBtn.onclick=function(e){e.preventDefault();e.stopPropagation();if(!currentOrderId)return;picker.value='';picker.click();};
   picker.onchange=async function(){
     const files=Array.from(picker.files||[]);if(!files.length)return;
+    const orderId=String(currentOrderId||'');if(!orderId){toast('Commande introuvable','err');return;}
     addBtn.disabled=true;const old=addBtn.textContent;addBtn.textContent='Import…';
-    try{await addFilesToOrder(currentOrderId,files);renderModal();}
+    try{await addFilesToOrder(orderId,files);if(String(currentOrderId||'')===orderId)renderModal();}
     catch(err){toast('Échec ajout pièce : '+String(err?.message||err),'err');}
     finally{addBtn.disabled=false;addBtn.textContent=old;picker.value='';}
   };
@@ -713,5 +727,5 @@ const obs=new MutationObserver(records=>{
 obs.observe(document.body,{childList:true,subtree:true});
 window.addEventListener('yaya:data-refreshed',schedule);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.getElementById(MODAL_ID)?.classList.contains('show'))closeModal();});
-window.__YAYA_COMMANDES_LINE_V4_VERSION='4.23-multi-pieces';
+window.__YAYA_COMMANDES_LINE_V4_VERSION='4.25-reliable-piece-import';
 })();
