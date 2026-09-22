@@ -339,9 +339,12 @@
     mailId=String(mailId||'').trim();
     if(!mailId)return null;
     try{
-      if(typeof window.yayaMailById==='function')return window.yayaMailById(mailId)||null;
-    }catch(e){}
-    return null;
+      const docs=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];
+      return docs.find(function(d){
+        return String(d&&d.id||'').trim()===mailId
+          && String(d&&d.type||'').trim().toUpperCase()==='MAIL';
+      })||null;
+    }catch(e){return null;}
   }
 
   function nativeMailMentionsAttachment(mail){
