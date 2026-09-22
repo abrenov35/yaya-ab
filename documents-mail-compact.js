@@ -338,12 +338,10 @@
   function nativeMailForId(mailId){
     mailId=String(mailId||'').trim();
     if(!mailId)return null;
-    let docs=[];
-    try{docs=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];}catch(e){}
-    return docs.find(function(d){
-      return String(d&&d.id||'').trim()===mailId &&
-        String(d&&d.type||'').trim().toUpperCase()==='MAIL';
-    })||null;
+    try{
+      if(typeof window.yayaMailById==='function')return window.yayaMailById(mailId)||null;
+    }catch(e){}
+    return null;
   }
 
   function nativeMailMentionsAttachment(mail){
