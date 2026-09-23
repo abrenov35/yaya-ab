@@ -125,24 +125,19 @@
 
     workerBusy=true;markWrite(1);
     try{
-      // IMPORTANT : ne jamais réécrire tout l'onglet documents.
-      // Yaya Mail peut ajouter un mail/PJ en parallèle ; un setDocuments
-      // global pourrait écraser une ligne arrivée entre-temps.
+      // IMPORTANT : une modification ne doit JAMAIS supprimer la ligne avant
+      // de la réécrire. Le backend addDocument sait remplacer par ID lorsque
+      // l'origine n'est pas GMAIL_ADDON/MAIL. Cela conserve ID, lien, type,
+      // chantier et toutes les métadonnées même si le réseau coupe.
       const items=Object.values(snapshot.items||{});
       for(const item of items){
         const d=item&&item.doc;
         const id=idOf(d);
         if(!id)continue;
 
-        // Tant que l'API backend historique n'est pas totalement migrée,
-        // on remplace une ligne de façon atomique : suppression ciblée puis
-        // ajout ciblé en chemin append sécurisé.
-        const removed=await window.apiPost('deleteDocument',{id:id});
-        if(!removed)throw new Error('suppression préalable document refusée : '+id);
-
-        const safeDoc=Object.assign({},d,{origine:'GMAIL_ADDON'});
+        const safeDoc=Object.assign({},d,{origine:'YAYA_WEB_EDIT'});
         const saved=await window.apiPost('addDocument',safeDoc);
-        if(!saved)throw new Error('écriture document refusée : '+id);
+        if(!saved)throw new Error('mise à jour document refusée : '+id);
       }
 
       const removeIds=Object.keys(snapshot.removes||{});
