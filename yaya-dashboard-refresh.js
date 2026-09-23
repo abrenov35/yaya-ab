@@ -1,7 +1,7 @@
 (function(){
   'use strict';
   const required=['chantiers','documents','achats','commandes','heures','salaries','avenants','validations'];
-  const initialBuild=(document.title.match(/Yaya v([\d.]+)/i)||[])[1]||'';
+  const initialBuild=(new URL(document.currentScript.src,location.href)).searchParams.get('_build')||(document.title.match(/Yaya v([\d.]+)/i)||[])[1]||'';
   let busy=false, lastSuccess=null, versionAvailable=false;
   const style=document.createElement('style');
   style.textContent='.yaya-refresh-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.yaya-refresh-controls button{min-height:38px;padding:7px 12px;border-radius:8px;border:1px solid #9aabc2;background:#fff;color:#183457;font-weight:700;cursor:pointer}.yaya-refresh-controls button:disabled{opacity:.55;cursor:wait}.yaya-refresh-controls [role=status]{font-size:12px;color:#35506c}.yaya-refresh-controls [data-error]{color:#b42318}.yaya-refresh-controls .yaya-new-version{background:#fff5d6;border-color:#dcae33}';
