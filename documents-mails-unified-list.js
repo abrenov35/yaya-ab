@@ -16,7 +16,9 @@
   }
   function isMail(d){
     if(!d)return false;
-    return upper(d.type)==='MAIL'||upper(d.origineMail)==='MAIL'||upper(d.origine)==='MAIL'||!!(d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody||d.expediteur||d.from||d.objetMail||d.mailSubject||d.emailSubject);
+    const type=upper(d.type);
+    if(type==='DOCUMENT'||type==='MAIL_PJ'||type==='PHOTO')return false;
+    return type==='MAIL'||upper(d.origineMail)==='MAIL'||upper(d.origine)==='MAIL'||!!(d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody||d.expediteur||d.from||d.objetMail||d.mailSubject||d.emailSubject);
   }
   function isAttachment(d){return upper(d&&d.type)==='MAIL_PJ';}
   function cardId(card){
