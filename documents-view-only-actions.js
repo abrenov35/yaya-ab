@@ -209,10 +209,11 @@
   }
 
   function mailSubject(d){return text(d&&(d.objetMail||d.mailSubject||d.emailSubject||d.subject||d.objet||d.sujet))||'Objet non renseigné';}
-  function mailSender(d){return text(d&&(d.nomMail||d.expediteur||d.from||d.sender))||'Expéditeur non renseigné';}
+  function mailSender(d){return text(d&&(d.nomMail||d.expediteur||d.from||d.sender||d.sujet))||'Expéditeur non renseigné';}
   function mailBody(d){
     if(!d)return '';
-    const raw=d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody||d.body||d.contenu||d.message||'';
+    // Dans la table documents, Yaya Mail persiste le corps du mail dans "titre".
+    const raw=d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody||d.body||d.contenu||d.message||d.titre||'';
     if(!raw)return '';
     const holder=document.createElement('div');holder.innerHTML=String(raw);
     return text(holder.textContent||holder.innerText||raw);
