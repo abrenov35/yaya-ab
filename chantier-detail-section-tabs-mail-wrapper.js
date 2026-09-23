@@ -72,6 +72,7 @@ rep("const LABELS={marche:'Marché',commandes:'Commande',depenses:'Dépenses',ch
 rep("      && normalise(d.type)!=='MAIL'\n      && normalise(d.type)!=='MAIL_PJ'","      && normalise(d.type)!=='MAIL_PJ'");
 rep("    );\n  }\n\n  function photosFor(card){","    ).sort((a,b)=>String(b.date||b.horodatage||b.createdAt||'').localeCompare(String(a.date||a.horodatage||a.createdAt||''))||String(b.id||'').localeCompare(String(a.id||'')));\n  }\n\n  function photosFor(card){");
 rep("      if(normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;","      if(normalise(row.type)==='MAIL'||normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;");
+rep("      if(normalise(row.type)==='MAIL'||normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;","      if(normalise(row.type)==='DOCUMENT'||normalise(row.type)==='MAIL_PJ')return false;\n      if(normalise(row.type)==='MAIL'||normalise(row.origineMail)==='MAIL'||normalise(row.origine)==='MAIL')return true;");
 rep("+'<span class=\"yaya-detail-charge-hours\">'+escapeHtml(item.row.type||'Document')+'</span>'","+'<span class=\"yaya-detail-charge-hours\">'+escapeHtml(item.vientMail?'Mail':'Document')+'</span>'");
 
 // Source unique des mails : feuille MAILS. Les anciennes lignes MAIL présentes

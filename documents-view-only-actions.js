@@ -235,6 +235,7 @@
   }
 
   function isMail(row,d){
+    if(d&&['DOCUMENT','MAIL_PJ'].includes(text(d.type).toUpperCase()))return false;
     if(row&&row.classList.contains('yaya-detail-mail-row'))return true;
     if(row&&row.closest('.yaya-detail-mails-pane,.yaya-force-mails-pane'))return true;
     if(d){

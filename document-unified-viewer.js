@@ -44,6 +44,7 @@
   }
 
   function isMail(row,d){
+    if(d&&['DOCUMENT','MAIL_PJ'].includes(text(d.type).toUpperCase()))return false;
     if(row&&row.classList.contains('yaya-detail-mail-row'))return true;
     const upper=function(v){return text(v).toUpperCase();};
     return !!(d&&(upper(d.type)==='MAIL'||upper(d.origine)==='MAIL'||upper(d.origineMail)==='MAIL'||d.contenuMail||d.corpsMail||d.objetMail||d.mailSubject||d.emailSubject));

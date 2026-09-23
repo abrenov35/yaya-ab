@@ -2027,6 +2027,7 @@ function texteMailYaya(v){
 }
 function documentIssuMailYaya(d){
   if(!d) return false;
+  if(['DOCUMENT','MAIL_PJ'].includes(String(d.type||'').trim().toUpperCase())) return false;
   if(String(d.type||'').toUpperCase()==='MAIL'||String(d.origineMail||d.origine||'').toUpperCase()==='MAIL') return true;
   if(d.contenuMail||d.corpsMail||d.expediteur||d.from||d.objetMail||d.mailSubject||d.emailSubject) return true;
   const source=String(d.titre||d.objet||'');
