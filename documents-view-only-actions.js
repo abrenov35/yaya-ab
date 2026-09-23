@@ -377,6 +377,17 @@
     return false;
   }
 
+  // Lecteur unique : tous les anciens appels voirMessageYaya utilisent désormais
+  // la nouvelle modale de lecture, déjà correctement positionnée sous l'en-tête.
+  window.voirMessageYaya=function(id){
+    id=text(id);
+    if(!id)return false;
+    const d=dataForId(id);
+    if(!d)return false;
+    return openMailBody(d,id);
+  };
+  try{voirMessageYaya=window.voirMessageYaya;}catch(e){}
+
   function openRow(row){
     const id=rowId(row);
     const d=dataForId(id);
