@@ -403,6 +403,11 @@
 
   function openPiece(d,knownList){
     if(!d)return;
+    try{
+      if(window.yayaUnifiedV4Viewer&&typeof window.yayaUnifiedV4Viewer.openMailAttachment==='function'){
+        return window.yayaUnifiedV4Viewer.openMailAttachment(text(d.id));
+      }
+    }catch(e){}
     const list=Array.isArray(knownList)&&knownList.length?knownList:attachmentsForMail(linkedMailId(d));
     const id=text(d.id);
     const url=text(d.lien||d.url||d.webUrl||d.downloadUrl);
