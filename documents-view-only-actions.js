@@ -65,6 +65,28 @@
       max-height:58vh!important;overflow:auto!important;padding:15px 16px!important;border:1px solid #d7e1ec!important;
       border-radius:10px!important;background:#fff!important;color:#1f2937!important;font-size:13px!important;line-height:1.55!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important
     }
+    #modalRoot .overlay:has(.yaya-mail-body-modal),
+    #modalRoot .overlay:has(.yaya-document-read-modal){
+      align-items:flex-start!important;
+      overflow:auto!important;
+      box-sizing:border-box!important;
+      padding:72px 12px 24px!important;
+    }
+    #modalRoot .yaya-mail-body-modal,
+    #modalRoot .yaya-document-read-modal{
+      margin:0 auto!important;
+      max-height:calc(100vh - 96px)!important;
+      overflow:auto!important;
+      box-sizing:border-box!important;
+    }
+    #modalRoot .yaya-mail-body-modal h5,
+    #modalRoot .yaya-document-read-modal h5{
+      position:sticky!important;
+      top:0!important;
+      z-index:3!important;
+      background:#fff!important;
+      padding-top:4px!important;
+    }
     #modalRoot .yaya-read-actions{display:flex!important;align-items:center!important;gap:9px!important;margin-top:15px!important;padding-top:13px!important;border-top:1px solid #e0e7ef!important}
     #modalRoot .yaya-read-actions .yaya-delete{margin-right:auto!important;border:1px solid #e2a29b!important;background:#fff3f2!important;color:#c72d24!important}
     #modalRoot .yaya-read-actions .yaya-edit{border:1px solid #a9c6e4!important;background:#eef6ff!important;color:#245d91!important}
@@ -75,6 +97,16 @@
     #modalRoot .yaya-mail-subject-body label{display:block!important;margin-bottom:7px!important;font-size:12px!important;font-weight:800!important;color:#304760!important}
     #modalRoot .yaya-mail-subject-body input{width:100%!important;box-sizing:border-box!important;min-height:44px!important;padding:0 12px!important;border:1px solid #afc0d2!important;border-radius:9px!important;font-size:14px!important}
     @media(max-width:640px){
+      #modalRoot .overlay:has(.yaya-mail-body-modal),
+      #modalRoot .overlay:has(.yaya-document-read-modal){
+        padding:62px 8px 16px!important;
+      }
+      #modalRoot .yaya-mail-body-modal,
+      #modalRoot .yaya-document-read-modal{
+        width:100%!important;
+        max-width:100%!important;
+        max-height:calc(100vh - 78px)!important;
+      }
       #pane-chantiers .yaya-detail-mails-pane .yaya-detail-mail-row,
       #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row{grid-template-columns:minmax(120px,1fr) minmax(150px,1.35fr) 82px!important;gap:7px!important}
       #modalRoot .yaya-read-actions{flex-wrap:wrap!important}
