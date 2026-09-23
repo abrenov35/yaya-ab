@@ -343,7 +343,14 @@ function openMailAttachment(id){
   showItems(items,index);return true;
 }
 function openDocument(id,url){
-  const d=docById(id);if(!d)return false;
+  const row=[...document.querySelectorAll('.yaya-detail-document-view[data-doc-id]')]
+    .find(button=>text(button.dataset.docId)===text(id))?.closest('.yaya-detail-document-row');
+  const d=docById(id)||{
+    id:text(id),lien:text(url),
+    sujet:text(row&&row.querySelector('strong')&&row.querySelector('strong').textContent),
+    titre:text(row&&row.querySelector('.yaya-document-field-2')&&row.querySelector('.yaya-document-field-2').textContent)
+  };
+  if(!text(d.id))return false;
   const items=[],rawUrl=text(url)||fileUrl(d),extras=extraPieces(d);
   const body=text(d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody);
   const mail=extras.find(p=>p&&p.kind==='mail');
