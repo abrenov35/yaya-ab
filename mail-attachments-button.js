@@ -87,9 +87,13 @@
     const currentId=text(window.__yayaUnifiedPreviewDocumentId||window.__yayaPreviewDocumentId);
     if(currentId&&context.ids.indexOf(currentId)===-1){window.__yayaMailAttachmentPreview=null;return false;}
     const modal=document.querySelector('#modalRoot .piece-preview-modal');if(!modal)return false;
-    const actions=modal.querySelector('.yaya-document-unified-actions,.piece-preview-head');if(!actions)return false;
-    let group=actions.querySelector('.yaya-mail-pj-switcher');
-    if(!group){group=document.createElement('span');group.className='yaya-mail-pj-switcher';actions.insertBefore(group,actions.firstChild||null);}
+    const head=modal.querySelector('.piece-preview-head');if(!head)return false;
+    let group=head.querySelector(':scope > .yaya-mail-pj-switcher');
+    if(!group){
+      group=document.createElement('span');
+      group.className='yaya-mail-pj-switcher';
+      head.insertBefore(group,head.firstChild||null);
+    }
     group.replaceChildren();
     context.ids.forEach(function(id,index){
       const d=docById(id);if(!d)return;
