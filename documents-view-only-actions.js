@@ -65,21 +65,52 @@
       max-height:58vh!important;overflow:auto!important;padding:15px 16px!important;border:1px solid #d7e1ec!important;
       border-radius:10px!important;background:#fff!important;color:#1f2937!important;font-size:13px!important;line-height:1.55!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important
     }
-    #modalRoot .overlay:has(.yaya-mail-body-modal),
+    #modalRoot .yaya-mail-body-overlay{
+      position:fixed!important;
+      inset:0!important;
+      z-index:2147483645!important;
+      display:flex!important;
+      align-items:flex-start!important;
+      justify-content:center!important;
+      box-sizing:border-box!important;
+      padding:76px 14px 16px!important;
+      overflow:hidden!important;
+    }
+    #modalRoot .yaya-mail-body-modal{
+      position:relative!important;
+      width:min(980px,calc(100vw - 28px))!important;
+      max-width:980px!important;
+      margin:0 auto!important;
+      max-height:calc(100dvh - 92px)!important;
+      overflow:auto!important;
+      box-sizing:border-box!important;
+      border-radius:12px!important;
+    }
+    #modalRoot .yaya-mail-body-modal h5{
+      position:sticky!important;
+      top:0!important;
+      z-index:5!important;
+      display:flex!important;
+      align-items:center!important;
+      justify-content:space-between!important;
+      min-height:44px!important;
+      margin:0 0 12px!important;
+      padding:8px 4px!important;
+      background:#fff!important;
+      color:#172b43!important;
+    }
     #modalRoot .overlay:has(.yaya-document-read-modal){
       align-items:flex-start!important;
       overflow:auto!important;
       box-sizing:border-box!important;
       padding:72px 12px 24px!important;
     }
-    #modalRoot .yaya-mail-body-modal,
     #modalRoot .yaya-document-read-modal{
       margin:0 auto!important;
       max-height:calc(100vh - 96px)!important;
       overflow:auto!important;
       box-sizing:border-box!important;
     }
-    #modalRoot .yaya-mail-body-modal h5,
     #modalRoot .yaya-document-read-modal h5{
       position:sticky!important;
       top:0!important;
@@ -97,11 +128,18 @@
     #modalRoot .yaya-mail-subject-body label{display:block!important;margin-bottom:7px!important;font-size:12px!important;font-weight:800!important;color:#304760!important}
     #modalRoot .yaya-mail-subject-body input{width:100%!important;box-sizing:border-box!important;min-height:44px!important;padding:0 12px!important;border:1px solid #afc0d2!important;border-radius:9px!important;font-size:14px!important}
     @media(max-width:640px){
-      #modalRoot .overlay:has(.yaya-mail-body-modal),
+      #modalRoot .yaya-mail-body-overlay{
+        padding:66px 8px 10px!important;
+      }
+      #modalRoot .yaya-mail-body-modal{
+        width:100%!important;
+        max-width:100%!important;
+        max-height:calc(100dvh - 76px)!important;
+        border-radius:10px!important;
+      }
       #modalRoot .overlay:has(.yaya-document-read-modal){
         padding:62px 8px 16px!important;
       }
-      #modalRoot .yaya-mail-body-modal,
       #modalRoot .yaya-document-read-modal{
         width:100%!important;
         max-width:100%!important;
@@ -282,6 +320,36 @@
     return true;
   }
 
+  function positionMailModal(){
+    const overlay=document.querySelector('#modalRoot .yaya-mail-body-overlay');
+    const modal=overlay&&overlay.querySelector('.yaya-mail-body-modal');
+    if(!overlay||!modal)return;
+
+    let top=68;
+    try{
+      const hdr=document.querySelector('.hdr');
+      if(hdr){
+        const r=hdr.getBoundingClientRect();
+        if(r.height>0&&r.bottom>0)top=Math.max(58,Math.ceil(r.bottom)+10);
+      }
+    }catch(e){}
+
+    overlay.style.setProperty('position','fixed','important');
+    overlay.style.setProperty('inset','0','important');
+    overlay.style.setProperty('display','flex','important');
+    overlay.style.setProperty('align-items','flex-start','important');
+    overlay.style.setProperty('justify-content','center','important');
+    overlay.style.setProperty('padding',top+'px 14px 14px','important');
+    overlay.style.setProperty('box-sizing','border-box','important');
+    overlay.style.setProperty('overflow','hidden','important');
+
+    const available=Math.max(220,window.innerHeight-top-14);
+    modal.style.setProperty('margin','0 auto','important');
+    modal.style.setProperty('max-height',available+'px','important');
+    modal.style.setProperty('overflow','auto','important');
+    modal.style.setProperty('box-sizing','border-box','important');
+  }
+
   function openMailBody(d,id){
     const body=mailBody(d);
     if(body){
@@ -298,6 +366,9 @@
         +'<button type="button" class="yaya-edit" data-yaya-mail-edit="'+esc(id)+'">Modifier l’objet</button>'
         +'<button type="button" class="btnp" onclick="closeModal()">Fermer</button>'
         +'</div></div></div>';
+      positionMailModal();
+      requestAnimationFrame(positionMailModal);
+      setTimeout(positionMailModal,80);
       return true;
     }
     id=text(id);if(!id)return false;
@@ -394,6 +465,10 @@
       }
     }).observe(pane,{childList:true,subtree:true});
   }
+
+  window.addEventListener('resize',function(){
+    if(document.querySelector('#modalRoot .yaya-mail-body-overlay'))positionMailModal();
+  },{passive:true});
 
   schedule();
   setTimeout(function(){observePane(document.getElementById('pane-documents'));observePane(document.getElementById('pane-chantiers'));schedule();},80);
