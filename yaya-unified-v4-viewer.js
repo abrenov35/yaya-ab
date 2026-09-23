@@ -36,6 +36,8 @@ function mailSubject(d){return text(d&&(d.objetMail||d.mailSubject||d.emailSubje
 function mailSender(d){return text(d&&(d.nomMail||d.expediteur||d.from||d.sender||d.sujet))||'Expéditeur non renseigné';}
 function fileName(d,index){return text(d&&(d.pieceNom||d.nomFichier||d.filename||d.fileName||d.sujet||d.titre))||('Pièce '+(index+1));}
 function fileUrl(d){return text(d&&(d.lienPieceJointe||d.pieceJointeUrl||d.attachmentUrl||d.fichierUrl||d.fileUrl||d.oneDriveWebUrl||d.dropboxUrl||d.lien));}
+function validFileUrl(v){try{const u=new URL(text(v));return /^https?:$/.test(u.protocol)&&!/(^|\.)mail\.google\.com$/i.test(u.hostname);}catch(e){return false;}}
+function extraPieces(d){const raw=text(d&&d.pieceEmpreinte);if(!raw.startsWith('YAYA_PIECES_V1:'))return [];try{const data=JSON.parse(raw.slice('YAYA_PIECES_V1:'.length));return Array.isArray(data.pieces)?data.pieces:[];}catch(e){return [];}}
 
 function installStyle(){
   if(document.getElementById(STYLE_ID))return;
@@ -43,18 +45,18 @@ function installStyle(){
   s.textContent=`
     #${MODAL_ID}{
       position:fixed;inset:0;z-index:60000;display:none;align-items:center;justify-content:center;
-      padding:12px;background:rgba(12,27,47,.58);box-sizing:border-box;
+      padding:0;background:#fff;box-sizing:border-box;
     }
     #${MODAL_ID}.show{display:flex}
     #${MODAL_ID} .v4-card{
-      width:min(1120px,calc(100vw - 24px));height:min(88dvh,820px);
+      width:100vw;height:100dvh;
       display:grid;grid-template-rows:auto minmax(0,1fr);background:#fff;border-radius:14px;
-      box-shadow:0 28px 90px rgba(8,25,46,.34);overflow:hidden;
+      box-shadow:none;overflow:hidden;
     }
     #${MODAL_ID} .v4-head{
       display:grid;
-      grid-template-columns:minmax(0,1fr) auto;
-      grid-template-areas:"tabs actions";
+      grid-template-columns:auto minmax(0,1fr) auto;
+      grid-template-areas:"title tabs actions";
       align-items:center;
       gap:10px;
       padding:9px 12px;
@@ -63,6 +65,7 @@ function installStyle(){
       min-height:58px;
       box-sizing:border-box;
     }
+    #${MODAL_ID} .v4-title{grid-area:title;font-size:15px;white-space:nowrap}
     #${MODAL_ID} .v4-tabs{
       grid-area:tabs;
       display:flex;gap:6px;align-items:center;min-width:0;
@@ -74,11 +77,13 @@ function installStyle(){
       padding:0 11px;font:inherit;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;
     }
     #${MODAL_ID} .v4-tab.on{background:#eaf4ff;border-color:#90bce6}
+    #${MODAL_ID} .v4-piece{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
+    #${MODAL_ID} .v4-piece-delete{width:32px;height:32px;border:1px solid #efc3c3;border-radius:7px;background:#fff5f5;color:#b42318;font-weight:800;cursor:pointer}
     #${MODAL_ID} .v4-head-actions{
       grid-area:actions;display:flex;align-items:center;justify-content:flex-end;
       gap:7px;min-width:0;white-space:nowrap
     }
-    #${MODAL_ID} .v4-download,#${MODAL_ID} .v4-delete,#${MODAL_ID} .v4-close{
+    #${MODAL_ID} .v4-download,#${MODAL_ID} .v4-edit,#${MODAL_ID} .v4-close{
       border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;
       height:36px;min-height:36px;padding:0 14px;font:inherit;font-size:12px;font-weight:850;
       cursor:pointer;white-space:nowrap;
@@ -86,7 +91,6 @@ function installStyle(){
       box-sizing:border-box;
     }
     #${MODAL_ID} .v4-download{border-color:#b9dfc5;background:#eef9f1;color:#17653a}
-    #${MODAL_ID} .v4-delete{border-color:#efc3c3;background:#fff5f5;color:#b42318}
     #${MODAL_ID} .v4-close{border-color:#cfd9e6;background:#fff;color:#334155}
     #${MODAL_ID} .v4-stage{min-height:0;overflow:hidden;background:#eef2f6}
     #${MODAL_ID} iframe{display:block;width:100%;height:100%;border:0;background:#fff}
@@ -121,7 +125,7 @@ function installStyle(){
       #${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}
       #${MODAL_ID} .v4-head{
         grid-template-columns:minmax(0,1fr) auto;
-        grid-template-areas:"tabs actions";
+        grid-template-areas:"title actions" "tabs tabs";
         gap:5px;
         padding:6px 7px;
         min-height:48px;
@@ -137,7 +141,7 @@ function installStyle(){
         max-width:none!important;
       }
       #${MODAL_ID} .v4-download,
-      #${MODAL_ID} .v4-delete,
+      #${MODAL_ID} .v4-edit,
       #${MODAL_ID} .v4-close{
         min-height:30px!important;
         padding:0 7px!important;
@@ -154,7 +158,7 @@ function ensureModal(){
   let m=document.getElementById(MODAL_ID);
   if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><div class="v4-tabs"></div><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-delete">Supprimer</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div></div>';
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong class="v4-title">Visualisation des pièces</strong><div class="v4-tabs"></div><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);
   m.querySelector('.v4-close').onclick=close;
   m.onclick=e=>{if(e.target===m)close();};
@@ -176,19 +180,27 @@ function showItems(items,index){
 }
 function render(){
   const m=ensureModal(),tabs=m.querySelector('.v4-tabs'),stage=m.querySelector('.v4-stage');
-  const dl=m.querySelector('.v4-download'),del=m.querySelector('.v4-delete');
+  const dl=m.querySelector('.v4-download'),del=m.querySelector('.v4-edit');
   tabs.replaceChildren();stage.replaceChildren();
   if(!currentItems.length){stage.innerHTML='<div class="v4-empty">Aucun élément à visualiser.</div>';return;}
   currentItems.forEach((item,i)=>{
-    const b=document.createElement('button');b.type='button';b.className='v4-tab'+(i===currentIndex?' on':'');
-    b.textContent=item.tab||('Pièce '+(i+1));b.title=item.title||b.textContent;b.onclick=()=>{currentIndex=i;render();};tabs.appendChild(b);
+    const wrap=document.createElement('span');wrap.className='v4-piece';
+    const btn=document.createElement('button');btn.type='button';btn.className='v4-tab'+(i===currentIndex?' on':'');
+    btn.textContent=item.tab||('Pièce '+(i+1));btn.title=item.title||btn.textContent;
+    btn.onclick=()=>{currentIndex=i;render();};wrap.appendChild(btn);
+    if(item.onDelete&&item.canDelete!==false){
+      const remove=document.createElement('button');remove.type='button';remove.className='v4-piece-delete';
+      remove.textContent='×';remove.title='Supprimer cette pièce';remove.setAttribute('aria-label','Supprimer cette pièce');
+      remove.onclick=e=>{e.preventDefault();e.stopPropagation();if(!confirm('Supprimer cette pièce ?'))return;close();item.onDelete();};
+      wrap.appendChild(remove);
+    }
+    tabs.appendChild(wrap);
   });
-  const item=currentItems[currentIndex];
-  dl.style.display=item.kind==='mail'?'none':'inline-flex';
-  del.style.display=item.canDelete===false?'none':'inline-flex';
-
+  const item=currentItems[currentIndex],edit=m.querySelector('.v4-edit');
+  dl.style.display=item.kind==='mail'||!validFileUrl(item.url)?'none':'inline-flex';
+  edit.style.display=typeof item.onEdit==='function'?'inline-flex':'none';
   dl.onclick=e=>{e.preventDefault();e.stopPropagation();const url=directDownloadUrl(item.url);if(!url)return;const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='';document.body.appendChild(a);a.click();a.remove();};
-  del.onclick=e=>{e.preventDefault();e.stopPropagation();close();if(typeof item.onDelete==='function')setTimeout(item.onDelete,0);};
+  edit.onclick=e=>{e.preventDefault();e.stopPropagation();close();if(typeof item.onEdit==='function')setTimeout(item.onEdit,0);};
 
   if(item.kind==='mail'){
     const box=document.createElement('div');box.className='v4-mail';
@@ -214,7 +226,7 @@ function render(){
     stage.appendChild(img);return;
   }
 
-  if(!item.url){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
+  if(!validFileUrl(item.url)){stage.innerHTML='<div class="v4-empty">Lien de cette pièce introuvable.</div>';return;}
   const id=driveId(item.url);
   const iframe=document.createElement('iframe');
   iframe.src=id?'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview':item.url;
@@ -331,13 +343,30 @@ function openMailAttachment(id){
   showItems(items,index);return true;
 }
 function openDocument(id,url){
-  const d=docById(id),u=text(url)||fileUrl(d);
-  const item={kind:'file',id:text(id),tab:'📎 Pièce 1',title:fileName(d,0),url:u,
-    onEdit:()=>{try{if(typeof window.editDocument==='function')window.editDocument(text(id));else if(typeof editDocument==='function')editDocument(text(id));}catch(e){}},
-    onDelete:()=>{try{if(typeof window.delDocument==='function')window.delDocument(text(id));else if(typeof delDocument==='function')delDocument(text(id));}catch(e){}}
-  };
-  showItems([item],0);return true;
+  const d=docById(id);if(!d)return false;
+  const items=[],rawUrl=text(url)||fileUrl(d),extras=extraPieces(d);
+  const body=text(d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody);
+  const mail=extras.find(p=>p&&p.kind==='mail');
+  if(mail||body)items.push({
+    kind:'mail',id:text(mail&&mail.id)||text(id),tab:'📧 Mail',
+    title:text(mail&&mail.subject)||mailSubject(d),
+    sender:text(mail&&mail.sender)||mailSender(d),date:text(mail&&mail.date)||text(d.date),
+    body:text(mail&&mail.body)||body,
+    onEdit:()=>{if(typeof window.editDocument==='function')window.editDocument(text(id));},
+    onDelete:()=>{if(typeof window.delDocument==='function')window.delDocument(text(id));}
+  });
+  if(validFileUrl(rawUrl))items.push({
+    kind:'file',id:text(id),tab:'📎 Pièce '+(items.length+1),title:fileName(d,0),url:rawUrl,
+    onEdit:()=>{if(typeof window.editDocument==='function')window.editDocument(text(id));},
+    onDelete:()=>{if(typeof window.delDocument==='function')window.delDocument(text(id));}
+  });
+  extras.filter(p=>p&&p.kind!=='mail'&&validFileUrl(p.url)&&text(p.url)!==rawUrl).forEach(p=>{
+    items.push({kind:'file',id:text(p.id),tab:'📎 Pièce '+(items.length+1),title:text(p.name)||'Pièce jointe',url:text(p.url),canDelete:false});
+  });
+  if(!items.length)items.push({kind:'file',tab:'📎 Pièce 1',title:fileName(d,0),url:''});
+  showItems(items,0);return true;
 }
+
 function openPhoto(id){
   const p=docById(id);if(!p)return false;
   const list=docs().filter(d=>String(d&&d.type||'').toUpperCase()==='PHOTO'&&text(d.chantierId)===text(p.chantierId)&&text(d.date)===text(p.date))
