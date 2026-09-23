@@ -179,8 +179,13 @@
   }
 
   function scheduleMailAttachmentFullscreen(docId){
-    [0,30,120,350,800].forEach(function(delay){
-      setTimeout(function(){forceMailAttachmentFullscreen(docId);},delay);
+    // Une seule stabilisation : les anciens 5 redimensionnements successifs
+    // faisaient clignoter l'aperçu des PJ mail.
+    requestAnimationFrame(function(){
+      const modal=document.querySelector('#modalRoot .piece-preview-modal');
+      if(!modal)return;
+      modal.dataset.yayaMailPjStable='1';
+      modal.dataset.yayaPreviewFullscreen='1';
     });
   }
 
