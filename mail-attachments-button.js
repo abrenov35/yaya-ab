@@ -100,6 +100,58 @@
     },0);
   }
 
+  const MAIL_PJ_API_FALLBACK='https://script.google.com/macros/s/AKfycbxXBpXjWXEF-7p6vvOE3blSBc8_5e62AtQb2stHjnrGE025cOxQGy-zAguYmN2u9O4K/exec';
+  let mailPjPdfJsPromise=null;
+
+  function mailPjApiUrl(){
+    try{if(typeof API!=='undefined'&&API)return String(API);}catch(e){}
+    return MAIL_PJ_API_FALLBACK;
+  }
+
+  function ensureMailPjPdfJs(){
+    if(window.pdfjsLib)return Promise.resolve(window.pdfjsLib);
+    if(mailPjPdfJsPromise)return mailPjPdfJsPromise;
+    mailPjPdfJsPromise=new Promise(function(resolve,reject){
+      const script=document.createElement('script');
+      script.src='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+      script.async=true;
+      script.onload=function(){
+        if(!window.pdfjsLib){reject(new Error('PDF.js indisponible'));return;}
+        try{window.pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';}catch(e){}
+        resolve(window.pdfjsLib);
+      };
+      script.onerror=function(){reject(new Error('Chargement PDF.js impossible'));};
+      document.head.appendChild(script);
+    }).catch(function(err){mailPjPdfJsPromise=null;throw err;});
+    return mailPjPdfJsPromise;
+  }
+
+  async function fetchMailPjDriveFile(d){
+    const url=text(d&&(d.lien||d.url||d.webUrl||d.downloadUrl));
+    const id=driveIdFromUrl(url);
+    if(!id)throw new Error('Identifiant Drive introuvable');
+
+    const response=await fetch(mailPjApiUrl(),{
+      method:'POST',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify({action:'getDriveFile',data:{url:url,id:id}})
+    });
+    if(!response.ok)throw new Error('API Yaya HTTP '+response.status);
+
+    const json=await response.json();
+    if(!json||json.ok!==true)throw new Error(json&&json.error?json.error:'Lecture Drive indisponible');
+    const data=json.data||{};
+    if(!data.base64)throw new Error('Fichier Drive vide');
+    return data;
+  }
+
+  function mailPjBase64ToBytes(base64){
+    const raw=atob(String(base64||''));
+    const bytes=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+    return bytes;
+  }
+
   function loadDrivePage(id,page,width,timeoutMs){
     return new Promise(function(resolve,reject){
       const img=new Image();
@@ -117,53 +169,89 @@
   }
 
   async function renderMailAttachmentPdf(stage,d,token){
-    const url=text(d&&(d.lien||d.url||d.webUrl||d.downloadUrl));
-    const id=driveIdFromUrl(url);
-    if(!id){
-      stage.innerHTML='<div class="yaya-mail-pj-error">Aperçu PDF indisponible. Utilise Télécharger.</div>';
-      return;
-    }
-
+    stage.classList.add('yaya-mail-pj-stage-scrolling');
     stage.innerHTML='<div class="yaya-mail-pj-loading">Chargement du PDF…</div>';
-    const viewer=document.createElement('div');
-    viewer.className='yaya-mail-pj-scroll';
-    stage.replaceChildren(viewer);
 
-    const loading=document.createElement('div');
-    loading.className='yaya-mail-pj-loading';
-    loading.textContent='Chargement du PDF…';
-    viewer.appendChild(loading);
-
-    let count=0;
-    const width=Math.max(1200,Math.min(2200,Math.round((stage.clientWidth||1200)*1.55)));
-
-    for(let page=1;page<=80;page++){
+    let task=null;
+    try{
+      const data=await fetchMailPjDriveFile(d);
       if(stage.dataset.renderToken!==token)return;
-      let img;
-      try{img=await loadDrivePage(id,page,width,6000);}
-      catch(e){
-        if(page===1){
-          loading.textContent='Aperçu PDF indisponible. Utilise Télécharger.';
-        }else if(loading.isConnected){
-          loading.remove();
-        }
-        break;
+
+      const pdfjs=await ensureMailPjPdfJs();
+      if(stage.dataset.renderToken!==token)return;
+
+      task=pdfjs.getDocument({
+        data:mailPjBase64ToBytes(data.base64),
+        disableWorker:true
+      });
+      const pdf=await task.promise;
+      if(stage.dataset.renderToken!==token){
+        try{task.destroy();}catch(e){}
+        return;
       }
-      if(stage.dataset.renderToken!==token)return;
-      if(loading.isConnected)loading.remove();
+
+      stage.replaceChildren();
+      stage.scrollTop=0;
 
       const wrap=document.createElement('div');
-      wrap.className='yaya-mail-pj-page';
-      const label=document.createElement('div');
-      label.className='yaya-mail-pj-page-label';
-      label.textContent='Page '+page;
-      img.alt='Page '+page;
-      wrap.append(img,label);
-      viewer.appendChild(wrap);
-      count++;
-    }
+      wrap.className='yaya-mail-pj-native-pages';
+      stage.appendChild(wrap);
 
-    if(count) viewer.scrollTop=0;
+      for(let pageNo=1;pageNo<=pdf.numPages;pageNo++){
+        if(stage.dataset.renderToken!==token){
+          try{task.destroy();}catch(e){}
+          return;
+        }
+
+        const page=await pdf.getPage(pageNo);
+        if(stage.dataset.renderToken!==token)return;
+
+        const raw=page.getViewport({scale:1});
+        const available=Math.max(320,Math.min(1220,(stage.clientWidth||1200)-28));
+        const cssScale=Math.max(.2,available/raw.width);
+        const dpr=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+        const viewport=page.getViewport({scale:cssScale*dpr});
+
+        const pageWrap=document.createElement('div');
+        pageWrap.className='yaya-mail-pj-page';
+
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.max(1,Math.floor(viewport.width));
+        canvas.height=Math.max(1,Math.floor(viewport.height));
+        canvas.style.width=Math.max(1,Math.floor(raw.width*cssScale))+'px';
+        canvas.style.height=Math.max(1,Math.floor(raw.height*cssScale))+'px';
+        canvas.style.maxWidth='100%';
+        canvas.style.display='block';
+
+        const label=document.createElement('div');
+        label.className='yaya-mail-pj-page-label';
+        label.textContent='Page '+pageNo+' / '+pdf.numPages;
+
+        pageWrap.append(canvas,label);
+        wrap.appendChild(pageWrap);
+
+        await page.render({
+          canvasContext:canvas.getContext('2d'),
+          viewport:viewport
+        }).promise;
+      }
+
+      stage.scrollTop=0;
+
+      const cleanup=new MutationObserver(function(){
+        if(!stage.isConnected){
+          cleanup.disconnect();
+          try{task&&task.destroy();}catch(e){}
+        }
+      });
+      cleanup.observe(document.documentElement,{childList:true,subtree:true});
+
+    }catch(err){
+      console.warn('Lecteur PDF PJ mail :',err);
+      if(stage.dataset.renderToken!==token)return;
+      stage.innerHTML='<div class="yaya-mail-pj-error">Aperçu PDF indisponible. Utilise Télécharger.</div>';
+      try{task&&task.destroy();}catch(e){}
+    }
   }
 
   function renderMailAttachmentImage(stage,d,token){
@@ -496,19 +584,26 @@
       #modalRoot .yaya-mail-pj-download{background:#26824f!important;border-color:#26824f!important;color:#fff!important}
       #modalRoot .yaya-mail-pj-delete{background:#fff5f3!important;border-color:#f1aaa1!important;color:#c82921!important}
       #modalRoot .yaya-mail-pj-viewer-stage{
-        flex:1 1 auto!important;min-height:0!important;position:relative!important;overflow:hidden!important;background:#edf1f5!important;
+        flex:1 1 auto!important;min-height:0!important;position:relative!important;
+        overflow-y:auto!important;overflow-x:hidden!important;background:#edf1f5!important;
+        box-sizing:border-box!important;padding:10px 0 36px!important;
+        overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+        scrollbar-gutter:stable!important;
+      }
+      #modalRoot .yaya-mail-pj-native-pages{
+        width:100%!important;min-height:100%!important;box-sizing:border-box!important;
       }
       #modalRoot .yaya-mail-pj-scroll{
-        width:100%!important;height:100%!important;overflow-y:auto!important;overflow-x:hidden!important;
-        box-sizing:border-box!important;padding:10px 0 28px!important;background:#edf1f5!important;
-        overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
+        width:100%!important;min-height:100%!important;overflow:visible!important;
+        box-sizing:border-box!important;background:#edf1f5!important;
       }
       #modalRoot .yaya-mail-pj-page{
         position:relative!important;width:min(96%,1200px)!important;margin:0 auto 14px!important;background:#fff!important;
         box-shadow:0 1px 8px rgba(18,38,61,.18)!important;
       }
-      #modalRoot .yaya-mail-pj-page img{
-        display:block!important;width:100%!important;height:auto!important;max-width:100%!important;max-height:none!important;margin:0!important;
+      #modalRoot .yaya-mail-pj-page img,
+      #modalRoot .yaya-mail-pj-page canvas{
+        display:block!important;width:auto!important;height:auto!important;max-width:100%!important;max-height:none!important;margin:0 auto!important;
       }
       #modalRoot .yaya-mail-pj-page-label{
         position:absolute!important;right:10px!important;bottom:8px!important;padding:3px 7px!important;border-radius:11px!important;
@@ -649,10 +744,12 @@
 
   let scheduled=false;
   function schedule(){
+    if(document.querySelector('#modalRoot .yaya-mail-pj-viewer-overlay'))return;
     if(scheduled)return;scheduled=true;
     requestAnimationFrame(function(){
-      scheduled=false;ensureStyle();injectModalButton();injectRowButtons();
-      injectAttachmentChoices();
+      scheduled=false;
+      if(document.querySelector('#modalRoot .yaya-mail-pj-viewer-overlay'))return;
+      ensureStyle();injectModalButton();injectRowButtons();
       hideAttachmentRows(document.getElementById('pane-documents'));
       hideAttachmentRows(document.getElementById('pane-chantiers'));
     });
