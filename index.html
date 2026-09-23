@@ -124,8 +124,8 @@
     '<script src="commande-tab-no-count-final.js?v=2"><\\/script>'+
     '<script src="charges-tab-no-count.js?v=2"><\\/script>'+
     '<script src="margin-badge-colors.js?v=margincolors-2"><\\/script>'+
-    '<script src="documents-view-only-actions.js?v=docactions-click-22"><\\/script>'+
-    '<script src="mail-attachments-button.js?v=mailpj-17"><\\/script>'+
+    '<script src="documents-view-only-actions.js?v=docactions-click-23"><\\/script>'+
+    '<script src="mail-attachments-button.js?v=mailpj-18"><\\/script>'+
     '<script src="chantier-signed-quotes-display.js?v=signedquotes-2"><\\/script>'+
     '<script src="layout-centering-fix.js?v=layout-8"><\\/script>'+
     '<script src="finance-background-save-delete-v1.js?v=bgfinance-7"><\\/script>'+
@@ -171,8 +171,9 @@
     '<script src="devis-drive-preview-fix.js?v=6"><\\/script>'+
     '<script src="devis-drive-embed-fallback.js?v=embed-1"><\\/script>'+
     '<script src="viewport-density-optimization.js?v=5"><\\/script>'+
-    '<script src="document-unified-viewer.js?v=unifiedviewer-4"><\\/script>'+
-    '<script src="toolbar-close-modal.js?v=1"><\\/script>'+"'+reveal+'</body>'";
+    '<script src="document-unified-viewer.js?v=unifiedviewer-5"><\\/script>'+
+    '<script src="toolbar-close-modal.js?v=1"><\\/script>'+
+    '<script src="fullpage-view-final.js?v=1"><\\/script>'+"'+reveal+'</body>'";
   if(!base.includes(marker))throw new Error('Point insertion aperçu introuvable');
   const nonBlockingReplacement=replacement.replaceAll('<script src="','<script defer src="');
   base=base.replace(marker,nonBlockingReplacement);
