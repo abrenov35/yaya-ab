@@ -118,6 +118,85 @@
     return ui;
   }
 
+  function currentDocumentFilename(){
+    const id=String(window.__yayaUnifiedPreviewDocumentId||window.__yayaPreviewDocumentId||'').trim();
+    if(!id)return '';
+    try{
+      const list=(typeof S!=='undefined'&&S&&Array.isArray(S.documents))?S.documents:[];
+      const d=list.find(function(row){return String(row&&row.id||'').trim()===id;});
+      return String(d&&(d.pieceNom||d.nomFichier||d.filename||d.fileName||d.titre)||'').trim();
+    }catch(e){return '';}
+  }
+
+  function drivePageUrl(id,page,width){
+    return 'https://drive.google.com/file/d/'+encodeURIComponent(id)+'/image?pagenumber='+Math.max(1,page)+'&w='+Math.max(900,width||1800);
+  }
+
+  function loadDrivePageImage(id,page,width,timeoutMs){
+    return new Promise(function(resolve,reject){
+      const img=new Image();
+      let done=false;
+      const finish=function(ok){
+        if(done)return;done=true;
+        clearTimeout(timer);
+        img.onload=img.onerror=null;
+        ok?resolve(img):reject(new Error('Page Drive indisponible'));
+      };
+      const timer=setTimeout(function(){finish(false);},timeoutMs||5000);
+      img.onload=function(){finish(img.naturalWidth>50&&img.naturalHeight>50);};
+      img.onerror=function(){finish(false);};
+      img.src=drivePageUrl(id,page,width);
+    });
+  }
+
+  async function showScrollableDrivePdf(root,id){
+    const ui=makeModal(root);
+    ui.modal.dataset.yayaPreviewFullscreen='1';
+    ui.modal.dataset.yayaDrivePdfScroll='1';
+
+    ui.stage.className='piece-preview-stage yaya-drive-pdf-scroll-stage';
+    ui.stage.replaceChildren();
+
+    const viewer=document.createElement('div');
+    viewer.className='yaya-drive-pdf-scroll-viewer';
+    viewer.style.cssText='width:100%;height:100%;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;background:#e9edf2;padding:8px 0;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;';
+
+    const loading=document.createElement('div');
+    loading.className='piece-preview-loading';
+    loading.textContent='Chargement du PDF…';
+    viewer.appendChild(loading);
+    ui.stage.appendChild(viewer);
+
+    let loaded=0;
+    const width=Math.max(1000,Math.min(2200,Math.round((ui.stage.clientWidth||1200)*1.6)));
+
+    for(let page=1;page<=60;page++){
+      let img;
+      try{
+        img=await loadDrivePageImage(id,page,width,5000);
+      }catch(e){
+        if(page===1)throw e;
+        break;
+      }
+      if(!ui.modal.isConnected)return ui;
+      if(loading.isConnected)loading.remove();
+
+      const pageWrap=document.createElement('div');
+      pageWrap.className='yaya-drive-pdf-scroll-page';
+      pageWrap.style.cssText='width:min(100%,1200px);margin:0 auto 10px;box-sizing:border-box;background:#fff;box-shadow:0 1px 5px rgba(15,31,53,.16);';
+
+      img.alt='Page '+page;
+      img.style.cssText='display:block;width:100%;height:auto;max-width:100%;margin:0;';
+      pageWrap.appendChild(img);
+      viewer.appendChild(pageWrap);
+      loaded++;
+    }
+
+    if(!loaded)throw new Error('Aucune page PDF lisible');
+    viewer.scrollTop=0;
+    return ui;
+  }
+
   async function fetchDriveFile(url,id){
     const response=await fetch(apiUrl(),{
       method:'POST',
@@ -311,9 +390,18 @@
     const root=document.getElementById('modalRoot');
     if(!root)return previousVoirPiece(value);
 
-    // Affichage immédiat d'une vignette Drive, pendant que le fichier complet
-    // est récupéré en arrière-plan via l'API Yaya. On n'utilise plus l'iframe
-    // Google Drive qui provoquait l'écran noir.
+    // Pour les PDF connus de Yaya, utiliser directement le lecteur vertical
+    // stable : pas d'iframe Google, pas de double scroll, pas de clignotement.
+    const knownName=currentDocumentFilename();
+    if(/\.pdf$/i.test(knownName)){
+      try{
+        await showScrollableDrivePdf(root,id);
+        return;
+      }catch(err){
+        console.warn('Lecteur PDF Drive vertical indisponible, secours API :',err);
+      }
+    }
+
     const ui=showFastThumbnail(root,id);
 
     try{
