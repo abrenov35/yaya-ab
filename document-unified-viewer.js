@@ -234,13 +234,25 @@
 
   document.addEventListener('click',function(event){
     if(event.__yayaDocumentRouteHandled)return;
-    const row=event.target&&event.target.closest?event.target.closest(ROW_SELECTOR):null;if(!row)return;
-    if(event.target.closest('button,a,input,select,textarea,label'))return;
-    const id=rowId(row);if(!id)return;
-    const d=doc(id);if(isMail(row,d))return;
+    const target=event.target;
+    const row=target&&target.closest?target.closest(ROW_SELECTOR):null;if(!row)return;
+    const view=target.closest('#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-view[data-doc-id]');
+    if(!view&&target.closest('button,a,input,select,textarea,label'))return;
+    const id=view?text(view.dataset.docId):rowId(row);if(!id)return;
+    const d=doc(id);
+    if(view&&view.dataset.mailLinked==='1'){
+      if(window.yayaUnifiedV4Viewer&&window.yayaUnifiedV4Viewer.openMail(id)){
+        event.preventDefault();event.stopImmediatePropagation();
+      }
+      return;
+    }
+    if(isMail(row,d))return;
     const url=rowUrl(row,d);
-    event.preventDefault();event.stopPropagation();
-    openUnified(id,url);
+    if(openUnified(id,url)){
+      event.preventDefault();
+      if(view)event.stopImmediatePropagation();
+      else event.stopPropagation();
+    }
   },true);
 
   const root=document.getElementById('modalRoot');
