@@ -105,6 +105,25 @@ function installStyle(){
     #${MODAL_ID} .v4-mail-meta{display:flex;align-items:center;gap:12px;margin-top:6px;color:#6b7b8d;font-size:11.5px;font-weight:650}
     #${MODAL_ID} .v4-mail-body{white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.55;color:#243b55}
     #${MODAL_ID} .v4-empty{height:100%;display:flex;align-items:center;justify-content:center;padding:18px;box-sizing:border-box;text-align:center;color:#708095;font-size:13px;font-weight:700}
+    .yaya-mail-pj-edit-safe{
+      position:fixed;inset:0;z-index:65000;display:flex;align-items:center;justify-content:center;
+      padding:16px;background:rgba(15,30,50,.46);box-sizing:border-box
+    }
+    .yaya-mail-pj-edit-safe-card{
+      width:min(440px,100%);background:#fff;border-radius:13px;padding:18px;
+      box-shadow:0 18px 55px rgba(15,30,50,.28);box-sizing:border-box
+    }
+    .yaya-mail-pj-edit-safe-card h3{margin:0 0 14px;color:#162d49;font-size:17px}
+    .yaya-mail-pj-edit-safe-card input{
+      width:100%;height:42px;border:1px solid #c9d7e5;border-radius:8px;padding:0 11px;
+      box-sizing:border-box;font:inherit;color:#203750
+    }
+    .yaya-mail-pj-edit-safe-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+    .yaya-mail-pj-edit-safe-actions button{
+      min-height:36px;padding:0 14px;border-radius:8px;border:1px solid #cbd5e1;
+      background:#fff;color:#334155;font-weight:800;cursor:pointer
+    }
+    .yaya-mail-pj-edit-safe-actions .save{background:#14558a;border-color:#14558a;color:#fff}
     @media(max-width:760px){
       #${MODAL_ID}{padding:4px}
       #${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}
@@ -221,6 +240,87 @@ function render(){
   stage.appendChild(iframe);
 }
 
+async function saveMailAttachmentSafe(id,newName){
+  id=text(id);newName=text(newName);
+  const current=docById(id);
+  if(!current||String(current.type||'').toUpperCase()!=='MAIL_PJ')return false;
+  if(!newName)newName=fileName(current,0);
+
+  const safe=Object.assign({},current,{
+    id:current.id,
+    type:'MAIL_PJ',
+    sujet:current.sujet,
+    chantierId:current.chantierId,
+    lien:current.lien,
+    pieceNom:newName,
+    titre:newName,
+    origine:'YAYA_WEB_EDIT'
+  });
+
+  let ok=false;
+  try{
+    if(typeof window.apiPost!=='function')throw new Error('API Yaya indisponible');
+    ok=await window.apiPost('addDocument',safe);
+  }catch(e){ok=false;}
+  if(!ok){
+    try{if(typeof toast==='function')toast('Modification non enregistrée',true);}catch(e){}
+    return false;
+  }
+
+  try{
+    if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
+      const i=S.documents.findIndex(d=>text(d&&d.id)===id);
+      if(i>=0)S.documents[i]=Object.assign({},safe);
+    }
+    const raw=localStorage.getItem('YAYA_CACHE_DATA_V2');
+    if(raw){
+      const cache=JSON.parse(raw);
+      if(cache&&Array.isArray(cache.documents)){
+        const i=cache.documents.findIndex(d=>text(d&&d.id)===id);
+        if(i>=0)cache.documents[i]=Object.assign({},safe);
+        localStorage.setItem('YAYA_CACHE_DATA_V2',JSON.stringify(cache));
+      }
+    }
+  }catch(e){}
+  try{if(typeof toast==='function')toast('Pièce modifiée ✓');}catch(e){}
+  return true;
+}
+
+function editMailAttachmentSafe(id){
+  id=text(id);
+  const d=docById(id);if(!d)return false;
+  const old=document.querySelector('.yaya-mail-pj-edit-safe');if(old)old.remove();
+
+  const overlay=document.createElement('div');
+  overlay.className='yaya-mail-pj-edit-safe';
+  overlay.innerHTML='<div class="yaya-mail-pj-edit-safe-card" role="dialog" aria-modal="true">'
+    +'<h3>Modifier la pièce jointe</h3>'
+    +'<input type="text" class="name" maxlength="180">'
+    +'<div class="yaya-mail-pj-edit-safe-actions"><button type="button" class="cancel">Annuler</button><button type="button" class="save">Enregistrer</button></div>'
+    +'</div>';
+  document.body.appendChild(overlay);
+  const input=overlay.querySelector('.name');
+  input.value=fileName(d,0);
+  input.focus();input.select();
+
+  const closeEdit=()=>{if(overlay.isConnected)overlay.remove();};
+  overlay.querySelector('.cancel').onclick=closeEdit;
+  overlay.onclick=e=>{if(e.target===overlay)closeEdit();};
+  overlay.querySelector('.save').onclick=async function(){
+    const btn=this;btn.disabled=true;btn.textContent='Enregistrement…';
+    const ok=await saveMailAttachmentSafe(id,input.value);
+    if(ok){closeEdit();openMailAttachment(id);}
+    else{btn.disabled=false;btn.textContent='Enregistrer';}
+  };
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Escape')closeEdit();
+    if(e.key==='Enter'){e.preventDefault();overlay.querySelector('.save').click();}
+  });
+  return true;
+}
+
+window.__yayaEditMailAttachmentSafe=editMailAttachmentSafe;
+
 function mailItems(id){
   const mail=docById(id);if(!mail)return [];
   const items=[{
@@ -231,7 +331,11 @@ function mailItems(id){
   const pjs=docs().filter(d=>String(d&&d.type||'').toUpperCase()==='MAIL_PJ'&&text(d.sujet)===text(mail.id));
   pjs.forEach((d,i)=>items.push({
     kind:'file',id:text(d.id),tab:'📎 Pièce '+(i+1),title:fileName(d,i),url:fileUrl(d),
-    onEdit:()=>{try{if(typeof window.editDocument==='function')window.editDocument(text(d.id));else if(typeof editDocument==='function')editDocument(text(d.id));}catch(e){}},
+    onEdit:()=>{try{
+      if(typeof window.__yayaEditMailAttachmentSafe==='function')window.__yayaEditMailAttachmentSafe(text(d.id));
+      else if(typeof window.editDocument==='function')window.editDocument(text(d.id));
+      else if(typeof editDocument==='function')editDocument(text(d.id));
+    }catch(e){}},
     onDelete:()=>{try{if(typeof window.delDocument==='function')window.delDocument(text(d.id));else if(typeof delDocument==='function')delDocument(text(d.id));}catch(e){}}
   }));
   return items;
