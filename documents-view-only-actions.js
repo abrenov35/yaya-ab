@@ -429,8 +429,8 @@
       const root=document.getElementById('modalRoot');if(!root)return false;
       const sujet=mailSubject(d),sender=mailSender(d),date=text(d&&d.date);
       root.innerHTML=''
-        +'<div class="overlay">'
-        +'<div class="modal yaya-mail-body-modal" data-yaya-mail-read-actions="1" style="max-width:760px">'
+        +'<div class="overlay yaya-mail-body-overlay">'
+        +'<div class="modal yaya-mail-body-modal" data-yaya-mail-read-actions="1" style="max-width:980px">'
         +'<h5>'+esc(sujet)+'<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
         +'<div class="yaya-mail-body-meta"><div><b>De :</b> '+esc(sender)+'</div>'+(date?'<div><b>Date :</b> '+esc(date)+'</div>':'')+'</div>'
         +'<div class="yaya-mail-body-content">'+esc(body)+'</div>'
@@ -557,15 +557,4 @@
   schedule();
   setTimeout(function(){observePane(document.getElementById('pane-documents'));observePane(document.getElementById('pane-chantiers'));schedule();},80);
   window.addEventListener('yaya:data-refreshed',schedule);
-})();
-
-(function(){
-  'use strict';
-  if(window.__yayaMailReadActionsLoaderV6)return;
-  window.__yayaMailReadActionsLoaderV6=true;
-  const s=document.createElement('script');
-  s.src='mail-subject-edit.js?v=mailreadactions-10';
-  s.async=false;
-  s.onerror=()=>console.error('Yaya : chargement actions mail V6 impossible');
-  document.head.appendChild(s);
 })();
