@@ -7,7 +7,8 @@
   const ROW_SELECTOR=[
     '#pane-documents .achligne.ligR[data-id]',
     '#pane-chantiers .yaya-detail-document-row',
-    '#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row'
+    '#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row',
+    '#pane-chantiers .yaya-document-line'
   ].join(',');
 
   function text(value){return String(value==null?'':value).trim();}
@@ -25,7 +26,7 @@
       if(text(value))return text(value);
     }
     const raw=[].map.call(row.querySelectorAll('[onclick]'),function(el){return String(el.getAttribute('onclick')||'');}).join(' ');
-    const match=raw.match(/(?:voirPiece|editDocument|delDocument)\(['"]([^'"]+)/i);
+    const match=raw.match(/(?:editDocument|delDocument)\(['"]([^'"]+)/i);
     return match&&match[1]?text(match[1]):'';
   }
 
@@ -236,17 +237,21 @@
     if(event.__yayaDocumentRouteHandled)return;
     const target=event.target;
     const row=target&&target.closest?target.closest(ROW_SELECTOR):null;if(!row)return;
-    const view=target.closest('#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-view[data-doc-id]');
+    const view=target.closest(
+      '#pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-view[data-doc-id],'+
+      '#pane-documents .achligne.ligR[data-id] button[onclick*="voirPiece("],'+
+      '#pane-chantiers .yaya-document-line button[onclick*="voirPiece("]'
+    );
     if(!view&&target.closest('button,a,input,select,textarea,label'))return;
-    const id=view?text(view.dataset.docId):rowId(row);if(!id)return;
-    const d=doc(id);
-    if(view&&view.dataset.mailLinked==='1'){
+    const id=view&&view.dataset.docId?text(view.dataset.docId):rowId(row);
+    if(!id)return;
+    const d=doc(id);if(!d)return;
+    if(isMail(row,d)||view&&view.dataset.mailLinked==='1'){
       if(window.yayaUnifiedV4Viewer&&window.yayaUnifiedV4Viewer.openMail(id)){
         event.preventDefault();event.stopImmediatePropagation();
       }
       return;
     }
-    if(isMail(row,d))return;
     const url=rowUrl(row,d);
     if(openUnified(id,url)){
       event.preventDefault();
