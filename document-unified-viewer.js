@@ -99,10 +99,54 @@
     if(document.getElementById('yaya-document-unified-viewer-style'))return;
     const style=document.createElement('style');style.id='yaya-document-unified-viewer-style';
     style.textContent=`
-      #modalRoot .piece-preview-head.yaya-document-unified-head{display:grid!important;grid-template-columns:minmax(140px,1fr) auto!important;gap:12px!important;align-items:center!important;padding:4px 2px 9px!important}
-      #modalRoot .yaya-document-unified-title{min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;font-size:15px!important;font-weight:800!important;color:#162d49!important}
-      #modalRoot .yaya-document-unified-actions{display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important}
-      #modalRoot .yaya-document-unified-actions button{min-height:38px!important;padding:0 14px!important;border-radius:8px!important;font-size:12.5px!important;font-weight:800!important;cursor:pointer!important;white-space:nowrap!important}
+      #modalRoot .piece-preview-head.yaya-document-unified-head{
+        display:grid!important;
+        grid-template-columns:auto minmax(180px,1fr) auto!important;
+        grid-template-areas:"switch title actions"!important;
+        gap:14px!important;
+        align-items:center!important;
+        min-height:54px!important;
+        margin:0 0 6px!important;
+        padding:6px 10px!important;
+        border-bottom:1px solid #e1e7ee!important;
+        background:#fff!important;
+      }
+      #modalRoot .piece-preview-head.yaya-document-unified-head>.yaya-mail-pj-switcher{
+        grid-area:switch!important;
+        justify-self:start!important;
+        margin:0!important;
+      }
+      #modalRoot .yaya-document-unified-title{
+        grid-area:title!important;
+        min-width:0!important;
+        overflow:hidden!important;
+        text-overflow:ellipsis!important;
+        white-space:nowrap!important;
+        font-size:14px!important;
+        font-weight:800!important;
+        color:#162d49!important;
+        text-align:left!important;
+      }
+      #modalRoot .yaya-document-unified-actions{
+        grid-area:actions!important;
+        display:flex!important;
+        align-items:center!important;
+        justify-content:flex-end!important;
+        gap:8px!important;
+        margin:0!important;
+      }
+      #modalRoot .yaya-document-unified-actions button{
+        height:38px!important;
+        min-height:38px!important;
+        padding:0 14px!important;
+        border-radius:8px!important;
+        font-size:12.5px!important;
+        font-weight:800!important;
+        cursor:pointer!important;
+        white-space:nowrap!important;
+        box-sizing:border-box!important;
+        margin:0!important;
+      }
       #modalRoot .yaya-document-action-edit{border:1px solid #9fc0df!important;background:#eef6ff!important;color:#245d91!important}
       #modalRoot .yaya-document-action-download{border:1px solid #207342!important;background:#2e854f!important;color:#fff!important}
       #modalRoot .yaya-document-action-delete{border:1px solid #e6a29c!important;background:#fff3f2!important;color:#c62820!important}
@@ -111,9 +155,34 @@
       #modalRoot .yaya-document-unified-modal .piece-preview-head>.yaya-preview-download-top,
       #modalRoot .yaya-document-unified-modal .piece-preview-head>.yaya-preview-download-direct{display:none!important}
       @media(max-width:700px){
-        #modalRoot .piece-preview-head.yaya-document-unified-head{grid-template-columns:1fr!important}
-        #modalRoot .yaya-document-unified-actions{justify-content:flex-start!important;overflow-x:auto!important;padding-bottom:2px!important}
-        #modalRoot .yaya-document-unified-actions button{min-height:34px!important;padding:0 10px!important;font-size:11.5px!important}
+        #modalRoot .piece-preview-head.yaya-document-unified-head{
+          grid-template-columns:minmax(0,1fr) auto!important;
+          grid-template-areas:
+            "switch title"
+            "actions actions"!important;
+          gap:7px 9px!important;
+          min-height:0!important;
+          padding:6px 7px!important;
+        }
+        #modalRoot .piece-preview-head.yaya-document-unified-head>.yaya-mail-pj-switcher{
+          max-width:52vw!important;
+        }
+        #modalRoot .yaya-document-unified-title{
+          text-align:right!important;
+          font-size:12px!important;
+        }
+        #modalRoot .yaya-document-unified-actions{
+          justify-content:flex-start!important;
+          overflow-x:auto!important;
+          padding:1px 0 2px!important;
+          gap:6px!important;
+        }
+        #modalRoot .yaya-document-unified-actions button{
+          height:34px!important;
+          min-height:34px!important;
+          padding:0 10px!important;
+          font-size:11.5px!important;
+        }
       }
     `;
     document.head.appendChild(style);
