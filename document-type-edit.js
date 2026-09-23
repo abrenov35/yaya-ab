@@ -173,7 +173,17 @@
     const row=text&&text.closest?text.closest('.yaya-detail-document-row'):null;
     const view=row?row.querySelector('.yaya-detail-document-view'):null;
     if(!view||view.disabled)return;
+    const id=String(view.dataset.docId||'').trim();
+    const url=String(view.dataset.lien||'').trim();
     stop(event);
+    if(id){
+      try{
+        if(view.dataset.mailLinked==='1'&&window.yayaUnifiedV4Viewer&&
+            window.yayaUnifiedV4Viewer.openMail(id))return;
+        if(typeof window.yayaOpenUnifiedDocument==='function'&&
+            window.yayaOpenUnifiedDocument(id,url))return;
+      }catch(err){console.warn('Ouverture du document',err);}
+    }
     try{view.click();}catch(e){}
   }
 
@@ -184,7 +194,7 @@
     if(type){openEdit(type,event);return;}
 
     const text=event.target&&event.target.closest
-      ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]')
+      ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"], #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row:not(.yaya-detail-market-row) .yaya-document-field-2')
       :null;
     if(text)openView(text,event);
   },true);
@@ -197,7 +207,7 @@
     if(type){openEdit(type,event);return;}
 
     const text=event.target&&event.target.closest
-      ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"]')
+      ?event.target.closest('#pane-chantiers .yaya-detail-documents-pane [data-yaya-document-view-text="1"], #pane-chantiers .yaya-detail-documents-pane .yaya-detail-document-row:not(.yaya-detail-market-row) .yaya-document-field-2')
       :null;
     if(text)openView(text,event);
   },true);
