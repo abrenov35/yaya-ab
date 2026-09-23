@@ -71,30 +71,32 @@
     .yaya-mail-body-modal .yaya-mail-body-content::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
     #modalRoot .yaya-mail-body-overlay{
       position:fixed!important;
-      left:0!important;
-      right:0!important;
-      bottom:0!important;
-      top:62px!important;
-      z-index:19!important;
+      inset:0!important;
+      z-index:2147483646!important;
       display:flex!important;
-      align-items:flex-start!important;
-      justify-content:center!important;
+      align-items:stretch!important;
+      justify-content:stretch!important;
       box-sizing:border-box!important;
-      padding:10px 14px 14px!important;
+      padding:0!important;
+      margin:0!important;
       overflow:hidden!important;
+      background:#fff!important;
     }
     #modalRoot .yaya-mail-body-modal{
       position:relative!important;
-      width:min(1180px,calc(100vw - 28px))!important;
-      max-width:1180px!important;
-      margin:0 auto!important;
-      height:calc(100dvh - 92px)!important;
-      max-height:calc(100dvh - 92px)!important;
+      width:100vw!important;
+      max-width:none!important;
+      height:100dvh!important;
+      max-height:none!important;
+      margin:0!important;
+      padding:10px 14px 12px!important;
       overflow:hidden!important;
       box-sizing:border-box!important;
-      border-radius:12px!important;
+      border-radius:0!important;
+      box-shadow:none!important;
       display:flex!important;
       flex-direction:column!important;
+      background:#fff!important;
     }
     #modalRoot .yaya-mail-body-modal h5.yaya-mail-topbar{
       flex:0 0 auto!important;
@@ -150,15 +152,16 @@
     #modalRoot .yaya-mail-subject-body input{width:100%!important;box-sizing:border-box!important;min-height:44px!important;padding:0 12px!important;border:1px solid #afc0d2!important;border-radius:9px!important;font-size:14px!important}
     @media(max-width:640px){
       #modalRoot .yaya-mail-body-overlay{
-        top:62px!important;
-        padding:6px 8px 10px!important;
+        inset:0!important;
+        padding:0!important;
       }
       #modalRoot .yaya-mail-body-modal{
-        width:100%!important;
-        max-width:100%!important;
-        height:calc(100dvh - 76px)!important;
-        max-height:calc(100dvh - 76px)!important;
-        border-radius:10px!important;
+        width:100vw!important;
+        max-width:none!important;
+        height:100dvh!important;
+        max-height:none!important;
+        border-radius:0!important;
+        padding:6px 8px 8px!important;
       }
       #modalRoot .yaya-mail-body-modal h5.yaya-mail-topbar{
         grid-template-columns:1fr!important;
@@ -431,34 +434,32 @@
     const modal=overlay&&overlay.querySelector('.yaya-mail-body-modal');
     if(!overlay||!modal)return;
 
-    let top=68;
-    try{
-      const hdr=document.querySelector('.hdr');
-      if(hdr){
-        const r=hdr.getBoundingClientRect();
-        if(r.height>0&&r.bottom>0)top=Math.max(58,Math.ceil(r.bottom)+10);
-      }
-    }catch(e){}
-
     overlay.style.setProperty('position','fixed','important');
-    overlay.style.removeProperty('inset');
-    overlay.style.setProperty('left','0','important');
-    overlay.style.setProperty('right','0','important');
-    overlay.style.setProperty('bottom','0','important');
-    overlay.style.setProperty('top',Math.max(0,top-10)+'px','important');
-    overlay.style.setProperty('z-index','19','important');
+    overlay.style.setProperty('inset','0','important');
+    overlay.style.setProperty('z-index','2147483646','important');
     overlay.style.setProperty('display','flex','important');
-    overlay.style.setProperty('align-items','flex-start','important');
-    overlay.style.setProperty('justify-content','center','important');
-    overlay.style.setProperty('padding','10px 14px 14px','important');
-    overlay.style.setProperty('box-sizing','border-box','important');
+    overlay.style.setProperty('align-items','stretch','important');
+    overlay.style.setProperty('justify-content','stretch','important');
+    overlay.style.setProperty('padding','0','important');
+    overlay.style.setProperty('margin','0','important');
     overlay.style.setProperty('overflow','hidden','important');
+    overlay.style.setProperty('background','#fff','important');
 
-    const available=Math.max(220,window.innerHeight-Math.max(0,top-10)-24);
-    modal.style.setProperty('margin','0 auto','important');
-    modal.style.setProperty('max-height',available+'px','important');
+    modal.style.setProperty('position','relative','important');
+    modal.style.setProperty('width','100vw','important');
+    modal.style.setProperty('max-width','none','important');
+    modal.style.setProperty('height','100dvh','important');
+    modal.style.setProperty('max-height','none','important');
+    modal.style.setProperty('margin','0','important');
     modal.style.setProperty('overflow','hidden','important');
+    modal.style.setProperty('border-radius','0','important');
+    modal.style.setProperty('box-shadow','none','important');
     modal.style.setProperty('box-sizing','border-box','important');
+
+    try{
+      document.documentElement.style.setProperty('overflow','hidden','important');
+      document.body.style.setProperty('overflow','hidden','important');
+    }catch(e){}
   }
 
   function openMailBody(d,id){
