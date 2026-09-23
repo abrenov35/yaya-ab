@@ -289,6 +289,72 @@
     return text(holder.textContent||holder.innerText||raw);
   }
 
+  async function saveMailSubjectSafe(id,newSubject){
+    id=text(id);
+    newSubject=text(newSubject);
+    if(!id||!newSubject)return false;
+    if(typeof window.apiGet!=='function'||typeof window.apiPost!=='function'){
+      try{if(typeof toast==='function')toast('Enregistrement indisponible',true);}catch(e){}
+      return false;
+    }
+
+    let fresh=null;
+    try{fresh=await window.apiGet(true);}catch(e){}
+    const rows=fresh&&Array.isArray(fresh.documents)?fresh.documents:null;
+    if(!rows){
+      try{if(typeof toast==='function')toast('Lecture serveur impossible',true);}catch(e){}
+      return false;
+    }
+
+    const index=rows.findIndex(function(row){return String(row&&row.id||'')===id;});
+    if(index<0){
+      try{if(typeof toast==='function')toast('Mail introuvable sur le serveur',true);}catch(e){}
+      return false;
+    }
+
+    const serverMail=Object.assign({},rows[index]);
+    serverMail.type='MAIL';
+    serverMail.objetMail=newSubject;
+    serverMail.objet=newSubject;
+
+    // Schéma historique documents : l'objet visible est en colonne objetMail,
+    // le corps reste dans titre et ne doit jamais être remplacé.
+    if(!serverMail.titre){
+      const local=dataForId(id);
+      if(local&&local.titre)serverMail.titre=local.titre;
+    }
+
+    rows[index]=serverMail;
+
+    let ok=false;
+    try{ok=await window.apiPost('setDocuments',rows);}catch(e){ok=false;}
+    if(!ok){
+      try{if(typeof toast==='function')toast('Objet du mail non enregistré',true);}catch(e){}
+      return false;
+    }
+
+    let verify=null;
+    try{verify=await window.apiGet(true);}catch(e){}
+    const saved=verify&&Array.isArray(verify.documents)
+      ? verify.documents.find(function(row){return String(row&&row.id||'')===id;})
+      : null;
+
+    if(!saved||String(saved.type||'').toUpperCase()!=='MAIL'){
+      try{if(typeof toast==='function')toast('Sécurité : le mail n’a pas été validé',true);}catch(e){}
+      return false;
+    }
+
+    try{
+      if(typeof S!=='undefined'&&S&&Array.isArray(S.documents)){
+        const localIndex=S.documents.findIndex(function(row){return String(row&&row.id||'')===id;});
+        if(localIndex>=0)S.documents[localIndex]=Object.assign({},saved);
+      }
+    }catch(e){}
+    try{if(typeof render==='function')render();}catch(e){}
+    try{if(typeof toast==='function')toast('Objet du mail enregistré ✓');}catch(e){}
+    return true;
+  }
+
   function openMailSubjectEditor(d,id){
     const root=document.getElementById('modalRoot');if(!root||!d)return false;
     const sender=mailSender(d);
@@ -309,12 +375,19 @@
       +'<button type="button" class="btnp yaya-mail-subject-save">Enregistrer</button>'
       +'</div></div></div>';
     root.querySelectorAll('.yaya-mail-subject-cancel').forEach(btn=>btn.addEventListener('click',()=>openMailBody(d,id)));
-    root.querySelector('.yaya-mail-subject-save')?.addEventListener('click',()=>{
+    root.querySelector('.yaya-mail-subject-save')?.addEventListener('click',async()=>{
       const input=document.getElementById('edDocTitre');
       if(!input||!text(input.value)){try{if(typeof toast==='function')toast('Indique un objet',true);}catch(e){};input&&input.focus();return;}
-      try{if(typeof window.__yayaSaveMailSubject==='function'){window.__yayaSaveMailSubject(id);return;}}catch(e){}
-      try{if(typeof window.saveDocumentEdit==='function'){window.saveDocumentEdit(id);return;}}catch(e){}
-      try{if(typeof saveDocumentEdit==='function')saveDocumentEdit(id);}catch(e){}
+      const btn=root.querySelector('.yaya-mail-subject-save');
+      if(btn){btn.disabled=true;btn.textContent='Enregistrement…';}
+      const ok=await saveMailSubjectSafe(id,input.value);
+      if(ok){
+        const fresh=dataForId(id);
+        if(fresh)openMailBody(fresh,id);
+        else try{if(typeof closeModal==='function')closeModal();}catch(e){}
+      }else if(btn&&btn.isConnected){
+        btn.disabled=false;btn.textContent='Enregistrer';
+      }
     });
     requestAnimationFrame(()=>document.getElementById('edDocTitre')?.focus());
     return true;
