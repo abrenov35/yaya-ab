@@ -168,6 +168,54 @@
     });
   }
 
+  async function renderMailAttachmentPdfViaDrive(stage,d,token){
+    const url=text(d&&(d.lien||d.url||d.webUrl||d.downloadUrl));
+    const id=driveIdFromUrl(url);
+    if(!id)throw new Error('Identifiant Drive introuvable');
+
+    stage.replaceChildren();
+    stage.scrollTop=0;
+
+    const wrap=document.createElement('div');
+    wrap.className='yaya-mail-pj-native-pages';
+    stage.appendChild(wrap);
+
+    let count=0;
+    const width=Math.max(1200,Math.min(2200,Math.round((stage.clientWidth||1200)*1.5)));
+
+    for(let page=1;page<=80;page++){
+      if(stage.dataset.renderToken!==token)return;
+      let img;
+      try{
+        img=await loadDrivePage(id,page,width,6000);
+      }catch(e){
+        if(page===1)throw e;
+        break;
+      }
+
+      if(stage.dataset.renderToken!==token)return;
+
+      const pageWrap=document.createElement('div');
+      pageWrap.className='yaya-mail-pj-page';
+
+      const label=document.createElement('div');
+      label.className='yaya-mail-pj-page-label';
+      label.textContent='Page '+page;
+
+      img.alt='Page '+page;
+      img.style.width='100%';
+      img.style.height='auto';
+      img.style.maxWidth='100%';
+
+      pageWrap.append(img,label);
+      wrap.appendChild(pageWrap);
+      count++;
+    }
+
+    if(!count)throw new Error('Aucune page Drive lisible');
+    stage.scrollTop=0;
+  }
+
   async function renderMailAttachmentPdf(stage,d,token){
     stage.classList.add('yaya-mail-pj-stage-scrolling');
     stage.innerHTML='<div class="yaya-mail-pj-loading">Chargement du PDF…</div>';
@@ -204,8 +252,6 @@
         }
 
         const page=await pdf.getPage(pageNo);
-        if(stage.dataset.renderToken!==token)return;
-
         const raw=page.getViewport({scale:1});
         const available=Math.max(320,Math.min(1220,(stage.clientWidth||1200)-28));
         const cssScale=Math.max(.2,available/raw.width);
@@ -238,19 +284,18 @@
 
       stage.scrollTop=0;
 
-      const cleanup=new MutationObserver(function(){
-        if(!stage.isConnected){
-          cleanup.disconnect();
-          try{task&&task.destroy();}catch(e){}
-        }
-      });
-      cleanup.observe(document.documentElement,{childList:true,subtree:true});
-
     }catch(err){
-      console.warn('Lecteur PDF PJ mail :',err);
-      if(stage.dataset.renderToken!==token)return;
-      stage.innerHTML='<div class="yaya-mail-pj-error">Aperçu PDF indisponible. Utilise Télécharger.</div>';
+      console.warn('Lecteur PDF natif indisponible, secours Drive :',err);
       try{task&&task.destroy();}catch(e){}
+      if(stage.dataset.renderToken!==token)return;
+      stage.innerHTML='<div class="yaya-mail-pj-loading">Chargement du PDF…</div>';
+      try{
+        await renderMailAttachmentPdfViaDrive(stage,d,token);
+      }catch(err2){
+        console.warn('Secours Drive indisponible :',err2);
+        if(stage.dataset.renderToken!==token)return;
+        stage.innerHTML='<div class="yaya-mail-pj-error">Aperçu PDF indisponible. Utilise Télécharger.</div>';
+      }
     }
   }
 
