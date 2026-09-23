@@ -1017,6 +1017,14 @@ async function deletePhoto(p,button,closeAfter){
   }
   toastS('Photo supprimée et synchronisée ✓');
 }
+window.__yayaPhotoDeleteById=async function(photoId){
+  var p=find(String(photoId||''));if(!p)return false;
+  await deletePhoto(p,null,false);return true;
+};
+window.__yayaPhotoEditById=function(photoId){
+  var p=find(String(photoId||''));if(!p)return false;
+  editTitle(String(p.chantierId||''),String(p.date||''),String(p.titre||DEF));return true;
+};
 function sameEntryPhotos(p){
   if(!p)return [];
   var cid=String(p.chantierId||''),d=iso(p.date);
@@ -1028,6 +1036,11 @@ function sameEntryPhotos(p){
 }
 async function openPic(p){
   if(!p)return;
+  try{
+    if(window.yayaUnifiedV4Viewer&&typeof window.yayaUnifiedV4Viewer.openPhoto==='function'){
+      return window.yayaUnifiedV4Viewer.openPhoto(String(p.id||''));
+    }
+  }catch(e){}
   var r=root(),direct=thumb(p.lien,1600),gallery=sameEntryPhotos(p);
   var currentIndex=gallery.findIndex(function(x){return String(x.id)===String(p.id)});
   if(currentIndex<0){gallery=[p];currentIndex=0}
