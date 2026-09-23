@@ -71,13 +71,16 @@
     .yaya-mail-body-modal .yaya-mail-body-content::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
     #modalRoot .yaya-mail-body-overlay{
       position:fixed!important;
-      inset:0!important;
-      z-index:2147483645!important;
+      left:0!important;
+      right:0!important;
+      bottom:0!important;
+      top:62px!important;
+      z-index:19!important;
       display:flex!important;
       align-items:flex-start!important;
       justify-content:center!important;
       box-sizing:border-box!important;
-      padding:76px 14px 16px!important;
+      padding:10px 14px 14px!important;
       overflow:hidden!important;
     }
     #modalRoot .yaya-mail-body-modal{
@@ -147,7 +150,8 @@
     #modalRoot .yaya-mail-subject-body input{width:100%!important;box-sizing:border-box!important;min-height:44px!important;padding:0 12px!important;border:1px solid #afc0d2!important;border-radius:9px!important;font-size:14px!important}
     @media(max-width:640px){
       #modalRoot .yaya-mail-body-overlay{
-        padding:66px 8px 10px!important;
+        top:62px!important;
+        padding:6px 8px 10px!important;
       }
       #modalRoot .yaya-mail-body-modal{
         width:100%!important;
@@ -437,15 +441,20 @@
     }catch(e){}
 
     overlay.style.setProperty('position','fixed','important');
-    overlay.style.setProperty('inset','0','important');
+    overlay.style.removeProperty('inset');
+    overlay.style.setProperty('left','0','important');
+    overlay.style.setProperty('right','0','important');
+    overlay.style.setProperty('bottom','0','important');
+    overlay.style.setProperty('top',Math.max(0,top-10)+'px','important');
+    overlay.style.setProperty('z-index','19','important');
     overlay.style.setProperty('display','flex','important');
     overlay.style.setProperty('align-items','flex-start','important');
     overlay.style.setProperty('justify-content','center','important');
-    overlay.style.setProperty('padding',top+'px 14px 14px','important');
+    overlay.style.setProperty('padding','10px 14px 14px','important');
     overlay.style.setProperty('box-sizing','border-box','important');
     overlay.style.setProperty('overflow','hidden','important');
 
-    const available=Math.max(220,window.innerHeight-top-14);
+    const available=Math.max(220,window.innerHeight-Math.max(0,top-10)-24);
     modal.style.setProperty('margin','0 auto','important');
     modal.style.setProperty('max-height',available+'px','important');
     modal.style.setProperty('overflow','hidden','important');
