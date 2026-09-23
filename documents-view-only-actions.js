@@ -62,9 +62,13 @@
       border:1px solid #d7e1ec!important;border-radius:10px!important;background:#f7f9fc!important;color:#24364d!important;font-size:12px!important
     }
     .yaya-mail-body-modal .yaya-mail-body-content{
-      max-height:58vh!important;overflow:auto!important;padding:15px 16px!important;border:1px solid #d7e1ec!important;
-      border-radius:10px!important;background:#fff!important;color:#1f2937!important;font-size:13px!important;line-height:1.55!important;white-space:pre-wrap!important;overflow-wrap:anywhere!important
+      flex:1 1 auto!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overflow-x:hidden!important;
+      padding:15px 16px!important;border:1px solid #d7e1ec!important;border-radius:10px!important;
+      background:#fff!important;color:#1f2937!important;font-size:13px!important;line-height:1.55!important;
+      white-space:pre-wrap!important;overflow-wrap:anywhere!important;scrollbar-width:none!important;-ms-overflow-style:none!important;
+      overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important
     }
+    .yaya-mail-body-modal .yaya-mail-body-content::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
     #modalRoot .yaya-mail-body-overlay{
       position:fixed!important;
       inset:0!important;
@@ -78,27 +82,41 @@
     }
     #modalRoot .yaya-mail-body-modal{
       position:relative!important;
-      width:min(980px,calc(100vw - 28px))!important;
-      max-width:980px!important;
+      width:min(1180px,calc(100vw - 28px))!important;
+      max-width:1180px!important;
       margin:0 auto!important;
+      height:calc(100dvh - 92px)!important;
       max-height:calc(100dvh - 92px)!important;
-      overflow:auto!important;
+      overflow:hidden!important;
       box-sizing:border-box!important;
       border-radius:12px!important;
-    }
-    #modalRoot .yaya-mail-body-modal h5{
-      position:sticky!important;
-      top:0!important;
-      z-index:5!important;
       display:flex!important;
+      flex-direction:column!important;
+    }
+    #modalRoot .yaya-mail-body-modal h5.yaya-mail-topbar{
+      flex:0 0 auto!important;
+      position:relative!important;
+      z-index:5!important;
+      display:grid!important;
+      grid-template-columns:minmax(0,1fr) auto!important;
       align-items:center!important;
-      justify-content:space-between!important;
-      min-height:44px!important;
-      margin:0 0 12px!important;
-      padding:8px 4px!important;
+      gap:14px!important;
+      min-height:52px!important;
+      margin:0 0 10px!important;
+      padding:6px 4px 10px!important;
+      border-bottom:1px solid #dfe6ee!important;
       background:#fff!important;
       color:#172b43!important;
     }
+    #modalRoot .yaya-mail-topbar-title{
+      min-width:0!important;overflow:hidden!important;text-overflow:ellipsis!important;white-space:nowrap!important;
+      font-size:15px!important;font-weight:850!important;color:#172b43!important;
+    }
+    #modalRoot .yaya-mail-top-actions{
+      display:flex!important;align-items:center!important;justify-content:flex-end!important;gap:8px!important;
+      margin:0!important;padding:0!important;border:0!important;flex-wrap:nowrap!important;
+    }
+    #modalRoot .yaya-mail-top-actions .yaya-delete{margin-right:0!important}
     #modalRoot .overlay:has(.yaya-document-read-modal){
       align-items:flex-start!important;
       overflow:auto!important;
@@ -134,9 +152,20 @@
       #modalRoot .yaya-mail-body-modal{
         width:100%!important;
         max-width:100%!important;
+        height:calc(100dvh - 76px)!important;
         max-height:calc(100dvh - 76px)!important;
         border-radius:10px!important;
       }
+      #modalRoot .yaya-mail-body-modal h5.yaya-mail-topbar{
+        grid-template-columns:1fr!important;
+        gap:6px!important;
+      }
+      #modalRoot .yaya-mail-top-actions{
+        justify-content:flex-start!important;
+        overflow-x:auto!important;
+        scrollbar-width:none!important;
+      }
+      #modalRoot .yaya-mail-top-actions::-webkit-scrollbar{display:none!important}
       #modalRoot .overlay:has(.yaya-document-read-modal){
         padding:62px 8px 16px!important;
       }
@@ -419,7 +448,7 @@
     const available=Math.max(220,window.innerHeight-top-14);
     modal.style.setProperty('margin','0 auto','important');
     modal.style.setProperty('max-height',available+'px','important');
-    modal.style.setProperty('overflow','auto','important');
+    modal.style.setProperty('overflow','hidden','important');
     modal.style.setProperty('box-sizing','border-box','important');
   }
 
@@ -430,17 +459,23 @@
       const sujet=mailSubject(d),sender=mailSender(d),date=text(d&&d.date);
       root.innerHTML=''
         +'<div class="overlay yaya-mail-body-overlay">'
-        +'<div class="modal yaya-mail-body-modal" data-yaya-mail-read-actions="1" style="max-width:980px">'
-        +'<h5>'+esc(sujet)+'<button type="button" onclick="closeModal()" aria-label="Fermer">×</button></h5>'
-        +'<div class="yaya-mail-body-meta"><div><b>De :</b> '+esc(sender)+'</div>'+(date?'<div><b>Date :</b> '+esc(date)+'</div>':'')+'</div>'
-        +'<div class="yaya-mail-body-content">'+esc(body)+'</div>'
-        +'<div class="yaya-read-actions">'
-        +'<button type="button" class="yaya-delete" data-yaya-mail-delete="'+esc(id)+'">Supprimer</button>'
+        +'<div class="modal yaya-mail-body-modal" data-yaya-mail-read-actions="1">'
+        +'<h5 class="yaya-mail-topbar">'
+        +'<span class="yaya-mail-topbar-title">'+esc(sujet)+'</span>'
+        +'<span class="yaya-read-actions yaya-mail-top-actions">'
         +'<button type="button" class="yaya-edit" data-yaya-mail-edit="'+esc(id)+'">Modifier l’objet</button>'
+        +'<button type="button" class="yaya-delete" data-yaya-mail-delete="'+esc(id)+'">Supprimer</button>'
         +'<button type="button" class="btnp" onclick="closeModal()">Fermer</button>'
-        +'</div></div></div>';
+        +'</span></h5>'
+        +'<div class="yaya-mail-body-meta"><div><b>De :</b> '+esc(sender)+'</div>'+(date?'<div><b>Date :</b> '+esc(date)+'</div>':'')+'</div>'
+        +'<div class="yaya-mail-body-content" tabindex="0">'+esc(body)+'</div>'
+        +'</div></div>';
       positionMailModal();
-      requestAnimationFrame(positionMailModal);
+      requestAnimationFrame(function(){
+        positionMailModal();
+        const scroller=root.querySelector('.yaya-mail-body-content');
+        if(scroller)try{scroller.focus({preventScroll:true});}catch(e){scroller.focus();}
+      });
       setTimeout(positionMailModal,80);
       return true;
     }
