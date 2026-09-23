@@ -217,6 +217,11 @@
 
   function openUnified(id,url){
     id=text(id);url=text(url);if(!id)return false;
+    try{
+      if(window.yayaUnifiedV4Viewer&&typeof window.yayaUnifiedV4Viewer.openDocument==='function'){
+        return window.yayaUnifiedV4Viewer.openDocument(id,url);
+      }
+    }catch(e){}
     window.__yayaPreviewDocumentId=id;
     window.__yayaUnifiedPreviewDocumentId=id;
     window.__yayaUnifiedPreviewUrl=url;
