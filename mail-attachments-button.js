@@ -298,7 +298,7 @@
       +'<button type="button" class="btn2 yaya-mail-pj-delete">Supprimer</button>'
       +'<button type="button" class="btn2 yaya-mail-pj-close">Fermer</button>'
       +'</div></div>'
-      +'<div class="yaya-mail-pj-viewer-stage"></div>'
+      +'<div class="yaya-mail-pj-viewer-stage" tabindex="0"></div>'
       +'</div></div>';
 
     const modal=root.querySelector('.yaya-mail-pj-viewer-modal');
@@ -332,6 +332,9 @@
       }else{
         renderMailAttachmentFallback(stage,d,token);
       }
+      requestAnimationFrame(function(){
+        try{stage.focus({preventScroll:true});}catch(e){try{stage.focus();}catch(_e){}}
+      });
     }
 
     list.forEach(function(d,index){
@@ -588,8 +591,9 @@
         overflow-y:auto!important;overflow-x:hidden!important;background:#edf1f5!important;
         box-sizing:border-box!important;padding:10px 0 36px!important;
         overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;
-        scrollbar-gutter:stable!important;
+        scrollbar-width:none!important;-ms-overflow-style:none!important;
       }
+      #modalRoot .yaya-mail-pj-viewer-stage::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}
       #modalRoot .yaya-mail-pj-native-pages{
         width:100%!important;min-height:100%!important;box-sizing:border-box!important;
       }
