@@ -53,10 +53,10 @@ function installStyle(){
     }
     #${MODAL_ID} .v4-head{
       display:grid;
-      grid-template-columns:auto minmax(120px,1fr) auto;
-      grid-template-areas:"tabs filename actions";
+      grid-template-columns:minmax(0,1fr) auto;
+      grid-template-areas:"tabs actions";
       align-items:center;
-      gap:12px;
+      gap:10px;
       padding:9px 12px;
       border-bottom:1px solid #dfe6ee;
       color:#162d49;background:#fff;
@@ -69,17 +69,6 @@ function installStyle(){
       overflow-x:auto;padding:2px 1px;scrollbar-width:none;
     }
     #${MODAL_ID} .v4-tabs::-webkit-scrollbar{display:none}
-    #${MODAL_ID} .v4-filename{
-      grid-area:filename;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      text-align:center;
-      font-size:13px;
-      font-weight:850;
-      color:#162d49;
-    }
     #${MODAL_ID} .v4-tab{
       min-height:32px;border:1px solid #c8d8e8;border-radius:7px;background:#fff;color:#205f9d;
       padding:0 11px;font:inherit;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap;
@@ -89,9 +78,12 @@ function installStyle(){
       grid-area:actions;display:flex;align-items:center;justify-content:flex-end;
       gap:7px;min-width:0;white-space:nowrap
     }
-    #${MODAL_ID} .v4-edit,#${MODAL_ID} .v4-download,#${MODAL_ID} .v4-delete,#${MODAL_ID} .v4-close{
+    #${MODAL_ID} .v4-download,#${MODAL_ID} .v4-delete,#${MODAL_ID} .v4-close{
       border:1px solid #9fc0df;background:#eef6ff;color:#245d91;border-radius:8px;
-      min-height:34px;padding:0 13px;font:inherit;font-size:12px;font-weight:850;cursor:pointer;white-space:nowrap;
+      height:36px;min-height:36px;padding:0 14px;font:inherit;font-size:12px;font-weight:850;
+      cursor:pointer;white-space:nowrap;
+      display:inline-flex;align-items:center;justify-content:center;text-align:center;line-height:1;
+      box-sizing:border-box;
     }
     #${MODAL_ID} .v4-download{border-color:#b9dfc5;background:#eef9f1;color:#17653a}
     #${MODAL_ID} .v4-delete{border-color:#efc3c3;background:#fff5f5;color:#b42318}
@@ -128,8 +120,8 @@ function installStyle(){
       #${MODAL_ID}{padding:4px}
       #${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}
       #${MODAL_ID} .v4-head{
-        grid-template-columns:auto minmax(70px,1fr) auto;
-        grid-template-areas:"tabs filename actions";
+        grid-template-columns:minmax(0,1fr) auto;
+        grid-template-areas:"tabs actions";
         gap:5px;
         padding:6px 7px;
         min-height:48px;
@@ -139,15 +131,11 @@ function installStyle(){
         padding:0 8px!important;
         font-size:10px!important;
       }
-      #${MODAL_ID} .v4-filename{
-        font-size:10.5px!important;
-      }
       #${MODAL_ID} .v4-head-actions{
         gap:4px!important;
         overflow:visible!important;
         max-width:none!important;
       }
-      #${MODAL_ID} .v4-edit,
       #${MODAL_ID} .v4-download,
       #${MODAL_ID} .v4-delete,
       #${MODAL_ID} .v4-close{
@@ -166,7 +154,7 @@ function ensureModal(){
   let m=document.getElementById(MODAL_ID);
   if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><div class="v4-tabs"></div><div class="v4-filename"></div><div class="v4-head-actions"><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-delete">Supprimer</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div></div>';
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><div class="v4-tabs"></div><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-delete">Supprimer</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);
   m.querySelector('.v4-close').onclick=close;
   m.onclick=e=>{if(e.target===m)close();};
@@ -187,8 +175,8 @@ function showItems(items,index){
   const m=ensureModal();render();m.classList.add('show');m.setAttribute('aria-hidden','false');
 }
 function render(){
-  const m=ensureModal(),tabs=m.querySelector('.v4-tabs'),stage=m.querySelector('.v4-stage'),filename=m.querySelector('.v4-filename');
-  const dl=m.querySelector('.v4-download'),edit=m.querySelector('.v4-edit'),del=m.querySelector('.v4-delete');
+  const m=ensureModal(),tabs=m.querySelector('.v4-tabs'),stage=m.querySelector('.v4-stage');
+  const dl=m.querySelector('.v4-download'),del=m.querySelector('.v4-delete');
   tabs.replaceChildren();stage.replaceChildren();
   if(!currentItems.length){stage.innerHTML='<div class="v4-empty">Aucun élément à visualiser.</div>';return;}
   currentItems.forEach((item,i)=>{
@@ -196,16 +184,10 @@ function render(){
     b.textContent=item.tab||('Pièce '+(i+1));b.title=item.title||b.textContent;b.onclick=()=>{currentIndex=i;render();};tabs.appendChild(b);
   });
   const item=currentItems[currentIndex];
-  if(filename){
-    filename.textContent=item.title||'';
-    filename.title=item.title||'';
-  }
   dl.style.display=item.kind==='mail'?'none':'inline-flex';
-  edit.style.display=item.canEdit===false?'none':'inline-flex';
   del.style.display=item.canDelete===false?'none':'inline-flex';
 
   dl.onclick=e=>{e.preventDefault();e.stopPropagation();const url=directDownloadUrl(item.url);if(!url)return;const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='';document.body.appendChild(a);a.click();a.remove();};
-  edit.onclick=e=>{e.preventDefault();e.stopPropagation();close();if(typeof item.onEdit==='function')setTimeout(item.onEdit,0);};
   del.onclick=e=>{e.preventDefault();e.stopPropagation();close();if(typeof item.onDelete==='function')setTimeout(item.onDelete,0);};
 
   if(item.kind==='mail'){
