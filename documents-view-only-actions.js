@@ -463,6 +463,12 @@
   }
 
   function openMailBody(d,id){
+    id=text(id);
+    try{
+      if(id&&window.yayaUnifiedV4Viewer&&typeof window.yayaUnifiedV4Viewer.openMail==='function'){
+        return window.yayaUnifiedV4Viewer.openMail(id);
+      }
+    }catch(e){}
     const body=mailBody(d);
     if(body){
       const root=document.getElementById('modalRoot');if(!root)return false;
@@ -494,6 +500,13 @@
     try{if(typeof window.voirMessageYaya==='function'){window.voirMessageYaya(id);return true;}}catch(e){}
     return false;
   }
+
+  window.__yayaEditMailSubject=function(id){
+    id=text(id);
+    const d=dataForId(id);
+    if(!d)return false;
+    return openMailSubjectEditor(d,id);
+  };
 
   // Lecteur unique : tous les anciens appels voirMessageYaya utilisent désormais
   // la nouvelle modale de lecture, déjà correctement positionnée sous l'en-tête.
