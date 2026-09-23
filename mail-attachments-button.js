@@ -404,7 +404,37 @@
   function openPiece(d,knownList){
     if(!d)return;
     const list=Array.isArray(knownList)&&knownList.length?knownList:attachmentsForMail(linkedMailId(d));
-    buildMailAttachmentViewer(list,text(d.id));
+    const id=text(d.id);
+    const url=text(d.lien||d.url||d.webUrl||d.downloadUrl);
+    if(!id||!url)return;
+
+    // Même lecteur que les Commandes / Documents : voirPiece plein écran.
+    window.__yayaMailAttachmentPreview={
+      mailId:linkedMailId(d),
+      ids:list.map(function(item){return text(item&&item.id);}).filter(Boolean),
+      activeId:id
+    };
+    window.__yayaPreviewDocumentId=id;
+    window.__yayaUnifiedPreviewDocumentId=id;
+    window.__yayaUnifiedPreviewUrl=url;
+
+    try{
+      if(typeof window.voirPiece==='function'){
+        const out=window.voirPiece(url);
+        if(out&&typeof out.catch==='function')out.catch(function(){window.open(url,'_blank','noopener');});
+        scheduleAttachmentChoices();
+        return;
+      }
+    }catch(e){}
+    try{
+      if(typeof voirPiece==='function'){
+        const out=voirPiece(url);
+        if(out&&typeof out.catch==='function')out.catch(function(){window.open(url,'_blank','noopener');});
+        scheduleAttachmentChoices();
+        return;
+      }
+    }catch(e){}
+    window.open(url,'_blank','noopener');
   }
   function fileLabel(d){return text(d.pieceNom||d.titre||d.nomFichier||d.filename||d.fileName)||'Pièce jointe';}
 
@@ -439,7 +469,31 @@
     return true;
   }
 
-  function scheduleAttachmentChoices(){ return false; }
+  let attachmentChoiceObserver=null;
+  function scheduleAttachmentChoices(){
+    const root=document.getElementById('modalRoot');
+    if(!root)return;
+
+    const apply=function(){
+      if(!window.__yayaMailAttachmentPreview)return false;
+      return injectAttachmentChoices();
+    };
+
+    requestAnimationFrame(apply);
+    setTimeout(apply,80);
+    setTimeout(apply,260);
+
+    if(attachmentChoiceObserver)attachmentChoiceObserver.disconnect();
+    attachmentChoiceObserver=new MutationObserver(function(){
+      if(!window.__yayaMailAttachmentPreview){
+        attachmentChoiceObserver.disconnect();
+        attachmentChoiceObserver=null;
+        return;
+      }
+      requestAnimationFrame(apply);
+    });
+    attachmentChoiceObserver.observe(root,{childList:true,subtree:true});
+  }
 
   function forceMailAttachmentFullscreen(docId){
     const expected=text(docId);
