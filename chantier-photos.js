@@ -489,6 +489,7 @@ async function fetchPhotoFile(url){
   photoFileCache.set(key,promise);
   try{return await promise}catch(e){photoFileCache.delete(key);throw e}
 }
+window.yayaFetchPhotoFile=fetchPhotoFile;
 function pumpPhotoThumbFallbackQueue(){
   while(photoThumbFallbackActive<PHOTO_THUMB_FALLBACK_MAX&&photoThumbFallbackQueue.length){
     var img=photoThumbFallbackQueue.shift();

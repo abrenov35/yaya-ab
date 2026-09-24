@@ -216,13 +216,24 @@ function render(){
 
   if(item.kind==='photo'){
     const img=document.createElement('img');img.className='v4-image';img.alt=item.title||'Photo';
+    img.decoding='async';
     const id=driveId(item.url);
-    img.src=id?'https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w2200':item.url;
-    img.onerror=function(){
-      if(id){
-        const iframe=document.createElement('iframe');iframe.src='https://drive.google.com/file/d/'+encodeURIComponent(id)+'/preview';iframe.title=item.title||'Photo';stage.replaceChildren(iframe);
+    img.onerror=async function(){
+      if(!img.isConnected)return;
+      stage.innerHTML='<div class="v4-empty">Chargement de la photo…</div>';
+      try{
+        if(typeof window.yayaFetchPhotoFile!=='function')throw new Error('Lecture indisponible');
+        const file=await window.yayaFetchPhotoFile(item.url);
+        if(currentItems[currentIndex]!==item||!m.classList.contains('show'))return;
+        const fallback=document.createElement('img');fallback.className='v4-image';fallback.alt=img.alt;
+        fallback.src=file.url;
+        fallback.onerror=()=>{if(fallback.isConnected)stage.innerHTML='<div class="v4-empty">Cette photo ne peut pas être affichée.</div>';};
+        stage.replaceChildren(fallback);
+      }catch(e){
+        if(currentItems[currentIndex]===item&&m.classList.contains('show'))stage.innerHTML='<div class="v4-empty">Cette photo ne peut pas être affichée.</div>';
       }
     };
+    img.src=id?'https://drive.google.com/thumbnail?id='+encodeURIComponent(id)+'&sz=w1600':item.url;
     stage.appendChild(img);return;
   }
 
