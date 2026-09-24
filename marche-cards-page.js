@@ -120,6 +120,13 @@ function css(){if(document.getElementById('yaya-devis-docs-css'))return;const s=
 #yayaDevisViewer .ydd-head .ydd-tabs{flex:1 1 auto;min-width:0;align-self:center;padding:0!important;border:0;background:transparent;scrollbar-width:thin}
 #yayaDevisViewer .ydd-head .ydd-tab{min-height:36px;border:1px solid #d5dee8;border-radius:8px;padding:0 9px}
 #yayaDevisViewer .ydd-head .ydd-actions{flex:0 0 auto;width:auto;margin-left:0;white-space:nowrap}
+#yayaDevisViewer .ydd-view{position:relative}
+#yayaDevisViewer .ydd-page-arrow{position:absolute;top:50%;z-index:2;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:46px;height:58px;border:0;border-radius:10px;background:rgba(20,40,65,.7);color:white;font-size:36px;cursor:pointer}
+#yayaDevisViewer .ydd-page-arrow.prev{left:16px}
+#yayaDevisViewer .ydd-page-arrow.next{right:16px}
+#yayaDevisViewer .ydd-page-arrow:hover{background:rgba(20,40,65,.9)}
+#yayaDevisViewer .ydd-page-arrow:focus-visible{outline:3px solid #76baff;outline-offset:2px}
+@media(max-width:700px){#yayaDevisViewer .ydd-page-arrow{width:34px;height:46px;font-size:28px}#yayaDevisViewer .ydd-page-arrow.prev{left:5px}#yayaDevisViewer .ydd-page-arrow.next{right:5px}}
 @media(max-width:700px){#yayaDevisViewer .ydd-head .ydd-title{display:none}#yayaDevisViewer .ydd-head .ydd-actions{gap:4px}#yayaDevisViewer .ydd-head .ydd-btn{flex:0 0 auto;padding:0 7px;font-size:11px}#yayaDevisViewer .ydd-head .ydd-tabs{min-width:65px}#yayaDevisViewer .ydd-head .ydd-tab{min-height:32px;padding:0 6px}}
 @media(max-width:700px){#yayaDevisViewer .ydd-modal.docs .ydd-head [data-add]{font-size:0!important;min-width:34px}#yayaDevisViewer .ydd-modal.docs .ydd-head [data-add]::after{content:'＋';font-size:17px}}
 `;document.head.appendChild(s);}
@@ -132,13 +139,14 @@ function showDoc(cid,i){
   const viewer=viewerUrl(raw);
   const root=document.getElementById('yayaDevisViewer');
   if(root){
+    root.dataset.currentDevisIndex=String(i);
     root.dataset.yayaDownloadUrl=raw;
     const dl=root.querySelector('[data-download-current]');
     if(dl)dl.style.display=raw?'inline-flex':'none';
   }
   window.__yayaLastPieceUrl=raw;
   const v=root&&root.querySelector('.ydd-view');
-  if(v)v.innerHTML='<iframe class="ydd-frame" title="Visualisation du devis" src="'+esc(viewer)+'" loading="eager"></iframe>';
+  if(v)v.innerHTML='<iframe class="ydd-frame" title="Visualisation du devis" src="'+esc(viewer)+'" loading="eager"></iframe>'+(i>0?'<button type="button" class="ydd-page-arrow prev" data-devis-step="-1" aria-label="Devis précédent">‹</button>':'')+(i<a.length-1?'<button type="button" class="ydd-page-arrow next" data-devis-step="1" aria-label="Devis suivant">›</button>':'');
 }
 function confirmDeleteDoc(){
   return new Promise(resolve=>{
@@ -171,6 +179,8 @@ function renderViewer(cid){
   }
   o.onclick=e=>{
     if(e.target===o||e.target.closest('[data-close]'))return closeViewer();
+    const arrow=e.target.closest('[data-devis-step]');
+    if(arrow){e.preventDefault();showDoc(cid,Number(o.dataset.currentDevisIndex||0)+Number(arrow.dataset.devisStep));return;}
     const dl=e.target.closest('[data-download-current]');
     if(dl){
       e.preventDefault();e.stopPropagation();
