@@ -93,6 +93,7 @@ function installStyle(){
     #${MODAL_ID} .v4-download{border-color:#b9dfc5;background:#eef9f1;color:#17653a}
     #${MODAL_ID} .v4-close{border-color:#cfd9e6;background:#fff;color:#334155}
     #${MODAL_ID} .v4-stage{min-height:0;overflow:hidden;background:#eef2f6}
+    #${MODAL_ID} .v4-stage.photo{touch-action:pan-y}
     #${MODAL_ID} iframe{display:block;width:100%;height:100%;border:0;background:#fff}
     #${MODAL_ID} .v4-image{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
     #${MODAL_ID} .v4-mail{height:100%;overflow:auto;background:#fff;padding:18px 22px;box-sizing:border-box;color:#21364f}
@@ -165,6 +166,19 @@ function ensureModal(){
   // Fermer dès l'appui : certains aperçus photo retardent le clic final sur mobile.
   closeButton.onpointerdown=close;
   m.onclick=e=>{if(e.target===m)close();};
+  const stage=m.querySelector('.v4-stage');
+  let startX=0,startY=0;
+  stage.addEventListener('touchstart',e=>{
+    if(!stage.classList.contains('photo')||e.touches.length!==1)return;
+    startX=e.touches[0].clientX;startY=e.touches[0].clientY;
+  },{passive:true});
+  stage.addEventListener('touchend',e=>{
+    if(!stage.classList.contains('photo')||!e.changedTouches.length)return;
+    const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;
+    if(Math.abs(dx)<45||Math.abs(dx)<=Math.abs(dy)*1.15)return;
+    const next=currentIndex+(dx<0?1:-1);
+    if(next>=0&&next<currentItems.length){currentIndex=next;render();}
+  },{passive:true});
   return m;
 }
 function close(){
@@ -200,6 +214,7 @@ function render(){
     tabs.appendChild(wrap);
   });
   const item=currentItems[currentIndex],edit=m.querySelector('.v4-edit');
+  stage.classList.toggle('photo',item.kind==='photo');
   if(dl)dl.style.display=item.kind==='mail'||!validFileUrl(item.url)?'none':'inline-flex';
   edit.style.display=typeof item.onEdit==='function'?'inline-flex':'none';
   if(dl)dl.onclick=e=>{e.preventDefault();e.stopPropagation();const url=directDownloadUrl(item.url);if(!url)return;const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='';document.body.appendChild(a);a.click();a.remove();};
