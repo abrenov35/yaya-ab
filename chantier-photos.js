@@ -462,11 +462,32 @@ function ensureHeicConverter(){
   }).catch(function(e){heicConverterPromise=null;throw e});
   return heicConverterPromise;
 }
+async function convertHeicNative(blob){
+  var url=URL.createObjectURL(blob);
+  try{
+    var image=await new Promise(function(resolve,reject){
+      var img=new Image(),timer=setTimeout(function(){img.src='';reject(new Error('Lecture HEIC expirée'))},8000);
+      img.onload=function(){clearTimeout(timer);resolve(img)};
+      img.onerror=function(){clearTimeout(timer);reject(new Error('HEIC non lisible par le navigateur'))};
+      img.src=url;
+    });
+    var width=image.naturalWidth,height=image.naturalHeight;
+    if(!width||!height)throw new Error('Dimensions HEIC invalides');
+    var scale=Math.min(1,2400/Math.max(width,height));
+    var canvas=document.createElement('canvas');
+    canvas.width=Math.max(1,Math.round(width*scale));canvas.height=Math.max(1,Math.round(height*scale));
+    canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+    var jpeg=await new Promise(function(resolve){canvas.toBlob(resolve,'image/jpeg',.88)});
+    if(!jpeg||jpeg.type!=='image/jpeg'||!jpeg.size)throw new Error('JPEG non généré');
+    return jpeg;
+  }finally{URL.revokeObjectURL(url)}
+}
 async function convertHeicBlob(blob){
+  try{return await convertHeicNative(blob)}catch(nativeError){}
   var converter=await ensureHeicConverter();
   var out=await converter({blob:blob,toType:'image/jpeg',quality:.88});
   if(Array.isArray(out))out=out[0];
-  if(!(out instanceof Blob))throw new Error('Conversion HEIC impossible');
+  if(!(out instanceof Blob)||!out.size)throw new Error('Conversion HEIC impossible');
   return out;
 }
 async function fetchPhotoFile(url){
