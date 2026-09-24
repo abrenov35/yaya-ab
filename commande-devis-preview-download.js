@@ -90,6 +90,9 @@
   function titleOf(container){const el=titleElement(container);return txt(el&&el.textContent);}
   function isTarget(container){
     if(!container)return false;
+    // Le visualiseur unifié gère lui-même son bouton Télécharger.
+    // Ne pas le retirer de la fenêtre photo (ni de ses autres onglets).
+    if(container.id==='yayaUnifiedV4Viewer'||container.closest('#yayaUnifiedV4Viewer'))return false;
     return container.id==='yayaCmdPreviewModalV2'||container.id==='yayaDevisViewer'||TITLE_RE.test(titleOf(container));
   }
 

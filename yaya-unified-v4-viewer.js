@@ -180,7 +180,7 @@ function showItems(items,index){
 }
 function render(){
   const m=ensureModal(),tabs=m.querySelector('.v4-tabs'),stage=m.querySelector('.v4-stage');
-  const dl=m.querySelector('.v4-download'),del=m.querySelector('.v4-edit');
+  const dl=m.querySelector('.v4-download');
   tabs.replaceChildren();stage.replaceChildren();
   if(!currentItems.length){stage.innerHTML='<div class="v4-empty">Aucun élément à visualiser.</div>';return;}
   currentItems.forEach((item,i)=>{
@@ -197,9 +197,9 @@ function render(){
     tabs.appendChild(wrap);
   });
   const item=currentItems[currentIndex],edit=m.querySelector('.v4-edit');
-  dl.style.display=item.kind==='mail'||!validFileUrl(item.url)?'none':'inline-flex';
+  if(dl)dl.style.display=item.kind==='mail'||!validFileUrl(item.url)?'none':'inline-flex';
   edit.style.display=typeof item.onEdit==='function'?'inline-flex':'none';
-  dl.onclick=e=>{e.preventDefault();e.stopPropagation();const url=directDownloadUrl(item.url);if(!url)return;const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='';document.body.appendChild(a);a.click();a.remove();};
+  if(dl)dl.onclick=e=>{e.preventDefault();e.stopPropagation();const url=directDownloadUrl(item.url);if(!url)return;const a=document.createElement('a');a.href=url;a.target='_blank';a.rel='noopener';a.download='';document.body.appendChild(a);a.click();a.remove();};
   edit.onclick=e=>{e.preventDefault();e.stopPropagation();close();if(typeof item.onEdit==='function')setTimeout(item.onEdit,0);};
 
   if(item.kind==='mail'){
