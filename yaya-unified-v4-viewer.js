@@ -395,6 +395,31 @@ function openMailAttachment(id){
   const index=Math.max(1,items.findIndex(x=>text(x.id)===text(id)));
   showItems(items,index);return true;
 }
+function isGmailBatchDocument(d){
+  return !!d
+    && String(d.type||'').toUpperCase()==='DOCUMENT'
+    && text(d.origine).toUpperCase()==='GMAIL_ADDON_PJ'
+    && !!text(d.gmailMessageId)
+    && validFileUrl(fileUrl(d));
+}
+function gmailBatchKey(d){
+  if(!isGmailBatchDocument(d))return '';
+  return [
+    text(d.chantierId),
+    text(d.gmailMessageId),
+    text(d.date),
+    text(d.titre),
+    text(d.objetMail||d.objet),
+    text(d.sujet)
+  ].join('|');
+}
+function gmailBatchDocuments(d){
+  const key=gmailBatchKey(d);if(!key)return [];
+  const all=docs();
+  return all.filter(item=>isGmailBatchDocument(item)&&gmailBatchKey(item)===key)
+    .sort((a,b)=>all.indexOf(a)-all.indexOf(b));
+}
+
 function openDocument(id,url){
   const row=[...document.querySelectorAll('.yaya-detail-document-view[data-doc-id]')]
     .find(button=>text(button.dataset.docId)===text(id))?.closest('.yaya-detail-document-row');
@@ -404,6 +429,23 @@ function openDocument(id,url){
     titre:text(row&&row.querySelector('.yaya-document-field-2')&&row.querySelector('.yaya-document-field-2').textContent)
   };
   if(!text(d.id))return false;
+  if(isGmailBatchDocument(d)){
+    const batch=gmailBatchDocuments(d);
+    if(batch.length>1){
+      const batchItems=batch.map((item,i)=>({
+        kind:'file',
+        id:text(item.id),
+        tab:'📎 Pièce '+(i+1),
+        title:fileName(item,i),
+        url:fileUrl(item),
+        onEdit:()=>{try{if(typeof window.editDocument==='function')window.editDocument(text(item.id));else if(typeof editDocument==='function')editDocument(text(item.id));}catch(e){}},
+        onDelete:()=>{try{if(typeof window.delDocument==='function')window.delDocument(text(item.id));else if(typeof delDocument==='function')delDocument(text(item.id));}catch(e){}}
+      }));
+      const activeIndex=Math.max(0,batchItems.findIndex(item=>text(item.id)===text(d.id)));
+      showItems(batchItems,activeIndex);
+      return true;
+    }
+  }
   const items=[],rawUrl=text(url)||fileUrl(d),extras=extraPieces(d);
   const body=text(d.contenuMail||d.corpsMail||d.bodyMail||d.mailBody);
   const mail=extras.find(p=>p&&p.kind==='mail');
