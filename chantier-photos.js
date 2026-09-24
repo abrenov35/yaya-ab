@@ -10,6 +10,17 @@ function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()
 function docs(){try{return Array.isArray(S.documents)?S.documents:[]}catch(e){return[]}}
 function isPhoto(d){return d&&norm(d.type)===TYPE}
 function rows(cid){return docs().filter(function(d){return isPhoto(d)&&String(d.chantierId||'')===String(cid||'')}).sort(function(a,b){return String(b.date||'').localeCompare(String(a.date||''))})}
+function photoLotId(p){var s=String(p&&p.origine||'');return s.indexOf('PHOTO_LOT_V1:')===0?s.slice(13):''}
+function photoGroupKey(p){var lot=photoLotId(p);return lot?'lot:'+lot:'date:'+iso(p&&p.date)}
+function photoGroupRows(cid,key){return rows(cid).filter(function(p){return photoGroupKey(p)===key})}
+function photoGroupTime(key,list){if(key.indexOf('lot:pb_')===0){var n=Number(key.slice(7).split('_')[0]);if(Number.isFinite(n))return n}return Date.parse(iso(list[0]&&list[0].date)+'T00:00:00')||0}
+function photoGroupLabel(key,list){
+  if(key.indexOf('lot:pb_')===0){
+    var stamp=photoGroupTime(key,list),when=new Date(stamp);
+    if(Number.isFinite(stamp)&&stamp>0)return 'Lot ajouté le '+when.toLocaleDateString('fr-FR')+' à '+when.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  }
+  return fr(list[0]&&list[0].date);
+}
 function isImageFile(file){var t=String(file&&file.type||'').toLowerCase(),n=String(file&&file.name||'');return t.indexOf('image/')===0||/\.(?:jpe?g|png|heic|heif|webp)$/i.test(n)}
 function toastS(m,e){try{toast(m,!!e)}catch(x){}}
 function id(){try{if(typeof uid==='function')return String(uid())}catch(e){}return 'photo-'+Date.now()+'-'+Math.random().toString(36).slice(2,8)}
@@ -307,7 +318,7 @@ async function enqueuePhotoJobs(cid,batch,batchId){
     var rowId=id(),jobId='pj_'+rowId;
     await putPhotoJob({
       id:jobId,rowId:rowId,chantierId:String(cid||''),date:iso(x.d)||today(),
-      title:groupTitle(rows(cid).filter(function(p){return iso(p.date)===iso(x.d)})),
+      title:DEF,
       name:String(f.name||'photo.jpg'),type:String(f.type||'image/jpeg'),
       lastModified:Number(f.lastModified||Date.now()),blob:f,link:'',createdAt:Date.now()+i,attempts:0,batchId:String(batchId||'')
     });
@@ -343,6 +354,7 @@ async function processPhotoJobs(){
           await putPhotoJob(job);
         }
         var row={id:job.rowId,chantierId:job.chantierId,type:'Photo',titre:job.title||DEF,sujet:job.name||'Photo chantier',date:job.date||today(),lien:job.link};
+        if(job.batchId)row.origine='PHOTO_LOT_V1:'+String(job.batchId);
         queuePhotoUpsert(row);
         localUpsertPhoto(row,false);
         ready.push(job);
@@ -599,7 +611,7 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
 function photoSignature(list){
   return (Array.isArray(list)?list:[]).map(function(p){
-    return [String(p&&p.id||''),iso(p&&p.date),String(p&&p.titre||''),String(p&&p.lien||'')].join('|');
+    return [String(p&&p.id||''),iso(p&&p.date),String(p&&p.titre||''),String(p&&p.lien||''),String(p&&p.origine||'')].join('|');
   }).join('¦');
 }
 function photoIndexByChantier(){
@@ -642,10 +654,10 @@ function ensurePane(card,tabs,list){
   }
 
   var groups={};
-  list.forEach(function(p){var d=iso(p.date)||'';(groups[d]||(groups[d]=[])).push(p)});
-  pane.innerHTML=Object.keys(groups).sort().reverse().map(function(d){
-    var a=groups[d],t=groupTitle(a);
-    return '<section class="yaya-pg"><div class="yaya-ph"><b class="yaya-pd">'+esc(fr(d))+'</b><span class="yaya-pt">'+esc(t)+'</span><button class="yaya-pe" data-date="'+esc(d)+'">✏️</button></div><div class="yaya-grid">'+a.map(function(p){
+  list.forEach(function(p){var key=photoGroupKey(p);(groups[key]||(groups[key]=[])).push(p)});
+  pane.innerHTML=Object.keys(groups).sort(function(a,b){return photoGroupTime(b,groups[b])-photoGroupTime(a,groups[a])}).map(function(key){
+    var a=groups[key],t=groupTitle(a);
+    return '<section class="yaya-pg"><div class="yaya-ph"><b class="yaya-pd">'+esc(photoGroupLabel(key,a))+'</b><span class="yaya-pt">'+esc(t)+'</span><button class="yaya-pe" data-group="'+esc(key)+'">✏️</button></div><div class="yaya-grid">'+a.map(function(p){
       var image=p.lien
         ? '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" data-src="'+esc(thumb(p.lien,360))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="lazy" decoding="async">'
         : '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span>';
@@ -1024,15 +1036,15 @@ window.__yayaPhotoDeleteById=async function(photoId){
 };
 window.__yayaPhotoEditById=function(photoId){
   var p=find(String(photoId||''));if(!p)return false;
-  editTitle(String(p.chantierId||''),String(p.date||''),String(p.titre||DEF));return true;
+  editTitle(String(p.chantierId||''),photoGroupKey(p),String(p.titre||DEF));return true;
 };
 function sameEntryPhotos(p){
   if(!p)return [];
-  var cid=String(p.chantierId||''),d=iso(p.date);
+  var cid=String(p.chantierId||''),key=photoGroupKey(p);
   // Même ordre que les vignettes affichées : gauche -> droite.
   // Ainsi "précédente" va bien vers la vignette de gauche et "suivante" vers celle de droite.
   return rows(cid)
-    .filter(function(x){return iso(x.date)===d})
+    .filter(function(x){return photoGroupKey(x)===key})
     .sort(function(a,b){return String(b.id||'').localeCompare(String(a.id||''))});
 }
 async function openPic(p){
@@ -1146,7 +1158,7 @@ async function openPic(p){
     }
   };
 }
-function editTitle(cid,d,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(fr(d))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=rows(cid).filter(function(p){return iso(p.date)===iso(d)});a.forEach(function(p){p.titre=v;queuePhotoUpsert(p)});savePhotoCache();close();refresh();var ok=await commitPhotoPending();toastS(ok?'Titre enregistré et synchronisé ✓':'Titre enregistré localement — synchronisation en attente',!ok)}}
+function editTitle(cid,key,current){var r=root();r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Titre du '+esc(photoGroupLabel(key,photoGroupRows(cid,key)))+'<button class="cl">Fermer</button></h5><div class="mrow"><input class="msel ti" maxlength="80" value="'+esc(current||DEF)+'"></div><div class="mfoot"><button class="btn2 cl">Annuler</button><button class="btnp go sv">Enregistrer</button></div></div></div>';r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});r.querySelector('.sv').onclick=async function(){var v=String(r.querySelector('.ti').value||'').trim()||DEF,a=photoGroupRows(cid,key);a.forEach(function(p){p.titre=v;queuePhotoUpsert(p)});savePhotoCache();close();refresh();var ok=await commitPhotoPending();toastS(ok?'Titre enregistré et synchronisé ✓':'Titre enregistré localement — synchronisation en attente',!ok)}}
 function photoFromTile(tile){
   if(!tile)return null;
   var p=find(tile.dataset.id);
@@ -1175,8 +1187,8 @@ if(!window.PointerEvent){
 }
 document.addEventListener('click',function(e){
   if(openPhotoTile(e,false))return;
-  var ed=e.target.closest&&e.target.closest('.yaya-pe[data-date]');
-  if(ed){e.preventDefault();e.stopPropagation();var c=ed.closest('.card'),cid=cardId(c),d=ed.dataset.date;editTitle(cid,d,groupTitle(rows(cid).filter(function(p){return iso(p.date)===d})))}
+  var ed=e.target.closest&&e.target.closest('.yaya-pe[data-group]');
+  if(ed){e.preventDefault();e.stopPropagation();var c=ed.closest('.card'),cid=cardId(c),key=ed.dataset.group;editTitle(cid,key,groupTitle(photoGroupRows(cid,key)))}
 },true);
 style();refresh();var refreshTimer=0,pane=document.getElementById('pane-chantiers');if(pane)new MutationObserver(function(){if(refreshTimer)return;refreshTimer=setTimeout(function(){refreshTimer=0;refresh()},90)}).observe(pane,{childList:true,subtree:true});window.addEventListener('yaya:data-refreshed',function(){setTimeout(refresh,30)});
 

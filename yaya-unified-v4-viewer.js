@@ -11,6 +11,7 @@ function text(v){return String(v==null?'':v).trim();}
 function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function docs(){try{return typeof S!=='undefined'&&S&&Array.isArray(S.documents)?S.documents:[];}catch(e){return[];}}
 function docById(id){id=text(id);return docs().find(d=>text(d&&d.id)===id)||null;}
+function photoGroupKey(d){const origin=text(d&&d.origine);return origin.startsWith('PHOTO_LOT_V1:')?'lot:'+origin.slice(13):'date:'+text(d&&d.date).slice(0,10);}
 function driveId(url){
   const s=text(url);let m=s.match(/drive\.google\.com\/file\/d\/([^/?#]+)/i);
   if(m&&m[1])return m[1];
@@ -405,7 +406,8 @@ function openDocument(id,url){
 
 function openPhoto(id){
   const p=docById(id);if(!p)return false;
-  const list=docs().filter(d=>String(d&&d.type||'').toUpperCase()==='PHOTO'&&text(d.chantierId)===text(p.chantierId)&&text(d.date)===text(p.date))
+  const group=photoGroupKey(p);
+  const list=docs().filter(d=>String(d&&d.type||'').toUpperCase()==='PHOTO'&&text(d.chantierId)===text(p.chantierId)&&photoGroupKey(d)===group)
     .sort((a,b)=>text(b.id).localeCompare(text(a.id)));
   const items=(list.length?list:[p]).map((d,i)=>({
     kind:'photo',id:text(d.id),tab:'📷 Photo '+(i+1),title:(text(d.date)?text(d.date)+' — ':'')+(text(d.titre)||'Photo'),url:fileUrl(d),
