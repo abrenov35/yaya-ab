@@ -160,7 +160,10 @@ function ensureModal(){
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
   m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong class="v4-title">Visualisation des pièces</strong><div class="v4-tabs"></div><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div></div>';
   document.body.appendChild(m);
-  m.querySelector('.v4-close').onclick=close;
+  const closeButton=m.querySelector('.v4-close');
+  closeButton.onclick=close;
+  // Fermer dès l'appui : certains aperçus photo retardent le clic final sur mobile.
+  closeButton.onpointerdown=close;
   m.onclick=e=>{if(e.target===m)close();};
   return m;
 }
