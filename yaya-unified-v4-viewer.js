@@ -98,16 +98,16 @@ function installStyle(){
     #${MODAL_ID} .v4-stage.photo{touch-action:pan-y}
     #${MODAL_ID} iframe{display:block;width:100%;height:100%;border:0;background:#fff}
     #${MODAL_ID} .v4-image{display:block;width:100%;height:100%;object-fit:contain;background:#fff}
-    #${MODAL_ID} .v4-photo-arrow{
+    #${MODAL_ID} .v4-viewer-arrow{
       position:absolute;top:52%;transform:translateY(-50%);z-index:3;
       width:46px;height:58px;border:0;border-radius:10px;
       background:rgba(20,40,65,.7);color:#fff;font-size:36px;line-height:1;
       cursor:pointer;display:none;align-items:center;justify-content:center;
     }
-    #${MODAL_ID} .v4-photo-arrow.prev{left:16px}
-    #${MODAL_ID} .v4-photo-arrow.next{right:16px}
-    #${MODAL_ID} .v4-photo-arrow:hover{background:rgba(20,40,65,.9)}
-    #${MODAL_ID} .v4-photo-arrow:focus-visible{outline:3px solid #76baff;outline-offset:2px}
+    #${MODAL_ID} .v4-viewer-arrow.prev{left:16px}
+    #${MODAL_ID} .v4-viewer-arrow.next{right:16px}
+    #${MODAL_ID} .v4-viewer-arrow:hover{background:rgba(20,40,65,.9)}
+    #${MODAL_ID} .v4-viewer-arrow:focus-visible{outline:3px solid #76baff;outline-offset:2px}
     #${MODAL_ID} .v4-mail{height:100%;overflow:auto;background:#fff;padding:18px 22px;box-sizing:border-box;color:#21364f}
     #${MODAL_ID} .v4-mail-head{position:sticky;top:-18px;z-index:2;margin:-18px -22px 16px;padding:15px 22px 12px;border-bottom:1px solid #e3e9f0;background:#fff}
     #${MODAL_ID} .v4-mail-head strong{display:block;font-size:16px;line-height:1.35;color:#142c48}
@@ -134,7 +134,10 @@ function installStyle(){
     }
     .yaya-mail-pj-edit-safe-actions .save{background:#14558a;border-color:#14558a;color:#fff}
     @media(max-width:760px){
-      #${MODAL_ID} .v4-photo-arrow{display:none!important}
+      #${MODAL_ID} .v4-viewer-arrow:not(.for-file){display:none!important}
+      #${MODAL_ID} .v4-viewer-arrow.for-file{width:34px;height:46px;font-size:28px}
+      #${MODAL_ID} .v4-viewer-arrow.prev{left:5px}
+      #${MODAL_ID} .v4-viewer-arrow.next{right:5px}
       #${MODAL_ID}{padding:4px}
       #${MODAL_ID} .v4-card{width:calc(100vw - 8px);height:calc(100dvh - 8px);border-radius:8px}
       #${MODAL_ID} .v4-head{
@@ -172,7 +175,7 @@ function ensureModal(){
   let m=document.getElementById(MODAL_ID);
   if(m)return m;
   m=document.createElement('div');m.id=MODAL_ID;m.setAttribute('aria-hidden','true');
-  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong class="v4-title">Visualisation des pièces</strong><div class="v4-tabs"></div><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div><button type="button" class="v4-photo-arrow prev" aria-label="Photo précédente">‹</button><button type="button" class="v4-photo-arrow next" aria-label="Photo suivante">›</button></div>';
+  m.innerHTML='<div class="v4-card" role="dialog" aria-modal="true"><div class="v4-head"><strong class="v4-title">Visualisation des pièces</strong><div class="v4-tabs"></div><div class="v4-head-actions"><button type="button" class="v4-download">Télécharger</button><button type="button" class="v4-edit">Modifier</button><button type="button" class="v4-close">Fermer</button></div></div><div class="v4-stage"></div><button type="button" class="v4-viewer-arrow prev" aria-label="Pièce précédente">‹</button><button type="button" class="v4-viewer-arrow next" aria-label="Pièce suivante">›</button></div>';
   document.body.appendChild(m);
   const closeButton=m.querySelector('.v4-close');
   closeButton.onclick=close;
@@ -180,7 +183,7 @@ function ensureModal(){
   closeButton.onpointerdown=close;
   m.onclick=e=>{if(e.target===m)close();};
   const stage=m.querySelector('.v4-stage');
-  m.querySelectorAll('.v4-photo-arrow').forEach(button=>{
+  m.querySelectorAll('.v4-viewer-arrow').forEach(button=>{
     button.onclick=()=>{const next=currentIndex+(button.classList.contains('next')?1:-1);if(next>=0&&next<currentItems.length){currentIndex=next;render();}};
   });
   let startX=0,startY=0;
@@ -230,8 +233,11 @@ function render(){
     tabs.appendChild(wrap);
   });
   const item=currentItems[currentIndex],edit=m.querySelector('.v4-edit');
-  m.querySelector('.v4-photo-arrow.prev').style.display=item.kind==='photo'&&currentIndex>0?'flex':'none';
-  m.querySelector('.v4-photo-arrow.next').style.display=item.kind==='photo'&&currentIndex<currentItems.length-1?'flex':'none';
+  m.querySelectorAll('.v4-viewer-arrow').forEach(arrow=>{
+    arrow.classList.toggle('for-file',item.kind!=='photo');
+    arrow.setAttribute('aria-label',(item.kind==='photo'?'Photo':'Pièce')+(arrow.classList.contains('next')?' suivante':' précédente'));
+    arrow.style.display=(arrow.classList.contains('next')?currentIndex<currentItems.length-1:currentIndex>0)?'flex':'none';
+  });
   stage.classList.toggle('photo',item.kind==='photo');
   if(dl)dl.style.display=item.kind==='mail'||!validFileUrl(item.url)?'none':'inline-flex';
   edit.style.display=typeof item.onEdit==='function'?'inline-flex':'none';
