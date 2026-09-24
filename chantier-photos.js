@@ -607,8 +607,29 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 '.yaya-photo-confirm-actions .danger{border:1px solid #b42318;background:#b42318;color:#fff}.yaya-photo-confirm-actions .danger:hover{background:#951f16;border-color:#951f16}'+
 '.yaya-photo-save-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:18px;text-align:center}.yaya-photo-save-state strong{font-size:16px;color:#173f69}.yaya-photo-save-state span{font-size:12px;color:#617184;max-width:420px}.yaya-photo-save-spinner,.yaya-photo-upload-spinner{display:inline-block;width:30px;height:30px;border:3px solid #cfd8e3;border-top-color:#173f69;border-radius:50%;animation:yayaPhotoSpin .8s linear infinite}@keyframes yayaPhotoSpin{to{transform:rotate(360deg)}}'+
 '.yaya-photo-upload-status{position:fixed;z-index:2147483000;right:14px;bottom:14px;display:flex;align-items:center;gap:10px;min-width:250px;max-width:min(380px,calc(100vw - 28px));padding:11px 13px;border:1px solid #b8c8da;border-radius:12px;background:#fff;box-shadow:0 8px 28px rgba(15,35,60,.18);color:#173f69}.yaya-photo-upload-status.done{border-color:#9bc6a4;background:#f4fbf5;color:#275d35}.yaya-photo-upload-status.error{border-color:#e2b7b7;background:#fff7f7;color:#8a2424}.yaya-photo-upload-icon{width:32px;min-width:32px;text-align:center;font-size:22px;font-weight:900}.yaya-photo-upload-copy{display:flex;flex-direction:column;gap:2px;min-width:0}.yaya-photo-upload-copy strong{font-size:12.5px;line-height:1.2}.yaya-photo-upload-copy span{font-size:11px;line-height:1.25;opacity:.9}.yaya-photo-upload-status .yaya-photo-upload-spinner{width:22px;height:22px;border-width:2px}'+
-'@media(max-width:560px){.yaya-photo-upload-status{left:10px;right:10px;bottom:10px;max-width:none}.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}';document.head.appendChild(s)}
+'@media(max-width:560px){.yaya-photo-upload-status{left:10px;right:10px;bottom:10px;max-width:none}.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}'+
+'.yaya-photo-move{position:absolute;z-index:5;left:4px;bottom:4px;min-height:27px;padding:0 6px;border:1px solid #fff;border-radius:6px;background:rgba(23,63,105,.94);color:#fff;font-size:11px;font-weight:800;cursor:pointer}.yaya-photo-move:focus-visible{outline:3px solid #76baff}';document.head.appendChild(s)}
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
+// Bouton indépendant de la vignette pour éviter d'ouvrir la photo lors du déplacement.
+function movePhotoToGroup(photo){
+  if(!photo)return;
+  var cid=String(photo.chantierId||''),current=photoGroupKey(photo),groups={};
+  rows(cid).forEach(function(p){var key=photoGroupKey(p);if(key!==current)(groups[key]||(groups[key]=[])).push(p)});
+  var keys=Object.keys(groups).sort(function(a,b){return photoGroupTime(b,groups[b])-photoGroupTime(a,groups[a])});
+  if(!keys.length){toastS('Aucun autre groupe de photos dans ce chantier',true);return}
+  var r=root();
+  r.innerHTML='<div class="overlay yaya-photo-overlay"><div class="modal"><h5>Déplacer la photo<button type="button" class="cl">Fermer</button></h5><p>Choisissez le groupe de destination dans ce chantier.</p><div class="mrow"><select class="msel destination">'+keys.map(function(key){var list=groups[key];return '<option value="'+esc(key)+'">'+esc(photoGroupLabel(key,list)+' — '+groupTitle(list)+' ('+list.length+' photo'+(list.length>1?'s':'')+')')+'</option>'}).join('')+'</select></div><div class="mfoot"><button type="button" class="btn2 cl">Annuler</button><button type="button" class="btnp go sv">Déplacer</button></div></div></div>';
+  r.querySelectorAll('.cl').forEach(function(b){b.onclick=close});
+  r.querySelector('.sv').onclick=async function(){
+    var key=r.querySelector('.destination').value,list=groups[key];if(!list||!list.length)return;
+    // Les anciens groupes sont liés à une date : créer un lot sans modifier la date des prises de vue.
+    var lot=key.indexOf('lot:')===0?key.slice(4):'regroupe_'+Date.now()+'_'+Math.random().toString(36).slice(2,8);
+    if(key.indexOf('date:')===0)list.forEach(function(p){p.origine='PHOTO_LOT_V1:'+lot;queuePhotoUpsert(p)});
+    photo.origine='PHOTO_LOT_V1:'+lot;photo.titre=groupTitle(list);
+    queuePhotoUpsert(photo);savePhotoCache();close();refresh();
+    var ok=await commitPhotoPending();toastS(ok?'Photo déplacée et synchronisée ✓':'Photo déplacée localement — synchronisation en attente',!ok);
+  };
+}
 function photoSignature(list){
   return (Array.isArray(list)?list:[]).map(function(p){
     return [String(p&&p.id||''),iso(p&&p.date),String(p&&p.titre||''),String(p&&p.lien||''),String(p&&p.origine||'')].join('|');
@@ -661,7 +682,7 @@ function ensurePane(card,tabs,list){
       var image=p.lien
         ? '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" data-src="'+esc(thumb(p.lien,360))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="lazy" decoding="async">'
         : '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span>';
-      return '<button type="button" class="yaya-pic" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo">'+image+'</button>';
+      return '<span class="yaya-pic-wrap"><button type="button" class="yaya-pic" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo">'+image+'</button><button type="button" class="yaya-photo-move" data-move-photo="'+esc(p.id)+'" aria-label="Déplacer cette photo vers un autre groupe" title="Déplacer vers un autre groupe">Déplacer</button></span>';
     }).join('')+'</div></section>';
   }).join('');
   hydratePhotoThumbs(pane);
@@ -1186,6 +1207,8 @@ if(!window.PointerEvent){
   document.addEventListener('touchend',function(e){openPhotoTile(e,true)},true);
 }
 document.addEventListener('click',function(e){
+  var move=e.target.closest&&e.target.closest('.yaya-photo-move[data-move-photo]');
+  if(move){e.preventDefault();e.stopPropagation();movePhotoToGroup(find(move.dataset.movePhoto));return;}
   if(openPhotoTile(e,false))return;
   var ed=e.target.closest&&e.target.closest('.yaya-pe[data-group]');
   if(ed){e.preventDefault();e.stopPropagation();var c=ed.closest('.card'),cid=cardId(c),key=ed.dataset.group;editTitle(cid,key,groupTitle(photoGroupRows(cid,key)))}
