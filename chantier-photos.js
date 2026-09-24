@@ -629,7 +629,7 @@ function style(){if(document.getElementById(STYLE))return;var s=document.createE
 '.yaya-photo-save-state{min-height:170px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:18px;text-align:center}.yaya-photo-save-state strong{font-size:16px;color:#173f69}.yaya-photo-save-state span{font-size:12px;color:#617184;max-width:420px}.yaya-photo-save-spinner,.yaya-photo-upload-spinner{display:inline-block;width:30px;height:30px;border:3px solid #cfd8e3;border-top-color:#173f69;border-radius:50%;animation:yayaPhotoSpin .8s linear infinite}@keyframes yayaPhotoSpin{to{transform:rotate(360deg)}}'+
 '.yaya-photo-upload-status{position:fixed;z-index:2147483000;right:14px;bottom:14px;display:flex;align-items:center;gap:10px;min-width:250px;max-width:min(380px,calc(100vw - 28px));padding:11px 13px;border:1px solid #b8c8da;border-radius:12px;background:#fff;box-shadow:0 8px 28px rgba(15,35,60,.18);color:#173f69}.yaya-photo-upload-status.done{border-color:#9bc6a4;background:#f4fbf5;color:#275d35}.yaya-photo-upload-status.error{border-color:#e2b7b7;background:#fff7f7;color:#8a2424}.yaya-photo-upload-icon{width:32px;min-width:32px;text-align:center;font-size:22px;font-weight:900}.yaya-photo-upload-copy{display:flex;flex-direction:column;gap:2px;min-width:0}.yaya-photo-upload-copy strong{font-size:12.5px;line-height:1.2}.yaya-photo-upload-copy span{font-size:11px;line-height:1.25;opacity:.9}.yaya-photo-upload-status .yaya-photo-upload-spinner{width:22px;height:22px;border-width:2px}'+
 '@media(max-width:560px){.yaya-photo-upload-status{left:10px;right:10px;bottom:10px;max-width:none}.yaya-photo-delete{width:30px;height:30px;top:3px;right:3px}}'+
-'.yaya-pic-wrap[draggable]{cursor:grab}.yaya-pic-wrap[draggable]:active{cursor:grabbing}.yaya-pg.yaya-drop-target{outline:3px solid #18845a;outline-offset:-3px;background:#ecfff4}.yaya-photo-dragging .yaya-pg{transition:background .12s ease}';document.head.appendChild(s)}
+'.yaya-pic[draggable]{cursor:grab;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}.yaya-pic[draggable]:active{cursor:grabbing}.yaya-pic.yaya-photo-drag-source{opacity:.5;transform:scale(.97)}.yaya-pg.yaya-drop-target{outline:3px solid #18845a;outline-offset:-3px;background:#ecfff4}.yaya-photo-dragging .yaya-pg{transition:background .12s ease}';document.head.appendChild(s)}
 function groupTitle(list){for(var i=0;i<list.length;i++){var t=String(list[i].titre||'').trim();if(t&&norm(t)!==norm(DEF)&&norm(t)!=='PHOTO')return t}return DEF}
 async function movePhotoIntoGroup(photo,key){
   if(!photo||!key||photoGroupKey(photo)===key)return;
@@ -706,9 +706,9 @@ function ensurePane(card,tabs,list){
     var a=groups[key],t=groupTitle(a);
     return '<section class="yaya-pg" data-photo-group="'+esc(key)+'"><div class="yaya-ph"><b class="yaya-pd">'+esc(photoGroupLabel(key,a))+'</b><span class="yaya-pt">'+esc(t)+'</span><button class="yaya-pe" data-group="'+esc(key)+'">✏️</button></div><div class="yaya-grid">'+a.map(function(p){
       var image=p.lien
-        ? '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" data-src="'+esc(thumb(p.lien,360))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="lazy" decoding="async">'
+        ? '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span><img class="yaya-photo-thumb" draggable="false" data-src="'+esc(thumb(p.lien,360))+'" data-photo-link="'+esc(p.lien)+'" alt="Photo" loading="lazy" decoding="async">'
         : '<span class="yaya-photo-placeholder" aria-hidden="true">📷</span>';
-      return '<span class="yaya-pic-wrap" draggable="true" data-drag-photo="'+esc(p.id)+'"><button type="button" class="yaya-pic" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo. Maintenir pour déplacer vers un autre groupe">'+image+'</button></span>';
+      return '<span class="yaya-pic-wrap"><button type="button" class="yaya-pic" draggable="true" data-drag-photo="'+esc(p.id)+'" data-id="'+esc(p.id)+'" aria-label="Ouvrir la photo. Glisser pour déplacer vers un autre groupe">'+image+'</button></span>';
     }).join('')+'</div></section>';
   }).join('');
   hydratePhotoThumbs(pane);
@@ -1230,59 +1230,98 @@ function highlightDragTarget(target){
   document.querySelectorAll('.yaya-pg.yaya-drop-target').forEach(function(el){el.classList.remove('yaya-drop-target')});
   if(target)target.classList.add('yaya-drop-target');
 }
+function clearTouchPhotoDrag(state){
+  state=state||touchDrag;
+  if(!state)return;
+  clearTimeout(state.timer);
+  if(state.tile){
+    state.tile.draggable=true;
+    state.tile.classList.remove('yaya-photo-drag-source');
+    try{if(state.pointerId!=null&&state.tile.hasPointerCapture&&state.tile.hasPointerCapture(state.pointerId))state.tile.releasePointerCapture(state.pointerId)}catch(e){}
+  }
+  if(state.card)state.card.classList.remove('yaya-photo-dragging');
+  if(touchDrag===state)touchDrag=null;
+  highlightDragTarget(null);dragPhotoId='';dragPhotoCard=null;
+}
+function activateTouchPhotoDrag(state){
+  if(!state||touchDrag!==state||state.active)return;
+  state.active=true;dragPhotoId=state.id;dragPhotoCard=state.card;
+  suppressPhotoOpenUntil=Date.now()+900;
+  if(state.card)state.card.classList.add('yaya-photo-dragging');
+  if(state.tile){
+    state.tile.classList.add('yaya-photo-drag-source');
+    try{if(state.pointerId!=null&&state.tile.setPointerCapture)state.tile.setPointerCapture(state.pointerId)}catch(e){}
+  }
+  highlightDragTarget(dragTarget(state.x,state.y));
+  if(navigator.vibrate)navigator.vibrate(25);
+}
+function touchPhotoAutoScroll(y){
+  var edge=72,step=18;
+  if(y<edge)window.scrollBy(0,-step);
+  else if(y>window.innerHeight-edge)window.scrollBy(0,step);
+}
 document.addEventListener('dragstart',function(e){
   var tile=e.target.closest&&e.target.closest('[data-drag-photo]');
   if(!tile)return;
   dragPhotoId=tile.dataset.dragPhoto;dragPhotoCard=tile.closest('.card');
-  e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragPhotoId);
+  tile.classList.add('yaya-photo-drag-source');
+  if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',dragPhotoId)}
 },true);
 document.addEventListener('dragover',function(e){
   if(!dragPhotoId)return;
   var target=dragTarget(e.clientX,e.clientY);highlightDragTarget(target);
-  if(target){e.preventDefault();e.dataTransfer.dropEffect='move'}
+  if(target){e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move'}
 },true);
 document.addEventListener('drop',function(e){
   if(!dragPhotoId)return;
   var target=dragTarget(e.clientX,e.clientY),photo=find(dragPhotoId);
   if(target){e.preventDefault();movePhotoIntoGroup(photo,target.dataset.photoGroup)}
+  document.querySelectorAll('.yaya-photo-drag-source').forEach(function(el){el.classList.remove('yaya-photo-drag-source')});
   highlightDragTarget(null);dragPhotoId='';dragPhotoCard=null;
 },true);
-document.addEventListener('dragend',function(){highlightDragTarget(null);dragPhotoId='';dragPhotoCard=null},true);
+document.addEventListener('dragend',function(){
+  document.querySelectorAll('.yaya-photo-drag-source').forEach(function(el){el.classList.remove('yaya-photo-drag-source')});
+  highlightDragTarget(null);dragPhotoId='';dragPhotoCard=null;
+},true);
 document.addEventListener('pointerdown',function(e){
   if(e.pointerType!=='touch')return;
   var tile=e.target.closest&&e.target.closest('.yaya-pic[data-id]');if(!tile)return;
-  var wrapper=tile.closest('[data-drag-photo]');if(wrapper)wrapper.draggable=false;
-  touchDrag={id:tile.dataset.id,card:tile.closest('.card'),x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,active:false,timer:0};
+  tile.draggable=false;
+  touchDrag={id:tile.dataset.id,card:tile.closest('.card'),tile:tile,pointerId:e.pointerId,x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,active:false,timer:0};
   var state=touchDrag;
-  state.wrapper=wrapper;
-  state.timer=setTimeout(function(){
-    if(touchDrag!==state)return;
-    state.active=true;dragPhotoId=state.id;dragPhotoCard=state.card;
-    state.card.classList.add('yaya-photo-dragging');
-    highlightDragTarget(dragTarget(state.x,state.y));
-    if(navigator.vibrate)navigator.vibrate(25);
-  },420);
+  // Appui bref puis glissement : assez court pour être naturel sur iPhone,
+  // sans détourner immédiatement un balayage servant à faire défiler la page.
+  state.timer=setTimeout(function(){activateTouchPhotoDrag(state)},180);
 },true);
 document.addEventListener('pointermove',function(e){
-  var state=touchDrag;if(!state||e.pointerType!=='touch')return;
+  var state=touchDrag;if(!state||e.pointerType!=='touch'||(state.pointerId!=null&&e.pointerId!==state.pointerId))return;
   state.x=e.clientX;state.y=e.clientY;
-  if(!state.active){if(Math.hypot(e.clientX-state.startX,e.clientY-state.startY)>12){clearTimeout(state.timer);if(state.wrapper)state.wrapper.draggable=true;touchDrag=null}return}
-  e.preventDefault();highlightDragTarget(dragTarget(e.clientX,e.clientY));
+  if(!state.active){
+    // On ne supprime plus le déplacement dès les premiers pixels :
+    // l'ancien seuil de 12 px annulait précisément le geste de glisser.
+    return;
+  }
+  e.preventDefault();
+  touchPhotoAutoScroll(e.clientY);
+  highlightDragTarget(dragTarget(e.clientX,e.clientY));
 },{capture:true,passive:false});
 document.addEventListener('touchmove',function(e){if(touchDrag&&touchDrag.active)e.preventDefault()},{capture:true,passive:false});
 document.addEventListener('contextmenu',function(e){if(touchDrag&&touchDrag.active){e.preventDefault();e.stopPropagation()}},true);
 document.addEventListener('pointerup',function(e){
-  var state=touchDrag;if(!state||e.pointerType!=='touch')return;
-  clearTimeout(state.timer);touchDrag=null;
-  if(state.wrapper)state.wrapper.draggable=true;
-  if(!state.active)return;
-  suppressPhotoOpenUntil=Date.now()+650;
-  var target=dragTarget(e.clientX,e.clientY);
-  if(target)movePhotoIntoGroup(find(state.id),target.dataset.photoGroup);
-  state.card.classList.remove('yaya-photo-dragging');highlightDragTarget(null);dragPhotoId='';dragPhotoCard=null;
+  var state=touchDrag;if(!state||e.pointerType!=='touch'||(state.pointerId!=null&&e.pointerId!==state.pointerId))return;
+  clearTimeout(state.timer);
+  if(!state.active){clearTouchPhotoDrag(state);return}
+  suppressPhotoOpenUntil=Date.now()+700;
+  var target=dragTarget(e.clientX,e.clientY),photo=find(state.id);
+  if(target)movePhotoIntoGroup(photo,target.dataset.photoGroup);
+  clearTouchPhotoDrag(state);
   e.preventDefault();e.stopPropagation();
 },true);
-document.addEventListener('pointercancel',function(){if(touchDrag){clearTimeout(touchDrag.timer);if(touchDrag.wrapper)touchDrag.wrapper.draggable=true;touchDrag.card.classList.remove('yaya-photo-dragging');touchDrag=null}highlightDragTarget(null);dragPhotoId='';dragPhotoCard=null},true);
+document.addEventListener('pointercancel',function(e){
+  var state=touchDrag;if(!state)return;
+  if(state.pointerId!=null&&e.pointerId!=null&&e.pointerId!==state.pointerId)return;
+  clearTouchPhotoDrag(state);
+},true);
 function openPhotoTile(e,isTouch){
   if(Date.now()<suppressPhotoOpenUntil){e.preventDefault();e.stopPropagation();return true}
   var tile=e.target.closest&&e.target.closest('.yaya-pic[data-id]');
